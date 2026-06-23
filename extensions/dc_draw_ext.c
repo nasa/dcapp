@@ -81,6 +81,7 @@ typedef struct _dcDrawLayer2D
     plVec2*        sbtPath;
     uint32_t       uVertexCount;
     dcDrawCommand* ptLastCommand;
+    dcDrawCommandState tCommandState;
 } dcDrawLayer2D;
 
 typedef struct _dcFontPrepData
@@ -148,7 +149,10 @@ static unsigned char*        ptrDOut_ = NULL;
 //-----------------------------------------------------------------------------
 
 static void pl__prepare_draw_command  (dcDrawLayer2D*, plTextureID, bool sdf);
+static void pl__prepare_draw_command_flags(dcDrawLayer2D*, plTextureID, uint32_t flags);
 static void pl__prepare_3d_draw_command(dcDrawList3D*, dcDrawCommand3DType, plTextureID);
+static bool pl__draw_command_state_equal(dcDrawCommandState, dcDrawCommandState);
+static dcDrawCommandState pl__draw_command_state_with_flags(dcDrawCommandState, uint32_t);
 static void pl__reserve_triangles   (dcDrawLayer2D*, uint32_t uIndexCount, uint32_t uVertexCount);
 static void pl__add_vertex          (dcDrawLayer2D*, plVec2 tPos, uint32_t uColor, plVec2 tUv);
 static void pl__add_index           (dcDrawLayer2D*, uint32_t uVertexStart, uint32_t i0, uint32_t i1, uint32_t i2);
@@ -447,6 +451,9 @@ pl_request_2d_layer(dcDrawList2D* ptDrawlist)
         ptLayer->ptDrawlist = ptDrawlist;
         pl_sb_push(ptDrawlist->_sbtLayersCreated, ptLayer);
    }
+   ptLayer->ptDrawlist = ptDrawlist;
+   ptLayer->ptLastCommand = NULL;
+   ptLayer->tCommandState = (dcDrawCommandState){0};
    pl_sb_reserve(ptLayer->sbuIndexBuffer, 1024);
    return ptLayer;
 }
@@ -458,6 +465,8 @@ pl_request_3d_drawlist(void)
 
     if(ptDrawlist)
     {
+        ptDrawlist->iLastCommand3D = -1;
+        ptDrawlist->tCommandState = (dcDrawCommandState){0};
         pl_sb_reserve(ptDrawlist->sbtLineIndexBuffer, 1024);
         pl_sb_reserve(ptDrawlist->sbtLineVertexBuffer, 1024);
         pl_sb_reserve(ptDrawlist->sbtSolidIndexBuffer, 1024);
@@ -512,6 +521,7 @@ pl_return_2d_layer(dcDrawLayer2D* ptLayer)
 {
     ptLayer->ptLastCommand = NULL;
     ptLayer->uVertexCount = 0;
+    ptLayer->tCommandState = (dcDrawCommandState){0};
     pl_sb_reset(ptLayer->sbtCommandBuffer);
     pl_sb_reset(ptLayer->sbuIndexBuffer);
     pl_sb_reset(ptLayer->sbtPath);
@@ -571,7 +581,8 @@ pl_prepare_2d_drawlist(dcDrawList2D* ptDrawlist)
             if(ptLastCommand)
             {
                 // check for same texture (allows merging draw calls)
-                if(ptLastCommand->tTextureId == ptLayerCommand->tTextureId && ptLastCommand->bSdf == ptLayerCommand->bSdf)
+                if(ptLastCommand->tTextureId == ptLayerCommand->tTextureId &&
+                    pl__draw_command_state_equal(ptLastCommand->tState, ptLayerCommand->tState))
                 {
                     // ptLastCommand->uElementCount += ptLayerCommand->uElementCount;
                     bCreateNewCommand = false;
@@ -721,6 +732,32 @@ pl_add_3d_callback(dcDrawList3D* ptDrawlist, dcDrawCallback3D tCallback, void* p
 }
 
 static void
+pl_set_2d_command_state(dcDrawLayer2D* ptLayer, dcDrawCommandState tState)
+{
+    if(!ptLayer)
+        return;
+
+    if(!pl__draw_command_state_equal(ptLayer->tCommandState, tState))
+    {
+        ptLayer->tCommandState = tState;
+        ptLayer->ptLastCommand = NULL;
+    }
+}
+
+static void
+pl_set_3d_command_state(dcDrawList3D* ptDrawlist, dcDrawCommandState tState)
+{
+    if(!ptDrawlist)
+        return;
+
+    if(!pl__draw_command_state_equal(ptDrawlist->tCommandState, tState))
+    {
+        ptDrawlist->tCommandState = tState;
+        ptDrawlist->iLastCommand3D = -1;
+    }
+}
+
+static void
 pl_add_line(dcDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, dcDrawLineOptions tOptions)
 {
     pl_sb_push(ptLayer->sbtPath, p0);
@@ -809,7 +846,12 @@ pl_add_text_ex(dcDrawLayer2D* ptLayer, plVec2 p, const char* pcText, dcDrawTextO
             p.x += ptGlyph->fXAdvance * fScale;
             if(c != ' ')
             {
-                pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, (bool)ptGlyph->iSDF);
+                uint32_t uFlags = ptGlyph->iSDF ? DC_DRAW_COMMAND_FLAG_SDF : DC_DRAW_COMMAND_FLAG_NONE;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_BOLD))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_BOLD;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_OUTLINE))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_OUTLINE;
+                pl__prepare_draw_command_flags(ptLayer, gptDrawCtx->ptAtlas->tTexture, uFlags);
                 pl__reserve_triangles(ptLayer, 6, 4);
                 const uint32_t uVtxStart = pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer);
                 pl__add_vertex(ptLayer, (plVec2){x0, y0}, tOptions.uColor, (plVec2){s0, t0});
@@ -859,7 +901,12 @@ pl_add_text_ex(dcDrawLayer2D* ptLayer, plVec2 p, const char* pcText, dcDrawTextO
             p.x += ptGlyph->fXAdvance * fScale;
             if(c != ' ')
             {
-                pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, (bool)ptGlyph->iSDF);
+                uint32_t uFlags = ptGlyph->iSDF ? DC_DRAW_COMMAND_FLAG_SDF : DC_DRAW_COMMAND_FLAG_NONE;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_BOLD))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_BOLD;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_OUTLINE))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_OUTLINE;
+                pl__prepare_draw_command_flags(ptLayer, gptDrawCtx->ptAtlas->tTexture, uFlags);
                 pl__reserve_triangles(ptLayer, 6, 4);
                 const uint32_t uVtxStart = pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer);
                 pl__add_vertex(ptLayer, pl_add_vec2(tOriginalPosition, pl_mul_mat3_vec3(&tOptions.tTransform, (plVec3){x0 - tOriginalPosition.x, y0 - tOriginalPosition.y, 1.0f}).xy), tOptions.uColor, (plVec2){s0, t0});
@@ -958,7 +1005,12 @@ pl_add_text_clipped_ex(dcDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plV
             p.x += ptGlyph->fXAdvance * fScale;
             if(c != ' ' && pl_rect_contains_point(&tClipRect, p))
             {
-                pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, (bool)ptGlyph->iSDF);
+                uint32_t uFlags = ptGlyph->iSDF ? DC_DRAW_COMMAND_FLAG_SDF : DC_DRAW_COMMAND_FLAG_NONE;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_BOLD))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_BOLD;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_OUTLINE))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_OUTLINE;
+                pl__prepare_draw_command_flags(ptLayer, gptDrawCtx->ptAtlas->tTexture, uFlags);
                 pl__reserve_triangles(ptLayer, 6, 4);
                 const uint32_t uVtxStart = pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer);
                 pl__add_vertex(ptLayer, (plVec2){x0, y0}, tOptions.uColor, (plVec2){s0, t0});
@@ -1012,7 +1064,12 @@ pl_add_text_clipped_ex(dcDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plV
 
             if(c != ' ' && pl_rect_contains_point(&tClipRect, tPoint1) && pl_rect_contains_point(&tClipRect, tPoint2))
             {
-                pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, (bool)ptGlyph->iSDF);
+                uint32_t uFlags = ptGlyph->iSDF ? DC_DRAW_COMMAND_FLAG_SDF : DC_DRAW_COMMAND_FLAG_NONE;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_BOLD))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_BOLD;
+                if(ptGlyph->iSDF && (tOptions.tFlags & DC_DRAW_TEXT_FLAG_OUTLINE))
+                    uFlags |= DC_DRAW_COMMAND_FLAG_SDF_OUTLINE;
+                pl__prepare_draw_command_flags(ptLayer, gptDrawCtx->ptAtlas->tTexture, uFlags);
                 pl__reserve_triangles(ptLayer, 6, 4);
                 const uint32_t uVtxStart = pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer);
                 pl__add_vertex(ptLayer, tPoint1, tOptions.uColor, (plVec2){s0, t0});
@@ -2550,6 +2607,7 @@ pl_new_draw_3d_frame(void)
         pl_sb_reset(ptDrawlist->sbtDrawCommands3D);
         pl_sb_reset(ptDrawlist->sbtTextEntries);
         ptDrawlist->iLastCommand3D = -1;
+        ptDrawlist->tCommandState = (dcDrawCommandState){0};
     }
 
     // reset 3d drawlists
@@ -2569,6 +2627,7 @@ pl_new_draw_3d_frame(void)
             pl_sb_reset(ptDrawlist->_sbtLayersCreated[j]->sbtPath);  
             ptDrawlist->_sbtLayersCreated[j]->uVertexCount = 0u;
             ptDrawlist->_sbtLayersCreated[j]->ptLastCommand = NULL;
+            ptDrawlist->_sbtLayersCreated[j]->tCommandState = (dcDrawCommandState){0};
         }
         pl_sb_reset(ptDrawlist->_sbtSubmittedLayers); 
     }
@@ -4016,12 +4075,18 @@ pl_add_default_font(dcFontAtlas* ptAtlas)
 static void
 pl__prepare_3d_draw_command(dcDrawList3D* ptDrawlist, dcDrawCommand3DType eType, plTextureID tTexture)
 {
+    const dcDrawCommandState tState = ptDrawlist->tCommandState;
+
+    if(ptDrawlist->iLastCommand3D >= (int)pl_sb_size(ptDrawlist->sbtDrawCommands3D))
+        ptDrawlist->iLastCommand3D = -1;
+
     if(ptDrawlist->iLastCommand3D >= 0)
     {
         dcDrawCommand3D* ptLastCmd = &ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D];
         // merge if same type (and same texture for textured)
         if(ptLastCmd->tUserCallback == NULL &&
            ptLastCmd->eType == eType &&
+           pl__draw_command_state_equal(ptLastCmd->tState, tState) &&
            (eType != DC_DRAW_COMMAND_3D_TEXTURED || ptLastCmd->tTextureId == tTexture))
         {
             return;
@@ -4031,7 +4096,8 @@ pl__prepare_3d_draw_command(dcDrawList3D* ptDrawlist, dcDrawCommand3DType eType,
     dcDrawCommand3D tNewCommand = {
         .eType         = eType,
         .uElementCount = 0,
-        .tTextureId    = tTexture
+        .tTextureId    = tTexture,
+        .tState        = tState
     };
 
     switch(eType)
@@ -4057,14 +4123,22 @@ pl__prepare_3d_draw_command(dcDrawList3D* ptDrawlist, dcDrawCommand3DType eType,
 static void
 pl__prepare_draw_command(dcDrawLayer2D* ptLayer, plTextureID tTextureID, bool bSdf)
 {
+    pl__prepare_draw_command_flags(ptLayer, tTextureID, bSdf ? DC_DRAW_COMMAND_FLAG_SDF : DC_DRAW_COMMAND_FLAG_NONE);
+}
+
+static void
+pl__prepare_draw_command_flags(dcDrawLayer2D* ptLayer, plTextureID tTextureID, uint32_t tFlags)
+{
     bool bCreateNewCommand = true;
+    const dcDrawCommandState tState = pl__draw_command_state_with_flags(ptLayer->tCommandState, tFlags);
 
     const plRect tCurrentClip = pl_sb_size(ptLayer->ptDrawlist->_sbtClipStack) > 0 ? pl_sb_top(ptLayer->ptDrawlist->_sbtClipStack) : (plRect){0};
 
     if(ptLayer->ptLastCommand)
     {
         // check if last command has same texture
-        if(ptLayer->ptLastCommand->tTextureId == tTextureID && ptLayer->ptLastCommand->bSdf == bSdf)
+        if(ptLayer->ptLastCommand->tTextureId == tTextureID &&
+            pl__draw_command_state_equal(ptLayer->ptLastCommand->tState, tState))
         {
             bCreateNewCommand = false;
         }
@@ -4088,7 +4162,7 @@ pl__prepare_draw_command(dcDrawLayer2D* ptLayer, plTextureID tTextureID, bool bS
             .uIndexOffset  = pl_sb_size(ptLayer->sbuIndexBuffer),
             .uElementCount = 0,
             .tTextureId    = tTextureID,
-            .bSdf          = bSdf,
+            .tState        = tState,
             .tClip         = tCurrentClip
         };
         pl_sb_push(ptLayer->sbtCommandBuffer, tNewdrawCommand);
@@ -4096,6 +4170,26 @@ pl__prepare_draw_command(dcDrawLayer2D* ptLayer, plTextureID tTextureID, bool bS
     }
     ptLayer->ptLastCommand = &pl_sb_top(ptLayer->sbtCommandBuffer);
     ptLayer->ptLastCommand->tTextureId = tTextureID;
+}
+
+static bool
+pl__draw_command_state_equal(dcDrawCommandState tA, dcDrawCommandState tB)
+{
+    return tA.tFlags == tB.tFlags &&
+        tA.tStencil.tMode == tB.tStencil.tMode &&
+        tA.tStencil.uDepth == tB.tStencil.uDepth;
+}
+
+static dcDrawCommandState
+pl__draw_command_state_with_flags(dcDrawCommandState tState, uint32_t tFlags)
+{
+    const uint32_t tDrawOwnedFlags =
+        DC_DRAW_COMMAND_FLAG_SDF |
+        DC_DRAW_COMMAND_FLAG_SDF_BOLD |
+        DC_DRAW_COMMAND_FLAG_SDF_OUTLINE;
+    tState.tFlags &= ~tDrawOwnedFlags;
+    tState.tFlags |= tFlags & tDrawOwnedFlags;
+    return tState;
 }
 
 static void
@@ -4229,6 +4323,8 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .add_lines                  = pl_add_lines,
         .add_2d_callback            = pl_add_2d_callback,
         .add_3d_callback            = pl_add_3d_callback,
+        .set_2d_command_state       = pl_set_2d_command_state,
+        .set_3d_command_state       = pl_set_3d_command_state,
         .add_text                   = pl_add_text_ex,
         .add_text_clipped           = pl_add_text_clipped_ex,
         .add_triangle               = pl_add_triangle,

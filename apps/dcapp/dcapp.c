@@ -16,6 +16,9 @@
 #include "geo.h"
 
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "pl_ds.h"
 
 // declarations
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
@@ -347,20 +350,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     sbfree(app_data->sb_font_levels);
     sbfree(app_data->sb_font_paths);
     sbfree(app_data->sb_font_path_offsets);
-
-    // cleanup shaders
-    _ext_gfx->destroy_shader(device, app_data->stencil_create_2d_shader);
-    _ext_gfx->destroy_shader(device, app_data->stencil_remove_2d_shader);
-    _ext_gfx->destroy_shader(device, app_data->stencil_cleanup_2d_shader);
-    _ext_gfx->destroy_shader(device, app_data->stencil_create_sdf_shader);
-    _ext_gfx->destroy_shader(device, app_data->stencil_remove_sdf_shader);
-    _ext_gfx->destroy_shader(device, app_data->stencil_cleanup_sdf_shader);
-    _ext_gfx->destroy_shader(device, app_data->bold_sdf_shader);
-    _ext_gfx->destroy_shader(device, app_data->outline_sdf_shader);
-    for (int i = 0; i < DC_STENCIL_MAX_DEPTH; i++) {
-        _ext_gfx->destroy_shader(device, app_data->stencil_draw_2d_shader[i]);
-        _ext_gfx->destroy_shader(device, app_data->stencil_draw_sdf_shader[i]);
-    }
 
     // cleanup deferred sets
     sbfree(app_data->sb_deferred_sets);

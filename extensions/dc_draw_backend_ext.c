@@ -67,6 +67,8 @@ typedef struct _dcPipelineEntry
     uint32_t           uMSAASampleCount;
     plShaderHandle     tRegularPipeline;
     plShaderHandle     tSecondaryPipeline;
+    plShaderHandle     tBoldSdfPipeline;
+    plShaderHandle     tOutlineSdfPipeline;
     dcDrawFlags        tFlags;
     uint32_t           uSubpassIndex;
 } dcPipelineEntry;
@@ -90,6 +92,9 @@ typedef struct _dcDrawBackendContext
     dcPipelineEntry*     sbt3dPipelineEntries;
     dcPipelineEntry*     sbt3dTexturedPipelineEntries;
     dcPipelineEntry*     sbt2dPipelineEntries;
+    dcPipelineEntry*     sbt2dStencilPipelineEntries;
+    dcPipelineEntry*     sbt3dStencilPipelineEntries;
+    dcPipelineEntry*     sbt3dTexturedStencilPipelineEntries;
     plBindGroupPool*     ptBindGroupPool;
 
     // bind group layouts
@@ -135,6 +140,17 @@ static plBufferHandle         pl__create_staging_buffer(const plBufferDesc*, con
 static const dcPipelineEntry* pl__get_3d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex);
 static const dcPipelineEntry* pl__get_3d_textured_pipeline     (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex);
 static const dcPipelineEntry* pl__get_2d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, uint32_t uSubpassIndex);
+static const dcPipelineEntry* pl__get_2d_stencil_pipeline      (plRenderPassHandle, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState);
+static const dcPipelineEntry* pl__get_3d_stencil_pipeline      (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex, dcDrawStencilState);
+static const dcPipelineEntry* pl__get_3d_textured_stencil_pipeline(plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex, dcDrawStencilState);
+static const dcPipelineEntry* pl__get_2d_command_pipeline      (const dcPipelineEntry*, plRenderPassHandle, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState);
+static const dcPipelineEntry* pl__get_3d_command_pipeline      (const dcPipelineEntry*, plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex, dcDrawStencilState);
+static const dcPipelineEntry* pl__get_3d_textured_command_pipeline(const dcPipelineEntry*, plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex, dcDrawStencilState);
+static plShaderHandle         pl__select_2d_command_shader     (const dcPipelineEntry*, uint32_t tFlags, plShaderHandle*, plShaderHandle*);
+static bool                   pl__stencil_state_valid          (dcDrawStencilState);
+static plGraphicsState        pl__stencil_graphics_state       (dcDrawStencilState);
+static plGraphicsState        pl__stencil_graphics_state_3d    (dcDrawStencilState, dcDrawFlags);
+static plBlendState           pl__stencil_blend_state          (dcDrawStencilState);
 static plBindGroupHandle      pl_create_bind_group_for_texture(plTextureHandle);
 
 //-----------------------------------------------------------------------------
@@ -280,6 +296,9 @@ pl_cleanup_draw_backend(void)
     pl_sb_free(gptDrawBackendCtx->sbt3dPipelineEntries);
     pl_sb_free(gptDrawBackendCtx->sbt3dTexturedPipelineEntries);
     pl_sb_free(gptDrawBackendCtx->sbt2dPipelineEntries);
+    pl_sb_free(gptDrawBackendCtx->sbt2dStencilPipelineEntries);
+    pl_sb_free(gptDrawBackendCtx->sbt3dStencilPipelineEntries);
+    pl_sb_free(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries);
     pl_temp_allocator_free(&gptDrawBackendCtx->tTempAllocator);
 
     gptDraw->cleanup();
@@ -772,7 +791,369 @@ pl__get_2d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, u
     };
     ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tSecondaryShaderDesc);
     pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tBoldSdfDesc = tSecondaryShaderDesc;
+    tBoldSdfDesc.tFragmentShader = gptShader->load_glsl("dc_draw_2d_sdf_bold.frag", "main", NULL, NULL);
+    ptEntry->tBoldSdfPipeline = gptGfx->create_shader(ptDevice, &tBoldSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tOutlineSdfDesc = tSecondaryShaderDesc;
+    tOutlineSdfDesc.tFragmentShader = gptShader->load_glsl("dc_draw_2d_sdf_outline.frag", "main", NULL, NULL);
+    ptEntry->tOutlineSdfPipeline = gptGfx->create_shader(ptDevice, &tOutlineSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
     return ptEntry;
+}
+
+static bool
+pl__stencil_state_valid(dcDrawStencilState tStencil)
+{
+    return tStencil.tMode != DC_DRAW_STENCIL_MODE_NONE &&
+        tStencil.uDepth > 0 &&
+        tStencil.uDepth <= DC_DRAW_STENCIL_MAX_DEPTH;
+}
+
+static plGraphicsState
+pl__stencil_graphics_state(dcDrawStencilState tStencil)
+{
+    const uint32_t uBit = 1u << (tStencil.uDepth - 1u);
+    const uint32_t uActiveMask = (uBit << 1u) - 1u;
+
+    plGraphicsState tState = {
+        .ulDepthWriteEnabled  = 0,
+        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
+        .ulCullMode           = PL_CULL_MODE_NONE,
+        .ulWireframe          = 0,
+        .ulStencilTestEnabled = 1,
+        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+        .ulStencilRef         = uBit,
+        .ulStencilMask        = uBit,
+        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+        .ulStencilOpPass      = PL_STENCIL_OP_REPLACE
+    };
+
+    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_CLEAR)
+    {
+        tState.ulStencilRef = 0;
+    }
+    else if(tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW)
+    {
+        tState.ulStencilMode   = PL_COMPARE_MODE_EQUAL;
+        tState.ulStencilRef    = uActiveMask;
+        tState.ulStencilMask   = uActiveMask;
+        tState.ulStencilOpPass = PL_STENCIL_OP_KEEP;
+    }
+
+    return tState;
+}
+
+static plGraphicsState
+pl__stencil_graphics_state_3d(dcDrawStencilState tStencil, dcDrawFlags tFlags)
+{
+    plGraphicsState tState = pl__stencil_graphics_state(tStencil);
+
+    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW)
+    {
+        uint64_t ulCullMode = PL_CULL_MODE_NONE;
+        if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
+            ulCullMode |= PL_CULL_MODE_CULL_FRONT;
+        if(tFlags & DC_DRAW_FLAG_CULL_BACK)
+            ulCullMode |= PL_CULL_MODE_CULL_BACK;
+
+        tState.ulDepthWriteEnabled = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0;
+        tState.ulDepthMode = tFlags & DC_DRAW_FLAG_DEPTH_TEST ?
+            (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) :
+            PL_COMPARE_MODE_ALWAYS;
+        tState.ulCullMode = ulCullMode;
+    }
+
+    return tState;
+}
+
+static plBlendState
+pl__stencil_blend_state(dcDrawStencilState tStencil)
+{
+    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_CREATE || tStencil.tMode == DC_DRAW_STENCIL_MODE_CLEAR)
+    {
+        return (plBlendState){
+            .bBlendEnabled   = false,
+            .uColorWriteMask = PL_COLOR_WRITE_MASK_NONE
+        };
+    }
+
+    return (plBlendState){
+        .bBlendEnabled   = true,
+        .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+        .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+        .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .tColorOp        = PL_BLEND_OP_ADD,
+        .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+        .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .tAlphaOp        = PL_BLEND_OP_ADD
+    };
+}
+
+static const dcPipelineEntry*
+pl__get_2d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return NULL;
+
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
+            ptEntry->uMSAASampleCount == uMSAASampleCount &&
+            ptEntry->uSubpassIndex == uSubpassIndex &&
+            ptEntry->tFlags == ((uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u)))
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+    pl_sb_add(gptDrawBackendCtx->sbt2dStencilPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries) - 1];
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+    ptEntry->tFlags = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u);
+
+    const plVertexBufferLayout tVertexLayout = {
+        .uByteStride = sizeof(float) * 5,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plBindGroupLayoutDesc tSamplerLayout = {
+        .atSamplerBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+        }
+    };
+    const plBindGroupLayoutDesc tTextureLayout = {
+        .atTextureBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+        }
+    };
+
+    const bool bDraw = tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW;
+    const plGraphicsState tGraphicsState = pl__stencil_graphics_state(tStencil);
+    const plBlendState tBlendState = pl__stencil_blend_state(tStencil);
+
+    const plShaderDesc tRegularDesc = {
+        .tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d.frag" : "dc_draw_2d_stencil.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
+        .tGraphicsState  = tGraphicsState,
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {tBlendState},
+        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tRegularDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    const plShaderDesc tSdfDesc = {
+        .tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
+        .tGraphicsState  = tGraphicsState,
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {tBlendState},
+        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tBoldSdfDesc = tSdfDesc;
+    tBoldSdfDesc.tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf_bold.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
+    ptEntry->tBoldSdfPipeline = gptGfx->create_shader(ptDevice, &tBoldSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tOutlineSdfDesc = tSdfDesc;
+    tOutlineSdfDesc.tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf_outline.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
+    ptEntry->tOutlineSdfPipeline = gptGfx->create_shader(ptDevice, &tOutlineSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return NULL;
+
+    const uint32_t uKey = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u) | ((uint32_t)tFlags << 16u);
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dStencilPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
+            ptEntry->uMSAASampleCount == uMSAASampleCount &&
+            ptEntry->uSubpassIndex == uSubpassIndex &&
+            ptEntry->tFlags == (dcDrawFlags)uKey)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+    pl_sb_add(gptDrawBackendCtx->sbt3dStencilPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries) - 1];
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+    ptEntry->tFlags = (dcDrawFlags)uKey;
+
+    const plVertexBufferLayout tVertexLayout = {
+        .uByteStride = sizeof(float) * 4,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plShaderDesc tDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL),
+        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {pl__stencil_blend_state(tStencil)},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    const plVertexBufferLayout tLineVertexLayout = {
+        .uByteStride = sizeof(float) * 10,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 6, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 9, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plShaderDesc tLineDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
+        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
+        .atVertexBufferLayouts = {tLineVertexLayout},
+        .atBlendStates = {pl__stencil_blend_state(tStencil)},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tLineDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_textured_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return NULL;
+
+    const uint32_t uKey = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u) | ((uint32_t)tFlags << 16u);
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
+            ptEntry->uMSAASampleCount == uMSAASampleCount &&
+            ptEntry->uSubpassIndex == uSubpassIndex &&
+            ptEntry->tFlags == (dcDrawFlags)uKey)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+    pl_sb_add(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries) - 1];
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+    ptEntry->tFlags = (dcDrawFlags)uKey;
+
+    const plVertexBufferLayout tVertexLayout = {
+        .uByteStride = sizeof(float) * 6,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plBindGroupLayoutDesc tSamplerLayout = {
+        .atSamplerBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+        }
+    };
+    const plBindGroupLayoutDesc tTextureLayout = {
+        .atTextureBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+        }
+    };
+    const plShaderDesc tDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL),
+        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {pl__stencil_blend_state(tStencil)},
+        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_2d_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return ptDefaultEntry;
+
+    const dcPipelineEntry* ptStencilEntry = pl__get_2d_stencil_pipeline(tRenderPass, uMSAASampleCount, uSubpassIndex, tStencil);
+    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return ptDefaultEntry;
+
+    const dcPipelineEntry* ptStencilEntry = pl__get_3d_stencil_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, tStencil);
+    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_textured_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return ptDefaultEntry;
+
+    const dcPipelineEntry* ptStencilEntry = pl__get_3d_textured_stencil_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, tStencil);
+    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
+}
+
+static plShaderHandle
+pl__select_2d_command_shader(const dcPipelineEntry* ptEntry, uint32_t tFlags, plShaderHandle* pt2dShaderOverride, plShaderHandle* ptSdfShaderOverride)
+{
+    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF_OUTLINE)
+        return ptEntry->tOutlineSdfPipeline;
+    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF_BOLD)
+        return ptEntry->tBoldSdfPipeline;
+    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF)
+        return ptSdfShaderOverride ? *ptSdfShaderOverride : ptEntry->tSecondaryPipeline;
+    return pt2dShaderOverride ? *pt2dShaderOverride : ptEntry->tRegularPipeline;
 }
 
 plBindGroupHandle
@@ -856,7 +1237,7 @@ pl_set_3d_shader(dcDrawList3D* ptDrawlist, plShaderHandle* ptSolidShader, plShad
 }
 
 void
-pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount)
+pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount, plShaderHandle* pt2dShaderOverride, plShaderHandle* ptSdfShaderOverride)
 {
     gptGfx->set_depth_bias( ptEncoder, 0.0f, 0.0f, 0.0f);
     gptDraw->prepare_2d_drawlist(ptDrawlist);
@@ -936,7 +1317,9 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     const int32_t iVertexOffset = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex);
     const int32_t iIndexOffset = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
 
-    const dcPipelineEntry* ptEntry = pl__get_2d_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, gptGfx->get_render_encoder_subpass(ptEncoder));
+    const plRenderPassHandle tRenderPass = gptGfx->get_encoder_render_pass(ptEncoder);
+    const uint32_t uSubpassIndex = gptGfx->get_render_encoder_subpass(ptEncoder);
+    const dcPipelineEntry* ptEntry = pl__get_2d_pipeline(tRenderPass, uMSAASampleCount, uSubpassIndex);
 
     const plVec2 tClipScale = gptIOI->get_io()->tMainFramebufferScale;
 
@@ -950,12 +1333,14 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     
     const float fTranslate[] = {-1.0f, -1.0f};
 
-    // reset custom shader state at start of submit
-    gptDrawBackendCtx->bCustomShaderActive = false;
-    gptDrawBackendCtx->pt2dShaderOverride = NULL;
-    gptDrawBackendCtx->ptSdfShaderOverride = NULL;
+    gptDrawBackendCtx->bCustomShaderActive = pt2dShaderOverride != NULL || ptSdfShaderOverride != NULL;
+    gptDrawBackendCtx->pt2dShaderOverride = pt2dShaderOverride;
+    gptDrawBackendCtx->ptSdfShaderOverride = ptSdfShaderOverride;
 
-    plShaderHandle tCurrentShader = ptEntry->tRegularPipeline;
+    const bool bBaseCustomShaderActive = gptDrawBackendCtx->bCustomShaderActive;
+    const dcPipelineEntry* ptCurrentEntry = ptEntry;
+    plShaderHandle tCurrentShader = pl__select_2d_command_shader(ptCurrentEntry, DC_DRAW_COMMAND_FLAG_NONE, pt2dShaderOverride, ptSdfShaderOverride);
+    gptDrawBackendCtx->tCurrentSamplerBindGroup = gptDrawBackendCtx->tFontSamplerBindGroup;
 
     typedef struct _dcDrawDynamicData
     {
@@ -971,7 +1356,7 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     ptDynamicData->uTranslate.x = -1.0f;
     ptDynamicData->uTranslate.y = -1.0f;
 
-    bool bSdf = false;
+    uint32_t tCurrentFlags = DC_DRAW_COMMAND_FLAG_NONE;
 
     plRenderViewport tViewport = {
         .fWidth  = fWidth,
@@ -1003,15 +1388,16 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 dcShaderOverride* ptOverride = (dcShaderOverride*)cmd.pUserCallbackData;
                 if(ptOverride)
                 {
-                    // custom shader override - store for use in draw commands
-                    gptDrawBackendCtx->pt2dShaderOverride = ptOverride->pt2dShader;
-                    gptDrawBackendCtx->ptSdfShaderOverride = ptOverride->ptSdfShader;
-                    gptDrawBackendCtx->bCustomShaderActive = true;
+                    plShaderHandle* pt2dShader = ptOverride->pt2dShader ? ptOverride->pt2dShader : pt2dShaderOverride;
+                    plShaderHandle* ptSdfShader = ptOverride->ptSdfShader ? ptOverride->ptSdfShader : ptSdfShaderOverride;
 
-                    // bind the appropriate shader based on current bSdf state
-                    plShaderHandle tShader = bSdf
-                        ? (ptOverride->ptSdfShader ? *ptOverride->ptSdfShader : ptEntry->tSecondaryPipeline)
-                        : (ptOverride->pt2dShader ? *ptOverride->pt2dShader : ptEntry->tRegularPipeline);
+                    // custom shader override - store for use in draw commands
+                    gptDrawBackendCtx->pt2dShaderOverride = pt2dShader;
+                    gptDrawBackendCtx->ptSdfShaderOverride = ptSdfShader;
+                    gptDrawBackendCtx->bCustomShaderActive = pt2dShader != NULL || ptSdfShader != NULL;
+
+                    // bind the appropriate shader based on current command state
+                    plShaderHandle tShader = pl__select_2d_command_shader(ptCurrentEntry, tCurrentFlags, pt2dShader, ptSdfShader);
                     gptGfx->bind_shader(ptEncoder, tShader);
                     tCurrentShader = tShader;
 
@@ -1021,13 +1407,12 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 }
                 else
                 {
-                    // reset to default shaders
-                    gptDrawBackendCtx->pt2dShaderOverride = NULL;
-                    gptDrawBackendCtx->ptSdfShaderOverride = NULL;
-                    gptDrawBackendCtx->bCustomShaderActive = false;
+                    // reset to the submit's base shader state
+                    gptDrawBackendCtx->pt2dShaderOverride = pt2dShaderOverride;
+                    gptDrawBackendCtx->ptSdfShaderOverride = ptSdfShaderOverride;
+                    gptDrawBackendCtx->bCustomShaderActive = bBaseCustomShaderActive;
 
-                    // let normal bSdf logic handle the shader on next draw command
-                    tCurrentShader = bSdf ? ptEntry->tSecondaryPipeline : ptEntry->tRegularPipeline;
+                    tCurrentShader = pl__select_2d_command_shader(ptCurrentEntry, tCurrentFlags, pt2dShaderOverride, ptSdfShaderOverride);
                     gptGfx->bind_shader(ptEncoder, tCurrentShader);
                 }
             }
@@ -1038,24 +1423,22 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
         }
         else
         {
-            // switch shaders based on bSdf flag, using overrides if custom shader active
-            if(cmd.bSdf && !bSdf)
+            const uint32_t tCmdFlags = cmd.tState.tFlags &
+                (DC_DRAW_COMMAND_FLAG_SDF |
+                 DC_DRAW_COMMAND_FLAG_SDF_BOLD |
+                 DC_DRAW_COMMAND_FLAG_SDF_OUTLINE);
+            const dcPipelineEntry* ptCmdEntry = pl__get_2d_command_pipeline(ptEntry, tRenderPass, uMSAASampleCount, uSubpassIndex, cmd.tState.tStencil);
+
+            // switch shaders based on command state, using overrides if custom shader active
+            if(ptCmdEntry != ptCurrentEntry || tCmdFlags != tCurrentFlags)
             {
-                plShaderHandle tShader = gptDrawBackendCtx->bCustomShaderActive && gptDrawBackendCtx->ptSdfShaderOverride
-                    ? *gptDrawBackendCtx->ptSdfShaderOverride
-                    : ptEntry->tSecondaryPipeline;
+                plShaderHandle* pt2dShader = gptDrawBackendCtx->bCustomShaderActive ? gptDrawBackendCtx->pt2dShaderOverride : NULL;
+                plShaderHandle* ptSdfShader = gptDrawBackendCtx->bCustomShaderActive ? gptDrawBackendCtx->ptSdfShaderOverride : NULL;
+                plShaderHandle tShader = pl__select_2d_command_shader(ptCmdEntry, tCmdFlags, pt2dShader, ptSdfShader);
                 gptGfx->bind_shader(ptEncoder, tShader);
                 tCurrentShader = tShader;
-                bSdf = true;
-            }
-            else if(!cmd.bSdf && bSdf)
-            {
-                plShaderHandle tShader = gptDrawBackendCtx->bCustomShaderActive && gptDrawBackendCtx->pt2dShaderOverride
-                    ? *gptDrawBackendCtx->pt2dShaderOverride
-                    : ptEntry->tRegularPipeline;
-                gptGfx->bind_shader(ptEncoder, tShader);
-                tCurrentShader = tShader;
-                bSdf = false;
+                ptCurrentEntry = ptCmdEntry;
+                tCurrentFlags = tCmdFlags;
             }
 
             if(pl_rect_width(&cmd.tClip) == 0)
@@ -1121,14 +1504,22 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 }
 
 void
-pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags tFlags, uint32_t uMSAASampleCount)
+pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount)
+{
+    pl_submit_2d_drawlist_ex(ptDrawlist, ptEncoder, fWidth, fHeight, uMSAASampleCount, NULL, NULL);
+}
+
+void
+pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags tFlags, uint32_t uMSAASampleCount, plShaderHandle* ptSolidShaderOverride, plShaderHandle* ptTexturedShaderOverride)
 {
     gptGfx->push_render_debug_group(ptEncoder, "3D Draw", (plVec4){0.33f, 0.02f, 0.10f, 1.0f});
 
     plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
     const uint32_t uFrameIdx = gptGfx->get_current_frame_index();
 
-    const dcPipelineEntry* ptEntry = pl__get_3d_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
+    const plRenderPassHandle tRenderPass = gptGfx->get_encoder_render_pass(ptEncoder);
+    const uint32_t uSubpassIndex = gptGfx->get_render_encoder_subpass(ptEncoder);
+    const dcPipelineEntry* ptEntry = pl__get_3d_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex);
 
     const float fAspectRatio = fWidth / fHeight;
 
@@ -1155,6 +1546,24 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     int32_t iLineVertexBase = 0, iLineIndexBase = 0;
     int32_t iTexturedVertexBase = 0, iTexturedIndexBase = 0;
 
+    const uint32_t uSolidIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
+    const uint32_t uLineIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+    const uint32_t uTexturedIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
+    const uint32_t uTotalIdxBufSzNeeded = uSolidIdxBufSzNeeded + uLineIdxBufSzNeeded + uTexturedIdxBufSzNeeded;
+    const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
+    if(uTotalIdxBufSzNeeded >= uAvailableIndexBufferSpace)
+    {
+        gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
+        const plBufferDesc tBufferDesc = {
+            .tUsage     = PL_BUFFER_USAGE_INDEX,
+            .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uTotalIdxBufSzNeeded + sizeof(uint32_t)),
+            .pcDebugName = "Draw Index Buffer"
+        };
+        gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
+        gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "3d draw idx buffer", uFrameIdx);
+        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
+    }
+
     //=========================================================================
     // Phase 1: Upload all vertex/index data
     //=========================================================================
@@ -1174,34 +1583,21 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 .pcDebugName = "3D Draw Vertex Buffer"
             };
             ptBufferInfo->uVertexBufferSize = (uint32_t)tBufferDesc.szByteSize;
+            ptBufferInfo->uVertexBufferOffset = 0;
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "3d draw vtx buffer", uFrameIdx);
         }
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
         memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
             ptDrawlist->sbtSolidVertexBuffer, uVtxBufSzNeeded);
 
-        const uint32_t uIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
-        const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
-        if(uIdxBufSzNeeded >= uAvailableIndexBufferSpace)
-        {
-            gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-            const plBufferDesc tBufferDesc = {
-                .tUsage     = PL_BUFFER_USAGE_INDEX,
-                .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uIdxBufSzNeeded + uAvailableIndexBufferSpace),
-                .pcDebugName = "Draw Index Buffer"
-            };
-            gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
-            gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "3d draw idx buffer", uFrameIdx);
-            gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
-        }
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
-            ptDrawlist->sbtSolidIndexBuffer, uIdxBufSzNeeded);
+            ptDrawlist->sbtSolidIndexBuffer, uSolidIdxBufSzNeeded);
 
         iSolidVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex3DSolid);
         iSolidIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
-        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
+        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uSolidIdxBufSzNeeded;
     }
 
     // lines
@@ -1219,41 +1615,28 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 .pcDebugName = "3D Lines Vertex Buffer"
             };
             ptBufferInfo->uVertexBufferSize = (uint32_t)tBufferDesc.szByteSize;
+            ptBufferInfo->uVertexBufferOffset = 0;
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "draw vtx buffer", uFrameIdx);
         }
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
         memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
             ptDrawlist->sbtLineVertexBuffer, uVtxBufSzNeeded);
 
-        const uint32_t uIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
-        const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
-        if(uIdxBufSzNeeded >= uAvailableIndexBufferSpace)
-        {
-            gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-            const plBufferDesc tBufferDesc = {
-                .tUsage     = PL_BUFFER_USAGE_INDEX,
-                .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uIdxBufSzNeeded + uAvailableIndexBufferSpace),
-                .pcDebugName = "Draw Index Buffer"
-            };
-            gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
-            gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "draw idx buffer", uFrameIdx);
-            gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
-        }
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
-            ptDrawlist->sbtLineIndexBuffer, uIdxBufSzNeeded);
+            ptDrawlist->sbtLineIndexBuffer, uLineIdxBufSzNeeded);
 
         iLineVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex3DLine);
         iLineIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
-        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
+        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uLineIdxBufSzNeeded;
     }
 
     // textured
     const dcPipelineEntry* ptTexturedEntry = NULL;
     if(pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer) > 0u)
     {
-        ptTexturedEntry = pl__get_3d_textured_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
+        ptTexturedEntry = pl__get_3d_textured_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex);
 
         const uint32_t uVtxBufSzNeeded = sizeof(dcDrawVertex3DTextured) * pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
         dcBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx];
@@ -1267,34 +1650,21 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 .pcDebugName = "3D Textured Vertex Buffer"
             };
             ptBufferInfo->uVertexBufferSize = (uint32_t)tBufferDesc.szByteSize;
+            ptBufferInfo->uVertexBufferOffset = 0;
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "3d textured draw vtx buffer", uFrameIdx);
         }
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
         memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
             ptDrawlist->sbtTexturedVertexBuffer, uVtxBufSzNeeded);
 
-        const uint32_t uIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
-        const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
-        if(uIdxBufSzNeeded >= uAvailableIndexBufferSpace)
-        {
-            gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-            const plBufferDesc tBufferDesc = {
-                .tUsage     = PL_BUFFER_USAGE_INDEX,
-                .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uIdxBufSzNeeded + uAvailableIndexBufferSpace),
-                .pcDebugName = "Draw Index Buffer"
-            };
-            gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
-            gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "draw idx buffer", uFrameIdx);
-            gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
-        }
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
-            ptDrawlist->sbtTexturedIndexBuffer, uIdxBufSzNeeded);
+            ptDrawlist->sbtTexturedIndexBuffer, uTexturedIdxBufSzNeeded);
 
         iTexturedVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex3DTextured);
         iTexturedIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
-        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
+        gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uTexturedIdxBufSzNeeded;
     }
 
     //=========================================================================
@@ -1322,10 +1692,10 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     const uint32_t uCmdCount = pl_sb_size(ptDrawlist->sbtDrawCommands3D);
     if(uCmdCount > 0)
     {
-        // reset 3D shader override state
-        gptDrawBackendCtx->bCustom3DShaderActive = false;
-        gptDrawBackendCtx->pt3dSolidShaderOverride = NULL;
-        gptDrawBackendCtx->pt3dTexturedShaderOverride = NULL;
+        gptDrawBackendCtx->bCustom3DShaderActive = ptSolidShaderOverride != NULL || ptTexturedShaderOverride != NULL;
+        gptDrawBackendCtx->pt3dSolidShaderOverride = ptSolidShaderOverride;
+        gptDrawBackendCtx->pt3dTexturedShaderOverride = ptTexturedShaderOverride;
+        const bool bBaseCustom3DShaderActive = gptDrawBackendCtx->bCustom3DShaderActive;
 
         for(uint32_t i = 0; i < uCmdCount; i++)
         {
@@ -1339,17 +1709,20 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                     dcShaderOverride3D* ptOverride = (dcShaderOverride3D*)cmd.pUserCallbackData;
                     if(ptOverride)
                     {
-                        gptDrawBackendCtx->pt3dSolidShaderOverride = ptOverride->ptSolidShader;
-                        gptDrawBackendCtx->pt3dTexturedShaderOverride = ptOverride->ptTexturedShader;
-                        gptDrawBackendCtx->bCustom3DShaderActive = true;
+                        plShaderHandle* ptSolidShader = ptOverride->ptSolidShader ? ptOverride->ptSolidShader : ptSolidShaderOverride;
+                        plShaderHandle* ptTexturedShader = ptOverride->ptTexturedShader ? ptOverride->ptTexturedShader : ptTexturedShaderOverride;
+
+                        gptDrawBackendCtx->pt3dSolidShaderOverride = ptSolidShader;
+                        gptDrawBackendCtx->pt3dTexturedShaderOverride = ptTexturedShader;
+                        gptDrawBackendCtx->bCustom3DShaderActive = ptSolidShader != NULL || ptTexturedShader != NULL;
                         PL_FREE(ptOverride);
                         ptDrawlist->sbtDrawCommands3D[i].pUserCallbackData = NULL;
                     }
                     else
                     {
-                        gptDrawBackendCtx->pt3dSolidShaderOverride = NULL;
-                        gptDrawBackendCtx->pt3dTexturedShaderOverride = NULL;
-                        gptDrawBackendCtx->bCustom3DShaderActive = false;
+                        gptDrawBackendCtx->pt3dSolidShaderOverride = ptSolidShaderOverride;
+                        gptDrawBackendCtx->pt3dTexturedShaderOverride = ptTexturedShaderOverride;
+                        gptDrawBackendCtx->bCustom3DShaderActive = bBaseCustom3DShaderActive;
                     }
                 }
                 continue;
@@ -1360,9 +1733,10 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 
             if(cmd.eType == DC_DRAW_COMMAND_3D_SOLID)
             {
+                const dcPipelineEntry* ptCmdEntry = pl__get_3d_command_pipeline(ptEntry, tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
                 plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dSolidShaderOverride
                     ? *gptDrawBackendCtx->pt3dSolidShaderOverride
-                    : ptEntry->tRegularPipeline;
+                    : ptCmdEntry->tRegularPipeline;
 
                 gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->at3DBufferInfo[uFrameIdx].tVertexBuffer);
                 gptGfx->bind_shader(ptEncoder, tShader);
@@ -1380,7 +1754,8 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
             }
             else if(cmd.eType == DC_DRAW_COMMAND_3D_LINE)
             {
-                plShaderHandle tShader = ptEntry->tSecondaryPipeline;
+                const dcPipelineEntry* ptCmdEntry = pl__get_3d_command_pipeline(ptEntry, tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
+                plShaderHandle tShader = ptCmdEntry->tSecondaryPipeline;
 
                 gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->atLineBufferInfo[uFrameIdx].tVertexBuffer);
                 gptGfx->bind_shader(ptEncoder, tShader);
@@ -1398,9 +1773,10 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
             }
             else if(cmd.eType == DC_DRAW_COMMAND_3D_TEXTURED && ptTexturedEntry)
             {
+                const dcPipelineEntry* ptCmdEntry = pl__get_3d_textured_command_pipeline(ptTexturedEntry, tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
                 plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dTexturedShaderOverride
                     ? *gptDrawBackendCtx->pt3dTexturedShaderOverride
-                    : ptTexturedEntry->tRegularPipeline;
+                    : ptCmdEntry->tRegularPipeline;
 
                 plBindGroupHandle tTexture = {.uData = cmd.tTextureId};
                 plBindGroupHandle atBindGroups[] = {
@@ -1505,6 +1881,12 @@ pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     gptGfx->pop_render_debug_group(ptEncoder);
 }
 
+void
+pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags tFlags, uint32_t uMSAASampleCount)
+{
+    pl_submit_3d_drawlist_ex(ptDrawlist, ptEncoder, fWidth, fHeight, ptMVP, tFlags, uMSAASampleCount, NULL, NULL);
+}
+
 plBindGroupPool*
 pl_draw_get_bind_group_pool(void)
 {
@@ -1527,6 +1909,8 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .cleanup_font_atlas            = pl_cleanup_font_atlas_backend,
         .submit_2d_drawlist            = pl_submit_2d_drawlist,
         .submit_3d_drawlist            = pl_submit_3d_drawlist,
+        .submit_2d_drawlist_ex         = pl_submit_2d_drawlist_ex,
+        .submit_3d_drawlist_ex         = pl_submit_3d_drawlist_ex,
         .create_bind_group_for_texture = pl_create_bind_group_for_texture,
         .get_bind_group_pool           = pl_draw_get_bind_group_pool,
         .use_nearest_sampler           = pl_use_nearest_sampler,

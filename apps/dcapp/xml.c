@@ -87,7 +87,6 @@ static _NodeIndex    _process_xml_node_window(_AppData *app_data, xmlNodePtr xml
 // utils (definitions at bottom of file)
 static const char *_node_type_to_string(_NodeType type);
 static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
-static void        _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass);
 static void        _init_app_data(_AppData *app_data, _Node *window_node);
 static void        _build_font_atlas(_AppData *app_data);
 
@@ -1881,6 +1880,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
             // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
             // copy memory to mapped staging buffer
             plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
@@ -2502,6 +2502,11 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
             // create GPU texture
             _Texture texture = dc_app_texture_create(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream", true);
+            {
+                plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+                _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+                _ext_starter->return_blit_encoder(encoder);
+            }
             sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
             sbpushn(app_data->sb_texture_names, "--dummy--", (int)strlen("--dummy--") + 1);
             sbpush(app_data->sb_textures, texture);
@@ -2751,6 +2756,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
                 plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+                _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
                 plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
                 memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
@@ -3355,6 +3361,7 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
             _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
             plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
             memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
@@ -5922,428 +5929,6 @@ static _NodeIndex _register_node(_AppData *app_data, _Node *node) {
     return sbcount(app_data->sb_nodes) - 1;
 }
 
-static void _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass) {
-    plRenderPassLayoutHandle render_pass_layout = _ext_gfx->get_render_pass(device, render_pass)->tDesc.tLayout;
-    uint32_t                 sample_count       = _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount;
-
-    // common vertex buffer layout for 2D drawing
-    const plVertexBufferLayout vertex_layout = {
-        .uByteStride  = sizeof(float) * 5,
-        .atAttributes = {
-            {.uByteOffset = 0, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-            {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-            {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }};
-
-    // common bind group layouts
-    const plBindGroupLayoutDesc sampler_layout = {
-        .atSamplerBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}}};
-    const plBindGroupLayoutDesc texture_layout = {
-        .atTextureBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}}};
-
-    // stencil create graphics state: increment stencil buffer
-    const plGraphicsState stencil_create_state = {
-        .ulDepthWriteEnabled  = 0,
-        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-        .ulCullMode           = PL_CULL_MODE_NONE,
-        .ulStencilTestEnabled = 1,
-        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-        .ulStencilRef         = 1,
-        .ulStencilMask        = 0xFF,
-        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_INCREMENT_AND_CLAMP};
-
-    // stencil remove graphics state: decrement stencil buffer
-    const plGraphicsState stencil_remove_state = {
-        .ulDepthWriteEnabled  = 0,
-        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-        .ulCullMode           = PL_CULL_MODE_NONE,
-        .ulStencilTestEnabled = 1,
-        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-        .ulStencilRef         = 0,
-        .ulStencilMask        = 0xFF,
-        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_DECREMENT_AND_CLAMP};
-
-    // stencil cleanup graphics state: decrement stencil buffer (same as remove but separate pipeline)
-    const plGraphicsState stencil_cleanup_state = {
-        .ulDepthWriteEnabled  = 0,
-        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-        .ulCullMode           = PL_CULL_MODE_NONE,
-        .ulStencilTestEnabled = 1,
-        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-        .ulStencilRef         = 0,
-        .ulStencilMask        = 0xFF,
-        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_DECREMENT_AND_CLAMP};
-
-    // blend states
-    const plBlendState stencil_only_blend = {
-        .bBlendEnabled   = false,
-        .uColorWriteMask = PL_COLOR_WRITE_MASK_NONE // don't write to color buffer
-    };
-    const plBlendState alpha_blend = {
-        .bBlendEnabled   = true,
-        .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-        .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-        .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .tColorOp        = PL_BLEND_OP_ADD,
-        .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-        .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .tAlphaOp        = PL_BLEND_OP_ADD};
-
-    // load shaders (pilotlight draw shaders)
-    plShaderModule vert_2d  = _ext_shader->load_glsl("pl_draw_2d.vert", "main", NULL, NULL);
-    plShaderModule frag_2d  = _ext_shader->load_glsl("pl_draw_2d.frag", "main", NULL, NULL);
-    plShaderModule frag_sdf = _ext_shader->load_glsl("pl_draw_2d_sdf.frag", "main", NULL, NULL);
-
-    // load stencil shaders (dcapp-specific, use discard for transparent pixels)
-    plShaderModule frag_2d_stencil  = _ext_shader->load_glsl("dc_draw_2d_stencil.frag", "main", NULL, NULL);
-    plShaderModule frag_sdf_stencil = _ext_shader->load_glsl("dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
-
-    // load text effect SDF shaders
-    plShaderModule frag_sdf_bold    = _ext_shader->load_glsl("dc_draw_2d_sdf_bold.frag", "main", NULL, NULL);
-    plShaderModule frag_sdf_outline = _ext_shader->load_glsl("dc_draw_2d_sdf_outline.frag", "main", NULL, NULL);
-
-    //-------------------------------------------------------------------------
-    // 2D stencil shaders
-    //-------------------------------------------------------------------------
-
-    // Stencil create 2D (uses discard for transparent pixels, colorWriteMask=0)
-    const plShaderDesc stencil_create_2d_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_2d_stencil,
-        .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_create_2d_shader = _ext_gfx->create_shader(device, &stencil_create_2d_desc);
-
-    // Stencil remove 2D (uses discard for transparent pixels, colorWriteMask=0)
-    const plShaderDesc stencil_remove_2d_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_2d_stencil,
-        .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_remove_2d_shader = _ext_gfx->create_shader(device, &stencil_remove_2d_desc);
-
-    // Stencil cleanup 2D (decrement stencil, no color write)
-    const plShaderDesc stencil_cleanup_2d_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_2d_stencil,
-        .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_cleanup_2d_shader = _ext_gfx->create_shader(device, &stencil_cleanup_2d_desc);
-
-    // Stencil draw 2D (one per depth level)
-    for (int i = 0; i < DC_STENCIL_MAX_DEPTH; i++) {
-        const plGraphicsState stencil_draw_state = {
-            .ulDepthWriteEnabled  = 0,
-            .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-            .ulCullMode           = PL_CULL_MODE_NONE,
-            .ulStencilTestEnabled = 1,
-            .ulStencilMode        = PL_COMPARE_MODE_LESS_OR_EQUAL,
-            .ulStencilRef         = i + 1,
-            .ulStencilMask        = 0xFF,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
-        const plShaderDesc stencil_draw_2d_desc = {
-            .tVertexShader         = vert_2d,
-            .tFragmentShader       = frag_2d,
-            .tGraphicsState        = stencil_draw_state,
-            .atVertexBufferLayouts = {vertex_layout},
-            .atBlendStates         = {alpha_blend},
-            .atBindGroupLayouts    = {sampler_layout, texture_layout},
-            .tRenderPassLayout     = render_pass_layout,
-            .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count};
-        app_data->stencil_draw_2d_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_2d_desc);
-    }
-
-    //-------------------------------------------------------------------------
-    // SDF stencil shaders
-    //-------------------------------------------------------------------------
-
-    // Stencil create SDF (uses discard for non-glyph pixels, colorWriteMask=0)
-    const plShaderDesc stencil_create_sdf_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_sdf_stencil,
-        .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_create_sdf_shader = _ext_gfx->create_shader(device, &stencil_create_sdf_desc);
-
-    // Stencil remove SDF (uses discard for non-glyph pixels, colorWriteMask=0)
-    const plShaderDesc stencil_remove_sdf_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_sdf_stencil,
-        .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_remove_sdf_shader = _ext_gfx->create_shader(device, &stencil_remove_sdf_desc);
-
-    // Stencil cleanup SDF (decrement stencil, no color write)
-    const plShaderDesc stencil_cleanup_sdf_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_sdf_stencil,
-        .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_cleanup_sdf_shader = _ext_gfx->create_shader(device, &stencil_cleanup_sdf_desc);
-
-    // Stencil draw SDF (one per depth level)
-    for (int i = 0; i < DC_STENCIL_MAX_DEPTH; i++) {
-        const plGraphicsState stencil_draw_state = {
-            .ulDepthWriteEnabled  = 0,
-            .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-            .ulCullMode           = PL_CULL_MODE_NONE,
-            .ulStencilTestEnabled = 1,
-            .ulStencilMode        = PL_COMPARE_MODE_LESS_OR_EQUAL,
-            .ulStencilRef         = i + 1,
-            .ulStencilMask        = 0xFF,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
-        const plShaderDesc stencil_draw_sdf_desc = {
-            .tVertexShader         = vert_2d,
-            .tFragmentShader       = frag_sdf,
-            .tGraphicsState        = stencil_draw_state,
-            .atVertexBufferLayouts = {vertex_layout},
-            .atBlendStates         = {alpha_blend},
-            .atBindGroupLayouts    = {sampler_layout, texture_layout},
-            .tRenderPassLayout     = render_pass_layout,
-            .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count};
-        app_data->stencil_draw_sdf_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_sdf_desc);
-    }
-
-    //-------------------------------------------------------------------------
-    // bold SDF shader (non-stencil, for Bold text and outline under-layer)
-    //-------------------------------------------------------------------------
-
-    const plGraphicsState bold_sdf_state = {
-        .ulDepthWriteEnabled  = 0,
-        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-        .ulCullMode           = PL_CULL_MODE_NONE,
-        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-        .ulStencilRef         = 0xff,
-        .ulStencilMask        = 0xff,
-        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
-    const plShaderDesc bold_sdf_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_sdf_bold,
-        .tGraphicsState        = bold_sdf_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {alpha_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->bold_sdf_shader = _ext_gfx->create_shader(device, &bold_sdf_desc);
-
-    const plShaderDesc outline_sdf_desc = {
-        .tVertexShader         = vert_2d,
-        .tFragmentShader       = frag_sdf_outline,
-        .tGraphicsState        = bold_sdf_state,
-        .atVertexBufferLayouts = {vertex_layout},
-        .atBlendStates         = {alpha_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->outline_sdf_shader = _ext_gfx->create_shader(device, &outline_sdf_desc);
-
-    //-------------------------------------------------------------------------
-    // 3D solid stencil shaders
-    //-------------------------------------------------------------------------
-
-    // 3D solid vertex buffer layout (pos3 + color)
-    const plVertexBufferLayout vertex_layout_3d_solid = {
-        .uByteStride  = sizeof(float) * 4,
-        .atAttributes = {
-            {.uByteOffset = 0, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }};
-
-    // load 3D shaders
-    plShaderModule vert_3d          = _ext_shader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL);
-    plShaderModule frag_3d          = _ext_shader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL);
-    plShaderModule vert_3d_textured = _ext_shader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL);
-    plShaderModule frag_3d_textured = _ext_shader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL);
-
-    // Stencil create 3D solid (increment stencil, no color write)
-    const plShaderDesc stencil_create_3d_solid_desc = {
-        .tVertexShader         = vert_3d,
-        .tFragmentShader       = frag_3d,
-        .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = {vertex_layout_3d_solid},
-        .atBlendStates         = {stencil_only_blend},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_create_3d_solid_shader = _ext_gfx->create_shader(device, &stencil_create_3d_solid_desc);
-
-    // Stencil remove 3D solid (decrement stencil, no color write)
-    const plShaderDesc stencil_remove_3d_solid_desc = {
-        .tVertexShader         = vert_3d,
-        .tFragmentShader       = frag_3d,
-        .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = {vertex_layout_3d_solid},
-        .atBlendStates         = {stencil_only_blend},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_remove_3d_solid_shader = _ext_gfx->create_shader(device, &stencil_remove_3d_solid_desc);
-
-    // Stencil cleanup 3D solid (decrement stencil, no color write)
-    const plShaderDesc stencil_cleanup_3d_solid_desc = {
-        .tVertexShader         = vert_3d,
-        .tFragmentShader       = frag_3d,
-        .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = {vertex_layout_3d_solid},
-        .atBlendStates         = {stencil_only_blend},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_cleanup_3d_solid_shader = _ext_gfx->create_shader(device, &stencil_cleanup_3d_solid_desc);
-
-    // Stencil draw 3D solid (one per depth level, with depth test)
-    for (int i = 0; i < DC_STENCIL_MAX_DEPTH; i++) {
-        const plGraphicsState stencil_draw_3d_state = {
-            .ulDepthWriteEnabled  = 1,
-            .ulDepthMode          = PL_COMPARE_MODE_LESS,
-            .ulCullMode           = PL_CULL_MODE_NONE,
-            .ulStencilTestEnabled = 1,
-            .ulStencilMode        = PL_COMPARE_MODE_LESS_OR_EQUAL,
-            .ulStencilRef         = i + 1,
-            .ulStencilMask        = 0xFF,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
-        const plShaderDesc stencil_draw_3d_solid_desc = {
-            .tVertexShader         = vert_3d,
-            .tFragmentShader       = frag_3d,
-            .tGraphicsState        = stencil_draw_3d_state,
-            .atVertexBufferLayouts = {vertex_layout_3d_solid},
-            .atBlendStates         = {alpha_blend},
-            .tRenderPassLayout     = render_pass_layout,
-            .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count};
-        app_data->stencil_draw_3d_solid_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_3d_solid_desc);
-    }
-
-    //-------------------------------------------------------------------------
-    // 3D textured stencil shaders
-    //-------------------------------------------------------------------------
-
-    // 3D textured vertex buffer layout (pos3 + uv2 + color)
-    const plVertexBufferLayout vertex_layout_3d_textured = {
-        .uByteStride  = sizeof(float) * 6,
-        .atAttributes = {
-            {.uByteOffset = 0, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-            {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }};
-
-    // Stencil create 3D textured (increment stencil, no color write)
-    const plShaderDesc stencil_create_3d_textured_desc = {
-        .tVertexShader         = vert_3d_textured,
-        .tFragmentShader       = frag_3d_textured,
-        .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = {vertex_layout_3d_textured},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_create_3d_textured_shader = _ext_gfx->create_shader(device, &stencil_create_3d_textured_desc);
-
-    // Stencil remove 3D textured (decrement stencil, no color write)
-    const plShaderDesc stencil_remove_3d_textured_desc = {
-        .tVertexShader         = vert_3d_textured,
-        .tFragmentShader       = frag_3d_textured,
-        .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = {vertex_layout_3d_textured},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_remove_3d_textured_shader = _ext_gfx->create_shader(device, &stencil_remove_3d_textured_desc);
-
-    // Stencil cleanup 3D textured (decrement stencil, no color write)
-    const plShaderDesc stencil_cleanup_3d_textured_desc = {
-        .tVertexShader         = vert_3d_textured,
-        .tFragmentShader       = frag_3d_textured,
-        .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = {vertex_layout_3d_textured},
-        .atBlendStates         = {stencil_only_blend},
-        .atBindGroupLayouts    = {sampler_layout, texture_layout},
-        .tRenderPassLayout     = render_pass_layout,
-        .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count};
-    app_data->stencil_cleanup_3d_textured_shader = _ext_gfx->create_shader(device, &stencil_cleanup_3d_textured_desc);
-
-    // Stencil draw 3D textured (one per depth level, with depth test)
-    for (int i = 0; i < DC_STENCIL_MAX_DEPTH; i++) {
-        const plGraphicsState stencil_draw_3d_state = {
-            .ulDepthWriteEnabled  = 1,
-            .ulDepthMode          = PL_COMPARE_MODE_LESS,
-            .ulCullMode           = PL_CULL_MODE_NONE,
-            .ulStencilTestEnabled = 1,
-            .ulStencilMode        = PL_COMPARE_MODE_LESS_OR_EQUAL,
-            .ulStencilRef         = i + 1,
-            .ulStencilMask        = 0xFF,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
-        const plShaderDesc stencil_draw_3d_textured_desc = {
-            .tVertexShader         = vert_3d_textured,
-            .tFragmentShader       = frag_3d_textured,
-            .tGraphicsState        = stencil_draw_3d_state,
-            .atVertexBufferLayouts = {vertex_layout_3d_textured},
-            .atBlendStates         = {alpha_blend},
-            .atBindGroupLayouts    = {sampler_layout, texture_layout},
-            .tRenderPassLayout     = render_pass_layout,
-            .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count};
-        app_data->stencil_draw_3d_textured_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_3d_textured_desc);
-    }
-}
-
 static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // mount VFS dirs
@@ -6487,9 +6072,6 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // wraps up
     _ext_starter->finalize();
-
-    // initialize stencil pipelines for clipping
-    _init_stencil_pipelines(app_data, _ext_starter->get_device(), _ext_starter->get_render_pass());
 
     // register our app drawlist
     app_data->pl_draw_list = _ext_dc_draw->request_2d_drawlist();

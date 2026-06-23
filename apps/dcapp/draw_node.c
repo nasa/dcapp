@@ -4360,7 +4360,10 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, pos, dims, &xform);
     void *previous_stencil_data = app_data->active_stencil_data;
 
-    if (!dc_app_draw_stencil_begin(&ctx)) return;
+    if (!dc_app_draw_stencil_begin(&ctx)) {
+        dc_app_draw_context_cleanup(&ctx);
+        return;
+    }
     app_data->active_stencil_data = ctx._stencil_data;
 
     for (int i = 0; i < num_children; i++) {
@@ -5598,8 +5601,6 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         // update text options
         text_options.tTransform = transform3;
 
-        dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
-
         // background pass
         if (has_background) {
             DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, (plVec2){0.0f, 0.0f}, dimensions[ii], &transform);
@@ -5618,18 +5619,12 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
             dc_app_draw_text_options(app_data, &sb_text[subtext_indices[ii]], shadow_opts);
         }
 
-        // bold (no outline): override SDF shader for fill
-        if (is_bold && !is_outlined) {
-            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, &app_data->bold_sdf_shader);
-        }
-
         // draw fill
-        dc_app_draw_text_options(app_data, &sb_text[subtext_indices[ii]], text_options);
-
-        // reset bold shader
+        dcDrawTextOptions fill_opts = text_options;
         if (is_bold && !is_outlined) {
-            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+            fill_opts.tFlags |= DC_DRAW_TEXT_FLAG_BOLD;
         }
+        dc_app_draw_text_options(app_data, &sb_text[subtext_indices[ii]], fill_opts);
 
         // outline pass: draw on top of fill using outline shader
         if (is_outlined) {
@@ -5641,10 +5636,8 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
             };
             dcDrawTextOptions outline_opts = text_options;
             outline_opts.uColor = PL_COLOR_32_RGBA(outline_color[0], outline_color[1], outline_color[2], outline_color[3]);
-
-            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, &app_data->outline_sdf_shader);
+            outline_opts.tFlags |= DC_DRAW_TEXT_FLAG_OUTLINE;
             dc_app_draw_text_options(app_data, &sb_text[subtext_indices[ii]], outline_opts);
-            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
         }
     }
 }

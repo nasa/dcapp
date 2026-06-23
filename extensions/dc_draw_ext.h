@@ -44,13 +44,14 @@ Index of this file:
 
 #define DC_UNICODE_CODEPOINT_INVALID 0xFFFD // invalid Unicode code point (standard value).
 #define DC_UNICODE_CODEPOINT_MAX     0xFFFF // maximum Unicode code point supported by this build.
+#define DC_DRAW_STENCIL_MAX_DEPTH    8
 
 //-----------------------------------------------------------------------------
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
 // dcapp's custom draw API (separate from pilotlight's plDrawI)
-#define dcDrawI_version {1, 5, 0}
+#define dcDrawI_version {1, 7, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -71,6 +72,8 @@ typedef struct _dcDrawList3D  dcDrawList3D;  // drawlist data for 3D
 typedef struct _dcDrawLayer2D dcDrawLayer2D; // opaque type for 2D draw layers
 typedef struct _dcDrawCommand   dcDrawCommand;   // opaque type for 2D draw layers
 typedef struct _dcDrawCommand3D dcDrawCommand3D; // 3D draw command
+typedef struct _dcDrawStencilState dcDrawStencilState;
+typedef struct _dcDrawCommandState dcDrawCommandState;
 
 // vertex buffer types
 typedef struct _dcDrawVertex          dcDrawVertex;          // vertex type (LAYOUT & PADDING MATTERS)
@@ -110,6 +113,8 @@ typedef uint16_t dcUiWChar;
 typedef int dcDrawFlags;     // -> enum _dcDrawFlags     // Flags:
 typedef int dcDrawRectFlags; // -> enum _dcDrawRectFlags // Flags:
 typedef int dcDrawCommand3DType; // -> enum _dcDrawCommand3DType
+typedef int dcDrawCommandFlags; // -> enum _dcDrawCommandFlags
+typedef int dcDrawTextFlags; // -> enum _dcDrawTextFlags
 
 // backend texture type
 #ifndef plTextureID
@@ -197,6 +202,8 @@ typedef struct _dcDrawI
     // advanced (you probably shouldn't be using this, mostly for backends)
     void (*add_2d_callback)(dcDrawLayer2D*, dcDrawCallback, void* userData, uint32_t userDataSize);
     void (*add_3d_callback)(dcDrawList3D*,  dcDrawCallback3D, void* userData, uint32_t userDataSize);
+    void (*set_2d_command_state)(dcDrawLayer2D*, dcDrawCommandState);
+    void (*set_3d_command_state)(dcDrawList3D*,  dcDrawCommandState);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~3D~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -263,6 +270,41 @@ enum _dcDrawCommand3DType
     DC_DRAW_COMMAND_3D_TEXTURED,
 };
 
+enum _dcDrawCommandFlags
+{
+    DC_DRAW_COMMAND_FLAG_NONE        = 0,
+    DC_DRAW_COMMAND_FLAG_SDF         = 1 << 0,
+    DC_DRAW_COMMAND_FLAG_SDF_BOLD    = 1 << 1,
+    DC_DRAW_COMMAND_FLAG_SDF_OUTLINE = 1 << 2,
+};
+
+enum _dcDrawTextFlags
+{
+    DC_DRAW_TEXT_FLAG_NONE    = 0,
+    DC_DRAW_TEXT_FLAG_BOLD    = 1 << 0,
+    DC_DRAW_TEXT_FLAG_OUTLINE = 1 << 1,
+};
+
+typedef enum _dcDrawStencilMode
+{
+    DC_DRAW_STENCIL_MODE_NONE,
+    DC_DRAW_STENCIL_MODE_CREATE,
+    DC_DRAW_STENCIL_MODE_CLEAR,
+    DC_DRAW_STENCIL_MODE_DRAW,
+} dcDrawStencilMode;
+
+typedef struct _dcDrawStencilState
+{
+    dcDrawStencilMode tMode;
+    uint8_t           uDepth;
+} dcDrawStencilState;
+
+typedef struct _dcDrawCommandState
+{
+    uint32_t           tFlags;
+    dcDrawStencilState tStencil;
+} dcDrawCommandState;
+
 enum _dcDrawRectFlags
 {
     DC_DRAW_RECT_FLAG_NONE                       = 0, // default: DC_DRAW_RECT_FLAG_ROUND_CORNERS_All
@@ -313,6 +355,7 @@ typedef struct _dcDrawTextOptions
     float       fSize;      // if zero, will use loaded size
     uint32_t    uColor;
     float       fWrap;      // 0.0f, no wrap
+    uint32_t    tFlags;     // dcDrawTextFlags
     const char* pcTextEnd;  // if null terminated, set to NULL
     plMat3      tTransform; // default: identity
 } dcDrawTextOptions;
@@ -433,6 +476,7 @@ typedef struct _dcDrawCommand3D
     uint32_t            uIndexOffset;
     uint32_t            uElementCount;
     plTextureID         tTextureId;      // textured commands only
+    dcDrawCommandState  tState;
     dcDrawCallback3D    tUserCallback;
     void*               pUserCallbackData;
     uint32_t            uUserCallbackDataSize;
@@ -462,7 +506,8 @@ typedef struct _dcDrawList3D
     dcDrawLayer2D* ptLayer;
 
     // [INTERNAL]
-    int iLastCommand3D;
+    int                iLastCommand3D;
+    dcDrawCommandState tCommandState;
 } dcDrawList3D;
 
 typedef struct _dcDrawCommand
@@ -472,7 +517,7 @@ typedef struct _dcDrawCommand
     uint32_t       uElementCount;
     plTextureID    tTextureId;
     plRect         tClip;
-    bool           bSdf;
+    dcDrawCommandState tState;
     dcDrawCallback tUserCallback;
     void*          pUserCallbackData;
     uint32_t       uUserCallbackDataSize;

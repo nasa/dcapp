@@ -460,7 +460,7 @@ typedef struct __NodeSphere {
     _TextureIndex texture_index;
 } _NodeSphere;
 
-#define DC_STENCIL_MAX_DEPTH 8
+#define DC_STENCIL_MAX_DEPTH DC_DRAW_STENCIL_MAX_DEPTH
 
 typedef enum __StencilChildType {
     STENCIL_CHILD_TYPE_UNDEFINED,

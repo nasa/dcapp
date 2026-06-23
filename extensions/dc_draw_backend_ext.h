@@ -22,7 +22,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define dcDrawBackendI_version {1, 1, 0}
+#define dcDrawBackendI_version {1, 4, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -83,6 +83,8 @@ typedef struct _dcDrawBackendI
 
     void (*submit_2d_drawlist)(dcDrawList2D*, plRenderEncoder*, float fWidth, float fHeight, uint32_t sampleCount);
     void (*submit_3d_drawlist)(dcDrawList3D*, plRenderEncoder*, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags, uint32_t sampleCount);
+    void (*submit_2d_drawlist_ex)(dcDrawList2D*, plRenderEncoder*, float fWidth, float fHeight, uint32_t sampleCount, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
+    void (*submit_3d_drawlist_ex)(dcDrawList3D*, plRenderEncoder*, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags, uint32_t sampleCount, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
 
     // misc.
     void (*use_nearest_sampler)(dcDrawLayer2D*);
