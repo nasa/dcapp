@@ -259,8 +259,6 @@ Defines a custom GLSL shader program that can be applied to the terrain. Must be
 ```xml
 <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
 <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
-<PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
-    FragmentShader="shaders/planet_elevation.frag"/>
 ```
 
 **Attributes:**
@@ -568,8 +566,6 @@ The `ShaderIndex` attribute on `<PlanetView>` controls which shader that view us
 <Planet Name="Moon">
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
-    <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
-        FragmentShader="shaders/planet_elevation.frag"/>
 </Planet>
 
 <!-- Each view can use a different shader -->
@@ -577,7 +573,7 @@ The `ShaderIndex` attribute on `<PlanetView>` controls which shader that view us
 <PlanetView Planet="Moon" ... ShaderIndex="2"/>
 ```
 
-Setting `ShaderIndex` to 0 uses the built-in shader. Setting it to 1, 2, or 3 activates the corresponding custom shader. Different views can use different variables or literal values.
+Setting `ShaderIndex` to 0 uses the built-in shader. Setting it to 1 or 2 activates the corresponding custom shader. Different views can use different variables or literal values.
 
 ### Fragment Shader Interface
 
@@ -641,18 +637,15 @@ color = mix(color, cModerate, step(5.0, slopeDeg));
 color = mix(color, cSteep,    step(10.0, slopeDeg));
 ```
 
-### Custom Vertex Shaders
+### Flattened Views
 
-You can also provide a custom vertex shader. The included `planet_flat.vert` demonstrates flattening terrain to a reference sphere while preserving the original normals for shading:
+Use `Flatten="true"` on `<PlanetView>` to render terrain on the reference sphere while still passing the original terrain position to fragment shaders. This means fragment shaders such as `planet_elevation.frag` can still color by real elevation even though the displayed geometry is flat.
 
-```glsl
-vec3 flatPos = normalize(inPos) * 1737400.0;
-gl_Position = tDynamicData.tData.tMvp * vec4(flatPos, 1.0);
-tShaderOut.tWorldPosition = flatPos;
-tShaderOut.tWorldNormal = Decode(inNormal);
+```xml
+<PlanetView Planet="Moon" Flatten="true" ShaderIndex="1" .../>
 ```
 
-This can be paired with any fragment shader. For example, index 3 in the sample combines the flat vertex shader with the elevation fragment shader.
+You can still provide a custom vertex shader through `VertexShader`, but flattening no longer needs one.
 
 ---
 
@@ -711,8 +704,6 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
-    <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
-        FragmentShader="shaders/planet_elevation.frag"/>
 </Planet>
 ```
 

@@ -22,10 +22,28 @@
 #define SHACKLETON_RADIUS 10460.0f
 
 static DcPlanetHandle logic_planet;
+static DcPlanetHandle xml_planet;
 static DcPlanetViewHandle logic_planet_view;
 static DcPlanetBreadcrumbsHandle logic_orbit_breadcrumbs;
 static int logic_texture_refresh = -1;
 static int logic_active_shader = -1;
+
+static float texture_mpp_for_refresh(int refresh) {
+    return refresh ? 4000.0f : 2000.0f;
+}
+
+static void update_planet_textures(DcAppContext *app_ctx, int refresh) {
+    float mpp = texture_mpp_for_refresh(refresh);
+    if (TexMpp) {
+        *TexMpp = (double)mpp;
+    }
+    if (xml_planet) {
+        dc_planet->set_texture_geodetic(app_ctx, xml_planet, "../../assets/nasa-worm.png", -90.0, 180.0, mpp);
+    }
+    if (logic_planet) {
+        dc_planet->set_texture_geodetic(app_ctx, logic_planet, "../../assets/nasa-worm.png", -90.0, 180.0, mpp);
+    }
+}
 
 static void update_logic_shader(void) {
     if (!logic_planet_view || !RightShader) return;
@@ -38,8 +56,6 @@ static void update_logic_shader(void) {
         updated = dc_planet->set_view_shaders(logic_planet_view, NULL, "shaders/planet_elevation.frag");
     } else if (desired == 2) {
         updated = dc_planet->set_view_shaders(logic_planet_view, NULL, "shaders/planet_slope.frag");
-    } else if (desired == 3) {
-        updated = dc_planet->set_view_shaders(logic_planet_view, "shaders/planet_flat.vert", "shaders/planet_elevation.frag");
     } else {
         updated = dc_planet->set_view_shaders(logic_planet_view, NULL, NULL);
     }
@@ -57,13 +73,14 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
     char data_path[4096] = {0};
     snprintf(data_path, sizeof(data_path), "%s/../../data/LDEM_45S_400M.planet.json", display_home);
 
+    xml_planet = dc_planet->get_planet_by_id(app_ctx, "Moon");
     logic_planet = dc_planet->create_planet_with_id(app_ctx, "LogicMoon", (DcPlanetCreateInfo){
         .data_path = data_path,
         .mesh_cache_size = 128u * 1024u * 1024u,
     });
+    update_planet_textures(app_ctx, TextureRefresh ? *TextureRefresh : 0);
+    logic_texture_refresh = TextureRefresh ? *TextureRefresh : -1;
     if (logic_planet) {
-        dc_planet->set_texture_geodetic(app_ctx, logic_planet, "../../assets/nasa-worm.png", -90.0, 180.0, TexMpp ? (float)*TexMpp : 2000.0f);
-        logic_texture_refresh = TextureRefresh ? *TextureRefresh : -1;
         logic_planet_view = dc_planet->create_geodetic_view(app_ctx, logic_planet, 1024, 1024);
         update_logic_shader();
         logic_orbit_breadcrumbs = dc_planet->create_breadcrumbs(app_ctx, DC_PLANET_CRS_GEODETIC, 512, 25000.0f);
@@ -88,9 +105,9 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
 
     update_logic_shader();
 
-    if (!logic_planet || !TextureRefresh || !TexMpp) return;
+    if (!TextureRefresh) return;
     if (*TextureRefresh != logic_texture_refresh) {
-        dc_planet->set_texture_geodetic(app_ctx, logic_planet, "../../assets/nasa-worm.png", -90.0, 180.0, (float)*TexMpp);
+        update_planet_textures(app_ctx, *TextureRefresh);
         logic_texture_refresh = *TextureRefresh;
     }
 }

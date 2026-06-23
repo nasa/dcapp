@@ -70,7 +70,8 @@ void main()
     vec3 worldLow  = vec3(0.0);
 #endif
 
-    vec3 worldPos = worldHigh + worldLow;
+    vec3 terrainWorldPos = worldHigh + worldLow;
+    vec3 renderWorldPos = terrainWorldPos;
 
     /* -------------------------------------------------------- */
     /* CORRECT FLATTENING (WORLD SPACE, HI+LO SAFE)             */
@@ -81,11 +82,11 @@ void main()
     if (doFlatten)
     {
         // Radially project full-precision position onto the sphere
-        worldPos = normalize(worldPos) * tDynamicData.tData.fRadius;
+        renderWorldPos = normalize(terrainWorldPos) * tDynamicData.tData.fRadius;
 
         // Re-split after non-linear math
-        worldHigh = worldPos;
-        worldLow  = worldPos - worldHigh;
+        worldHigh = renderWorldPos;
+        worldLow  = renderWorldPos - worldHigh;
     }
 
     /* -------------------------------------------------------- */
@@ -113,7 +114,7 @@ void main()
     /* Outputs                                                  */
     /* -------------------------------------------------------- */
 
-    tShaderOut.tWorldPosition = worldPos;
+    tShaderOut.tWorldPosition = terrainWorldPos;
     tShaderOut.tUV = inUV;
     tShaderOut.tWorldNormal = Decode(inNormal);
 

@@ -84,6 +84,7 @@ Index:
 //-----------------------------------------------------------------------------
 
 #define PL_REQUEST_QUEUE_SIZE 100
+#define PL_PLANET_TEXTURE_MAX_TILE_BYTES (256ull * 1024ull * 1024ull)
 
 //-----------------------------------------------------------------------------
 // [SECTION] forward declarations
@@ -960,6 +961,19 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                 if (uYInc == 0) uYInc = 1;
 
                 uint32_t uInc = pl_min(uXInc, uYInc);
+                uint64_t uTileBytes = (uint64_t)uInc * (uint64_t)uInc * (uint64_t)tFullData._uStride;
+                if (uTileBytes > PL_PLANET_TEXTURE_MAX_TILE_BYTES)
+                {
+                    fprintf(stderr,
+                            "[WARN] (PlanetTexture) skipping '%s': generated tile texture would be %ux%u (%.1f MiB). Increase MetersPerPixel.\n",
+                            ptPlanetTexture->pcPath,
+                            uInc,
+                            uInc,
+                            (double)uTileBytes / (1024.0 * 1024.0));
+                    gptImageOps->cleanup(&tFullData);
+                    PL_FREE(abActiveTextureTiles);
+                    return;
+                }
 
                 const uint32_t uActiveX0 = tFullData.uActiveXOffset;
                 const uint32_t uActiveY0 = tFullData.uActiveYOffset;

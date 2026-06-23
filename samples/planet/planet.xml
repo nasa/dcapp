@@ -49,10 +49,9 @@
     <Planet Name="Moon" CRS="#_planet_crs_geodetic_" MeshCacheSize="128" LightDirectionX="-1" LightDirectionY="@LightY" LightDirectionZ="-1">
         <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
         <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
-            Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
+            Latitude="-90" Longitude="180"/>
         <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
         <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
-        <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert" FragmentShader="shaders/planet_elevation.frag"/>
     </Planet>
 
     <Default>
@@ -77,14 +76,6 @@
             <Set Variable="LightY">@SliderLightY</Set>
             <Set Variable="LightY" Operator="#_set_multiply_">0.02</Set>
             <Set Variable="LightY" Operator="#_set_subtract_">1</Set>
-
-            <!-- Toggle texture scale based on refresh state -->
-            <If Value1="@TextureRefresh" Operator="#_if_eq_" Value2="0">
-                <Set Variable="TexMpp">1</Set>
-            </If>
-            <If Value1="@TextureRefresh" Operator="#_if_eq_" Value2="1">
-                <Set Variable="TexMpp">2000</Set>
-            </If>
 
             <!-- ========== TEXTURE REFRESH ========== -->
             <Button Type="#_button_toggle_" X="60" Y="806" Width="90" Height="22"
