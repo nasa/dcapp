@@ -70,13 +70,14 @@
     <Variable Type="#_variable_integer_" InitialValue="1">RollAnimateDir</Variable>
     <Variable Type="#_variable_integer_" InitialValue="1">PitchAnimateDir</Variable>
     <Variable Type="#_variable_integer_" InitialValue="1">YawAnimateDir</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">UseUfoTexture</Variable>
 
     <!-- Defaults -->
     <Default>
         <Text Size="16" FillColor="#_color_white_"/>
     </Default>
 
-    <Window X="0" Y="20" Width="1200" Height="900">
+    <Window X="0" Y="20" Width="1200" Height="900" UpdateRate="30">
         <Panel VirtualWidth="#PanelWidth" VirtualHeight="#PanelHeight" BackgroundColor="#_color_charcoal_">
 
             <!-- ========== COMPUTE VALUES FROM SLIDERS ========== -->
@@ -227,17 +228,32 @@
                 </StencilAdd>
                 <StencilDraw>
                     <!-- Textured Sphere (the ADI ball) -->
-                    <Sphere
-                        X="#ADI_CenterX"
-                        Y="#ADI_CenterY"
-                        LocalAlignX="#_align_center_"
-                        LocalAlignY="#_align_middle_"
-                        Radius="300"
-                        Image="../../assets/adi.png"
-                        Roll="@Roll"
-                        Pitch="@Pitch"
-                        Yaw="@Yaw"
-                    />
+                    <If Value1="@UseUfoTexture" Operator="#_if_eq_" Value2="0">
+                        <Sphere
+                            X="#ADI_CenterX"
+                            Y="#ADI_CenterY"
+                            LocalAlignX="#_align_center_"
+                            LocalAlignY="#_align_middle_"
+                            Radius="300"
+                            Image="../../assets/adi.png"
+                            Roll="@Roll"
+                            Pitch="@Pitch"
+                            Yaw="@Yaw"
+                        />
+                    </If>
+                    <If Value1="@UseUfoTexture" Operator="#_if_eq_" Value2="1">
+                        <Sphere
+                            X="#ADI_CenterX"
+                            Y="#ADI_CenterY"
+                            LocalAlignX="#_align_center_"
+                            LocalAlignY="#_align_middle_"
+                            Radius="300"
+                            Image="../../assets/adi-ufo.png"
+                            Roll="@Roll"
+                            Pitch="@Pitch"
+                            Yaw="@Yaw"
+                        />
+                    </If>
                 </StencilDraw>
             </Stencil>
 
@@ -496,6 +512,22 @@
             <Text X="#ADI_CenterX" Y="240" LocalAlignX="#_align_center_" Size="12" FillColor="#_color_white_">Y</Text>
 
             <!-- ========== CONTROLS - ATTITUDE SLIDERS ========== -->
+
+            <Button Type="#_button_toggle_" X="1040" Y="850" Width="150" Height="28" Variable="UseUfoTexture" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.30 0.16 0.48" LineColor="0.70 0.45 1.00" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="#_color_white_">UFO Texture</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="0.7 0.7 0.7">Clean Texture</Text>
+                </ButtonIndicatorOff>
+            </Button>
 
             <Text X="850" Y="850" LocalAlignX="#_align_left_" Size="20" FillColor="#_color_yellow_">Attitude (deg)</Text>
 
