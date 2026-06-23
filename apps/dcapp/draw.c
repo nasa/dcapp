@@ -4,6 +4,7 @@
 #include "dcapp.h"
 #include "draw.h"
 #include "planet.h"
+#include "texture.h"
 
 #include "app/enums.h"
 #include "geo.h"
@@ -70,6 +71,8 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .planet_line_cartesian     = dc_app_draw_planet_line_cartesian,
     .planet_polygon_geodetic   = dc_app_draw_planet_polygon_geodetic,
     .planet_polygon_cartesian  = dc_app_draw_planet_polygon_cartesian,
+    .planet_image_geodetic     = dc_app_draw_planet_image_geodetic,
+    .planet_image_cartesian    = dc_app_draw_planet_image_cartesian,
     .planet_text_geodetic      = dc_app_draw_planet_text_geodetic,
     .planet_text_cartesian     = dc_app_draw_planet_text_cartesian,
 };
@@ -164,7 +167,9 @@ static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppV
 static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3 position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
 static void     _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
-static bool     _planet_project_text(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size);
+static bool     _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size);
+static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
+static void     _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
 static void     _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
 
 //-----------------------------------------------------------------------------
@@ -1486,24 +1491,50 @@ void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanet
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color) {
-    if (!ctx || !draw_view || !text) return;
+void dc_app_draw_planet_image_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint) {
+    if (!ctx || !draw_view || !draw_view->view || texture_id == 0) return;
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (!planet) return;
+
+    plVec3d geodetic_in = {lat, lon, height};
+    plVec3d cartesian_out;
+    dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic_in, &cartesian_out, 1);
+    dc_app_draw_planet_image_cartesian(ctx, draw_view, (DcAppVec3){(float)cartesian_out.x, (float)cartesian_out.y, (float)cartesian_out.z}, texture_id, size, tint);
+}
+
+void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint) {
+    if (!ctx || !draw_view || !draw_view->view || texture_id == 0) return;
+
+    DcAppVec2 size_meters = _planet_image_size_meters(ctx, texture_id, size);
+    if (size_meters.x <= 0.0f || size_meters.y <= 0.0f) return;
+
+    DcAppVec2 image_position = {0};
+    float image_width = 0.0f;
+    if (!_planet_project_overlay(draw_view, (plVec3){position.x, position.y, position.z}, size_meters.x, &image_position, &image_width)) return;
+
+    float image_height = image_width * (size_meters.y / size_meters.x);
+    _planet_draw_image_label(ctx, draw_view, texture_id, image_position, (DcAppVec2){image_width, image_height}, tint);
+}
+
+void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color) {
+    if (!ctx || !draw_view || !draw_view->view || !text) return;
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (!planet) return;
     // converts geodetic text positions to renderer-native cartesian coordinates.
     plVec3d geodetic_in = {lat, lon, height};
     plVec3d cartesian_out;
     dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic_in, &cartesian_out, 1);
     DcAppVec2 position = {0};
     float text_size = 0.0f;
-    if (!_planet_project_text(draw_view, (plVec3){(float)cartesian_out.x, (float)cartesian_out.y, (float)cartesian_out.z}, size, &position, &text_size)) return;
+    if (!_planet_project_overlay(draw_view, (plVec3){(float)cartesian_out.x, (float)cartesian_out.y, (float)cartesian_out.z}, size, &position, &text_size)) return;
     _planet_draw_text_label(ctx, draw_view, position, text, text_size, color);
 }
 
 void dc_app_draw_planet_text_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, const char *text, float size, DcAppVec4 color) {
-    if (!ctx || !draw_view || !text) return;
+    if (!ctx || !draw_view || !draw_view->view || !text) return;
     DcAppVec2 text_position = {0};
     float text_size = 0.0f;
-    if (!_planet_project_text(draw_view, (plVec3){position.x, position.y, position.z}, size, &text_position, &text_size)) return;
+    if (!_planet_project_overlay(draw_view, (plVec3){position.x, position.y, position.z}, size, &text_position, &text_size)) return;
     _planet_draw_text_label(ctx, draw_view, text_position, text, text_size, color);
 }
 
@@ -1750,10 +1781,10 @@ static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCame
     camera->tProjMat.col[3].w = 1.0f;
 }
 
-static bool _planet_project_text(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size) {
+static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size) {
     if (out_position) *out_position = (DcAppVec2){0};
     if (out_size) *out_size = 0.0f;
-    if (!draw_view || !out_position || !out_size || size_meters <= 0.0f) return false;
+    if (!draw_view || !draw_view->view || !out_position || !out_size || size_meters <= 0.0f) return false;
 
     if (draw_view->view->width == 0 || draw_view->view->height == 0) return false;
 
@@ -1806,6 +1837,54 @@ static bool _planet_project_text(DcAppDrawPlanetViewHandle draw_view, plVec3 pos
     *out_position = (DcAppVec2){pixel_x * scale_x, (output_height - pixel_y) * scale_y};
     *out_size = pixel_size * scale_y;
     return *out_size > 0.0f;
+}
+
+static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size) {
+    if (size.x > 0.0f && size.y > 0.0f) return size;
+    if (!ctx || texture_id == 0) return (DcAppVec2){0};
+
+    _AppData *app_data = (_AppData *)ctx->_runtime;
+    DcAppVec2 texture_size = {0};
+    if (!dc_app_texture_get_size(app_data, texture_id, &texture_size)) return (DcAppVec2){0};
+    if (texture_size.x <= 0.0f || texture_size.y <= 0.0f) return (DcAppVec2){0};
+
+    float aspect = texture_size.x / texture_size.y;
+    if (size.x > 0.0f) return (DcAppVec2){size.x, size.x / aspect};
+    if (size.y > 0.0f) return (DcAppVec2){size.y * aspect, size.y};
+    return (DcAppVec2){0};
+}
+
+static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint) {
+    if (!ctx || !draw_view || texture_id == 0 || size.x <= 0.0f || size.y <= 0.0f) return;
+    if (draw_view->area.dimensions[0] <= 0.0f || draw_view->area.dimensions[1] <= 0.0f) return;
+
+    DcAppDrawContext image_ctx = *ctx;
+    image_ctx.area = draw_view->area;
+
+    DcAppPlacement centered = {
+        .local_align_x = DC_APP_ALIGN_TYPE_CENTER,
+        .local_align_y = DC_APP_ALIGN_TYPE_MIDDLE,
+    };
+
+    if (!dc_app_draw_stencil_begin(&image_ctx)) {
+        dc_app_draw_image_ex(&image_ctx, texture_id, position, size, tint, centered, NULL);
+        return;
+    }
+
+    dc_app_draw_stencil_add(&image_ctx);
+    dc_app_draw_quad_filled_ex(&image_ctx,
+                               (DcAppVec2){0.0f, 0.0f},
+                               (DcAppVec2){draw_view->area.dimensions[0], 0.0f},
+                               (DcAppVec2){draw_view->area.dimensions[0], draw_view->area.dimensions[1]},
+                               (DcAppVec2){0.0f, draw_view->area.dimensions[1]},
+                               (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
+                               (DcAppVec2){0.0f, 0.0f},
+                               (DcAppPlacement){0},
+                               NULL);
+
+    dc_app_draw_stencil_draw(&image_ctx);
+    dc_app_draw_image_ex(&image_ctx, texture_id, position, size, tint, centered, NULL);
+    dc_app_draw_stencil_end(&image_ctx);
 }
 
 static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color) {

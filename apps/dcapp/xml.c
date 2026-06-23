@@ -57,6 +57,7 @@ static _NodeIndex    _process_xml_node_planet_breadcrumbs(_AppData *app_data, xm
 static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_image(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -330,6 +331,9 @@ _NodeIndex dc_app_process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _Nod
 
         case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
             return _process_xml_node_planet_geo_json(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_IMAGE:
+            return _process_xml_node_planet_image(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_LINE:
             return _process_xml_node_planet_line(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -4112,6 +4116,103 @@ static _NodeIndex _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodeP
 
     dc_geojson_free(geojson);
     return first_index;
+}
+
+static _NodeIndex _process_xml_node_planet_image(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetImage", "PlanetImage must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_IMAGE;
+    dc_node.parent = parent_node_index;
+
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_image.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_image.crs              = parent->planet_view.crs;
+
+    xmlChar *raw_file = xmlGetProp(xml_node, BAD_CAST "File");
+    if (!raw_file || xmlStrlen(raw_file) == 0) {
+        if (raw_file) xmlFree(raw_file);
+        raw_file = xmlNodeGetContent(xml_node);
+    }
+    if (raw_file) {
+        char cleaned_file[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        strncpy(cleaned_file, (const char *)raw_file, sizeof(cleaned_file) - 1);
+        cleaned_file[sizeof(cleaned_file) - 1] = '\0';
+        xmlFree(raw_file);
+        dc_utils_trim_whitespace_inplace(cleaned_file);
+        dc_node.planet_image.texture_index = dc_app_texture_load_image_index(app_data, cleaned_file, directory);
+    } else {
+        DC_LOG_ERROR("PlanetImage", "Missing 'File' attribute");
+    }
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_image.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
+
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        dc_node.planet_image.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        dc_node.planet_image.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+    if (raw_x) {
+        dc_node.planet_image.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+        xmlFree(raw_x);
+    }
+
+    xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+    if (raw_y) {
+        dc_node.planet_image.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+        xmlFree(raw_y);
+    }
+
+    xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+    if (raw_z) {
+        dc_node.planet_image.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+        xmlFree(raw_z);
+    }
+
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_image.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    xmlChar *raw_width = xmlGetProp(xml_node, BAD_CAST "Width");
+    if (!raw_width) raw_width = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+    if (!raw_width) raw_width = xmlGetProp(xml_node, BAD_CAST "Size");
+    if (raw_width) {
+        dc_node.planet_image.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_width);
+        xmlFree(raw_width);
+    }
+
+    xmlChar *raw_height_px = xmlGetProp(xml_node, BAD_CAST "Height");
+    if (!raw_height_px) raw_height_px = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+    if (raw_height_px) {
+        dc_node.planet_image.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height_px);
+        xmlFree(raw_height_px);
+    }
+
+    dc_node.planet_image.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "TintColor", &(dc_node.planet_image.tint_color)) ||
+        _load_color_from_string(app_data, xml_node, "Color", &(dc_node.planet_image.tint_color)) ||
+        _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.planet_image.tint_color))) {
+        dc_node.planet_image.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    }
+
+    return _register_node(app_data, &dc_node);
 }
 
 static _NodeIndex _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {

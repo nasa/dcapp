@@ -572,6 +572,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
             case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
             case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
+            case DC_APP_ELEM_TYPE_PLANET_IMAGE:
             case DC_APP_ELEM_TYPE_PLANET_LINE:
             case DC_APP_ELEM_TYPE_PLANET_POLYGON:
             case DC_APP_ELEM_TYPE_PLANET_SPHERE:
@@ -1078,6 +1079,33 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             // All attributes are optional (dynamic, can be set via variables at runtime)
             break;
 
+        case DC_APP_ELEM_TYPE_PLANET_IMAGE: {
+            xmlChar *file = xmlGetProp(node, BAD_CAST "File");
+            xmlChar *content = NULL;
+            if (!file) {
+                content = xmlNodeGetContent(node);
+            }
+            if ((!file || xmlStrlen(file) == 0) && (!content || xmlStrlen(content) == 0)) {
+                DC_LOG_ERROR("Validate", "<PlanetImage> missing required attribute 'File' or text content (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (file) xmlFree(file);
+            if (content) xmlFree(content);
+
+            xmlChar *width = xmlGetProp(node, BAD_CAST "Width");
+            if (!width) width = xmlGetProp(node, BAD_CAST "DimensionX");
+            if (!width) width = xmlGetProp(node, BAD_CAST "Size");
+            xmlChar *height = xmlGetProp(node, BAD_CAST "Height");
+            if (!height) height = xmlGetProp(node, BAD_CAST "DimensionY");
+            if (!width && !height) {
+                DC_LOG_ERROR("Validate", "<PlanetImage> missing required attribute 'Width', 'Height', or 'Size' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (width) xmlFree(width);
+            if (height) xmlFree(height);
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_PLANET_SHADER: {
             xmlChar *index = xmlGetProp(node, BAD_CAST "Index");
             if (!index) {
@@ -1140,6 +1168,7 @@ static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
 static const char *_valid_attrs_planet_overlay[] = {"Planet", "CRS", "HeightAboveTerrain", "Latitude", "Longitude", "X", "Y", "Z", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", NULL};
+static const char *_valid_attrs_planet_image[]   = {"File", "Width", "Height", "DimensionX", "DimensionY", "TintColor", "Color", NULL};
 static const char *_valid_attrs_planet_breadcrumbs[] = {"Altitude", "PointSpacing", "MaxPoints", "Clear", "Enabled", NULL};
 static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "CRS", "HeightAboveTerrain", NULL};
 static const char *_valid_attrs_planet_vertex[]  = {"Latitude", "Longitude", "Altitude", "X", "Y", "Z", NULL};
@@ -1370,6 +1399,11 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
             return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
                    _attr_in_list(attr_name, _valid_attrs_line);
+
+        case DC_APP_ELEM_TYPE_PLANET_IMAGE:
+            return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
+                   _attr_in_list(attr_name, _valid_attrs_planet_image) ||
+                   _attr_in_list(attr_name, _valid_attrs_color);
 
         case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
             return _attr_in_list(attr_name, _valid_attrs_planet_geojson) ||

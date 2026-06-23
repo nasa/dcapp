@@ -635,6 +635,8 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    void (*planet_line_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_polygon_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 line_color, DcVec4 fill_color);");
     fprintf(file, "%s\n", "    void (*planet_polygon_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 line_color, DcVec4 fill_color);");
+    fprintf(file, "%s\n", "    void (*planet_image_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, DcTextureId texture_id, DcVec2 size, DcVec4 tint);");
+    fprintf(file, "%s\n", "    void (*planet_image_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, DcVec3 position, DcTextureId texture_id, DcVec2 size, DcVec4 tint);");
     fprintf(file, "%s\n", "    void (*planet_text_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, const char *text, float size, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_text_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, DcVec3 position, const char *text, float size, DcVec4 color);");
     fprintf(file, "%s\n", "} DcDrawApi;");

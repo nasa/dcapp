@@ -50,6 +50,7 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
 static void _draw_node_planet_breadcrumbs(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view);
+static void _draw_node_planet_image(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_text(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
@@ -4741,6 +4742,39 @@ static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, DcAppDrawC
     }
 }
 
+static void _draw_node_planet_image(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view) {
+    if (!app_data || !node || !ctx || !view || node->planet_image.texture_index == TEXTURE_INDEX_UNDEFINED) return;
+
+    double lat = node->planet_image.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_image.lat)->value_double : 0.0;
+    double lon = node->planet_image.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_image.lon)->value_double : 0.0;
+    double height = node->planet_image.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_image.height_above_terrain)->value_double : 0.0;
+    DcAppVec2 size = {
+        node->planet_image.dimension.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.dimension.x)->value_double : 0.0f,
+        node->planet_image.dimension.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.dimension.y)->value_double : 0.0f
+    };
+    DcAppVec4 tint = {1.0f, 1.0f, 1.0f, 1.0f};
+    if (node->planet_image.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+        tint.r = node->planet_image.tint_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.tint_color.r)->value_double : 1.0f;
+        tint.g = node->planet_image.tint_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.tint_color.g)->value_double : 1.0f;
+        tint.b = node->planet_image.tint_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.tint_color.b)->value_double : 1.0f;
+        tint.a = node->planet_image.tint_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.tint_color.a)->value_double : 1.0f;
+    }
+
+    if (node->planet_image.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        DcAppVec3 position = {
+            node->planet_image.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.xyz.x)->value_double : 0.0f,
+            node->planet_image.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.xyz.y)->value_double : 0.0f,
+            node->planet_image.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_image.xyz.z)->value_double : 0.0f
+        };
+        dc_app_draw_planet_image_cartesian(ctx, view, position, (DcAppTextureId)node->planet_image.texture_index, size, tint);
+    } else {
+        dc_app_draw_planet_image_geodetic(ctx, view, lat, lon, height, (DcAppTextureId)node->planet_image.texture_index, size, tint);
+    }
+}
+
 static void _draw_node_planet_text(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view) {
     // resolve position
     double lat = node->planet_text.lat != DC_APP_VAL_INDEX_UNDEFINED
@@ -5153,6 +5187,8 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
                 _draw_node_planet_line(app_data, child, view);
             else if (child->type == NODE_TYPE_PLANET_POLYGON)
                 _draw_node_planet_polygon(app_data, child, view);
+            else if (child->type == NODE_TYPE_PLANET_IMAGE)
+                _draw_node_planet_image(app_data, child, &ctx, draw_view);
             else if (child->type == NODE_TYPE_PLANET_SPHERE)
                 _draw_node_planet_sphere(app_data, child, &ctx, draw_view);
             else if (child->type == NODE_TYPE_PLANET_TEXT)
