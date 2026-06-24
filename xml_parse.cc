@@ -209,16 +209,34 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Mask"))
         {
             dcMask *myitem = new dcMask(myparent);
-
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
-            {
-                if (NodeCheck(subnode, "Stencil"))
+            {                
+                if (NodeCheck(subnode, "Stencil") || NodeCheck(subnode, "StencilAdd"))
                 {
-                    process_elements(myitem->stencilList, subnode->children);
+                    dcMask::StencilList stencil;
+                    stencil.type = dcMask::MASK_STENCIL_DEST_ADD;
+                    stencil.stencils = new dcParent();
+                    stencil.stencils->setParent(myitem);
+                    process_elements(stencil.stencils, subnode->children);
+                    myitem->stencils.push_back(stencil);
+                }
+                if (NodeCheck(subnode, "StencilSub"))
+                {
+                    dcMask::StencilList stencil;
+                    stencil.type = dcMask::MASK_STENCIL_DEST_SUB;
+                    stencil.stencils = new dcParent();
+                    stencil.stencils->setParent(myitem);
+                    process_elements(stencil.stencils, subnode->children);
+                    myitem->stencils.push_back(stencil);
                 }
                 if (NodeCheck(subnode, "Projection"))
                 {
-                    process_elements(myitem->projectionList, subnode->children);
+                    dcMask::StencilList stencil;
+                    stencil.type = dcMask::MASK_STENCIL_PROJ;
+                    stencil.stencils = new dcParent();
+                    stencil.stencils->setParent(myitem);
+                    process_elements(stencil.stencils, subnode->children);
+                    myitem->stencils.push_back(stencil);
                 }
             }
         }

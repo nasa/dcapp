@@ -139,7 +139,7 @@ void dcADI::draw(void)
 
     // Draw the ball
     stencil_begin();        // enable stencil, clear existing buffer
-    stencil_init_dest();    // setup stencil test to write 1's into destination area
+    stencil_init_dest_add();    // setup stencil test to write 1's into destination area
         circle_fill(center, middle, ballrad, 360, 80, 1, 1, 1, 1);
     stencil_init_proj();    // set stencil to only keep fragments with reference != 0
         draw_textured_sphere(center, middle, sphereTriangles, ballrad * scale->getDecimal(), ballID, roll->getDecimal(), pitch->getDecimal(), yaw->getDecimal());
