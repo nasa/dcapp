@@ -94,8 +94,8 @@ void dcMapTexture::setMapImagePoint(const std::string &filename, const std::stri
         mip.textureID = tdLoadTexture(filename);
         mip.vLongitude = getValue(lon);
         mip.vLatitude = getValue(lat);
-        mip.width = getValue(w)->getDecimal();
-        mip.height = getValue(h)->getDecimal();
+        mip.width = getValue(w);
+        mip.height = getValue(h);
     }
     else
     {
@@ -124,7 +124,7 @@ void dcMapTexture::setMapStringPoint(const std::string &text, const std::string 
         msp.vText = getValue(text);
         msp.vLongitude = getValue(lon);
         msp.vLatitude = getValue(lat);
-        msp.size = getValue(size)->getDecimal();
+        msp.size = getValue(size);
     }
     else
     {

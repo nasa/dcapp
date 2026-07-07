@@ -461,8 +461,8 @@ void dcMap::displayPoints(void)
 
             mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
             my = (mip.vRatio - texDown) / (texUp - texDown) * height;
-            mwidth = mip.width;
-            mheight = mip.height;
+            mwidth = mip.width->getDecimal();
+            mheight = mip.height->getDecimal();
             if (mip.enableScaling)
             {
                 mwidth *= zoom;
@@ -503,7 +503,7 @@ void dcMap::displayPoints(void)
 
             mx = (msp.hRatio - texLeft) / (texRight - texLeft) * width;
             my = (msp.vRatio - texDown) / (texUp - texDown) * height;
-            msize = msp.size;
+            msize = msp.size->getDecimal();
             if (msp.enableScaling)
             {
                 msize *= zoom;

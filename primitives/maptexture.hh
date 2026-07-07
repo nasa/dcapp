@@ -15,8 +15,8 @@ typedef struct {
             Value* vLongitude;
             Value* vLatitude;
             Value* vEnabled;
-            double width;
-            double height;
+            Value* width;
+            Value* height;
             double hRatio;
             double vRatio;
             bool enableScaling;
@@ -28,7 +28,7 @@ typedef struct {
             Value* vLongitude;
             Value* vLatitude;
             Value* vEnabled;
-            double size;
+            Value* size;
             double hRatio;
             double vRatio;
             bool enableScaling;
