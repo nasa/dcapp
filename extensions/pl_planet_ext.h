@@ -166,6 +166,7 @@ typedef struct _plPlanetStreamStats
     uint32_t uPendingRequests;
     uint32_t uResidentChunks;
     uint32_t uTotalChunks;
+    uint32_t uFallbackChunks;
 } plPlanetStreamStats;
 
 //-----------------------------------------------------------------------------

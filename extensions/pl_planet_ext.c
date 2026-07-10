@@ -192,6 +192,8 @@ typedef struct _plPlanet
 
     plBufferHandle tVertexBuffer;
     plFreeList tVertexBufferManager;
+
+    uint32_t uLastFallbackChunks;
 } plPlanet;
 
 typedef struct _plPlanetView
@@ -280,6 +282,12 @@ static inline bool pl__is_leaf_resident(const plPlanetChunk* c)
              c->aptChildren[1]->ptIndexHole ||
              c->aptChildren[2]->ptIndexHole ||
              c->aptChildren[3]->ptIndexHole);
+}
+
+static inline bool
+pl__is_root_chunk(const plPlanetChunk* c)
+{
+    return c && c->ptParent == NULL;
 }
 
 static void
@@ -691,6 +699,7 @@ void
 pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer)
 {
     const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
+    ptView->ptPlanet->uLastFallbackChunks = 0;
     plDevice* ptDevice = gptCtx->ptDevice;
     gptCtx->tCurrentDynamicBufferBlock = gptGfx->allocate_dynamic_data_block(ptDevice);
 
@@ -1382,6 +1391,8 @@ pl_planet_get_stream_stats(plPlanet* ptPlanet)
     if(!ptPlanet)
         return tStats;
 
+    tStats.uFallbackChunks = ptPlanet->uLastFallbackChunks;
+
     for(plPlanetResidencyNode* ptRequest = ptPlanet->tRequestQueue.ptNext; ptRequest; ptRequest = ptRequest->ptNext)
         tStats.uPendingRequests++;
 
@@ -1565,7 +1576,7 @@ pl__free_chunk_until(plPlanet* P, uint64_t idx_bytes_needed, uint64_t vtx_bytes_
     for (plPlanetChunk* c = tail; c; c = c->ptPrev)
     {
         if (!c->ptIndexHole) continue;            // not resident -> skip
-        if (c->uLevel == 0) continue;             // keep roots
+        if (pl__is_root_chunk(c)) continue;       // keep roots
         if (!pl__is_leaf_resident(c)) continue;   // don't drop nodes with resident children
 
         freed_idx += (uint64_t)c->uIndexCount * sizeof(uint32_t);
@@ -1577,12 +1588,14 @@ pl__free_chunk_until(plPlanet* P, uint64_t idx_bytes_needed, uint64_t vtx_bytes_
             return; // sufficient
     }
 
-    // Pass 2: allow evicting non-leaf (still avoid root). Prefer aged items.
+    // Pass 2: prefer aged chunks, but keep resident ancestors so traversal
+    // cannot lose access to already-resident descendants.
     const uint64_t now = gptIOI->get_io()->ulFrameCount;
     for (plPlanetChunk* c = tail; c; c = c->ptPrev)
     {
         if (!c->ptIndexHole) continue;
-        if (c->uLevel == 0) continue;
+        if (pl__is_root_chunk(c)) continue;
+        if (!pl__is_leaf_resident(c)) continue;
         if (now - c->uLastFrameUsed <= 30) continue;
 
         freed_idx += (uint64_t)c->uIndexCount * sizeof(uint32_t);
@@ -1593,11 +1606,14 @@ pl__free_chunk_until(plPlanet* P, uint64_t idx_bytes_needed, uint64_t vtx_bytes_
             return; // sufficient
     }
 
-    // Pass 3: final fallback — evict oldest non-root regardless of age/leaf.
+    // Pass 3: final fallback — evict oldest non-root chunk that has no
+    // resident descendants. If none exists, the cache cannot satisfy the
+    // requested visible set without breaking traversal.
     for (plPlanetChunk* c = tail; c; c = c->ptPrev)
     {
         if (!c->ptIndexHole) continue;
-        if (c->uLevel == 0) continue;
+        if (pl__is_root_chunk(c)) continue;
+        if (!pl__is_leaf_resident(c)) continue;
 
         pl__make_unresident(P, c);
         return; // free at least one to make progress
@@ -1967,7 +1983,7 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
     if(ptChunk->ptIndexHole == NULL)
         return;
 
-    float fViewportWidth = gptIOI->get_io()->tMainViewportSize.x;
+    float fViewportWidth = (float)ptPlanetView->uOutputWidth;
     float fHorizontalFieldOfView = 2.0f * atanf(tanf(0.5f * ptCamera->fFieldOfView) * ptCamera->fAspectRatio);
 
     float fK = fViewportWidth / (2.0f * tanf(0.5f * fHorizontalFieldOfView));
@@ -1980,10 +1996,15 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
     float tauMerge     = tauSubdivide * 0.5f;
 
     bool bChildrenResident = pl__all_children_resident(ptChunk);
+    bool bHasChildren = ptChunk->aptChildren[0] != NULL;
+    bool bFallbackChunk = bHasChildren && !bChildrenResident && fRho > tauSubdivide;
 
     // Decide refinement using hysteresis
     if(!bChildrenResident || fRho <= tauSubdivide)
     {
+        if(bFallbackChunk)
+            ptPlanet->uLastFallbackChunks++;
+
         // Draw parent
         plDevice* ptDevice = gptCtx->ptDevice;
         plDynamicBinding tDynamicBinding =

@@ -508,6 +508,8 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
     }
     out_info->tGeodeticModel.tDatum = PL_DATUM_SPHERE;
     out_info->tGeodeticModel.sphere.dRadius = radius;
+    if (pl_json_bool_member(root, "double_precision", false))
+        out_info->tFlags |= PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION;
     out_info->dMetersPerPixel = meters_per_pixel;
     out_info->uSize = (uint32_t)tile_size;
     out_info->uTileCount = tile_count;

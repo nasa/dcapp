@@ -325,7 +325,7 @@ PL_EXPORT void pl_app_update(AppData *app) {
     _ext_planet->render_view(app->view, &camera, cmd);
 
     plPlanetStreamStats stream_stats = _ext_planet->get_stream_stats(app->planet);
-    if (stream_stats.uPendingRequests == 0)
+    if (stream_stats.uPendingRequests == 0 && stream_stats.uFallbackChunks == 0)
         app->idle_frame_count++;
     else
         app->idle_frame_count = 0;
@@ -356,12 +356,13 @@ PL_EXPORT void pl_app_update(AppData *app) {
             !stbi_write_png(app->output, (int)app->width, (int)app->height, 4, buffer->tMemoryAllocation.pHostMapped, stride)) {
             fprintf(stderr, "Error: failed to write snapshot: %s\n", app->output);
         } else {
-            printf("Wrote snapshot: %s (%u frame%s, %u/%u chunks resident)\n",
+            printf("Wrote snapshot: %s (%u frame%s, %u/%u chunks resident, %u fallback chunks)\n",
                    app->output,
                    app->frame + 1,
                    app->frame == 0 ? "" : "s",
                    stream_stats.uResidentChunks,
-                   stream_stats.uTotalChunks);
+                   stream_stats.uTotalChunks,
+                   stream_stats.uFallbackChunks);
         }
 
         app->done = true;
@@ -712,6 +713,8 @@ static bool _load_planet_data(AppData *app) {
     }
     info->tGeodeticModel.tDatum = PL_DATUM_SPHERE;
     info->tGeodeticModel.sphere.dRadius = radius;
+    if (pl_json_bool_member(root, "double_precision", false))
+        info->tFlags |= PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION;
     info->dMetersPerPixel = meters_per_pixel;
     info->uSize = (uint32_t)tile_size;
     info->uTileCount = tile_count;

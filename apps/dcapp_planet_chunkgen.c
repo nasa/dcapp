@@ -291,6 +291,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
 
     plPlanetProcessInfo planet_info = {
+        .tFlags = PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION,
         .tProjection = dem_info.projection,
         .tGeodeticModel = {
             .tDatum = PL_DATUM_SPHERE,
@@ -349,6 +350,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     pl_json_add_double_member(root, "max_height", max_height);
     pl_json_add_int_member(root, "tree_depth", tree_depth);
     pl_json_add_float_member(root, "max_base_error", max_base_error);
+    pl_json_add_bool_member(root, "double_precision",
+                            (planet_info.tFlags & PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION) != 0);
     plJsonObject *projection_obj = pl_json_add_member(root, "projection");
     pl_json_add_string_member(projection_obj, "type", "polar_stereographic");
     pl_json_add_double_member(projection_obj, "latitude_of_origin", dem_info.projection.tPolarStereo.dLatitudeOfOrigin);
