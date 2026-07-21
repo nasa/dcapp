@@ -26,18 +26,25 @@ layout(set = 3, binding = 0) uniform PL_DYNAMIC_DATA
     plGpuDynPlanetData tData;
 } tDynamicData;
 
+vec4 SampleHazardMap(uint uTextureIndex, vec4 tUVInfo)
+{
+    vec2 tUV = tShaderIn.tUV * tUVInfo.xy + tUVInfo.zw;
+    return texture(sampler2D(at2DTextures[uTextureIndex], tSamplerLinearClamp), tUV);
+}
+
 //-----------------------------------------------------------------------------
 // [SECTION] entry
 //-----------------------------------------------------------------------------
 
 void main()
 {
-    vec2 tUVActual = tShaderIn.tUV;
-    tUVActual = tUVActual * tDynamicData.tData.tUVInfo.xy;
-    tUVActual = tUVActual + tDynamicData.tData.tUVInfo.zw;
-
     vec3 normal = normalize(tShaderIn.tWorldNormal);
-    vec4 tHazardColor = texture(sampler2D(at2DTextures[tDynamicData.tData.uTextureIndex], tSamplerLinearClamp), tUVActual);
+    vec4 tHazardColor = vec4(0.0);
+    tHazardColor += SampleHazardMap(tDynamicData.tData.uTextureIndex,  tDynamicData.tData.tUVInfo);
+    tHazardColor += SampleHazardMap(tDynamicData.tData.uTextureIndex1, tDynamicData.tData.tUVInfo1);
+    tHazardColor += SampleHazardMap(tDynamicData.tData.uTextureIndex2, tDynamicData.tData.tUVInfo2);
+    tHazardColor += SampleHazardMap(tDynamicData.tData.uTextureIndex3, tDynamicData.tData.tUVInfo3);
+    tHazardColor += SampleHazardMap(tDynamicData.tData.uTextureIndex4, tDynamicData.tData.tUVInfo4);
 
     // Diffuse lighting
     vec3 w_i = normalize(tDynamicData.tData.tLightDirection);

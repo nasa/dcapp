@@ -79,6 +79,8 @@ Index:
 // shader interop
 #include "pl_shader_interop_planet.h"
 
+_Static_assert(sizeof(plGpuDynPlanetData) <= 256, "planet dynamic data exceeds the default GPU allocation size");
+
 //-----------------------------------------------------------------------------
 // [SECTION] defines
 //-----------------------------------------------------------------------------
@@ -163,9 +165,10 @@ typedef struct _plOBB2
 typedef struct _plChunkFileData
 {
     plPlanetChunkFile tFile;
-    char              acPakFileName[256];
-    plResourceHandle  tTextureResource;
-    uint32_t          uTextureIndex;
+    char              aacPakFileNames[PL_PLANET_TEXTURE_SLOT_COUNT][256];
+    plResourceHandle  atTextureResources[PL_PLANET_TEXTURE_SLOT_COUNT];
+    uint32_t          auTextureIndices[PL_PLANET_TEXTURE_SLOT_COUNT];
+    plVec4*           atTextureUVInfo;
 } plChunkFileData;
 
 typedef struct _plPlanet
@@ -295,6 +298,23 @@ pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
 {
     *ptHighOut = (float)dValue;
     *ptLowOut = (float)(dValue - *ptHighOut);
+}
+
+static void
+pl__planet_release_texture_slot(plChunkFileData* ptChunkFileData, uint32_t uSlot)
+{
+    if(ptChunkFileData->auTextureIndices[uSlot] != gptCtx->uDummyIndex)
+    {
+        if(gptResource->is_valid(ptChunkFileData->atTextureResources[uSlot]))
+        {
+            plTextureHandle tTexture = gptResource->get_texture(ptChunkFileData->atTextureResources[uSlot]);
+            pl__planet_return_bindless_texture_index(tTexture);
+            gptResource->evict(ptChunkFileData->atTextureResources[uSlot]);
+            gptResource->unload(ptChunkFileData->atTextureResources[uSlot]);
+        }
+        ptChunkFileData->atTextureResources[uSlot] = (plResourceHandle){0};
+        ptChunkFileData->auTextureIndices[uSlot]    = gptCtx->uDummyIndex;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -555,19 +575,9 @@ pl_cleanup_planet(plPlanet* ptPlanet)
 
     for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
     {
-        if(ptPlanet->sbtChunkFiles[i].uTextureIndex != 0 && gptResource->is_valid(ptPlanet->sbtChunkFiles[i].tTextureResource))
-        {
-            plTextureHandle tTexture = gptResource->get_texture(ptPlanet->sbtChunkFiles[i].tTextureResource);
-            pl__planet_return_bindless_texture_index(tTexture);
-            gptResource->evict(ptPlanet->sbtChunkFiles[i].tTextureResource);
-            gptResource->unload(ptPlanet->sbtChunkFiles[i].tTextureResource);
-            ptPlanet->sbtChunkFiles[i].tTextureResource = (plResourceHandle){0};
-            ptPlanet->sbtChunkFiles[i].uTextureIndex = 0;
-        }
-        else if(ptPlanet->sbtChunkFiles[i].uTextureIndex != 0)
-        {
-            ptPlanet->sbtChunkFiles[i].uTextureIndex = 0;
-        }
+        for (uint32_t uSlot = 0; uSlot < PL_PLANET_TEXTURE_SLOT_COUNT; uSlot++)
+            pl__planet_release_texture_slot(&ptPlanet->sbtChunkFiles[i], uSlot);
+        PL_FREE(ptPlanet->sbtChunkFiles[i].atTextureUVInfo);
         PL_FREE(ptPlanet->sbtChunkFiles[i].tFile.atChunks);
         ptPlanet->sbtChunkFiles[i].tFile.atChunks = NULL;
         ptPlanet->sbtChunkFiles[i].tFile.uChunkCount = 0;
@@ -777,47 +787,38 @@ static inline int clampi(int v, int lo, int hi)
 void
 pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint32_t uSlot)
 {
-    (void)uSlot;
+    if (uSlot >= PL_PLANET_TEXTURE_SLOT_COUNT)
+        return;
 
     // ---------------------------------------------------------------------
-    // Evict/unbind previous textures for all chunk files
+    // Evict/unbind the previous textures in this slot
     // ---------------------------------------------------------------------
     for (uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
     {
-        if (ptPlanet->sbtChunkFiles[i].uTextureIndex != 0)
-        {
-            if (!gptResource->is_valid(ptPlanet->sbtChunkFiles[i].tTextureResource))
-            {
-                ptPlanet->sbtChunkFiles[i].uTextureIndex = 0;
-                continue;
-            }
+        plChunkFileData* ptChunkFileData = &ptPlanet->sbtChunkFiles[i];
+        pl__planet_release_texture_slot(ptChunkFileData, uSlot);
 
-            plTextureHandle tTexture = gptResource->get_texture(ptPlanet->sbtChunkFiles[i].tTextureResource);
-            pl__planet_return_bindless_texture_index(tTexture);
-            ptPlanet->sbtChunkFiles[i].uTextureIndex = 0;
-            gptResource->evict(ptPlanet->sbtChunkFiles[i].tTextureResource);
-            gptResource->unload(ptPlanet->sbtChunkFiles[i].tTextureResource);
-            ptPlanet->sbtChunkFiles[i].tTextureResource = (plResourceHandle){0};
+        for(uint32_t j = 0; j < ptChunkFileData->tFile.uChunkCount; j++)
+        {
+            plVec4* ptUVInfo = &ptChunkFileData->atTextureUVInfo[uSlot * ptChunkFileData->tFile.uChunkCount + j];
+            *ptUVInfo = (plVec4){1.0f, 1.0f, 0.0f, 0.0f};
         }
     }
 
+    if (ptPlanetTexture == NULL)
+        return;
+
     // ---------------------------------------------------------------------
-    // Active tile mask (use tInfo counts consistently)
+    // Tile grid (use tInfo counts consistently)
     // ---------------------------------------------------------------------
     const uint32_t uH          = ptPlanet->tInfo.uHorizontalTiles;
     const uint32_t uV          = ptPlanet->tInfo.uVerticalTiles;
     const uint32_t uTileCount  = ptPlanet->tInfo.uTileCount;
 
-    bool* abActiveTextureTiles = PL_ALLOC(sizeof(bool) * uTileCount);
-    memset(abActiveTextureTiles, 0, sizeof(bool) * uTileCount);
-
     if (ptPlanetTexture)
     {
         if (ptPlanetTexture->pcPath == NULL || ptPlanetTexture->pcPath[0] == '\0' || ptPlanetTexture->fMetersPerPixel <= 0.0f)
-        {
-            PL_FREE(abActiveTextureTiles);
             return;
-        }
 
         // Texture center is already in projected meters
         const float fX = (float)ptPlanetTexture->dOriginX;
@@ -829,10 +830,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
         plImageInfo tImageInfo = (plImageInfo){0};
         gptImage->get_info_from_file(ptPlanetTexture->pcPath, &tImageInfo);
         if (tImageInfo.iWidth <= 0 || tImageInfo.iHeight <= 0)
-        {
-            PL_FREE(abActiveTextureTiles);
             return;
-        }
 
         const float imgWm = (float)tImageInfo.iWidth  * ptPlanetTexture->fMetersPerPixel;
         const float imgHm = (float)tImageInfo.iHeight * ptPlanetTexture->fMetersPerPixel;
@@ -914,7 +912,6 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                 {
                     if (pucImageData)
                         gptImage->free(pucImageData);
-                    PL_FREE(abActiveTextureTiles);
                     return;
                 }
 
@@ -980,7 +977,6 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                             uInc,
                             (double)uTileBytes / (1024.0 * 1024.0));
                     gptImageOps->cleanup(&tFullData);
-                    PL_FREE(abActiveTextureTiles);
                     return;
                 }
 
@@ -1016,8 +1012,8 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                         const uint32_t tileY = (uint32_t)(tly + (int)iy);
 
                         char acNameBuffer[128] = {0};
-                        snprintf(acNameBuffer, sizeof(acNameBuffer), "hazard_prep_%llx_%u_%u.png",
-                                 (unsigned long long)(uintptr_t)ptPlanet, tileX, tileY);
+                        snprintf(acNameBuffer, sizeof(acNameBuffer), "hazard_prep_%llx_%u_%u_%u.png",
+                                 (unsigned long long)(uintptr_t)ptPlanet, uSlot, tileX, tileY);
 
                         const size_t flat = (size_t)tileX + (size_t)tileY * (size_t)uH;
                         if (flat >= (size_t)uTileCount)
@@ -1043,22 +1039,22 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                         gptImage->write(acNameBuffer, puImageData, &tWriteInfo);
                         gptImageOps->cleanup_extract(puImageData);
 
-                        sprintf(ptPlanet->sbtChunkFiles[flat].acPakFileName, "%s", acNameBuffer);
+                        sprintf(ptPlanet->sbtChunkFiles[flat].aacPakFileNames[uSlot], "%s", acNameBuffer);
 
                         plResourceHandle tTextureResource = gptResource->load_ex(
-                            ptPlanet->sbtChunkFiles[flat].acPakFileName,
+                            ptPlanet->sbtChunkFiles[flat].aacPakFileNames[uSlot],
                             PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
                             NULL, 0);
                         if (!gptResource->is_valid(tTextureResource))
                             continue;
                         gptResource->make_resident(tTextureResource);
                         plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
-                        ptPlanet->sbtChunkFiles[flat].tTextureResource = tTextureResource;
-                        ptPlanet->sbtChunkFiles[flat].uTextureIndex = pl__planet_get_bindless_texture_index(tTexture);
-                        abActiveTextureTiles[flat] = true;
+                        ptPlanet->sbtChunkFiles[flat].atTextureResources[uSlot] = tTextureResource;
+                        ptPlanet->sbtChunkFiles[flat].auTextureIndices[uSlot] = pl__planet_get_bindless_texture_index(tTexture);
 
                         for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[flat].tFile.uChunkCount; i++)
                         {
+                            plVec4* ptUVInfo = &ptPlanet->sbtChunkFiles[flat].atTextureUVInfo[uSlot * ptPlanet->sbtChunkFiles[flat].tFile.uChunkCount + i];
                             uint32_t uTopDownLevel = ptPlanet->sbtChunkFiles[flat].tFile.iTreeDepth - ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].uLevel - 1;
 
                             // chunk width
@@ -1069,8 +1065,8 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                             float fXScale = (float)uWidth / (float)iFinalWidth;
                             float fYScale = (float)uHeight / (float)iFinalHeight;
 
-                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVScale.x = fXScale;
-                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVScale.y = fYScale;
+                            ptUVInfo->x = fXScale;
+                            ptUVInfo->y = fYScale;
 
                             // UV on parent chunk
                             float fU = (float)ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].fX; // UV on original heightmap
@@ -1084,8 +1080,8 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                             fV = fV - (float)(iSubYOffset - iy * uInc) / (float)iFinalHeight;
 
                             // works for root level but does too much at child levels
-                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVOffset.x = fU;
-                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVOffset.y = fV;
+                            ptUVInfo->z = fU;
+                            ptUVInfo->w = fV;
                         }
                     }
                 }
@@ -1094,24 +1090,6 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
         }
     }
 
-    // ---------------------------------------------------------------------
-    // Update chunk files with generated hazard textures
-    // ---------------------------------------------------------------------
-    for (uint32_t k = 0; k < uTileCount; k++)
-    {
-        if(!abActiveTextureTiles[k])
-        {
-            for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[k].tFile.uChunkCount; i++)
-            {
-                ptPlanet->sbtChunkFiles[k].tFile.atChunks[i].tUVScale.x = 1.0f;
-                ptPlanet->sbtChunkFiles[k].tFile.atChunks[i].tUVScale.y = 1.0f;
-                ptPlanet->sbtChunkFiles[k].tFile.atChunks[i].tUVOffset.x = 0.0f;
-                ptPlanet->sbtChunkFiles[k].tFile.atChunks[i].tUVOffset.y = 0.0f;
-            }
-        }
-    }
-
-    PL_FREE(abActiveTextureTiles);
 }
 
 bool
@@ -1121,13 +1099,19 @@ pl_chlod_load_chunk_file(plPlanet* ptPlanet, const char* pcPath, plPlanetLoadFla
     uint32_t uChunkFileID = pl_sb_size(ptPlanet->sbtChunkFiles);
     gptTerrainProcessor->load_chunk_file(pcPath, &tChunkFileData.tFile, uChunkFileID);
 
+    const size_t szUVInfoCount = (size_t)tChunkFileData.tFile.uChunkCount * PL_PLANET_TEXTURE_SLOT_COUNT;
+    tChunkFileData.atTextureUVInfo = PL_ALLOC(sizeof(plVec4) * szUVInfoCount);
+
+    for (uint32_t uSlot = 0; uSlot < PL_PLANET_TEXTURE_SLOT_COUNT; uSlot++)
+        tChunkFileData.auTextureIndices[uSlot] = gptCtx->uDummyIndex;
+
     for(uint32_t i = 0; i < tChunkFileData.tFile.uChunkCount; i++)
     {
-
         tChunkFileData.tFile.atChunks[i].uIndex = i;
 
-        tChunkFileData.tFile.atChunks[i].tUVScale.x = 1.0f;
-        tChunkFileData.tFile.atChunks[i].tUVScale.y = 1.0f;
+        for (uint32_t uSlot = 0; uSlot < PL_PLANET_TEXTURE_SLOT_COUNT; uSlot++)
+            tChunkFileData.atTextureUVInfo[uSlot * tChunkFileData.tFile.uChunkCount + i] =
+                (plVec4){1.0f, 1.0f, 0.0f, 0.0f};
     }
     pl_sb_push(ptPlanet->sbtChunkFiles, tChunkFileData);
     return true;
@@ -2010,13 +1994,22 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
         plDynamicBinding tDynamicBinding =
             pl_allocate_dynamic_data(gptGfx, ptDevice, &gptCtx->tCurrentDynamicBufferBlock);
         plGpuDynPlanetData* ptDynamic = (plGpuDynPlanetData*)tDynamicBinding.pcData;
+        plChunkFileData* ptChunkFileData = &ptPlanet->sbtChunkFiles[ptChunk->uFileID];
+        const uint32_t   uChunkCount     = ptChunkFileData->tFile.uChunkCount;
 
         ptDynamic->iLevel             = (int)ptChunk->uLevel;
         ptDynamic->tFlags             = ptPlanetView->tRuntimeOptions.tFlags;
-        ptDynamic->uTextureIndex      = ptPlanet->sbtChunkFiles[ptChunk->uFileID].uTextureIndex;
+        ptDynamic->uTextureIndex      = ptChunkFileData->auTextureIndices[0];
+        ptDynamic->uTextureIndex1     = ptChunkFileData->auTextureIndices[1];
+        ptDynamic->uTextureIndex2     = ptChunkFileData->auTextureIndices[2];
+        ptDynamic->uTextureIndex3     = ptChunkFileData->auTextureIndices[3];
+        ptDynamic->uTextureIndex4     = ptChunkFileData->auTextureIndices[4];
         ptDynamic->tLightDirection    = ptPlanet->tRuntimeOptions.tLightDirection;
-        ptDynamic->tUVInfo.xy         = ptChunk->tUVScale;
-        ptDynamic->tUVInfo.zw         = ptChunk->tUVOffset;
+        ptDynamic->tUVInfo            = ptChunkFileData->atTextureUVInfo[ptChunk->uIndex];
+        ptDynamic->tUVInfo1           = ptChunkFileData->atTextureUVInfo[1 * uChunkCount + ptChunk->uIndex];
+        ptDynamic->tUVInfo2           = ptChunkFileData->atTextureUVInfo[2 * uChunkCount + ptChunk->uIndex];
+        ptDynamic->tUVInfo3           = ptChunkFileData->atTextureUVInfo[3 * uChunkCount + ptChunk->uIndex];
+        ptDynamic->tUVInfo4           = ptChunkFileData->atTextureUVInfo[4 * uChunkCount + ptChunk->uIndex];
         ptDynamic->fHazardMapStrength = ptPlanetView->tRuntimeOptions.fHazardMapStrength;
         ptDynamic->fRadius            = (float)ptPlanet->dRadius;
         pl__planet_split_double(ptCamera->tPosDouble.x, &ptDynamic->tCameraPosHigh.x, &ptDynamic->tCameraPosLow.x);

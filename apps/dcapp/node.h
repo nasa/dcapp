@@ -527,9 +527,13 @@ typedef struct {
     _ValIndex mpp;                     // double var: meters per pixel
     _ValIndex originX;                 // double var: meters in projected CRS
     _ValIndex originY;                 // double var: meters in projected CRS
+    _ValIndex enabled;                 // boolean var: load/remove this texture slot
     _ValIndex fire_refresh;            // var: change triggers texture reload
     DcValue   last_fire_refresh_value; // edge detection (fire on change)
     DcAppPlanetCrs crs;
+    uint8_t slot;                      // assigned by XML declaration order
+    bool    last_enabled;
+    bool    enabled_initialized;
 } _PlanetTextureEntry;
 
 #define PLANET_INDEX_UNDEFINED 0

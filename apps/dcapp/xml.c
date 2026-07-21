@@ -4689,13 +4689,14 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
 
     _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
 
-    if (sbcount(def->sb_textures) >= 1) {
-        DC_LOG_ERROR("PlanetTexture", "Only one <PlanetTexture> per <Planet> is currently supported (line %ld)", xmlGetLineNo(xml_node));
+    if (sbcount(def->sb_textures) >= 5) {
+        DC_LOG_ERROR("PlanetTexture", "A <Planet> supports at most five <PlanetTexture> elements (line %ld)", xmlGetLineNo(xml_node));
         return NODE_INDEX_UNDEFINED;
     }
 
     _PlanetTextureEntry entry = {0};
-    entry.crs = def->crs;
+    entry.crs  = def->crs;
+    entry.slot = (uint8_t)sbcount(def->sb_textures);
 
     // coordinate reference system
     xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
@@ -4771,6 +4772,13 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
     if (raw_z) {
         entry.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
         xmlFree(raw_z);
+    }
+
+    // load/remove this texture slot
+    xmlChar *raw_enabled = xmlGetProp(xml_node, BAD_CAST "Enabled");
+    if (raw_enabled) {
+        entry.enabled = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_enabled);
+        xmlFree(raw_enabled);
     }
 
     // edge-triggered refresh

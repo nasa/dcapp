@@ -933,13 +933,25 @@ static void _init_planets(_AppData *app_data) {
 
         plPlanet *planet = dc_app_planet_pl(def->handle);
 
-        // apply the initial texture overlay if one was parsed.
-        if (sbcount(def->sb_textures) > 0) {
+        // apply each initially enabled texture overlay in declaration order.
+        for (int t = 0; t < sbcount(def->sb_textures); t++) {
+            _PlanetTextureEntry *entry = &def->sb_textures[t];
+            bool enabled = entry->enabled == DC_APP_VAL_INDEX_UNDEFINED ||
+                           dc_app_lookup_get_value(app_data->lookup, entry->enabled)->value_boolean;
+            entry->last_enabled        = enabled;
+            entry->enabled_initialized = true;
+
+            if (entry->fire_refresh != DC_APP_VAL_INDEX_UNDEFINED) {
+                entry->last_fire_refresh_value = *dc_app_lookup_get_value(app_data->lookup, entry->fire_refresh);
+            }
+
+            if (!enabled) continue;
+
             plPlanetTexture texture;
-            if (_build_planet_texture(app_data, def, &def->sb_textures[0], &texture)) {
-                DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, originX=%.1f, originY=%.1f)",
-                            i, texture.pcPath, texture.fMetersPerPixel, texture.dOriginX, texture.dOriginY);
-                _ext_planet->set_texture(planet, &texture, 0);
+            if (_build_planet_texture(app_data, def, entry, &texture)) {
+                DC_LOG_INFO("Planet", "  [%d] texture slot %u: %s (mpp=%.1f, originX=%.1f, originY=%.1f)",
+                            i, (unsigned)entry->slot, texture.pcPath, texture.fMetersPerPixel, texture.dOriginX, texture.dOriginY);
+                _ext_planet->set_texture(planet, &texture, entry->slot);
             }
         }
 
@@ -995,19 +1007,32 @@ static void _update_planet_defs(_AppData *app_data) {
         plPlanet *planet = app_data->sb_planets[def->index];
         if (!planet) continue;
 
-        // texture refresh check
+        // texture enabled/refresh checks
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             _PlanetTextureEntry *tex = &def->sb_textures[t];
-            if (tex->fire_refresh == DC_APP_VAL_INDEX_UNDEFINED) continue;
-            DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->fire_refresh);
-            if (!dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value)) {
+            bool enabled = tex->enabled == DC_APP_VAL_INDEX_UNDEFINED ||
+                           dc_app_lookup_get_value(app_data->lookup, tex->enabled)->value_boolean;
+            bool enabled_changed = tex->enabled_initialized && enabled != tex->last_enabled;
+            bool refresh_changed = false;
+
+            if (tex->fire_refresh != DC_APP_VAL_INDEX_UNDEFINED) {
+                DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->fire_refresh);
+                refresh_changed = !dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value);
+                tex->last_fire_refresh_value = *refresh_val;
+            }
+
+            tex->last_enabled        = enabled;
+            tex->enabled_initialized = true;
+
+            if (enabled_changed && !enabled) {
+                _ext_planet->set_texture(planet, NULL, tex->slot);
+            } else if (enabled && (enabled_changed || refresh_changed)) {
                 plPlanetTexture texture;
                 if (_build_planet_texture(app_data, def, tex, &texture)) {
-                    _ext_planet->set_texture(planet, &texture, 0);
+                    _ext_planet->set_texture(planet, &texture, tex->slot);
                 } else {
-                    _ext_planet->set_texture(planet, NULL, 0);
+                    _ext_planet->set_texture(planet, NULL, tex->slot);
                 }
-                tex->last_fire_refresh_value = *refresh_val;
             }
         }
 

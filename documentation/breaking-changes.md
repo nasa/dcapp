@@ -7,6 +7,30 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-20 - Planet Extension API 0.7.0
+
+#### Affected Code
+- Plugins or tools that fetch `plPlanetI` by version.
+- Custom planet fragment shaders that want to render texture slots 1 through 4.
+- Logic modules that want to configure texture slots 1 through 4.
+
+#### Changed
+- `plPlanetI_version` changed from `{0, 6, 0}` to `{0, 7, 0}`.
+- The existing `plPlanetI.set_texture(..., index)` parameter now selects one
+  of five independent slots instead of being ignored.
+- `plGpuDynPlanetData` appends four texture indices and four UV transforms.
+  Existing slot-0 field names and offsets are unchanged.
+- `DcPlanetApi` appends slot-aware geodetic/cartesian texture setters and a
+  per-slot clear function. Existing function-pointer offsets are unchanged.
+
+#### Migration
+- Rebuild consumers and request `plPlanetI` version `{0, 7, 0}`.
+- Existing custom shaders continue to render slot 0. To render every overlay,
+  sample `uTextureIndex1` through `uTextureIndex4` with their matching
+  `tUVInfo1` through `tUVInfo4` values.
+- Regenerate `logic/dcapp.h` to call the new slot-aware functions. Existing
+  logic binaries and the original setters remain slot-0 compatible.
+
 ### 2026-06-12 - Planet Extension API 0.6.0
 
 #### Affected Code

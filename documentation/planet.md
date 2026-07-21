@@ -195,8 +195,12 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
-    <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
-        Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+        Latitude="-90" Longitude="180" Enabled="@ShowHazard0"
+        FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/square.png" MetersPerPixel="@TexMpp"
+        Latitude="-90" Longitude="180" Enabled="@ShowHazard1"
+        FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
 </Planet>
@@ -230,11 +234,12 @@ Specifies the preprocessed terrain data for a planet. Must be a child of `<Plane
 
 ### `<PlanetTexture>`
 
-Overlays an image onto the planet surface at a specific geographic location. Must be a child of `<Planet>`.
+Overlays an image onto the planet surface at a specific geographic location. Must be a child of `<Planet>`. A planet may contain up to five texture overlays. Their internal slots are assigned by declaration order; there is no XML slot/index attribute. Overlapping textures are combined additively.
 
 ```xml
-<PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
-    Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
+<PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+    Latitude="-90" Longitude="180" Enabled="@ShowHazard0"
+    FireRefresh="@TextureRefresh"/>
 ```
 
 **Attributes:**
@@ -248,9 +253,22 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 | `Longitude` | double/variable | Yes for geodetic CRS | Longitude of the texture center in degrees |
 | `X`, `Y`, `Z` | double/variable | Yes for cartesian CRS | Texture center in renderer-native Cartesian meters |
 | `OriginX`, `OriginY` | double/variable | Optional override | Texture center in projected terrain meters. If both are set, they override `Latitude`/`Longitude` and `X`/`Y`/`Z`. Both attributes must be provided together. |
+| `Enabled` | boolean/variable | No | Loads or removes this overlay independently. Defaults to `true`. Re-enabling rebuilds and uploads the texture. |
 | `FireRefresh` | integer/variable | No | Edge-triggered texture reload. When this value changes (e.g., incremented by a button), the texture path, scale, and position are re-read. Useful for dynamically updating the overlay image at runtime. |
 
-`MetersPerPixel` must be greater than zero. Runtime texture placement uses the same polar stereographic projected-meter convention as the generated `.planet.json` tile origins. XML `Latitude`/`Longitude` use the same user-facing longitude convention as cameras and overlays; dcapp converts that to terrain projection longitude before calling the planet extension. New chunk metadata uses `originX`/`originY`; older metadata with per-tile `lat`/`lon` is still accepted and converted at load time.
+`MetersPerPixel` must be greater than zero. Disabling an overlay releases its texture resources, so it no longer consumes texture VRAM; turning it back on performs the normal texture build and upload again. `FireRefresh` affects only its own overlay and is ignored while that overlay is disabled. Runtime texture placement uses the same polar stereographic projected-meter convention as the generated `.planet.json` tile origins. XML `Latitude`/`Longitude` use the same user-facing longitude convention as cameras and overlays; dcapp converts that to terrain projection longitude before calling the planet extension. New chunk metadata uses `originX`/`originY`; older metadata with per-tile `lat`/`lon` is still accepted and converted at load time.
+
+Logic modules can address the same five slots through the generated `dc_planet` API:
+
+```c
+dc_planet->set_texture_geodetic_slot(
+    app_ctx, planet, 3, "hazard-ring.png", lat, lon, meters_per_pixel);
+
+// Releases slot 3's texture resources.
+dc_planet->clear_texture(app_ctx, planet, 3);
+```
+
+`set_texture_cartesian_slot()` provides the cartesian equivalent. The original `set_texture_geodetic()` and `set_texture_cartesian()` functions remain compatible and target slot 0. Valid slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`.
 
 ### `<PlanetShader>`
 
@@ -591,11 +609,13 @@ layout(location = 0) in struct plShaderIn {
 The dynamic data uniform provides additional information:
 
 - `tDynamicData.tData.tLightDirection` -- Direction toward the light source
-- `tDynamicData.tData.tUVInfo` -- UV scale and offset for texture atlas lookup
-- `tDynamicData.tData.uTextureIndex` -- Bindless texture index for the overlay texture
+- `tDynamicData.tData.tUVInfo`, `tUVInfo1` ... `tUVInfo4` -- Per-overlay UV scale and offset for texture atlas lookup
+- `tDynamicData.tData.uTextureIndex`, `uTextureIndex1` ... `uTextureIndex4` -- Per-overlay bindless texture indices
 - `tDynamicData.tData.tFlags` -- Flags for wireframe, LOD level, and chunk visualization
 - `tDynamicData.tData.iChunkID` -- Chunk identifier (for debug coloring)
 - `tDynamicData.tData.fHazardMapStrength` -- Hazard map overlay intensity (default 0.3)
+
+The original unsuffixed fields represent declaration-order slot 0. Existing custom shaders that use only those fields remain compatible and render only the first overlay; custom shaders must sample the four suffixed field pairs to render all five.
 
 The output is a single `vec4` color:
 
@@ -655,38 +675,28 @@ The `samples/planet/planet.xml` sample demonstrates the full planet rendering pi
 
 ### Variables
 
-The sample declares slider-driven variables for interactive camera control, plus state variables for shader selection and projection mode:
+The sample declares slider-driven camera values, independent shader selection for each view, and one enabled variable per hazard map:
 
 ```xml
-<!-- Slider raw values -->
-<Variable Type="#_variable_double_" InitialValue="45">SliderLat</Variable>
-<Variable Type="#_variable_double_" InitialValue="180">SliderLon</Variable>
-<Variable Type="#_variable_double_" InitialValue="200">SliderEle</Variable>
-
-<!-- Computed geodetic camera values -->
-<Variable Type="#_variable_double_">Latitude</Variable>
-<Variable Type="#_variable_double_">Longitude</Variable>
-<Variable Type="#_variable_double_">Elevation</Variable>
+<Variable Type="#_variable_double_" InitialValue="-58.62">Latitude</Variable>
+<Variable Type="#_variable_double_" InitialValue="345.27">Longitude</Variable>
+<Variable Type="#_variable_double_" InitialValue="2000000">Elevation</Variable>
 <Variable Type="#_variable_double_" InitialValue="0">Heading</Variable>
 
-<!-- Computed cartesian/RPY camera values (written by logic file) -->
-<Variable Type="#_variable_double_">CamX</Variable>
-<Variable Type="#_variable_double_">CamY</Variable>
-<Variable Type="#_variable_double_">CamZ</Variable>
-<Variable Type="#_variable_double_">CamRoll</Variable>
-<Variable Type="#_variable_double_">CamPitch</Variable>
-<Variable Type="#_variable_double_">CamYaw</Variable>
-
-<!-- Active shader index: 0=default, 1=elevation, 2=slope -->
-<Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
-
-<!-- Orthographic projection toggle -->
+<Variable Type="#_variable_integer_" InitialValue="1">LeftShader</Variable>
+<Variable Type="#_variable_integer_" InitialValue="2">RightShader</Variable>
 <Variable Type="#_variable_integer_" InitialValue="0">UseOrtho</Variable>
+
+<Variable Type="#_variable_integer_" InitialValue="1">HazardMap0Enabled</Variable>
+<Variable Type="#_variable_integer_" InitialValue="1">HazardMap1Enabled</Variable>
+<Variable Type="#_variable_integer_" InitialValue="1">HazardMap2Enabled</Variable>
+<Variable Type="#_variable_integer_" InitialValue="1">HazardMap3Enabled</Variable>
+<Variable Type="#_variable_integer_" InitialValue="1">HazardMap4Enabled</Variable>
 ```
 
 ### Logic File
 
-A logic file converts the geodetic camera position into cartesian/RPY coordinates so both views show the same scene:
+A logic file creates the second planet/view through the public C API so it can be compared with the XML-created view:
 
 ```xml
 <Logic File="logic/logic.so"/>
@@ -694,14 +704,27 @@ A logic file converts the geodetic camera position into cartesian/RPY coordinate
 
 ### Planet Definition
 
-A single `<Planet>` is defined with one data source, one texture overlay, and three custom shaders. The shader definitions act as a shared library -- each view selects its own active shader via `ShaderIndex`:
+The XML planet defines one data source, five same-center texture overlays, and two custom shaders. Each overlay gets its internal slot from this declaration order:
 
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
-    <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
-        Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+        Latitude="-58.62" Longitude="345.27"
+        Enabled="@HazardMap0Enabled" FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/square.png" MetersPerPixel="@TexMpp"
+        Latitude="-58.62" Longitude="345.27"
+        Enabled="@HazardMap1Enabled" FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/triangle.png" MetersPerPixel="@TexMpp"
+        Latitude="-58.62" Longitude="345.27"
+        Enabled="@HazardMap2Enabled" FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/ring.png" MetersPerPixel="@TexMpp"
+        Latitude="-58.62" Longitude="345.27"
+        Enabled="@HazardMap3Enabled" FireRefresh="@TextureRefresh"/>
+    <PlanetTexture File="assets/cross.png" MetersPerPixel="@TexMpp"
+        Latitude="-58.62" Longitude="345.27"
+        Enabled="@HazardMap4Enabled" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
 </Planet>
@@ -709,37 +732,27 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 
 ### Two PlanetViews
 
-The sample renders two side-by-side viewports of the same planet -- one using geodetic position with local-NED attitude and one using cartesian position with cartesian-RPY attitude. Both use `ShaderIndex="@ActiveShader"` so the shader buttons affect both views, but each view could use a different variable for independent control:
+The sample renders two side-by-side geodetic viewports. The left view and its overlays are XML-defined. The right view is drawn by the logic module using the public planet API:
 
 ```xml
-<!-- Geodetic camera and overlays (left) -->
 <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_"
     AttitudeFrame="#_planet_attitude_frame_local_ned_"
-    X="15" Y="200" Width="450" Height="450"
+    X="15" Y="300" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
     CameraElevation="@Elevation" CameraYaw="@Heading"
-    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader">
-    <PlanetEllipse Latitude="-58.62" Longitude="-14.73"
-        Radius="115385" FillColor="0.0 1.0 1.0 0.10"/>
-</PlanetView>
+    CameraOrthographic="@UseOrtho" ShaderIndex="@LeftShader"/>
 
-<!-- Cartesian camera and overlays (right) -->
-<PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_"
-    AttitudeFrame="#_planet_attitude_frame_cartesian_rpy_"
-    X="535" Y="200" Width="450" Height="450"
-    CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
-    CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader">
-    <PlanetEllipse X="-230161.415" Y="-1484128.773" Z="875455.350"
-        Radius="115385" FillColor="0.0 1.0 1.0 0.10"/>
-</PlanetView>
+<Container X="535" Y="300" Width="450" Height="450"
+    VirtualWidth="450" VirtualHeight="450">
+    <DrawFunction Name="draw_logic_planet_view"/>
+</Container>
 ```
 
-Because the logic file converts geodetic camera state to cartesian camera state, both views display the same camera angle. The two viewports demonstrate that either supported frame pair can be used depending on your application's needs. The sample also marks known lunar craters in both CRS forms, which is useful for verifying that geodetic and cartesian overlays land in the same place.
+Both views consume the same camera variables and display the same area. The XML planet and the logic-created planet each demonstrate all five texture slots, and the same five toggle variables independently clear or rebuild the corresponding slot in both planets.
 
 ### Interactive Controls
 
-The sample provides sliders for latitude, longitude, elevation, and heading, along with toggle buttons for orthographic projection, texture refresh, and shader selection (Default, Elevation, Slope, Flat Map).
+The sample provides sliders for camera and terrain controls, independent shader toggles, a shared texture refresh control, and separate Circle, Square, Triangle, Ring, and Cross hazard-map toggles.
 
 ### Running the Sample
 

@@ -13,6 +13,8 @@ typedef struct _DcAppPlanetView *DcAppPlanetViewHandle;
 typedef struct _DcAppDrawPlanetView *DcAppDrawPlanetViewHandle;
 typedef struct _DcAppPlanetBreadcrumbs *DcAppPlanetBreadcrumbsHandle;
 
+#define DC_APP_PLANET_TEXTURE_SLOT_COUNT 5u
+
 typedef uint32_t DcAppTextureId;
 
 typedef union _DcAppVec2 {
@@ -288,6 +290,10 @@ typedef struct _DcAppPlanetApi {
     void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position);
     void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
     DcAppPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
+    // Appended to preserve the offsets used by existing generated logic headers.
+    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
+    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel);
+    bool (*clear_texture)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot);
 } DcAppPlanetApi;
 
 typedef void *(*DcAppGetVariableFn)(DcAppContext *app_ctx, const char *name);

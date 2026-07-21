@@ -962,6 +962,15 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
                 }
                 xmlFree(name);
             }
+
+            int texture_count = 0;
+            for (xmlNodePtr child = node->children; child; child = child->next) {
+                if (dc_app_xml_node_to_elem_type(child) == DC_APP_ELEM_TYPE_PLANET_TEXTURE && ++texture_count > 5) {
+                    DC_LOG_ERROR("Validate", "<Planet> supports at most five <PlanetTexture> elements (line %ld)", xmlGetLineNo(child));
+                    ctx->error_count++;
+                    break;
+                }
+            }
             break;
         }
 
@@ -1165,7 +1174,7 @@ static const char *_valid_attrs_style[]          = {"Name", NULL};
 static const char *_valid_attrs_planet[]         = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
 static const char *_valid_attrs_planet_view[]    = {"Planet", "CRS", "AttitudeFrame", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
-static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "FireRefresh", NULL};
+static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "Enabled", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
 static const char *_valid_attrs_planet_overlay[] = {"Planet", "CRS", "HeightAboveTerrain", "Latitude", "Longitude", "X", "Y", "Z", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", NULL};
 static const char *_valid_attrs_planet_image[]   = {"File", "Width", "Height", "DimensionX", "DimensionY", "TintColor", "Color", NULL};

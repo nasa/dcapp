@@ -34,6 +34,9 @@ static const DcAppPlanetApi dc_app_planet_interface = {
     .update_breadcrumbs_cartesian = dc_app_planet_update_breadcrumbs_cartesian,
     .clear_breadcrumbs      = dc_app_planet_clear_breadcrumbs,
     .get_breadcrumbs_points = dc_app_planet_get_breadcrumbs_points,
+    .set_texture_geodetic_slot  = dc_app_planet_set_texture_geodetic_slot,
+    .set_texture_cartesian_slot = dc_app_planet_set_texture_cartesian_slot,
+    .clear_texture               = dc_app_planet_clear_texture,
 };
 
 const DcAppPlanetApi *dc_app_planet_api(void) {
@@ -129,6 +132,11 @@ DcAppPlanetHandle dc_app_planet_create_planet_with_id(_AppData *app_data, const 
 }
 
 bool dc_app_planet_set_texture_geodetic(_AppData *app_data, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel) {
+    return dc_app_planet_set_texture_geodetic_slot(app_data, planet, 0, path, lat, lon, meters_per_pixel);
+}
+
+bool dc_app_planet_set_texture_geodetic_slot(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel) {
+    if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
     if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
@@ -151,11 +159,16 @@ bool dc_app_planet_set_texture_geodetic(_AppData *app_data, DcAppPlanetHandle pl
         .dOriginX = polar_out.x,
         .dOriginY = polar_out.y,
     };
-    _ext_planet->set_texture(planet->planet, &texture, 0);
+    _ext_planet->set_texture(planet->planet, &texture, slot);
     return true;
 }
 
 bool dc_app_planet_set_texture_cartesian(_AppData *app_data, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel) {
+    return dc_app_planet_set_texture_cartesian_slot(app_data, planet, 0, path, position, meters_per_pixel);
+}
+
+bool dc_app_planet_set_texture_cartesian_slot(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel) {
+    if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
     if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
@@ -180,7 +193,13 @@ bool dc_app_planet_set_texture_cartesian(_AppData *app_data, DcAppPlanetHandle p
         .dOriginX = polar_out.x,
         .dOriginY = polar_out.y,
     };
-    _ext_planet->set_texture(planet->planet, &texture, 0);
+    _ext_planet->set_texture(planet->planet, &texture, slot);
+    return true;
+}
+
+bool dc_app_planet_clear_texture(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot) {
+    if (!app_data || !planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
+    _ext_planet->set_texture(planet->planet, NULL, slot);
     return true;
 }
 

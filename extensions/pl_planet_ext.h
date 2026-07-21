@@ -24,7 +24,8 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 6, 0}
+#define plPlanetI_version {0, 7, 0}
+#define PL_PLANET_TEXTURE_SLOT_COUNT 5u
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes

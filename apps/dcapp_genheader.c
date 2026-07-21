@@ -521,6 +521,8 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "typedef struct DcDrawPlanetView *DcDrawPlanetViewHandle;");
     fprintf(file, "%s\n", "typedef struct DcPlanetBreadcrumbs *DcPlanetBreadcrumbsHandle;");
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#define DC_PLANET_TEXTURE_SLOT_COUNT 5u");
+    fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef struct _DcPlanetCreateInfo {");
     fprintf(file, "%s\n", "    const char *data_path;");
     fprintf(file, "%s\n", "    uint32_t mesh_cache_size; // bytes, 0 uses renderer default.");
@@ -699,6 +701,10 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    void (*update_breadcrumbs_cartesian)(DcPlanetBreadcrumbsHandle breadcrumbs, DcVec3 position);");
     fprintf(file, "%s\n", "    void (*clear_breadcrumbs)(DcPlanetBreadcrumbsHandle breadcrumbs);");
     fprintf(file, "%s\n", "    DcPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcPlanetBreadcrumbsHandle breadcrumbs);");
+    fprintf(file, "%s\n", "    // Appended to preserve the offsets used by existing generated logic headers.");
+    fprintf(file, "%s\n", "    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);");
+    fprintf(file, "%s\n", "    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, DcVec3 position, float meters_per_pixel);");
+    fprintf(file, "%s\n", "    bool (*clear_texture)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot);");
     fprintf(file, "%s\n", "} DcPlanetApi;");
     fprintf(file, "%s\n", "");
 

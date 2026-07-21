@@ -22,14 +22,50 @@
 #define SHACKLETON_RADIUS 10460.0f
 
 static DcPlanetHandle logic_planet;
-static DcPlanetHandle xml_planet;
 static DcPlanetViewHandle logic_planet_view;
 static DcPlanetBreadcrumbsHandle logic_orbit_breadcrumbs;
 static int logic_texture_refresh = -1;
+static int logic_texture_enabled[DC_PLANET_TEXTURE_SLOT_COUNT] = {-1, -1, -1, -1, -1};
 static int logic_active_shader = -1;
+
+static const char *logic_texture_paths[DC_PLANET_TEXTURE_SLOT_COUNT] = {
+    "assets/circle.png",
+    "assets/square.png",
+    "assets/triangle.png",
+    "assets/ring.png",
+    "assets/cross.png",
+};
 
 static float texture_mpp_for_refresh(int refresh) {
     return refresh ? 4000.0f : 2000.0f;
+}
+
+static int *texture_enabled_variable(uint32_t slot) {
+    switch (slot) {
+        case 0: return HazardMap0Enabled;
+        case 1: return HazardMap1Enabled;
+        case 2: return HazardMap2Enabled;
+        case 3: return HazardMap3Enabled;
+        case 4: return HazardMap4Enabled;
+        default: return NULL;
+    }
+}
+
+static int texture_enabled(uint32_t slot) {
+    int *enabled = texture_enabled_variable(slot);
+    return enabled && *enabled != 0;
+}
+
+static void update_planet_texture_slot(DcAppContext *app_ctx, uint32_t slot, float mpp) {
+    int enabled = texture_enabled(slot);
+    if (logic_planet) {
+        if (enabled) {
+            dc_planet->set_texture_geodetic_slot(app_ctx, logic_planet, slot, logic_texture_paths[slot], -58.62, 345.27, mpp);
+        } else {
+            dc_planet->clear_texture(app_ctx, logic_planet, slot);
+        }
+    }
+    logic_texture_enabled[slot] = enabled;
 }
 
 static void update_planet_textures(DcAppContext *app_ctx, int refresh) {
@@ -37,11 +73,14 @@ static void update_planet_textures(DcAppContext *app_ctx, int refresh) {
     if (TexMpp) {
         *TexMpp = (double)mpp;
     }
-    if (xml_planet) {
-        dc_planet->set_texture_geodetic(app_ctx, xml_planet, "../../assets/nasa-worm.png", -90.0, 180.0, mpp);
-    }
-    if (logic_planet) {
-        dc_planet->set_texture_geodetic(app_ctx, logic_planet, "../../assets/nasa-worm.png", -90.0, 180.0, mpp);
+
+    for (uint32_t slot = 0; slot < DC_PLANET_TEXTURE_SLOT_COUNT; slot++) {
+        int enabled = texture_enabled(slot);
+        if (enabled || logic_texture_enabled[slot] > 0) {
+            update_planet_texture_slot(app_ctx, slot, mpp);
+        } else {
+            logic_texture_enabled[slot] = enabled;
+        }
     }
 }
 
@@ -73,7 +112,6 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
     char data_path[4096] = {0};
     snprintf(data_path, sizeof(data_path), "%s/../../data/LDEM_45S_400M.planet.json", display_home);
 
-    xml_planet = dc_planet->get_planet_by_id(app_ctx, "Moon");
     logic_planet = dc_planet->create_planet_with_id(app_ctx, "LogicMoon", (DcPlanetCreateInfo){
         .data_path = data_path,
         .mesh_cache_size = 128u * 1024u * 1024u,
@@ -105,10 +143,18 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
 
     update_logic_shader();
 
-    if (!TextureRefresh) return;
-    if (*TextureRefresh != logic_texture_refresh) {
-        update_planet_textures(app_ctx, *TextureRefresh);
-        logic_texture_refresh = *TextureRefresh;
+    int refresh = TextureRefresh ? *TextureRefresh : 0;
+    if (refresh != logic_texture_refresh) {
+        update_planet_textures(app_ctx, refresh);
+        logic_texture_refresh = refresh;
+        return;
+    }
+
+    float mpp = texture_mpp_for_refresh(refresh);
+    for (uint32_t slot = 0; slot < DC_PLANET_TEXTURE_SLOT_COUNT; slot++) {
+        if (texture_enabled(slot) != logic_texture_enabled[slot]) {
+            update_planet_texture_slot(app_ctx, slot, mpp);
+        }
     }
 }
 

@@ -50,7 +50,17 @@ PL_BEGIN_STRUCT(plGpuDynPlanetData)
     vec4 tCameraPosLow;
 
     mat4 tCameraViewProjection;
-    
+
+    uint uTextureIndex1;
+    uint uTextureIndex2;
+    uint uTextureIndex3;
+    uint uTextureIndex4;
+
+    vec4 tUVInfo1;
+    vec4 tUVInfo2;
+    vec4 tUVInfo3;
+    vec4 tUVInfo4;
+
 PL_END_STRUCT(plGpuDynPlanetData)
 
 #endif // PL_SHADER_INTEROP_TERRAIN_H

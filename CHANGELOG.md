@@ -5,6 +5,18 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[2.152.0] - 2026-07-20
+--------------------
+
+### Added
+- Added support for up to five additive planet texture overlays, assigned by XML declaration order.
+- Added per-overlay `Enabled` controls that unload and rebuild individual planet textures.
+- Added slot-aware geodetic/cartesian texture setters and per-slot clearing to the generated planet logic API.
+
+### Changed
+- Updated the planet sample with five independently toggleable basic-shape hazard maps.
+
+
 [2.151.0] - 2026-06-12
 --------------------
 
