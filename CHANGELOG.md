@@ -10,10 +10,11 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 ### Added
 - Added logic APIs for planet ellipses, app-owned GeoJSON overlays, projected texture origins, and runtime light direction.
+- Added geodetic planet-local push/pop drawing for reusable local line and polygon shapes, with matching `<PlanetContainer>` XML support.
 
 ### Changed
 - Planet polygon logic calls now omit zero-alpha fill or outline passes, matching XML's independently optional components.
-- Updated the planet sample to exercise logic-side lighting, GeoJSON loading, and ellipse rendering beside their XML equivalents.
+- Updated the planet sample to exercise logic-side lighting, GeoJSON loading, ellipse rendering, and a moving local doghouse beside their XML equivalents.
 
 ### Fixed
 - Planet ellipse rotation now rotates the ellipse axes in the local tangent plane.

@@ -20,6 +20,7 @@
     <Variable Type="#_variable_double_" InitialValue="-1">LightY</Variable>
     <Variable Type="#_variable_double_" InitialValue="-65">OrbitLat</Variable>
     <Variable Type="#_variable_double_" InitialValue="315">OrbitLon</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">LocalRotation</Variable>
 
     <!-- Logic-facing readout text -->
     <Variable Type="#_variable_string_">LogicReadout</Variable>
@@ -250,7 +251,7 @@
             </Button>
 
             <!-- ========== PLANET VIEWS ========== -->
-            <Text X="240" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">Geodetic Camera</Text>
+            <Text X="240" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">XML: PlanetContainer</Text>
             <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_" X="15" Y="300" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
                 CameraYaw="@Heading"
@@ -261,6 +262,24 @@
                     LineColor="0.1 0.9 1.0 0.85" LineWidth="3500"/>
                 <PlanetSphere CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
                     HeightAboveTerrain="50000" Radius="18000" FillColor="0.1 0.9 1.0 1.0"/>
+                <!-- The small XY shape is scaled, rotated, and moved as one unit. -->
+                <PlanetContainer Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="60000" Rotation="@LocalRotation" Scale="2000">
+                    <PlanetPolygon LineColor="0.1 0.9 1.0 1.0" LineWidth="3500"
+                        FillColor="0.1 0.65 1.0 0.22">
+                        <Vertex X="-40" Y="-30"/>
+                        <Vertex X="40" Y="-30"/>
+                        <Vertex X="40" Y="10"/>
+                        <Vertex X="0" Y="50"/>
+                        <Vertex X="-40" Y="10"/>
+                    </PlanetPolygon>
+                    <PlanetLine LineColor="0.55 0.95 1.0 1.0" LineWidth="3500">
+                        <Vertex X="-12.5" Y="-30"/>
+                        <Vertex X="-12.5" Y="0"/>
+                        <Vertex X="12.5" Y="0"/>
+                        <Vertex X="12.5" Y="-30"/>
+                    </PlanetLine>
+                </PlanetContainer>
                 <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
                     LineColor="0.25 0.70 1.0 0.90" LineWidth="2200" FillColor="0.25 0.70 1.0 0.10"/>
                 <PlanetEllipse Latitude="-55.0" Longitude="335.0" HeightAboveTerrain="1500"
@@ -285,7 +304,7 @@
                 <PlanetText Latitude="-89.67" Longitude="129.78" HeightAboveTerrain="50000" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton 21 km</PlanetText>
             </PlanetView>
 
-            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">Geodetic Camera (logic)</Text>
+            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">Logic: local push/pop</Text>
             <Container X="535" Y="300" Width="450" Height="450" VirtualWidth="450" VirtualHeight="450">
                 <DrawFunction Name="draw_logic_planet_view"/>
             </Container>

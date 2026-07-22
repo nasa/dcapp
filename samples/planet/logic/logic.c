@@ -37,6 +37,22 @@ static const char *logic_texture_paths[DC_PLANET_TEXTURE_SLOT_COUNT] = {
     "assets/cross.png",
 };
 
+// Authored once in a small local grid; the pushed frame supplies scale, rotation, and position.
+static const DcVec2 logic_doghouse[] = {
+    {.x = -40.0f, .y = -30.0f},
+    {.x = 40.0f, .y = -30.0f},
+    {.x = 40.0f, .y = 10.0f},
+    {.x = 0.0f, .y = 50.0f},
+    {.x = -40.0f, .y = 10.0f},
+};
+
+static const DcVec2 logic_doghouse_door[] = {
+    {.x = -12.5f, .y = -30.0f},
+    {.x = -12.5f, .y = 0.0f},
+    {.x = 12.5f, .y = 0.0f},
+    {.x = 12.5f, .y = -30.0f},
+};
+
 static float texture_mpp_for_refresh(int refresh) {
     return refresh ? 4000.0f : 2000.0f;
 }
@@ -130,13 +146,19 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
 void display_draw(DcAppContext *app_ctx, void *user_data) {
     (void)user_data;
     static double orbit_lon = 315.0;
+    static double local_rotation = 0.0;
     orbit_lon += 0.25;
     if (orbit_lon >= 360.0) {
         orbit_lon -= 360.0;
     }
+    local_rotation += 0.5;
+    if (local_rotation >= 360.0) {
+        local_rotation -= 360.0;
+    }
 
     *OrbitLat = -65.0;
     *OrbitLon = orbit_lon;
+    *LocalRotation = local_rotation;
 
     if (logic_planet && logic_orbit_breadcrumbs) {
         dc_planet->update_breadcrumbs_geodetic(logic_orbit_breadcrumbs, logic_planet,
@@ -174,7 +196,9 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
     (void)args;
 
     if (LogicReadout) {
-        snprintf(*LogicReadout, sizeof(*LogicReadout), "lat/lon/ele: %.2f %.2f %.0f    rpy: 0.00 0.00 %.2f", *Latitude, *Longitude, *Elevation, *Heading);
+        snprintf(*LogicReadout, sizeof(*LogicReadout),
+                 "lat/lon/ele: %.2f %.2f %.0f    rpy: 0.00 0.00 %.2f    local rotation: %.1f",
+                 *Latitude, *Longitude, *Elevation, *Heading, *LocalRotation);
     }
 
     const DcDrawArea *area = dc_draw->get_area(draw_ctx);
@@ -232,6 +256,26 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
     }
     dc_draw->planet_sphere_geodetic(draw_ctx, view, *OrbitLat, *OrbitLon, 50000.0, 18000.0,
                                     (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f});
+
+    DcPlanetLocalTransform doghouse_transform = {
+        .scale = {.x = 2000.0f, .y = 2000.0f},
+        .rotation_degrees = (float)*LocalRotation,
+    };
+    if (dc_draw->planet_local_push_geodetic(
+            draw_ctx, view, *OrbitLat, *OrbitLon, 60000.0, doghouse_transform)) {
+        dc_draw->planet_polygon_local(
+            draw_ctx, logic_doghouse,
+            (uint32_t)(sizeof(logic_doghouse) / sizeof(logic_doghouse[0])),
+            4200.0f,
+            (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f},
+            (DcVec4){.r = 1.0f, .g = 0.45f, .b = 0.10f, .a = 0.22f});
+        dc_draw->planet_line_local(
+            draw_ctx, logic_doghouse_door,
+            (uint32_t)(sizeof(logic_doghouse_door) / sizeof(logic_doghouse_door[0])),
+            4200.0f,
+            (DcVec4){.r = 1.0f, .g = 0.90f, .b = 0.55f, .a = 1.0f});
+        dc_draw->planet_local_pop(draw_ctx);
+    }
 
     dc_draw->planet_sphere_geodetic(draw_ctx, view, BAILLY_LAT, BAILLY_LON, 1000.0, BAILLY_RADIUS, (DcVec4){.r = 1.0f, .g = 0.78f, .b = 0.18f, .a = 0.18f});
     dc_draw->planet_sphere_geodetic(draw_ctx, view, CLAVIUS_LAT, CLAVIUS_LON, 1000.0, CLAVIUS_RADIUS, (DcVec4){.r = 0.0f, .g = 0.95f, .b = 1.0f, .a = 0.20f});

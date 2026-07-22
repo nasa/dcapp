@@ -68,8 +68,9 @@ The parser recognizes these XML element names:
 `False`, `Function`, `If`, `Image`, `Include`, `Line`, `Logic`, `MouseActive`,
 `MouseHovered`, `MouseInactive`, `MouseMotion`, `MousePressed`,
 `MouseReleased`, `Panel`, `PixelStream`, `Planet`, `PlanetBreadcrumbs`,
-`PlanetData`, `PlanetEllipse`, `PlanetGeoJSON`, `PlanetLine`, `PlanetPolygon`,
-`PlanetShader`, `PlanetSphere`, `PlanetText`, `PlanetTexture`, `PlanetView`,
+`PlanetContainer`, `PlanetData`, `PlanetEllipse`, `PlanetGeoJSON`, `PlanetLine`,
+`PlanetPolygon`, `PlanetShader`, `PlanetSphere`, `PlanetText`, `PlanetTexture`,
+`PlanetView`,
 `Polygon`, `Rectangle`, `Set`, `Sphere`, `Stencil`, `StencilAdd`,
 `StencilDraw`, `StencilRemove`, `Style`, `Text`, `TrickFrom`, `TrickIO`,
 `TrickTo`, `TrickVariable`, `True`, `Variable`, `Vertex`, and `Window`.

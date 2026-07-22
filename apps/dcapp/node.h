@@ -81,6 +81,7 @@ typedef enum __NodeType {
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
     NODE_TYPE_PLANET_BREADCRUMBS,
+    NODE_TYPE_PLANET_CONTAINER,
     NODE_TYPE_PLANET_ELLIPSE,
     NODE_TYPE_PLANET_IMAGE,
     NODE_TYPE_PLANET_LINE,
@@ -570,6 +571,16 @@ typedef struct __PlanetDef {
     DcAppPlanetHandle handle; // dcapp handle for xml and logic interop
 } _PlanetDef;
 
+typedef struct __NodePlanetContainer {
+    _ValIndex  lat;
+    _ValIndex  lon;
+    _ValIndex  height_above_terrain;
+    _ValIndex2 scale;
+    _ValIndex  rotation;
+    uint8_t    planet_def_index;
+    _NodeIndex child;
+} _NodePlanetContainer;
+
 typedef struct __NodePlanetEllipse {
     _ValIndex  lat;
     _ValIndex  lon;
@@ -772,6 +783,7 @@ typedef struct __Node {
         _NodeStateEvent    state_event;
         _NodeStencil       stencil;
         _NodePlanetBreadcrumbs planet_breadcrumbs;
+        _NodePlanetContainer planet_container;
         _NodePlanetEllipse planet_ellipse;
         _NodePlanetImage   planet_image;
         _NodePlanetLine    planet_line;

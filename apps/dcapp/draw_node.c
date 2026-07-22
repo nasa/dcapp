@@ -48,10 +48,13 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_planet_breadcrumbs(_AppData *app_data, _Node *node, plPlanetView *view);
+static void _draw_node_planet_container(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view);
+static void _draw_node_planet_line_local(_AppData *app_data, _Node *node, DcAppDrawContext *ctx);
 static void _draw_node_planet_image(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view);
+static void _draw_node_planet_polygon_local(_AppData *app_data, _Node *node, DcAppDrawContext *ctx);
 static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_text(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -4488,6 +4491,39 @@ static void _draw_node_planet_breadcrumbs(_AppData *app_data, _Node *node, plPla
     dc_app_draw_planet_line(view, breadcrumbs->sb_points, (uint32_t)point_count, line_width, line_color);
 }
 
+static void _draw_node_planet_container(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view) {
+    _NodePlanetContainer *container = &node->planet_container;
+
+    double lat = container->lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, container->lat)->value_double : 0.0;
+    double lon = container->lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, container->lon)->value_double : 0.0;
+    double height = container->height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, container->height_above_terrain)->value_double : 0.0;
+
+    DcAppPlanetLocalTransform transform = {0};
+    transform.scale.x = container->scale.x != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, container->scale.x)->value_double : 1.0f;
+    transform.scale.y = container->scale.y != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, container->scale.y)->value_double : 1.0f;
+    transform.rotation_degrees = container->rotation != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, container->rotation)->value_double : 0.0f;
+
+    if (!dc_app_draw_planet_local_push_geodetic(ctx, view, lat, lon, height, transform)) return;
+
+    _NodeIndex child_index = container->child;
+    while (child_index != NODE_INDEX_UNDEFINED) {
+        _Node *child = _get_node(app_data, child_index);
+        if (child->type == NODE_TYPE_PLANET_LINE)
+            _draw_node_planet_line_local(app_data, child, ctx);
+        else if (child->type == NODE_TYPE_PLANET_POLYGON)
+            _draw_node_planet_polygon_local(app_data, child, ctx);
+        child_index = child->next;
+    }
+
+    dc_app_draw_planet_local_pop(ctx);
+}
+
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view) {
     _PlanetDef *def = &app_data->sb_planet_defs[node->planet_ellipse.planet_def_index];
 
@@ -4613,6 +4649,35 @@ static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView
     free(pts3d);
 }
 
+static void _draw_node_planet_line_local(_AppData *app_data, _Node *node, DcAppDrawContext *ctx) {
+    uint32_t count = (uint32_t)sbcount(node->planet_line.sb_points_dynamic);
+    if (count < 2) return;
+
+    DcAppVec2 *points = (DcAppVec2 *)malloc(sizeof(*points) * count);
+    if (!points) return;
+
+    for (uint32_t i = 0; i < count; i++) {
+        _PlanetVertexDynamic *vertex = &node->planet_line.sb_points_dynamic[i];
+        points[i].x = vertex->xyz.x != DC_APP_VAL_INDEX_UNDEFINED
+            ? (float)dc_app_lookup_get_value(app_data->lookup, vertex->xyz.x)->value_double : 0.0f;
+        points[i].y = vertex->xyz.y != DC_APP_VAL_INDEX_UNDEFINED
+            ? (float)dc_app_lookup_get_value(app_data->lookup, vertex->xyz.y)->value_double : 0.0f;
+    }
+
+    float line_width = (node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    DcAppVec4 line_color = {1.0f, 1.0f, 1.0f, 1.0f};
+    if (node->planet_line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+        line_color.r = node->planet_line.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.r)->value_double : 1.0f;
+        line_color.g = node->planet_line.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.g)->value_double : 1.0f;
+        line_color.b = node->planet_line.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.b)->value_double : 1.0f;
+        line_color.a = node->planet_line.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.a)->value_double : 1.0f;
+    }
+
+    dc_app_draw_planet_line_local(ctx, points, count, line_width, line_color);
+    free(points);
+}
+
 static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view) {
     _PlanetDef *def = &app_data->sb_planet_defs[node->planet_polygon.planet_def_index];
 
@@ -4683,6 +4748,42 @@ static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetV
     }
 
     free(pts3d);
+}
+
+static void _draw_node_planet_polygon_local(_AppData *app_data, _Node *node, DcAppDrawContext *ctx) {
+    uint32_t count = (uint32_t)sbcount(node->planet_polygon.sb_points_dynamic);
+    if (count < 3) return;
+
+    DcAppVec2 *points = (DcAppVec2 *)malloc(sizeof(*points) * count);
+    if (!points) return;
+
+    for (uint32_t i = 0; i < count; i++) {
+        _PlanetVertexDynamic *vertex = &node->planet_polygon.sb_points_dynamic[i];
+        points[i].x = vertex->xyz.x != DC_APP_VAL_INDEX_UNDEFINED
+            ? (float)dc_app_lookup_get_value(app_data->lookup, vertex->xyz.x)->value_double : 0.0f;
+        points[i].y = vertex->xyz.y != DC_APP_VAL_INDEX_UNDEFINED
+            ? (float)dc_app_lookup_get_value(app_data->lookup, vertex->xyz.y)->value_double : 0.0f;
+    }
+
+    float line_width = (node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    DcAppVec4 line_color = {0};
+    DcAppVec4 fill_color = {0};
+    if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+        line_color.r = node->planet_polygon.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.r)->value_double : 1.0f;
+        line_color.g = node->planet_polygon.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.g)->value_double : 1.0f;
+        line_color.b = node->planet_polygon.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.b)->value_double : 1.0f;
+        line_color.a = node->planet_polygon.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.a)->value_double : 1.0f;
+    }
+    if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+        fill_color.r = node->planet_polygon.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.r)->value_double : 1.0f;
+        fill_color.g = node->planet_polygon.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.g)->value_double : 1.0f;
+        fill_color.b = node->planet_polygon.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.b)->value_double : 1.0f;
+        fill_color.a = node->planet_polygon.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.a)->value_double : 1.0f;
+    }
+
+    dc_app_draw_planet_polygon_local(ctx, points, count, line_width, line_color, fill_color);
+    free(points);
 }
 
 static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view) {
@@ -5154,6 +5255,8 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             _Node *child = _get_node(app_data, child_index);
             if (child->type == NODE_TYPE_PLANET_BREADCRUMBS)
                 _draw_node_planet_breadcrumbs(app_data, child, view);
+            else if (child->type == NODE_TYPE_PLANET_CONTAINER)
+                _draw_node_planet_container(app_data, child, &ctx, draw_view);
             else if (child->type == NODE_TYPE_PLANET_ELLIPSE)
                 _draw_node_planet_ellipse(app_data, child, view);
             else if (child->type == NODE_TYPE_PLANET_LINE)

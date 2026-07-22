@@ -54,6 +54,7 @@ static _NodeIndex    _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex    _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_breadcrumbs(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -322,6 +323,9 @@ _NodeIndex dc_app_process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _Nod
 
         case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
             return _process_xml_node_planet_breadcrumbs(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_CONTAINER:
+            return _process_xml_node_planet_container(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return _process_xml_node_planet_data(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3694,6 +3698,73 @@ static _NodeIndex _process_xml_node_planet_breadcrumbs(_AppData *app_data, xmlNo
     return _register_node(app_data, &dc_node);
 }
 
+static _NodeIndex _process_xml_node_planet_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetContainer", "PlanetContainer must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_CONTAINER;
+    dc_node.parent = parent_node_index;
+
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_container.planet_def_index = parent->planet_view.planet_def_index;
+
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        dc_node.planet_container.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    } else {
+        DC_LOG_ERROR("PlanetContainer", "Missing 'Latitude' attribute");
+    }
+
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        dc_node.planet_container.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    } else {
+        DC_LOG_ERROR("PlanetContainer", "Missing 'Longitude' attribute");
+    }
+
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_container.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    if (raw_rotation) {
+        dc_node.planet_container.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        xmlFree(raw_rotation);
+    }
+
+    xmlChar *raw_scale = xmlGetProp(xml_node, BAD_CAST "Scale");
+    if (raw_scale) {
+        _ValIndex scale = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale);
+        dc_node.planet_container.scale.x = scale;
+        dc_node.planet_container.scale.y = scale;
+        xmlFree(raw_scale);
+    }
+
+    xmlChar *raw_scale_x = xmlGetProp(xml_node, BAD_CAST "ScaleX");
+    if (raw_scale_x) {
+        dc_node.planet_container.scale.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale_x);
+        xmlFree(raw_scale_x);
+    }
+
+    xmlChar *raw_scale_y = xmlGetProp(xml_node, BAD_CAST "ScaleY");
+    if (raw_scale_y) {
+        dc_node.planet_container.scale.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale_y);
+        xmlFree(raw_scale_y);
+    }
+
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+    _NodeIndex child_index = _process_xml_node_children(app_data, xml_node, node_index, DC_APP_ELEM_TYPE_PLANET_CONTAINER, directory);
+    _get_node(app_data, node_index)->planet_container.child = child_index;
+    return node_index;
+}
+
 static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     (void)directory;
 
@@ -4217,8 +4288,9 @@ static _NodeIndex _process_xml_node_planet_image(_AppData *app_data, xmlNodePtr 
 
 static _NodeIndex _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
 
-    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
-        DC_LOG_ERROR("PlanetLine", "PlanetLine must be a child of PlanetView");
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW &&
+        parent_elem_type != DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        DC_LOG_ERROR("PlanetLine", "PlanetLine must be a child of PlanetView or PlanetContainer");
         return NODE_INDEX_UNDEFINED;
     }
 
@@ -4227,8 +4299,13 @@ static _NodeIndex _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr x
     dc_node.parent = parent_node_index;
 
     _Node *parent = _get_node(app_data, parent_node_index);
-    dc_node.planet_line.planet_def_index = parent->planet_view.planet_def_index;
-    dc_node.planet_line.crs              = parent->planet_view.crs;
+    if (parent_elem_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        dc_node.planet_line.planet_def_index = parent->planet_container.planet_def_index;
+        dc_node.planet_line.crs              = DC_APP_PLANET_CRS_GEODETIC;
+    } else {
+        dc_node.planet_line.planet_def_index = parent->planet_view.planet_def_index;
+        dc_node.planet_line.crs              = parent->planet_view.crs;
+    }
     dc_node.planet_line.sb_points_static  = NULL;
     dc_node.planet_line.sb_points_dynamic = NULL;
     dc_node.planet_line.is_dynamic        = true;
@@ -4265,8 +4342,9 @@ static _NodeIndex _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr x
 
 static _NodeIndex _process_xml_node_planet_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
 
-    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
-        DC_LOG_ERROR("PlanetPolygon", "PlanetPolygon must be a child of PlanetView");
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW &&
+        parent_elem_type != DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        DC_LOG_ERROR("PlanetPolygon", "PlanetPolygon must be a child of PlanetView or PlanetContainer");
         return NODE_INDEX_UNDEFINED;
     }
 
@@ -4275,8 +4353,13 @@ static _NodeIndex _process_xml_node_planet_polygon(_AppData *app_data, xmlNodePt
     dc_node.parent = parent_node_index;
 
     _Node *parent = _get_node(app_data, parent_node_index);
-    dc_node.planet_polygon.planet_def_index = parent->planet_view.planet_def_index;
-    dc_node.planet_polygon.crs              = parent->planet_view.crs;
+    if (parent_elem_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        dc_node.planet_polygon.planet_def_index = parent->planet_container.planet_def_index;
+        dc_node.planet_polygon.crs              = DC_APP_PLANET_CRS_GEODETIC;
+    } else {
+        dc_node.planet_polygon.planet_def_index = parent->planet_view.planet_def_index;
+        dc_node.planet_polygon.crs              = parent->planet_view.crs;
+    }
     dc_node.planet_polygon.sb_points_static  = NULL;
     dc_node.planet_polygon.sb_points_dynamic = NULL;
     dc_node.planet_polygon.is_dynamic        = true;
@@ -6021,6 +6104,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Set";
         case NODE_TYPE_PLANET_BREADCRUMBS:
             return "PlanetBreadcrumbs";
+        case NODE_TYPE_PLANET_CONTAINER:
+            return "PlanetContainer";
         case NODE_TYPE_PLANET_VIEW:
             return "PlanetView";
         case NODE_TYPE_TEXT:

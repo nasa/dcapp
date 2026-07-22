@@ -422,6 +422,117 @@ When `CameraOrthographic` is set to 1, the view uses orthographic (parallel) pro
 
 `<PlanetView>` supports child elements that render geographic overlays on the terrain surface.
 
+### `<PlanetContainer>`
+
+Establishes a movable geodetic frame for lines and polygons authored once in
+local 2D meters. It must be a direct child of `<PlanetView>` and may contain
+`<PlanetLine>` and `<PlanetPolygon>` children.
+
+```xml
+<PlanetContainer Latitude="@LandingLat" Longitude="@LandingLon"
+    HeightAboveTerrain="60000" Rotation="@Heading" Scale="2000">
+    <PlanetPolygon LineWidth="3500"
+        LineColor="1 0.8 0 1" FillColor="1 0.5 0 0.2">
+        <Vertex X="-40" Y="-30"/>
+        <Vertex X="40" Y="-30"/>
+        <Vertex X="40" Y="10"/>
+        <Vertex X="0" Y="50"/>
+        <Vertex X="-40" Y="10"/>
+    </PlanetPolygon>
+</PlanetContainer>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Latitude` | double/var | Yes | Frame anchor latitude in degrees |
+| `Longitude` | double/var | Yes | Frame anchor longitude in degrees |
+| `HeightAboveTerrain` | double/var | No | Radial height above the reference sphere in meters. Defaults to 0. |
+| `Rotation` | double/var | No | Rotation in degrees. Defaults to 0. |
+| `Scale` | double/var | No | Shorthand that sets both scale components. Defaults to 1. |
+| `ScaleX` | double/var | No | Local X scale. Overrides `Scale`. |
+| `ScaleY` | double/var | No | Local Y scale. Overrides `Scale`. |
+
+Within the container, vertex `X` and `Y` are local meters: `+X` points east
+and `+Y` points north at the anchor. Scale is applied before rotation, and
+positive rotation turns east toward north. Container nesting is not
+supported. The container height applies to the entire shape; child `CRS` and
+`HeightAboveTerrain` attributes and vertex `Latitude`, `Longitude`, `Altitude`,
+and `Z` attributes are invalid in this local scope.
+
+The C equivalent is a draw-context scope. A successful push establishes the
+frame used by subsequent local line and polygon calls; pop restores the
+previous frame:
+
+```c
+typedef struct _DcPlanetLocalTransform {
+    DcVec2 scale;
+    float rotation_degrees;
+} DcPlanetLocalTransform;
+
+static const DcVec2 doghouse[] = {
+    {-40.0f, -30.0f},
+    { 40.0f, -30.0f},
+    { 40.0f,  10.0f},
+    {  0.0f,  50.0f},
+    {-40.0f,  10.0f},
+};
+
+DcPlanetLocalTransform transform = {
+    .scale = {2000.0f, 2000.0f},
+    .rotation_degrees = heading,
+};
+
+if (dc_draw->planet_local_push_geodetic(
+        draw_ctx, view, latitude, longitude, height, transform)) {
+    dc_draw->planet_polygon_local(
+        draw_ctx, doghouse,
+        (uint32_t)(sizeof(doghouse) / sizeof(doghouse[0])),
+        line_width, line_color, fill_color);
+    dc_draw->planet_local_pop(draw_ctx);
+}
+```
+
+The available scoped calls are:
+
+```c
+bool (*planet_local_push_geodetic)(
+    DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view,
+    double latitude, double longitude, double height,
+    DcPlanetLocalTransform transform);
+void (*planet_local_pop)(DcDrawContext *draw_ctx);
+void (*planet_line_local)(
+    DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
+    float line_width, DcVec4 color);
+void (*planet_polygon_local)(
+    DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
+    float line_width, DcVec4 line_color, DcVec4 fill_color);
+```
+
+Scale must be initialized explicitly; a zero-initialized transform collapses
+every point to the anchor. Shape scale does not affect line width. The frame
+is bound to the supplied draw view and lives only for the current draw
+context. Pop should only be called after a successful push.
+
+Each transformed point is mapped onto the sphere independently:
+
+```text
+d = sqrt(x*x + y*y)
+tangent = normalize(east*x + north*y)
+angle = d / planet_radius
+direction = up*cos(angle) + tangent*sin(angle)
+world = direction * (planet_radius + height)
+```
+
+Local `(0, 0)` maps directly to the anchor. The mapping crosses longitude
+boundaries naturally, but remains a local chart; shapes should stay well below
+antipodal scale.
+
+The initial implementation maps only the authored vertices to the reference
+sphere and then uses the existing line and polygon renderer unchanged. Lines
+and outlines remain straight chords, and fills remain triangle fans; there is
+no automatic subdivision or terrain elevation sampling. Add authored vertices
+when a smoother large curve is needed.
+
 ### `<PlanetLine>`
 
 Draws a line strip on the terrain surface.
@@ -558,7 +669,9 @@ fill/outline behavior as omitting `FillColor` or `LineColor` in XML.
 
 ### `<Vertex>`
 
-Defines a point inside `<PlanetLine>` or `<PlanetPolygon>`. The containing line or polygon determines the CRS unless the primitive explicitly overrides it.
+Defines a point inside `<PlanetLine>` or `<PlanetPolygon>`. The containing line
+or polygon determines the CRS unless the primitive explicitly overrides it.
+Inside `<PlanetContainer>`, use `X` and `Y` for local east/north meters instead.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -794,7 +907,13 @@ The sample renders two side-by-side geodetic viewports. The left view and its ov
 </Container>
 ```
 
-Both views consume the same camera variables and display the same area. The XML planet and the logic-created planet each demonstrate all five texture slots, and the same five toggle variables independently clear or rebuild the corresponding slot in both planets.
+Both views consume the same camera variables and display the same area. The
+XML planet and the logic-created planet each demonstrate all five texture
+slots, and the same five toggle variables independently clear or rebuild the
+corresponding slot in both planets.
+They also draw the same doghouse from fixed local points at the moving
+`OrbitLat`/`OrbitLon` anchor: the left view uses `<PlanetContainer>`, while the
+right view uses the matching C push/draw/pop API.
 
 ### Interactive Controls
 

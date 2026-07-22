@@ -106,6 +106,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Planet";
         case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
             return "PlanetBreadcrumbs";
+        case DC_APP_ELEM_TYPE_PLANET_CONTAINER:
+            return "PlanetContainer";
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return "PlanetData";
         case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
@@ -249,6 +251,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_PLANET;
     if (strcmp(name, "PlanetBreadcrumbs") == 0)
         return DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS;
+    if (strcmp(name, "PlanetContainer") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_CONTAINER;
     if (strcmp(name, "PlanetData") == 0)
         return DC_APP_ELEM_TYPE_PLANET_DATA;
     if (strcmp(name, "PlanetEllipse") == 0)

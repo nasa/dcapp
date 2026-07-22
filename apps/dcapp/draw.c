@@ -65,6 +65,10 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .stencil_end            = dc_app_draw_stencil_end,
     .planet_view_geodetic      = dc_app_draw_planet_view_geodetic,
     .planet_view_cartesian     = dc_app_draw_planet_view_cartesian,
+    .planet_local_push_geodetic = dc_app_draw_planet_local_push_geodetic,
+    .planet_local_pop           = dc_app_draw_planet_local_pop,
+    .planet_line_local          = dc_app_draw_planet_line_local,
+    .planet_polygon_local       = dc_app_draw_planet_polygon_local,
     .planet_sphere_geodetic    = dc_app_draw_planet_sphere_geodetic,
     .planet_sphere_cartesian   = dc_app_draw_planet_sphere_cartesian,
     .planet_line_geodetic      = dc_app_draw_planet_line_geodetic,
@@ -137,9 +141,24 @@ struct _DcAppDrawPlanetView {
     DcAppDrawArea area;
 };
 
+typedef struct _DcAppPlanetLocalFrame {
+    DcAppDrawPlanetViewHandle draw_view;
+    plVec3d up;
+    plVec3d east;
+    plVec3d north;
+    double planet_radius;
+    double surface_radius;
+    double scale_x;
+    double scale_y;
+    double rotation_cos;
+    double rotation_sin;
+} _DcAppPlanetLocalFrame;
+
 // queues planet views so they render to textures before entering the 2d draw stream.
 typedef struct _DcAppPlanetViewData {
     DcAppDrawPlanetViewHandle *sb_views;
+    uint32_t local_count;
+    _DcAppPlanetLocalFrame local_stack[DCAPP_DRAW_CONTEXT_STACK_MAX];
 } _DcAppPlanetViewData;
 
 typedef struct _DcAppResolvedGeojsonStyle {
@@ -176,6 +195,8 @@ static void _clear_stencil_bit(_AppData *app_data);
 static _DcAppPlanetViewData *_planet_view_data(DcAppDrawContext *ctx);
 static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view);
 static void _flush_planet_views(DcAppDrawContext *ctx);
+static _DcAppPlanetLocalFrame *_planet_local_frame(DcAppDrawContext *ctx);
+static plVec3 *_planet_local_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count);
 static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3 position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
@@ -1454,6 +1475,71 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ct
     return draw_view;
 }
 
+bool dc_app_draw_planet_local_push_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppPlanetLocalTransform transform) {
+    if (!ctx || !draw_view || !draw_view->view) return false;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (!planet || planet->radius <= 0.0) return false;
+
+    _DcAppPlanetViewData *data = _planet_view_data(ctx);
+    if (!data || data->local_count >= DCAPP_DRAW_CONTEXT_STACK_MAX) return false;
+
+    double lat_radians = lat * M_PI / 180.0;
+    double lon_radians = lon * M_PI / 180.0;
+    double rotation = (double)transform.rotation_degrees * M_PI / 180.0;
+    double lat_cos = cos(lat_radians);
+    double lat_sin = sin(lat_radians);
+    double lon_cos = cos(lon_radians);
+    double lon_sin = sin(lon_radians);
+
+    _DcAppPlanetLocalFrame *frame = &data->local_stack[data->local_count++];
+    *frame = (_DcAppPlanetLocalFrame){
+        .draw_view = draw_view,
+        .up = {lat_cos * lon_sin, lat_sin, lat_cos * lon_cos},
+        .east = {lon_cos, 0.0, -lon_sin},
+        .north = {-lat_sin * lon_sin, lat_cos, -lat_sin * lon_cos},
+        .planet_radius = planet->radius,
+        .surface_radius = planet->radius + height,
+        .scale_x = transform.scale.x,
+        .scale_y = transform.scale.y,
+        .rotation_cos = cos(rotation),
+        .rotation_sin = sin(rotation),
+    };
+    return true;
+}
+
+void dc_app_draw_planet_local_pop(DcAppDrawContext *ctx) {
+    if (!ctx || !ctx->_planet_view_data) return;
+    _DcAppPlanetViewData *data = (_DcAppPlanetViewData *)ctx->_planet_view_data;
+    if (data->local_count > 0) data->local_count--;
+}
+
+void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+    if (!points || point_count < 2) return;
+
+    _DcAppPlanetLocalFrame *frame = _planet_local_frame(ctx);
+    plVec3 *cartesian = _planet_local_points(ctx, points, point_count);
+    if (!frame || !cartesian) return;
+
+    dc_app_draw_planet_line(dc_app_planet_view_pl(frame->draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    PL_FREE(cartesian);
+}
+
+void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+    if (!points || point_count < 3) return;
+
+    _DcAppPlanetLocalFrame *frame = _planet_local_frame(ctx);
+    plVec3 *cartesian = _planet_local_points(ctx, points, point_count);
+    if (!frame || !cartesian) return;
+
+    plPlanetView *view = dc_app_planet_view_pl(frame->draw_view->view);
+    if (fill_color.a > 0.0f)
+        dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
+    if (line_color.a > 0.0f)
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    PL_FREE(cartesian);
+}
+
 void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, double radius, DcAppVec4 color) {
     (void)ctx;
     if (!draw_view) return;
@@ -1943,9 +2029,55 @@ static _DcAppPlanetViewData *_planet_view_data(DcAppDrawContext *ctx) {
     if (!ctx) return NULL;
     if (!ctx->_planet_view_data) {
         ctx->_planet_view_data = PL_ALLOC(sizeof(_DcAppPlanetViewData));
+        if (!ctx->_planet_view_data) return NULL;
         memset(ctx->_planet_view_data, 0, sizeof(_DcAppPlanetViewData));
     }
     return (_DcAppPlanetViewData *)ctx->_planet_view_data;
+}
+
+static _DcAppPlanetLocalFrame *_planet_local_frame(DcAppDrawContext *ctx) {
+    if (!ctx || !ctx->_planet_view_data) return NULL;
+    _DcAppPlanetViewData *data = (_DcAppPlanetViewData *)ctx->_planet_view_data;
+    if (data->local_count == 0) return NULL;
+    return &data->local_stack[data->local_count - 1];
+}
+
+static plVec3 *_planet_local_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count) {
+    _DcAppPlanetLocalFrame *frame = _planet_local_frame(ctx);
+    if (!frame || !points || point_count == 0) return NULL;
+
+    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
+    if (!cartesian) return NULL;
+
+    for (uint32_t i = 0; i < point_count; i++) {
+        double local_x = (double)points[i].x * frame->scale_x;
+        double local_y = (double)points[i].y * frame->scale_y;
+        double x = local_x * frame->rotation_cos - local_y * frame->rotation_sin;
+        double y = local_x * frame->rotation_sin + local_y * frame->rotation_cos;
+        double distance = hypot(x, y);
+
+        plVec3d direction = frame->up;
+        if (distance > 0.0) {
+            double angle = distance / frame->planet_radius;
+            double tangent_x = (frame->east.x * x + frame->north.x * y) / distance;
+            double tangent_y = (frame->east.y * x + frame->north.y * y) / distance;
+            double tangent_z = (frame->east.z * x + frame->north.z * y) / distance;
+            double angle_cos = cos(angle);
+            double angle_sin = sin(angle);
+            direction = (plVec3d){
+                frame->up.x * angle_cos + tangent_x * angle_sin,
+                frame->up.y * angle_cos + tangent_y * angle_sin,
+                frame->up.z * angle_cos + tangent_z * angle_sin,
+            };
+        }
+
+        cartesian[i] = (plVec3){
+            (float)(direction.x * frame->surface_radius),
+            (float)(direction.y * frame->surface_radius),
+            (float)(direction.z * frame->surface_radius),
+        };
+    }
+    return cartesian;
 }
 
 static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view) {

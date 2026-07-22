@@ -172,7 +172,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         // exposes only dcapp-owned api tables to logic.
         DcAppInit init = {
             .size = sizeof(init),
-            .version = 6,
+            .version = 7,
             .app_ctx = app_data,
             .get_variable = get_variable_value_addr,
             .draw = dc_app_draw_api(),

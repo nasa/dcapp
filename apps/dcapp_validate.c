@@ -23,6 +23,7 @@ static void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemTyp
 static void _validate_children(ValidationContext *ctx, xmlNodePtr node, DcAppElemType parent_type);
 static bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type);
 static void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
+static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type, DcAppElemType parent_type);
 static void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 static void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
@@ -120,6 +121,9 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
     // validate required attributes for this element type
     _validate_required_attributes(ctx, node, elem_type);
 
+    // local planet primitives use only container placement and Vertex X/Y.
+    _validate_planet_local_attributes(ctx, node, elem_type, parent_type);
+
     // validate that all attributes are valid for this element type
     _validate_attribute_names(ctx, node, elem_type);
 
@@ -131,6 +135,45 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
 
     // recurse into children
     _validate_children(ctx, node, elem_type);
+}
+
+static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type, DcAppElemType parent_type) {
+    if (parent_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER &&
+        (elem_type == DC_APP_ELEM_TYPE_PLANET_LINE || elem_type == DC_APP_ELEM_TYPE_PLANET_POLYGON)) {
+        const char *invalid_attrs[] = {"CRS", "HeightAboveTerrain"};
+        for (size_t i = 0; i < sizeof(invalid_attrs) / sizeof(invalid_attrs[0]); i++) {
+            if (xmlHasProp(node, BAD_CAST invalid_attrs[i])) {
+                DC_LOG_ERROR("Validate", "<%s> inside <PlanetContainer> cannot use '%s' (line %ld)",
+                             node->name, invalid_attrs[i], xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+        }
+        return;
+    }
+
+    if (elem_type != DC_APP_ELEM_TYPE_VERTEX ||
+        (parent_type != DC_APP_ELEM_TYPE_PLANET_LINE && parent_type != DC_APP_ELEM_TYPE_PLANET_POLYGON)) return;
+
+    xmlNodePtr container = node->parent ? node->parent->parent : NULL;
+    if (!container || dc_app_xml_node_to_elem_type(container) != DC_APP_ELEM_TYPE_PLANET_CONTAINER) return;
+
+    if (!xmlHasProp(node, BAD_CAST "X")) {
+        DC_LOG_ERROR("Validate", "<Vertex> inside <PlanetContainer> requires 'X' (line %ld)", xmlGetLineNo(node));
+        ctx->error_count++;
+    }
+    if (!xmlHasProp(node, BAD_CAST "Y")) {
+        DC_LOG_ERROR("Validate", "<Vertex> inside <PlanetContainer> requires 'Y' (line %ld)", xmlGetLineNo(node));
+        ctx->error_count++;
+    }
+
+    const char *invalid_attrs[] = {"Latitude", "Longitude", "Altitude", "Z"};
+    for (size_t i = 0; i < sizeof(invalid_attrs) / sizeof(invalid_attrs[0]); i++) {
+        if (xmlHasProp(node, BAD_CAST invalid_attrs[i])) {
+            DC_LOG_ERROR("Validate", "<Vertex> inside <PlanetContainer> cannot use '%s' (line %ld)",
+                         invalid_attrs[i], xmlGetLineNo(node));
+            ctx->error_count++;
+        }
+    }
 }
 
 bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
@@ -570,6 +613,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     if (parent_type == DC_APP_ELEM_TYPE_PLANET_VIEW) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
+            case DC_APP_ELEM_TYPE_PLANET_CONTAINER:
             case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
             case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
             case DC_APP_ELEM_TYPE_PLANET_IMAGE:
@@ -581,6 +625,18 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             default:
                 return false;
         }
+    }
+
+    // PlanetContainer holds local-space line and polygon primitives.
+    if (parent_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        return child_type == DC_APP_ELEM_TYPE_PLANET_LINE ||
+               child_type == DC_APP_ELEM_TYPE_PLANET_POLYGON;
+    }
+
+    // Planet line and polygon primitives contain vertices.
+    if (parent_type == DC_APP_ELEM_TYPE_PLANET_LINE ||
+        parent_type == DC_APP_ELEM_TYPE_PLANET_POLYGON) {
+        return child_type == DC_APP_ELEM_TYPE_VERTEX;
     }
 
     // Polygon can contain Vertex, drawable content, and mouse events
@@ -1073,6 +1129,22 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
+        case DC_APP_ELEM_TYPE_PLANET_CONTAINER: {
+            xmlChar *lat = xmlGetProp(node, BAD_CAST "Latitude");
+            xmlChar *lon = xmlGetProp(node, BAD_CAST "Longitude");
+            if (!lat) {
+                DC_LOG_ERROR("Validate", "<PlanetContainer> missing required attribute 'Latitude' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (!lon) {
+                DC_LOG_ERROR("Validate", "<PlanetContainer> missing required attribute 'Longitude' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (lat) xmlFree(lat);
+            if (lon) xmlFree(lon);
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_PLANET_DATA: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
@@ -1173,6 +1245,7 @@ static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "
 static const char *_valid_attrs_style[]          = {"Name", NULL};
 static const char *_valid_attrs_planet[]         = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
 static const char *_valid_attrs_planet_view[]    = {"Planet", "CRS", "AttitudeFrame", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
+static const char *_valid_attrs_planet_container[] = {"Latitude", "Longitude", "HeightAboveTerrain", "Rotation", "Scale", "ScaleX", "ScaleY", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "Enabled", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
@@ -1384,6 +1457,9 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
                    _attr_in_list(attr_name, _valid_attrs_planet_view);
+
+        case DC_APP_ELEM_TYPE_PLANET_CONTAINER:
+            return _attr_in_list(attr_name, _valid_attrs_planet_container);
 
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return _attr_in_list(attr_name, _valid_attrs_planet_data);

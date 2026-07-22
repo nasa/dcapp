@@ -316,6 +316,11 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    float d[3];");
     fprintf(file, "%s\n", "} DcVec3;");
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef struct _DcPlanetLocalTransform {");
+    fprintf(file, "%s\n", "    DcVec2 scale;");
+    fprintf(file, "%s\n", "    float rotation_degrees;");
+    fprintf(file, "%s\n", "} DcPlanetLocalTransform;");
+    fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef union _DcVec4 {");
     fprintf(file, "%s\n", "    struct {");
     fprintf(file, "%s\n", "        union {");
@@ -666,6 +671,10 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    // draws planet views and overlays through dcapp handles.");
     fprintf(file, "%s\n", "    DcDrawPlanetViewHandle (*planet_view_geodetic)(DcDrawContext *draw_ctx, DcPlanetViewHandle view, double lat, double lon, double elevation, DcVec3 rpy, float fov_degrees, bool orthographic, DcPlanetViewOptions options, DcVec2 position, DcVec2 size, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    DcDrawPlanetViewHandle (*planet_view_cartesian)(DcDrawContext *draw_ctx, DcPlanetViewHandle view, DcVec3 camera_position, DcVec3 rpy, float fov_degrees, bool orthographic, DcPlanetViewOptions options, DcVec2 position, DcVec2 size, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    bool (*planet_local_push_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, DcPlanetLocalTransform transform);");
+    fprintf(file, "%s\n", "    void (*planet_local_pop)(DcDrawContext *draw_ctx);");
+    fprintf(file, "%s\n", "    void (*planet_line_local)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float line_width, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*planet_polygon_local)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float line_width, DcVec4 line_color, DcVec4 fill_color);");
     fprintf(file, "%s\n", "    void (*planet_sphere_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_sphere_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, DcVec3 position, float radius, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_line_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 color);");
