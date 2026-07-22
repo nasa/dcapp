@@ -5,6 +5,20 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[Unreleased]
+------------
+
+### Added
+- Added logic APIs for planet ellipses, app-owned GeoJSON overlays, projected texture origins, and runtime light direction.
+
+### Changed
+- Planet polygon logic calls now omit zero-alpha fill or outline passes, matching XML's independently optional components.
+- Updated the planet sample to exercise logic-side lighting, GeoJSON loading, and ellipse rendering beside their XML equivalents.
+
+### Fixed
+- Planet ellipse rotation now rotates the ellipse axes in the local tangent plane.
+
+
 [2.152.0] - 2026-07-20
 --------------------
 

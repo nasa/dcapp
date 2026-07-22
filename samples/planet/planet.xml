@@ -263,6 +263,9 @@
                     HeightAboveTerrain="50000" Radius="18000" FillColor="0.1 0.9 1.0 1.0"/>
                 <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
                     LineColor="0.25 0.70 1.0 0.90" LineWidth="2200" FillColor="0.25 0.70 1.0 0.10"/>
+                <PlanetEllipse Latitude="-55.0" Longitude="335.0" HeightAboveTerrain="1500"
+                    RadiusX="80000" RadiusY="40000" Rotation="25" Segments="64"
+                    LineColor="1.0 0.35 0.80 0.90" LineWidth="2500" FillColor="1.0 0.20 0.70 0.12"/>
                 <PlanetSphere Latitude="-66.82" Longitude="-68.90" Radius="150500" HeightAboveTerrain="1000" FillColor="1.0 0.78 0.18 0.18"/>
                 <PlanetSphere Latitude="-58.62" Longitude="-14.73" Radius="115385" HeightAboveTerrain="1000" FillColor="0.0 0.95 1.0 0.20"/>
                 <PlanetSphere Latitude="-50.00" Longitude="-6.20" Radius="97000" HeightAboveTerrain="1000" FillColor="0.45 1.0 0.25 0.18"/>

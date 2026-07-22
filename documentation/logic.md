@@ -254,9 +254,13 @@ The generated header exposes these global API tables:
 | `dc_draw` | Draw lines, polygons, rectangles, rounded rectangles, circles, ellipses, text, images, containers, and stencils |
 | `dc_mouse` | Register hit targets and query hover/press/release/click/active state |
 | `dc_texture` | Load and query app-owned textures |
-| `dc_planet` | Create planet resources and draw planet overlays from logic |
+| `dc_planet` | Create planet resources and load/configure textures, lighting, views, breadcrumbs, and GeoJSON |
 
 See the DrawFunction samples for concrete API usage.
+
+Planet overlays are drawn through `dc_draw`, including geodetic/cartesian
+spheres, lines, polygons, images, text, ellipses, and loaded GeoJSON. See
+[Planet Rendering](planet.md) for coordinate and style semantics.
 
 ## Building Logic
 

@@ -215,8 +215,12 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 | `LightDirectionX` | double/var | No | X component of the light direction vector. Default -1. Can be variable-driven. |
 | `LightDirectionY` | double/var | No | Y component of the light direction vector. Default -1. Can be variable-driven. |
 | `LightDirectionZ` | double/var | No | Z component of the light direction vector. Default -1. Can be variable-driven. |
+| `MeshCacheSize` | integer | No | Combined vertex/index cache size in MiB. Logic uses bytes in `DcPlanetCreateInfo.mesh_cache_size`. |
 
 **Children:** `<PlanetData>`, `<PlanetTexture>`, `<PlanetShader>`
+
+Logic-created planets can update the same runtime lighting with
+`dc_planet->set_light_direction(planet, direction)`.
 
 ### `<PlanetData>`
 
@@ -268,7 +272,11 @@ dc_planet->set_texture_geodetic_slot(
 dc_planet->clear_texture(app_ctx, planet, 3);
 ```
 
-`set_texture_cartesian_slot()` provides the cartesian equivalent. The original `set_texture_geodetic()` and `set_texture_cartesian()` functions remain compatible and target slot 0. Valid slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`.
+`set_texture_cartesian_slot()` provides the cartesian equivalent, while
+`set_texture_projected_slot()` accepts the same projected-meter `OriginX` and
+`OriginY` coordinates as XML. The original `set_texture_geodetic()` and
+`set_texture_cartesian()` functions remain compatible and target slot 0. Valid
+slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`.
 
 ### `<PlanetShader>`
 
@@ -323,8 +331,8 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `PivotParentAlignY` | — | align | No | Pivot parent alignment (vertical) |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
-| `NegateX` | — | boolean | No | Flip the rendered image horizontally |
-| `NegateY` | — | boolean | No | Flip the rendered image vertically |
+| `NegateX` | — | boolean | No | Negate the resolved X position offset |
+| `NegateY` | — | boolean | No | Negate the resolved Y position offset |
 | `CameraFOV` | — | number/var | No | Vertical field of view in degrees for perspective rendering and orthographic scale derivation. Defaults to 60. |
 | `CameraOrthographic` | — | integer/var | No | Set to 1 for orthographic projection, 0 for perspective. Can be variable-driven for runtime toggling. |
 
@@ -485,6 +493,11 @@ Draws an ellipse on the terrain surface at a geographic location.
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in meters |
 
+Logic uses `dc_draw->planet_ellipse_geodetic()` or
+`planet_ellipse_cartesian()`. Passing `segments == 0` selects the XML default
+of 64; values are limited to `DC_PLANET_ELLIPSE_MAX_SEGMENTS`. A line or fill
+with zero alpha is omitted, so either component can be drawn independently.
+
 ### `<PlanetSphere>`
 
 Draws a sphere at a geographic location on the terrain surface.
@@ -539,6 +552,10 @@ Draws a filled or outlined polygon on the terrain surface.
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
+The logic `planet_polygon_geodetic()` and `planet_polygon_cartesian()` calls
+omit a component whose color has zero alpha. This provides the same independent
+fill/outline behavior as omitting `FillColor` or `LineColor` in XML.
+
 ### `<Vertex>`
 
 Defines a point inside `<PlanetLine>` or `<PlanetPolygon>`. The containing line or polygon determines the CRS unless the primitive explicitly overrides it.
@@ -567,6 +584,35 @@ Loads a GeoJSON file and renders its features (points, lines, polygons) on the t
 | `LineColor` | color | No | Default line color for features without simplestyle properties |
 | `LineWidth` | double/var | No | Default line width in meters |
 | `FillColor` | color | No | Default fill color for polygon features |
+
+Logic loads the file once as an app-owned resource, then draws it into any
+compatible planet view:
+
+```c
+DcPlanetGeojsonHandle features =
+    dc_planet->load_geojson(app_ctx, "assets/features.geojson");
+
+DcPlanetGeojsonStyle style = dc_planet_geojson_style_default();
+style.flags = DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR |
+              DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR |
+              DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH;
+style.height_above_terrain = 1000.0;
+style.line_width = 2000.0f;
+style.line_color = (DcVec4){.r = 1, .g = 1, .a = 1};
+style.fill_color = (DcVec4){.r = 1, .g = 1, .a = 0.2f};
+
+dc_draw->planet_geojson(draw_ctx, view, features, style);
+```
+
+Simplestyle values in the file override flagged fallback values. With no
+fallback flags, the XML-compatible defaults apply: points are white 1000-meter
+spheres, lines are white at the default width, and unstyled polygons are not
+drawn. GeoJSON resources remain valid until app shutdown.
+
+Logic planet line, polygon, and ellipse functions accept renderer line widths
+directly. XML planet primitives multiply their `LineWidth` by 1.2 before
+submission, so multiply by `1.2f` when exact side-by-side width matching matters.
+`planet_geojson()` applies that XML-compatible scaling itself.
 
 ---
 

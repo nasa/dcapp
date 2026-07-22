@@ -272,6 +272,7 @@ struct __AppData {
     void (*logic_close)(DcAppContext *app_ctx, void *user_data);
     void *logic_user_data;
     DcAppPlanetBreadcrumbsHandle *sb_planet_breadcrumbs;
+    DcAppPlanetGeojsonHandle *sb_planet_geojsons;
 
     // trick
     _TrickContext *sb_tricks;

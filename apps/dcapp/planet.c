@@ -13,6 +13,7 @@ static void _planet_ensure_initialized(_AppData *app_data);
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin);
 static void _planet_free_process_info(plPlanetProcessInfo *info);
 static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size);
+static bool _planet_file_path_to_absolute(_AppData *app_data, const char *path, char *out, size_t out_size);
 static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
 static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
 static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3 a, DcAppVec3 b);
@@ -21,22 +22,25 @@ static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetC
 
 // connects the public planet api table to the shared planet subsystem.
 static const DcAppPlanetApi dc_app_planet_interface = {
-    .get_planet_by_id       = dc_app_planet_get_planet_by_id,
-    .create_planet          = dc_app_planet_create_planet,
-    .create_planet_with_id  = dc_app_planet_create_planet_with_id,
-    .set_texture_geodetic   = dc_app_planet_set_texture_geodetic,
-    .set_texture_cartesian  = dc_app_planet_set_texture_cartesian,
-    .create_geodetic_view   = dc_app_planet_create_geodetic_view,
-    .create_cartesian_view  = dc_app_planet_create_cartesian_view,
-    .set_view_shaders       = dc_app_planet_set_view_shaders,
-    .create_breadcrumbs     = dc_app_planet_create_breadcrumbs,
-    .update_breadcrumbs_geodetic  = dc_app_planet_update_breadcrumbs_geodetic,
-    .update_breadcrumbs_cartesian = dc_app_planet_update_breadcrumbs_cartesian,
-    .clear_breadcrumbs      = dc_app_planet_clear_breadcrumbs,
-    .get_breadcrumbs_points = dc_app_planet_get_breadcrumbs_points,
+    .get_planet_by_id           = dc_app_planet_get_planet_by_id,
+    .create_planet              = dc_app_planet_create_planet,
+    .create_planet_with_id      = dc_app_planet_create_planet_with_id,
+    .set_texture_geodetic       = dc_app_planet_set_texture_geodetic,
+    .set_texture_cartesian      = dc_app_planet_set_texture_cartesian,
     .set_texture_geodetic_slot  = dc_app_planet_set_texture_geodetic_slot,
     .set_texture_cartesian_slot = dc_app_planet_set_texture_cartesian_slot,
+    .set_texture_projected_slot = dc_app_planet_set_texture_projected_slot,
     .clear_texture               = dc_app_planet_clear_texture,
+    .set_light_direction         = dc_app_planet_set_light_direction,
+    .create_geodetic_view        = dc_app_planet_create_geodetic_view,
+    .create_cartesian_view       = dc_app_planet_create_cartesian_view,
+    .set_view_shaders            = dc_app_planet_set_view_shaders,
+    .load_geojson                = dc_app_planet_load_geojson,
+    .create_breadcrumbs          = dc_app_planet_create_breadcrumbs,
+    .update_breadcrumbs_geodetic  = dc_app_planet_update_breadcrumbs_geodetic,
+    .update_breadcrumbs_cartesian = dc_app_planet_update_breadcrumbs_cartesian,
+    .clear_breadcrumbs            = dc_app_planet_clear_breadcrumbs,
+    .get_breadcrumbs_points       = dc_app_planet_get_breadcrumbs_points,
 };
 
 const DcAppPlanetApi *dc_app_planet_api(void) {
@@ -197,9 +201,34 @@ bool dc_app_planet_set_texture_cartesian_slot(_AppData *app_data, DcAppPlanetHan
     return true;
 }
 
+bool dc_app_planet_set_texture_projected_slot(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel) {
+    if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
+    if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+
+    char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    if (!_planet_file_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
+
+    plPlanetTexture texture = {
+        .pcPath = vfs_path,
+        .fMetersPerPixel = meters_per_pixel,
+        .dOriginX = origin_x,
+        .dOriginY = origin_y,
+    };
+    _ext_planet->set_texture(planet->planet, &texture, slot);
+    return true;
+}
+
 bool dc_app_planet_clear_texture(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot) {
     if (!app_data || !planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
     _ext_planet->set_texture(planet->planet, NULL, slot);
+    return true;
+}
+
+bool dc_app_planet_set_light_direction(DcAppPlanetHandle planet, DcAppVec3 direction) {
+    if (!planet || !planet->planet) return false;
+    plPlanetRuntimeOptions options = _ext_planet->get_runtime_options(planet->planet);
+    options.tLightDirection = (plVec3){direction.x, direction.y, direction.z};
+    _ext_planet->set_runtime_options(planet->planet, options);
     return true;
 }
 
@@ -273,8 +302,38 @@ DcAppPlanetBreadcrumbsPoints dc_app_planet_get_breadcrumbs_points(DcAppPlanetBre
     };
 }
 
+DcAppPlanetGeojsonHandle dc_app_planet_load_geojson(_AppData *app_data, const char *path) {
+    char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    if (!_planet_file_path_to_absolute(app_data, path, absolute_path, sizeof(absolute_path))) return NULL;
+
+    DcGeojsonHandle geojson = dc_geojson_load(absolute_path);
+    if (geojson.index == DC_GEOJSON_UNDEFINED) return NULL;
+    if (dc_geojson_feature_count(geojson) == 0) {
+        dc_geojson_free(geojson);
+        return NULL;
+    }
+
+    DcAppPlanetGeojsonHandle handle = (DcAppPlanetGeojsonHandle)PL_ALLOC(sizeof(*handle));
+    if (!handle) {
+        dc_geojson_free(geojson);
+        return NULL;
+    }
+    handle->app_data = app_data;
+    handle->geojson = geojson;
+    sbpush(app_data->sb_planet_geojsons, handle);
+    return handle;
+}
+
 void dc_app_planet_free_wrappers(_AppData *app_data) {
     if (!app_data) return;
+
+    for (int i = 0; i < sbcount(app_data->sb_planet_geojsons); i++) {
+        DcAppPlanetGeojsonHandle geojson = app_data->sb_planet_geojsons[i];
+        if (!geojson) continue;
+        dc_geojson_free(geojson->geojson);
+        PL_FREE(geojson);
+    }
+    sbfree(app_data->sb_planet_geojsons);
 
     for (int i = 0; i < sbcount(app_data->sb_planet_breadcrumbs); i++) {
         DcAppPlanetBreadcrumbsHandle breadcrumbs = app_data->sb_planet_breadcrumbs[i];
@@ -411,6 +470,26 @@ static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char 
     const char *filename = separator ? separator + 1 : abs_path;
     snprintf(out, out_size, "%s/%s", vfs_mount, filename);
     return _ext_vfs->does_file_exist(out);
+}
+
+static bool _planet_file_path_to_absolute(_AppData *app_data, const char *path, char *out, size_t out_size) {
+    if (!app_data || !path || path[0] == '\0' || !out || out_size == 0) return false;
+
+    char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    strncpy(cleaned, path, sizeof(cleaned) - 1);
+    dc_utils_trim_whitespace_inplace(cleaned);
+    if (cleaned[0] == '\0') return false;
+
+    char joined[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    if (dc_utils_is_relative_path(cleaned)) {
+        const char *base_dir = app_data->config ? app_data->config->config_dir_path : NULL;
+        if (!base_dir || base_dir[0] == '\0') return false;
+        if (dc_utils_join_paths(base_dir, cleaned, joined, sizeof(joined)) != 0) return false;
+    } else {
+        strncpy(joined, cleaned, sizeof(joined) - 1);
+    }
+
+    return dc_utils_canonicalize_path(joined, out, out_size) == 0;
 }
 
 static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height) {

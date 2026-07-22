@@ -12,8 +12,10 @@ typedef struct _DcAppPlanet *DcAppPlanetHandle;
 typedef struct _DcAppPlanetView *DcAppPlanetViewHandle;
 typedef struct _DcAppDrawPlanetView *DcAppDrawPlanetViewHandle;
 typedef struct _DcAppPlanetBreadcrumbs *DcAppPlanetBreadcrumbsHandle;
+typedef struct _DcAppPlanetGeojson *DcAppPlanetGeojsonHandle;
 
 #define DC_APP_PLANET_TEXTURE_SLOT_COUNT 5u
+#define DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS 1000u
 
 typedef uint32_t DcAppTextureId;
 
@@ -94,6 +96,28 @@ typedef union _DcAppVec4 {
     };
     float d[4];
 } DcAppVec4;
+
+typedef enum _DcAppPlanetGeojsonStyleFlags {
+    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_NONE = 0,
+    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR = 1 << 0,
+    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR = 1 << 1,
+    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH = 1 << 2,
+} DcAppPlanetGeojsonStyleFlags;
+
+typedef struct _DcAppPlanetGeojsonStyle {
+    int flags;
+    double height_above_terrain;
+    float line_width;
+    DcAppVec4 line_color;
+    DcAppVec4 fill_color;
+} DcAppPlanetGeojsonStyle;
+
+static inline DcAppPlanetGeojsonStyle dc_app_planet_geojson_style_default(void) {
+    return (DcAppPlanetGeojsonStyle){
+        .line_width = 1.0f,
+        .line_color = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+    };
+}
 
 typedef struct _DcAppStroke {
     DcAppVec4 color;
@@ -238,10 +262,13 @@ typedef struct _DcAppDrawApi {
     void (*planet_line_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
     void (*planet_polygon_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
     void (*planet_polygon_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
+    void (*planet_ellipse_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
+    void (*planet_ellipse_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
     void (*planet_image_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint);
     void (*planet_image_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint);
     void (*planet_text_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color);
     void (*planet_text_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, const char *text, float size, DcAppVec4 color);
+    void (*planet_geojson)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppPlanetGeojsonHandle geojson, DcAppPlanetGeojsonStyle style);
 } DcAppDrawApi;
 
 typedef struct _DcAppMouseApi {
@@ -282,18 +309,20 @@ typedef struct _DcAppPlanetApi {
     DcAppPlanetHandle (*create_planet_with_id)(DcAppContext *app_ctx, const char *id, DcAppPlanetCreateInfo info);
     bool (*set_texture_geodetic)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
     bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel);
+    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
+    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel);
+    bool (*set_texture_projected_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);
+    bool (*clear_texture)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot);
+    bool (*set_light_direction)(DcAppPlanetHandle planet, DcAppVec3 direction);
     DcAppPlanetViewHandle (*create_geodetic_view)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
     DcAppPlanetViewHandle (*create_cartesian_view)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
     bool (*set_view_shaders)(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
+    DcAppPlanetGeojsonHandle (*load_geojson)(DcAppContext *app_ctx, const char *path);
     DcAppPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
     void (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
     void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position);
     void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
     DcAppPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
-    // Appended to preserve the offsets used by existing generated logic headers.
-    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
-    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel);
-    bool (*clear_texture)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot);
 } DcAppPlanetApi;
 
 typedef void *(*DcAppGetVariableFn)(DcAppContext *app_ctx, const char *name);

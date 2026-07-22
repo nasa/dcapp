@@ -4513,9 +4513,6 @@ static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetV
     if (segments < 3) segments = 3;
     if (segments > _NODE_ELLIPSE_MAX_SEGMENTS) segments = _NODE_ELLIPSE_MAX_SEGMENTS;
 
-    // convert to radians
-    float rot_rad = pl_radiansf(rotation);
-
     plVec3 center_in = {lat, lon, height};
     plVec3 center;
     dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &center_in, &center, 1);
@@ -4528,57 +4525,33 @@ static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetV
         };
     }
 
-    // local tangent plane (ENU)
-    plVec3 up = pl_norm_vec3(center);
-
-    // east = cross({0,1,0}, up), handle poles
-    plVec3 world_up = {0.0f, 1.0f, 0.0f};
-    plVec3 east = pl_cross_vec3(world_up, up);
-    float east_len = pl_length_vec3(east);
-    if (east_len < 1e-6f) {
-        east = (plVec3){1.0f, 0.0f, 0.0f};
-    } else {
-        east = pl_norm_vec3(east);
-    }
-    plVec3 north = pl_cross_vec3(up, east);
-
-    // generate ellipse points
-    plVec3 points[_NODE_ELLIPSE_MAX_SEGMENTS];
-    for (int i = 0; i < segments; i++) {
-        float theta = 2.0f * (float)M_PI * (float)i / (float)segments + rot_rad;
-        float ex = radius_x * cosf(theta);
-        float ey = radius_y * sinf(theta);
-        points[i] = (plVec3){
-            center.x + ex * east.x + ey * north.x,
-            center.y + ex * east.y + ey * north.y,
-            center.z + ex * east.z + ey * north.z
-        };
-    }
-
-    // draw fill
-    if (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+    bool fill_enabled = (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) != 0;
+    uint32_t fill_color = 0;
+    if (fill_enabled) {
         float fc[4] = {
             node->planet_ellipse.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.r)->value_double : 1.0f,
             node->planet_ellipse.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.g)->value_double : 1.0f,
             node->planet_ellipse.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.b)->value_double : 1.0f,
             node->planet_ellipse.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.a)->value_double : 1.0f
         };
-        uint32_t fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
-        dc_app_draw_planet_polygon_filled(view, points, (uint32_t)segments, fill_color);
+        fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
     }
 
-    // draw outline
-    if (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+    bool line_enabled = (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) != 0;
+    uint32_t line_color = 0;
+    if (line_enabled) {
         float lc[4] = {
             node->planet_ellipse.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.r)->value_double : 1.0f,
             node->planet_ellipse.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.g)->value_double : 1.0f,
             node->planet_ellipse.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.b)->value_double : 1.0f,
             node->planet_ellipse.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.a)->value_double : 1.0f
         };
-        uint32_t line_color = PL_COLOR_32_RGBA(lc[0], lc[1], lc[2], lc[3]);
-        dc_app_draw_planet_polygon(view, points, (uint32_t)segments, line_width, line_color);
+        line_color = PL_COLOR_32_RGBA(lc[0], lc[1], lc[2], lc[3]);
     }
 
+    dc_app_draw_planet_ellipse(view, center, (plVec2){radius_x, radius_y}, rotation,
+                               (uint32_t)segments, line_width, line_color, line_enabled,
+                               fill_color, fill_enabled);
 }
 
 static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view) {

@@ -24,6 +24,7 @@
 static DcPlanetHandle logic_planet;
 static DcPlanetViewHandle logic_planet_view;
 static DcPlanetBreadcrumbsHandle logic_orbit_breadcrumbs;
+static DcPlanetGeojsonHandle logic_geojson;
 static int logic_texture_refresh = -1;
 static int logic_texture_enabled[DC_PLANET_TEXTURE_SLOT_COUNT] = {-1, -1, -1, -1, -1};
 static int logic_active_shader = -1;
@@ -116,6 +117,7 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
         .data_path = data_path,
         .mesh_cache_size = 128u * 1024u * 1024u,
     });
+    logic_geojson = dc_planet->load_geojson(app_ctx, "assets/geojson_test.geojson");
     update_planet_textures(app_ctx, TextureRefresh ? *TextureRefresh : 0);
     logic_texture_refresh = TextureRefresh ? *TextureRefresh : -1;
     if (logic_planet) {
@@ -139,6 +141,10 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
     if (logic_planet && logic_orbit_breadcrumbs) {
         dc_planet->update_breadcrumbs_geodetic(logic_orbit_breadcrumbs, logic_planet,
                                               (DcVec3){.x = (float)*OrbitLat, .y = (float)*OrbitLon, .z = 50000.0f});
+    }
+
+    if (logic_planet && LightY) {
+        dc_planet->set_light_direction(logic_planet, (DcVec3){.x = -1.0f, .y = (float)*LightY, .z = -1.0f});
     }
 
     update_logic_shader();
@@ -201,20 +207,27 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
 
     if (!view) return;
 
-    const DcVec3 geojson_polygon[] = {
-        {.x = -66.5f, .y = 300.0f, .z = 1500.0f},
-        {.x = -66.5f, .y = 345.0f, .z = 1500.0f},
-        {.x = -63.5f, .y = 345.0f, .z = 1500.0f},
-        {.x = -63.5f, .y = 300.0f, .z = 1500.0f},
-    };
+    if (logic_geojson) {
+        DcPlanetGeojsonStyle geojson_style = dc_planet_geojson_style_default();
+        geojson_style.flags = DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR |
+                              DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR |
+                              DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH;
+        geojson_style.height_above_terrain = 1500.0;
+        geojson_style.line_width = 2200.0f;
+        geojson_style.line_color = (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.90f};
+        geojson_style.fill_color = (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.10f};
+        dc_draw->planet_geojson(draw_ctx, view, logic_geojson, geojson_style);
+    }
 
-    dc_draw->planet_polygon_geodetic(draw_ctx, view, geojson_polygon, 4, 4400.0f,
-                                     (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.90f},
-                                     (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.10f});
+    dc_draw->planet_ellipse_geodetic(
+        draw_ctx, view, -55.0, 335.0, 1500.0,
+        (DcVec2){80000.0f, 40000.0f}, 25.0f, 64, 3000.0f,
+        (DcVec4){.r = 1.0f, .g = 0.35f, .b = 0.80f, .a = 0.90f},
+        (DcVec4){.r = 1.0f, .g = 0.20f, .b = 0.70f, .a = 0.12f});
 
     DcPlanetBreadcrumbsPoints orbit_trail = dc_planet->get_breadcrumbs_points(logic_orbit_breadcrumbs);
     if (orbit_trail.count >= 2 && orbit_trail.crs == DC_PLANET_CRS_GEODETIC) {
-        dc_draw->planet_line_geodetic(draw_ctx, view, orbit_trail.points, orbit_trail.count, 7000.0f,
+        dc_draw->planet_line_geodetic(draw_ctx, view, orbit_trail.points, orbit_trail.count, 4200.0f,
                                       (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 0.85f});
     }
     dc_draw->planet_sphere_geodetic(draw_ctx, view, *OrbitLat, *OrbitLon, 50000.0, 18000.0,

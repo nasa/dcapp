@@ -71,10 +71,13 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .planet_line_cartesian     = dc_app_draw_planet_line_cartesian,
     .planet_polygon_geodetic   = dc_app_draw_planet_polygon_geodetic,
     .planet_polygon_cartesian  = dc_app_draw_planet_polygon_cartesian,
+    .planet_ellipse_geodetic   = dc_app_draw_planet_ellipse_geodetic,
+    .planet_ellipse_cartesian  = dc_app_draw_planet_ellipse_cartesian,
     .planet_image_geodetic     = dc_app_draw_planet_image_geodetic,
     .planet_image_cartesian    = dc_app_draw_planet_image_cartesian,
     .planet_text_geodetic      = dc_app_draw_planet_text_geodetic,
     .planet_text_cartesian     = dc_app_draw_planet_text_cartesian,
+    .planet_geojson            = dc_app_draw_planet_geojson,
 };
 
 static const DcAppMouseApi dc_app_mouse_interface = {
@@ -139,6 +142,16 @@ typedef struct _DcAppPlanetViewData {
     DcAppDrawPlanetViewHandle *sb_views;
 } _DcAppPlanetViewData;
 
+typedef struct _DcAppResolvedGeojsonStyle {
+    double height_above_terrain;
+    float line_width;
+    DcAppVec4 line_color;
+    DcAppVec4 fill_color;
+    bool line_enabled;
+    bool fill_enabled;
+    bool line_width_set;
+} _DcAppResolvedGeojsonStyle;
+
 static void _set_stencil_phase(_AppData *app_data, int depth, _DcAppStencilPhase phase);
 static void _restore_stencil_phase(_AppData *app_data, _DcAppStencilPhase phase);
 static dcDrawStencilState _stencil_state(_DcAppStencilPhase phase, int depth);
@@ -171,6 +184,9 @@ static bool     _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plV
 static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
 static void     _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
 static void     _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
+static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback);
+static plVec3  *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain);
+static void     _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style);
 
 //-----------------------------------------------------------------------------
 // [SECTION] DrawFunction context helpers
@@ -1318,6 +1334,42 @@ void dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_
     _ext_planet->draw_line(view, points, point_count, line_width, color);
 }
 
+void dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius, float rotation_degrees, uint32_t segments, float line_width, uint32_t line_color, bool line_enabled, uint32_t fill_color, bool fill_enabled) {
+    if (!view || (radius.x <= 0.0f && radius.y <= 0.0f)) return;
+    if (segments == 0) segments = 64;
+    if (segments < 3) segments = 3;
+    if (segments > DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS) segments = DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS;
+
+    plVec3 up = pl_norm_vec3(center);
+    plVec3 east = pl_cross_vec3((plVec3){0.0f, 1.0f, 0.0f}, up);
+    if (pl_length_vec3(east) < 1e-6f) {
+        east = (plVec3){1.0f, 0.0f, 0.0f};
+    } else {
+        east = pl_norm_vec3(east);
+    }
+    plVec3 north = pl_cross_vec3(up, east);
+    float rotation = pl_radiansf(rotation_degrees);
+    float rotation_cos = cosf(rotation);
+    float rotation_sin = sinf(rotation);
+
+    plVec3 points[DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS];
+    for (uint32_t i = 0; i < segments; i++) {
+        float theta = 2.0f * (float)M_PI * (float)i / (float)segments;
+        float local_x = radius.x * cosf(theta);
+        float local_y = radius.y * sinf(theta);
+        float x = local_x * rotation_cos - local_y * rotation_sin;
+        float y = local_x * rotation_sin + local_y * rotation_cos;
+        points[i] = (plVec3){
+            center.x + x * east.x + y * north.x,
+            center.y + x * east.y + y * north.y,
+            center.z + x * east.z + y * north.z,
+        };
+    }
+
+    if (fill_enabled) dc_app_draw_planet_polygon_filled(view, points, segments, fill_color);
+    if (line_enabled) dc_app_draw_planet_polygon(view, points, segments, line_width, line_color);
+}
+
 void dc_app_draw_planet_sphere(plPlanetView *view, float lon, float lat, float height, float radius, uint32_t color) {
     if (!view || radius <= 0.0f) return;
     _ext_planet->draw_sphere(view, lon, lat, height, radius, color);
@@ -1469,8 +1521,10 @@ void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetV
     }
 
     plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
-    dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
-    dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    if (fill_color.a > 0.0f)
+        dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
+    if (line_color.a > 0.0f)
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
     PL_FREE(cartesian);
 }
 
@@ -1486,8 +1540,10 @@ void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanet
     }
 
     plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
-    dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
-    dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    if (fill_color.a > 0.0f)
+        dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
+    if (line_color.a > 0.0f)
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
     PL_FREE(cartesian);
 }
 
@@ -1536,6 +1592,187 @@ void dc_app_draw_planet_text_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     float text_size = 0.0f;
     if (!_planet_project_overlay(draw_view, (plVec3){position.x, position.y, position.z}, size, &text_position, &text_size)) return;
     _planet_draw_text_label(ctx, draw_view, text_position, text, text_size, color);
+}
+
+void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+    (void)ctx;
+    if (!draw_view || !draw_view->view) return;
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (!planet) return;
+
+    plVec3d geodetic = {lat, lon, height};
+    plVec3d cartesian;
+    dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic, &cartesian, 1);
+    dc_app_draw_planet_ellipse(
+        dc_app_planet_view_pl(draw_view->view),
+        (plVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z},
+        (plVec2){radius.x, radius.y}, rotation_degrees, segments, line_width,
+        PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a), line_color.a > 0.0f,
+        PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a), fill_color.a > 0.0f);
+}
+
+void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+    (void)ctx;
+    if (!draw_view || !draw_view->view) return;
+    dc_app_draw_planet_ellipse(
+        dc_app_planet_view_pl(draw_view->view),
+        (plVec3){center.x, center.y, center.z},
+        (plVec2){radius.x, radius.y}, rotation_degrees, segments, line_width,
+        PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a), line_color.a > 0.0f,
+        PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a), fill_color.a > 0.0f);
+}
+
+void dc_app_draw_planet_geojson(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppPlanetGeojsonHandle geojson, DcAppPlanetGeojsonStyle style) {
+    if (!ctx || !draw_view || !draw_view->view || !geojson) return;
+
+    uint32_t feature_count = dc_geojson_feature_count(geojson->geojson);
+    for (uint32_t i = 0; i < feature_count; i++) {
+        const DcGeojsonFeature *feature = dc_geojson_feature(geojson->geojson, i);
+        if (feature) _planet_draw_geojson_feature(draw_view, feature, _planet_geojson_style(feature, style));
+    }
+}
+
+static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback) {
+    bool line_enabled = (fallback.flags & DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR) != 0;
+    bool fill_enabled = (fallback.flags & DC_APP_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR) != 0;
+    bool line_width_set = (fallback.flags & DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH) != 0;
+    _DcAppResolvedGeojsonStyle style = {
+        .height_above_terrain = fallback.height_above_terrain,
+        .line_width = line_width_set ? fallback.line_width : 1.0f,
+        .line_color = line_enabled ? fallback.line_color : (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
+        .fill_color = fallback.fill_color,
+        .line_enabled = line_enabled,
+        .fill_enabled = fill_enabled,
+        .line_width_set = line_width_set,
+    };
+
+    if (feature->style.stroke.has_value) {
+        style.line_color = (DcAppVec4){
+            feature->style.stroke.r,
+            feature->style.stroke.g,
+            feature->style.stroke.b,
+            feature->style.stroke.a,
+        };
+        style.line_enabled = true;
+    }
+    if (feature->style.fill.has_value) {
+        style.fill_color = (DcAppVec4){
+            feature->style.fill.r,
+            feature->style.fill.g,
+            feature->style.fill.b,
+            feature->style.fill.a,
+        };
+        style.fill_enabled = true;
+    }
+    if (feature->style.has_stroke_width) {
+        style.line_width = feature->style.stroke_width;
+        style.line_width_set = true;
+    }
+    return style;
+}
+
+static plVec3 *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain) {
+    if (!planet || !coordinates || coordinates->count == 0) return NULL;
+
+    plVec3 *points = (plVec3 *)PL_ALLOC(sizeof(plVec3) * coordinates->count);
+    if (!points) return NULL;
+
+    for (uint32_t i = 0; i < coordinates->count; i++) {
+        const DcGeojsonPosition *position = &coordinates->positions[i];
+        plVec3 geodetic = {
+            (float)position->lat,
+            (float)position->lon,
+            (float)(position->has_alt ? position->alt : height_above_terrain),
+        };
+        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic, &points[i], 1);
+    }
+    return points;
+}
+
+static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style) {
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
+    if (!planet || !view || !feature) return;
+
+    uint32_t line_color = PL_COLOR_32_RGBA(style.line_color.r, style.line_color.g, style.line_color.b, style.line_color.a);
+    uint32_t fill_color = PL_COLOR_32_RGBA(style.fill_color.r, style.fill_color.g, style.fill_color.b, style.fill_color.a);
+    float line_width = style.line_width * DCAPP_LINE_WIDTH_FACTOR;
+
+    switch (feature->type) {
+        case DC_GEOJSON_FEATURE_POINT: {
+            const DcGeojsonPosition *point = &feature->geom.point.position;
+            float radius = style.line_width_set ? style.line_width : 1000.0f;
+            dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
+                                      (float)style.height_above_terrain, radius, line_color);
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_MULTI_POINT: {
+            float radius = style.line_width_set ? style.line_width : 1000.0f;
+            for (uint32_t i = 0; i < feature->geom.multi_point.count; i++) {
+                const DcGeojsonPosition *point = &feature->geom.multi_point.positions[i];
+                dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
+                                          (float)style.height_above_terrain, radius, line_color);
+            }
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_LINE_STRING: {
+            const DcGeojsonCoordArray *coordinates = &feature->geom.line_string;
+            plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
+            if (points) {
+                dc_app_draw_planet_line(view, points, coordinates->count, line_width, line_color);
+                PL_FREE(points);
+            }
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_MULTI_LINE_STRING:
+            for (uint32_t i = 0; i < feature->geom.multi_line_string.count; i++) {
+                const DcGeojsonCoordArray *coordinates = &feature->geom.multi_line_string.line_strings[i];
+                plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
+                if (points) {
+                    dc_app_draw_planet_line(view, points, coordinates->count, line_width, line_color);
+                    PL_FREE(points);
+                }
+            }
+            break;
+
+        case DC_GEOJSON_FEATURE_POLYGON: {
+            if (feature->geom.polygon.ring_count == 0) break;
+            const DcGeojsonCoordArray *coordinates = &feature->geom.polygon.rings[0];
+            plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
+            if (points) {
+                if (style.fill_enabled) dc_app_draw_planet_polygon_filled(view, points, coordinates->count, fill_color);
+                if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, line_width, line_color);
+                PL_FREE(points);
+            }
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_MULTI_POLYGON:
+            for (uint32_t i = 0; i < feature->geom.multi_polygon.count; i++) {
+                const DcGeojsonPolygon *polygon = &feature->geom.multi_polygon.polygons[i];
+                if (polygon->ring_count == 0) continue;
+                const DcGeojsonCoordArray *coordinates = &polygon->rings[0];
+                plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
+                if (points) {
+                    if (style.fill_enabled) dc_app_draw_planet_polygon_filled(view, points, coordinates->count, fill_color);
+                    if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, line_width, line_color);
+                    PL_FREE(points);
+                }
+            }
+            break;
+
+        case DC_GEOJSON_FEATURE_GEOMETRY_COLLECTION:
+            for (uint32_t i = 0; i < feature->geom.geometry_collection.count; i++) {
+                _planet_draw_geojson_feature(draw_view, &feature->geom.geometry_collection.features[i], style);
+            }
+            break;
+
+        case DC_GEOJSON_FEATURE_UNDEFINED:
+            break;
+    }
 }
 
 //-----------------------------------------------------------------------------
