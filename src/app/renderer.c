@@ -290,8 +290,9 @@ void dc_app_renderer_initialize_planets(DcAppRenderer *renderer) {
         // apply each initially enabled texture overlay in declaration order.
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             DcAppPlanetTextureEntry *entry = &def->sb_textures[t];
-            bool enabled = entry->enabled == DC_APP_VAL_INDEX_UNDEFINED ||
-                           dc_app_lookup_get_value(renderer->lookup, entry->enabled)->value_boolean;
+            bool enabled = true;
+            if (entry->enabled != DC_APP_VAL_INDEX_UNDEFINED)
+                enabled = dc_app_lookup_get_value(renderer->lookup, entry->enabled)->value_boolean;
             entry->last_enabled        = enabled;
             entry->enabled_initialized = true;
 
@@ -367,8 +368,9 @@ void dc_app_renderer_update_planets(DcAppRenderer *renderer) {
         // texture enabled/refresh checks
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             DcAppPlanetTextureEntry *tex = &def->sb_textures[t];
-            bool enabled = tex->enabled == DC_APP_VAL_INDEX_UNDEFINED ||
-                           dc_app_lookup_get_value(renderer->lookup, tex->enabled)->value_boolean;
+            bool enabled = true;
+            if (tex->enabled != DC_APP_VAL_INDEX_UNDEFINED)
+                enabled = dc_app_lookup_get_value(renderer->lookup, tex->enabled)->value_boolean;
             bool enabled_changed = tex->enabled_initialized && enabled != tex->last_enabled;
             bool refresh_changed = false;
 
