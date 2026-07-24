@@ -22,9 +22,9 @@ typedef struct DcAppPlanetGeojsonStyle DcAppPlanetGeojsonStyle;
 typedef struct DcAppPlanetCreateInfo DcAppPlanetCreateInfo;
 typedef struct DcAppPlanetApi DcAppPlanetApi;
 
-// Local geometry starts as tangent-plane XY meters before scale and rotation.
+// Local geometry and line widths start in tangent-plane units before scale and rotation.
 struct DcAppPlanetLocalTransform {
-    DcAppVec2 scale;
+    float scale;
     float rotation_degrees;
 };
 

@@ -450,7 +450,7 @@ typedef struct DcAppNodePlanetContainer {
     DcAppValIndex  lat;
     DcAppValIndex  lon;
     DcAppValIndex  height_above_terrain;
-    DcAppValIndex2 scale;
+    DcAppValIndex  scale;
     DcAppValIndex  rotation;
     uint8_t    planet_def_index;
     DcAppNodeIndex child;

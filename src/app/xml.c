@@ -3490,22 +3490,8 @@ static DcAppNodeIndex _process_xml_node_planet_container(DcAppXmlContext *xml_ct
 
     xmlChar *raw_scale = xmlGetProp(xml_node, BAD_CAST "Scale");
     if (raw_scale) {
-        DcAppValIndex scale = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale);
-        dc_node.planet_container.scale.x = scale;
-        dc_node.planet_container.scale.y = scale;
+        dc_node.planet_container.scale = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale);
         xmlFree(raw_scale);
-    }
-
-    xmlChar *raw_scale_x = xmlGetProp(xml_node, BAD_CAST "ScaleX");
-    if (raw_scale_x) {
-        dc_node.planet_container.scale.x = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale_x);
-        xmlFree(raw_scale_x);
-    }
-
-    xmlChar *raw_scale_y = xmlGetProp(xml_node, BAD_CAST "ScaleY");
-    if (raw_scale_y) {
-        dc_node.planet_container.scale.y = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, (const char *)raw_scale_y);
-        xmlFree(raw_scale_y);
     }
 
     DcAppNodeIndex node_index = _register_node(xml_ctx, &dc_node);

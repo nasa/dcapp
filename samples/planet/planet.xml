@@ -265,7 +265,7 @@
                 <!-- The small XY shape is scaled, rotated, and moved as one unit. -->
                 <PlanetContainer Latitude="@OrbitLat" Longitude="@OrbitLon"
                     HeightAboveTerrain="60000" Rotation="@LocalRotation" Scale="2000">
-                    <PlanetPolygon LineColor="0.1 0.9 1.0 1.0" LineWidth="3500"
+                    <PlanetPolygon LineColor="0.1 0.9 1.0 1.0" LineWidth="2.1"
                         FillColor="0.1 0.65 1.0 0.22">
                         <Vertex X="-40" Y="-30"/>
                         <Vertex X="40" Y="-30"/>
@@ -273,7 +273,7 @@
                         <Vertex X="0" Y="50"/>
                         <Vertex X="-40" Y="10"/>
                     </PlanetPolygon>
-                    <PlanetLine LineColor="0.55 0.95 1.0 1.0" LineWidth="3500">
+                    <PlanetLine LineColor="0.55 0.95 1.0 1.0" LineWidth="2.1">
                         <Vertex X="-12.5" Y="-30"/>
                         <Vertex X="-12.5" Y="0"/>
                         <Vertex X="12.5" Y="0"/>

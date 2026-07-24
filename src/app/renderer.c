@@ -4882,10 +4882,8 @@ static void _render_planet_container(DcAppDrawContext *ctx, DcAppRenderer *rende
         ? dc_app_lookup_get_value(renderer->lookup, container->height_above_terrain)->value_double : 0.0;
 
     DcAppPlanetLocalTransform transform = {0};
-    transform.scale.x = container->scale.x != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, container->scale.x)->value_double : 1.0f;
-    transform.scale.y = container->scale.y != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, container->scale.y)->value_double : 1.0f;
+    transform.scale = container->scale != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, container->scale)->value_double : 1.0f;
     transform.rotation_degrees = container->rotation != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, container->rotation)->value_double : 0.0f;
 
@@ -5063,8 +5061,8 @@ static void _render_planet_line_local(DcAppDrawContext *ctx, DcAppRenderer *rend
             ? (float)dc_app_lookup_get_value(renderer->lookup, vertex->xyz.y)->value_double : 0.0f;
     }
 
-    float line_width = (node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    float line_width = node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_width)->value_double : 1.0f;
     DcAppVec4 line_color = {1.0f, 1.0f, 1.0f, 1.0f};
     if (node->planet_line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         line_color.r = node->planet_line.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_color.r)->value_double : 1.0f;
@@ -5176,8 +5174,8 @@ static void _render_planet_polygon_local(DcAppDrawContext *ctx, DcAppRenderer *r
             ? (float)dc_app_lookup_get_value(renderer->lookup, vertex->xyz.y)->value_double : 0.0f;
     }
 
-    float line_width = (node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    float line_width = node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double : 1.0f;
     DcAppVec4 line_color = {0};
     DcAppVec4 fill_color = {0};
     if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {

@@ -64,8 +64,7 @@ typedef struct _DcAppPlanetContainerFrame {
     plVec3d north;
     double planet_radius;
     double surface_radius;
-    double scale_x;
-    double scale_y;
+    double scale;
     double rotation_cos;
     double rotation_sin;
 } _DcAppPlanetContainerFrame;
@@ -1686,8 +1685,7 @@ bool dc_app_draw_planet_container_push_geodetic(DcAppDrawContext *ctx, DcAppDraw
         .north = {-lat_sin * lon_sin, lat_cos, -lat_sin * lon_cos},
         .planet_radius = planet_radius,
         .surface_radius = planet_radius + height,
-        .scale_x = transform.scale.x,
-        .scale_y = transform.scale.y,
+        .scale = transform.scale,
         .rotation_cos = cos(rotation),
         .rotation_sin = sin(rotation),
     };
@@ -1711,7 +1709,8 @@ void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *point
     plVec3 *cartesian = _planet_container_transform_points(ctx, points, point_count);
     if (!frame || !cartesian) return;
 
-    dc_app_draw_planet_line(dc_app_planet_view_pl(frame->draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    float scaled_line_width = line_width * (float)fabs(frame->scale);
+    dc_app_draw_planet_line(dc_app_planet_view_pl(frame->draw_view->view), cartesian, point_count, scaled_line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
     PL_FREE(cartesian);
 }
 
@@ -1723,10 +1722,11 @@ void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *po
     if (!frame || !cartesian) return;
 
     plPlanetView *view = dc_app_planet_view_pl(frame->draw_view->view);
+    float scaled_line_width = line_width * (float)fabs(frame->scale);
     if (fill_color.a > 0.0f)
         dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
     if (line_color.a > 0.0f)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+        dc_app_draw_planet_polygon(view, cartesian, point_count, scaled_line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
     PL_FREE(cartesian);
 }
 
@@ -2267,8 +2267,8 @@ static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const D
 
     // Treat local XY as tangent-plane meters and wrap it onto the sphere by arc length.
     for (uint32_t i = 0; i < point_count; i++) {
-        double local_x = (double)points[i].x * frame->scale_x;
-        double local_y = (double)points[i].y * frame->scale_y;
+        double local_x = (double)points[i].x * frame->scale;
+        double local_y = (double)points[i].y * frame->scale;
         double x = local_x * frame->rotation_cos - local_y * frame->rotation_sin;
         double y = local_x * frame->rotation_sin + local_y * frame->rotation_cos;
         double distance = hypot(x, y);

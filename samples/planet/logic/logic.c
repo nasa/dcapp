@@ -263,7 +263,7 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
                                     (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f});
 
     DcPlanetLocalTransform doghouse_transform = {
-        .scale = {.x = 2000.0f, .y = 2000.0f},
+        .scale = 2000.0f,
         .rotation_degrees = (float)*LocalRotation,
     };
     if (dc_draw->planet_container_push_geodetic(
@@ -271,13 +271,13 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         dc_draw->planet_polygon_local(
             draw_ctx, logic_doghouse,
             (uint32_t)(sizeof(logic_doghouse) / sizeof(logic_doghouse[0])),
-            4200.0f,
+            2.1f,
             (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f},
             (DcVec4){.r = 1.0f, .g = 0.45f, .b = 0.10f, .a = 0.22f});
         dc_draw->planet_line_local(
             draw_ctx, logic_doghouse_door,
             (uint32_t)(sizeof(logic_doghouse_door) / sizeof(logic_doghouse_door[0])),
-            4200.0f,
+            2.1f,
             (DcVec4){.r = 1.0f, .g = 0.90f, .b = 0.55f, .a = 1.0f});
         dc_draw->planet_container_pop(draw_ctx);
     }

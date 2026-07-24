@@ -12,13 +12,16 @@ static void check_public_contract(DcInit *init) {
     DcVec3 point;
 
     DcPlanetCreateInfo planet_info;
+    DcPlanetLocalTransform local_transform;
     DcPlanetViewOptions view_options;
     DcPlanetGeojsonStyle geojson_style;
     memset(&position, 0, sizeof(position));
     memset(&point, 0, sizeof(point));
     memset(&planet_info, 0, sizeof(planet_info));
+    memset(&local_transform, 0, sizeof(local_transform));
     memset(&view_options, 0, sizeof(view_options));
     memset(&geojson_style, 0, sizeof(geojson_style));
+    local_transform.scale = 1.0f;
 
     DcTextureId texture = init->texture->load_image(init->app_ctx, "", &position);
     init->texture->get_size(init->app_ctx, texture, &position);
@@ -30,6 +33,7 @@ static void check_public_contract(DcInit *init) {
 
     (void)view_options;
     (void)geojson_style;
+    (void)local_transform;
 }
 
 DCAPP_LOGIC_EXPORT void abi_function(DcAppContext *app_ctx, void *user_data) {

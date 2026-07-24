@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "} DcVec3;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef struct DcPlanetLocalTransform {");
-    fprintf(file, "%s\n", "    DcVec2 scale;");
+    fprintf(file, "%s\n", "    float scale;");
     fprintf(file, "%s\n", "    float rotation_degrees;");
     fprintf(file, "%s\n", "} DcPlanetLocalTransform;");
     fprintf(file, "%s\n", "");

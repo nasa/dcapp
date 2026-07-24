@@ -431,7 +431,7 @@ local 2D meters. It must be a direct child of `<PlanetView>` and may contain
 ```xml
 <PlanetContainer Latitude="@LandingLat" Longitude="@LandingLon"
     HeightAboveTerrain="60000" Rotation="@Heading" Scale="2000">
-    <PlanetPolygon LineWidth="3500"
+    <PlanetPolygon LineWidth="2.1"
         LineColor="1 0.8 0 1" FillColor="1 0.5 0 0.2">
         <Vertex X="-40" Y="-30"/>
         <Vertex X="40" Y="-30"/>
@@ -448,14 +448,13 @@ local 2D meters. It must be a direct child of `<PlanetView>` and may contain
 | `Longitude` | double/var | Yes | Frame anchor longitude in degrees |
 | `HeightAboveTerrain` | double/var | No | Radial height above the reference sphere in meters. Defaults to 0. |
 | `Rotation` | double/var | No | Rotation in degrees. Defaults to 0. |
-| `Scale` | double/var | No | Shorthand that sets both scale components. Defaults to 1. |
-| `ScaleX` | double/var | No | Local X scale. Overrides `Scale`. |
-| `ScaleY` | double/var | No | Local Y scale. Overrides `Scale`. |
+| `Scale` | double/var | No | Uniform scale applied to local coordinates and line widths. Defaults to 1. |
 
 Within the container, vertex `X` and `Y` are local meters: `+X` points east
-and `+Y` points north at the anchor. Scale is applied before rotation, and
-positive rotation turns east toward north. Container nesting is not
-supported. The container height applies to the entire shape; child `CRS` and
+and `+Y` points north at the anchor. `LineWidth` is expressed in the same local
+units and scales with the container. Scale is applied before rotation, and
+positive rotation turns east toward north. Container nesting is not supported.
+The container height applies to the entire shape; child `CRS` and
 `HeightAboveTerrain` attributes and vertex `Latitude`, `Longitude`, `Altitude`,
 and `Z` attributes are invalid in this local scope.
 
@@ -465,7 +464,7 @@ previous frame:
 
 ```c
 typedef struct _DcPlanetLocalTransform {
-    DcVec2 scale;
+    float scale;
     float rotation_degrees;
 } DcPlanetLocalTransform;
 
@@ -478,7 +477,7 @@ static const DcVec2 doghouse[] = {
 };
 
 DcPlanetLocalTransform transform = {
-    .scale = {2000.0f, 2000.0f},
+    .scale = 2000.0f,
     .rotation_degrees = heading,
 };
 
@@ -509,9 +508,9 @@ void (*planet_polygon_local)(
 ```
 
 Scale must be initialized explicitly; a zero-initialized transform collapses
-every point to the anchor. Shape scale does not affect line width. The frame
-is bound to the supplied draw view and lives only for the current draw
-context. Pop should only be called after a successful push.
+every point to the anchor and scales line width to zero. The frame is bound to
+the supplied draw view and lives only for the current draw context. Pop should
+only be called after a successful push.
 
 Each transformed point is mapped onto the sphere independently:
 
