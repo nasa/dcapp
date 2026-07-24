@@ -79,7 +79,7 @@ static void update_planet_texture_slot(DcAppContext *app_ctx, uint32_t slot, flo
         if (enabled) {
             dc_planet->set_texture_geodetic_slot(app_ctx, logic_planet, slot, logic_texture_paths[slot], -58.62, 345.27, mpp);
         } else {
-            dc_planet->clear_texture(app_ctx, logic_planet, slot);
+            dc_planet->clear_texture(logic_planet, slot);
         }
     }
     logic_texture_enabled[slot] = enabled;
@@ -211,7 +211,7 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
     if (!logic_planet_view) return;
 
     bool use_ortho = *UseOrtho != 0;
-    DcPlanetViewOptions options = dc_planet_view_options_default();
+    DcPlanetViewOptions options = {0};
     if (Tau) options.tau = (float)*Tau;
 
     DcDrawPlanetViewHandle view = dc_draw->planet_view_geodetic(
@@ -226,13 +226,18 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         options,
         (DcVec2){0.0f, 0.0f},
         size,
-        dc_place_top_left(),
+        (DcPlacement){
+            .parent_align_x = DC_ALIGN_LEFT,
+            .parent_align_y = DC_ALIGN_TOP,
+            .local_align_x = DC_ALIGN_LEFT,
+            .local_align_y = DC_ALIGN_TOP,
+        },
         0);
 
     if (!view) return;
 
     if (logic_geojson) {
-        DcPlanetGeojsonStyle geojson_style = dc_planet_geojson_style_default();
+        DcPlanetGeojsonStyle geojson_style = {0};
         geojson_style.flags = DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR |
                               DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR |
                               DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH;
@@ -261,7 +266,7 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         .scale = {.x = 2000.0f, .y = 2000.0f},
         .rotation_degrees = (float)*LocalRotation,
     };
-    if (dc_draw->planet_local_push_geodetic(
+    if (dc_draw->planet_container_push_geodetic(
             draw_ctx, view, *OrbitLat, *OrbitLon, 60000.0, doghouse_transform)) {
         dc_draw->planet_polygon_local(
             draw_ctx, logic_doghouse,
@@ -274,7 +279,7 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
             (uint32_t)(sizeof(logic_doghouse_door) / sizeof(logic_doghouse_door[0])),
             4200.0f,
             (DcVec4){.r = 1.0f, .g = 0.90f, .b = 0.55f, .a = 1.0f});
-        dc_draw->planet_local_pop(draw_ctx);
+        dc_draw->planet_container_pop(draw_ctx);
     }
 
     dc_draw->planet_sphere_geodetic(draw_ctx, view, BAILLY_LAT, BAILLY_LON, 1000.0, BAILLY_RADIUS, (DcVec4){.r = 1.0f, .g = 0.78f, .b = 0.18f, .a = 0.18f});

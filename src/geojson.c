@@ -15,33 +15,13 @@
 // internal types
 //-----------------------------------------------------------------------------
 
-typedef struct DcGeojsonData {
+struct DcGeojson {
     DcGeojsonFeature *sb_features;
-    bool              used;
-} DcGeojsonData;
-
-static DcGeojsonData *_sb_datas = NULL;
+};
 
 //-----------------------------------------------------------------------------
 // internal helpers
 //-----------------------------------------------------------------------------
-
-static void
-_ensure_init(void)
-{
-    if (!_sb_datas) {
-        DcGeojsonData reserved = {0};
-        sbpush(_sb_datas, reserved);
-    }
-}
-
-static DcGeojsonData *
-_get(DcGeojsonHandle handle)
-{
-    if (handle.index == DC_GEOJSON_UNDEFINED || handle.index >= (uint8_t)sbcount(_sb_datas) || !_sb_datas[handle.index].used)
-        return NULL;
-    return &_sb_datas[handle.index];
-}
 
 static uint32_t
 _json_array_count(plJsonObject *array)
@@ -69,7 +49,7 @@ _json_member(plJsonObject *json, const char *name)
 }
 
 static DcGeojsonFeature *
-_push_feature(DcGeojsonData *gj)
+_push_feature(DcGeojson *gj)
 {
     DcGeojsonFeature feat;
     memset(&feat, 0, sizeof(DcGeojsonFeature));
@@ -371,48 +351,30 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
 // public api
 //-----------------------------------------------------------------------------
 
-DcGeojsonHandle
+DcGeojson *
 dc_geojson_load(const char *filepath)
 {
-    DcGeojsonHandle handle = { .index = DC_GEOJSON_UNDEFINED };
-    _ensure_init();
-
-    // find free slot (0 is reserved as invalid)
-    uint8_t slot = DC_GEOJSON_UNDEFINED;
-    for (int i = 1; i < sbcount(_sb_datas); i++) {
-        if (!_sb_datas[i].used) {
-            slot = (uint8_t)i;
-            break;
-        }
-    }
-
-    // no free slot found, append a new one
-    if (slot == DC_GEOJSON_UNDEFINED) {
-        if (sbcount(_sb_datas) >= 255) {
-            DC_LOG_ERROR(DC_GEOJSON_TAG, "no free slots");
-            return handle;
-        }
-        DcGeojsonData empty = {0};
-        sbpush(_sb_datas, empty);
-        slot = (uint8_t)(sbcount(_sb_datas) - 1);
-    }
-
     char *json_str = dc_utils_load_text_file(filepath);
     if (!json_str) {
         DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to load file: %s", filepath);
-        return handle;
+        return NULL;
     }
 
     plJsonObject *root = NULL;
     if (!pl_load_json(json_str, &root)) {
         DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to parse JSON: %s", filepath);
         free(json_str);
-        return handle;
+        return NULL;
     }
 
-    DcGeojsonData *gj = &_sb_datas[slot];
-    memset(gj, 0, sizeof(DcGeojsonData));
-    gj->used = true;
+    DcGeojson *gj = (DcGeojson *)malloc(sizeof(DcGeojson));
+    if (!gj) {
+        DC_LOG_ERROR(DC_GEOJSON_TAG, "allocation failed");
+        pl_unload_json(&root);
+        free(json_str);
+        return NULL;
+    }
+    memset(gj, 0, sizeof(DcGeojson));
 
     char type_buf[64] = {0};
     pl_json_string_member(root, "type", type_buf, sizeof(type_buf));
@@ -458,40 +420,34 @@ dc_geojson_load(const char *filepath)
     free(json_str);
 
     if (!ok) {
-        handle.index = slot;
-        dc_geojson_free(handle);
-        handle.index = DC_GEOJSON_UNDEFINED;
-        return handle;
+        dc_geojson_free(gj);
+        return NULL;
     }
 
     DC_LOG_INFO(DC_GEOJSON_TAG, "loaded %s: %d features", filepath, sbcount(gj->sb_features));
-    handle.index = slot;
-    return handle;
+    return gj;
 }
 
 void
-dc_geojson_free(DcGeojsonHandle handle)
+dc_geojson_free(DcGeojson *geojson)
 {
-    DcGeojsonData *gj = _get(handle);
-    if (!gj) return;
+    if (!geojson) return;
 
-    for (int i = 0; i < sbcount(gj->sb_features); i++)
-        _free_feature(&gj->sb_features[i]);
-    sbfree(gj->sb_features);
-    memset(gj, 0, sizeof(DcGeojsonData));
+    for (int i = 0; i < sbcount(geojson->sb_features); i++)
+        _free_feature(&geojson->sb_features[i]);
+    sbfree(geojson->sb_features);
+    free(geojson);
 }
 
 uint32_t
-dc_geojson_feature_count(DcGeojsonHandle handle)
+dc_geojson_feature_count(DcGeojson *geojson)
 {
-    DcGeojsonData *gj = _get(handle);
-    return gj ? (uint32_t)sbcount(gj->sb_features) : 0;
+    return geojson ? (uint32_t)sbcount(geojson->sb_features) : 0;
 }
 
 const DcGeojsonFeature *
-dc_geojson_feature(DcGeojsonHandle handle, uint32_t index)
+dc_geojson_feature(DcGeojson *geojson, uint32_t index)
 {
-    DcGeojsonData *gj = _get(handle);
-    if (!gj || index >= (uint32_t)sbcount(gj->sb_features)) return NULL;
-    return &gj->sb_features[index];
+    if (!geojson || index >= (uint32_t)sbcount(geojson->sb_features)) return NULL;
+    return &geojson->sb_features[index];
 }

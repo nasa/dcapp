@@ -39,17 +39,26 @@ import build.backend_macos as apple
 # [SECTION] utilities
 #-----------------------------------------------------------------------------
 
-# list all files matching extensions
-def list_files_recursive(directory, *extensions):
-
-    # prevent globbing root
+# List matching files directly in a directory. Use this for source groups whose
+# directory boundary is part of the target definition.
+def list_files(directory, *extensions):
     if not directory.strip():
         directory = "."
-
-    pattern = []
+    files = []
     for extension in extensions:
-        pattern += glob.glob(f"{directory}/**/*{extension}", recursive=True)
-    return pattern
+        files.extend(glob.glob(f"{directory}/*{extension}"))
+    return sorted(path for path in files if os.path.isfile(path))
+
+
+# List matching files below a directory when a target intentionally owns the
+# entire subtree.
+def list_files_recursive(directory, *extensions):
+    if not directory.strip():
+        directory = "."
+    files = []
+    for extension in extensions:
+        files.extend(glob.glob(f"{directory}/**/*{extension}", recursive=True))
+    return sorted(path for path in files if os.path.isfile(path))
 
 #-----------------------------------------------------------------------------
 # [SECTION] project
@@ -63,6 +72,50 @@ bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 # now, update directories to be relative to the output directory
 pl_dir_rel  = fwd(os.path.relpath(pl_dir_abs, output_dir_abs))
 bin_dir_rel = fwd(os.path.relpath(bin_dir_abs, output_dir_abs))
+
+def source(path):
+    """Resolve a repository-relative source path."""
+    return os.path.join(dcapp_home_abs, path)
+
+
+def relative_sources(*source_groups):
+    """Flatten absolute source groups into deterministic build-script paths."""
+    files = []
+    for group in source_groups:
+        if isinstance(group, (list, tuple)):
+            files.extend(group)
+        else:
+            files.append(group)
+    return [fwd(os.path.relpath(path, output_dir_abs)) for path in files]
+
+
+def normalize_windows_script(path):
+    """Keep the committed batch file deterministic on every host platform."""
+    with open(path, "r", newline=None) as script_file:
+        lines = script_file.read().splitlines()
+    with open(path, "w", newline="") as script_file:
+        script_file.write("\r\n".join(line.rstrip() for line in lines) + "\r\n")
+
+
+# Source groups make target ownership explicit. Adding a new directory under
+# src does not silently add it to dcapp or either command-line tool.
+app_runtime_sources = list_files(source("src/app"), ".c")
+pixelstream_sources = list_files(source("src/pixelstream"), ".c")
+utility_sources = list_files(source("src/utils"), ".c")
+core_runtime_sources = [
+    source("src/edge.c"),
+    source("src/geo.c"),
+    source("src/geojson.c"),
+    source("src/sock.c"),
+    source("src/trick.c"),
+]
+config_utility_sources = [
+    source("src/utils/env.c"),
+    source("src/utils/file.c"),
+    source("src/utils/log.c"),
+    source("src/utils/math.c"),
+    source("src/utils/string.c"),
+]
 
 # set vcpkg paths (always computed so the windows bat is correct regardless of host platform)
 vcpkg_abs = os.path.abspath(dcapp_home_abs + "/vcpkg_installed/x64-windows")
@@ -196,11 +249,14 @@ with pl.project("apps"):
         pl.set_output_binary("dcapp")
 
         # list source files relative to the output directory
-        src_files_abs = sorted(list_files_recursive(dcapp_home_abs + "/src", ".c"))
-        sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
-            *sources_files_rel,
-            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp/dcapp.c", output_dir_abs))
+            *relative_sources(
+                app_runtime_sources,
+                core_runtime_sources,
+                pixelstream_sources,
+                utility_sources,
+                source("apps/dcapp.c"),
+            )
         )
 
         # release config
@@ -257,14 +313,15 @@ with pl.project("apps"):
 
         pl.set_output_binary("dcapp-genheader")
 
-        # list source files relative to the output directory
-        src_files_abs  = sorted(list_files_recursive(dcapp_home_abs + "/src/app", ".c"))
-        src_files_abs += sorted(list_files_recursive(dcapp_home_abs + "/src/utils", ".c"))
-        src_files_abs += [dcapp_home_abs + "/src/value.c"]
-        sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
-            *sources_files_rel,
-            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp_genheader.c", output_dir_abs))
+            *relative_sources(
+                source("src/app/config.c"),
+                source("src/app/elem.c"),
+                source("src/app/lookup.c"),
+                source("src/app/value.c"),
+                config_utility_sources,
+                source("apps/dcapp_genheader.c"),
+            )
         )
 
         # release config
@@ -317,14 +374,13 @@ with pl.project("apps"):
 
         pl.set_output_binary("dcapp-validate")
 
-        # list source files relative to the output directory
-        src_files_abs  = sorted(list_files_recursive(dcapp_home_abs + "/src/app", ".c"))
-        src_files_abs += sorted(list_files_recursive(dcapp_home_abs + "/src/utils", ".c"))
-        src_files_abs += [dcapp_home_abs + "/src/value.c"]
-        sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
-            *sources_files_rel,
-            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp_validate.c", output_dir_abs))
+            *relative_sources(
+                source("src/app/config.c"),
+                source("src/app/elem.c"),
+                config_utility_sources,
+                source("apps/dcapp_validate.c"),
+            )
         )
 
         # release config
@@ -485,5 +541,6 @@ out_script_macos = output_dir_abs + "/" + "build-apps-macos.sh"
 out_script_linux = output_dir_abs + "/" + "build-apps-linux.sh"
 
 win32.generate_build(out_script_win32)
+normalize_windows_script(out_script_win32)
 apple.generate_build(out_script_macos)
 linux.generate_build(out_script_linux)

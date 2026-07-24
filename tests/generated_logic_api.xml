@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_string_">AbiString</Variable>
+    <Variable Type="#_variable_integer_">AbiInteger</Variable>
+    <Variable Type="#_variable_double_">AbiDouble</Variable>
+    <Variable Type="#_variable_boolean_">AbiBoolean</Variable>
+
+    <Function Name="abi_function"/>
+    <DrawFunction Name="abi_draw_function"/>
+</DCAPP>

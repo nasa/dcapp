@@ -210,7 +210,7 @@ When placing textures from XML, dcapp converts user-facing `Latitude`/`Longitude
 | `extensions/pl_planet_ext.c` | Texture placement against projected tile origins |
 | `extensions/pl_planet_processor_ext.c` | Converts projected heightmap points to Cartesian terrain vertices |
 | `apps/dcapp_planet_chunkgen.c` | Writes projected tile origins to `.planet.json` |
-| `apps/dcapp/dcapp.c` | Converts XML texture coordinates and legacy JSON tile `lat`/`lon` to projected origins |
+| `apps/dcapp.c` | Converts XML texture coordinates and legacy JSON tile `lat`/`lon` to projected origins |
 
 ---
 

@@ -267,7 +267,7 @@ static void draw_example_24_draw_result(DcDrawContext *draw_ctx, const DcDrawFun
         dc_draw->rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){width, height}, area_stroke);
         dc_draw->line(draw_ctx, (DcVec2){0.0f, height * 0.5f}, (DcVec2){width, height * 0.5f}, area_stroke);
         dc_draw->line(draw_ctx, (DcVec2){width * 0.5f, 0.0f}, (DcVec2){width * 0.5f, height}, area_stroke);
-        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){10.0f, 10.0f}, (DcVec4){ .r = 0.94f, .g = 0.82f, .b = 0.28f, .a = 1.0f }, dc_place_center(), NULL);
+        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){10.0f, 10.0f}, (DcVec4){ .r = 0.94f, .g = 0.82f, .b = 0.28f, .a = 1.0f }, (DcPlacement){ .parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -288,7 +288,7 @@ static void draw_example_26_container_push(DcDrawContext *draw_ctx, const DcDraw
     (void)args;
     if (dc_draw->container_push(draw_ctx, (DcVec2){44.0f, 30.0f}, (DcVec2){132.0f, 66.0f}, (DcVec2){132.0f, 66.0f})) {
         dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){132.0f, 66.0f}, 8.0f, (DcVec4){ .r = 0.24f, .g = 0.18f, .b = 0.14f, .a = 0.92f });
-        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, dc_place_center(), NULL);
+        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, (DcPlacement){ .parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -315,7 +315,7 @@ static void draw_example_28_container_push_area(DcDrawContext *draw_ctx, const D
     DcDrawResult result = {0};
     dc_draw->circle_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){ .r = 0.24f, .g = 0.18f, .b = 0.14f, .a = 0.92f }, (DcPlacement){0}, &result);
     if (dc_draw->container_push_area(draw_ctx, &result.area)) {
-        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, dc_place_center(), NULL);
+        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, (DcPlacement){ .parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }

@@ -269,7 +269,7 @@ dc_planet->set_texture_geodetic_slot(
     app_ctx, planet, 3, "hazard-ring.png", lat, lon, meters_per_pixel);
 
 // Releases slot 3's texture resources.
-dc_planet->clear_texture(app_ctx, planet, 3);
+dc_planet->clear_texture(planet, 3);
 ```
 
 `set_texture_cartesian_slot()` provides the cartesian equivalent, while
@@ -315,7 +315,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `CRS` | — | enum | Yes | Coordinate reference system for the camera position and inherited child overlays. Must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`. |
 | `AttitudeFrame` | — | enum | No | Frame used to interpret camera roll/pitch/yaw. Defaults to `#_planet_attitude_frame_local_ned_` for geodetic CRS and `#_planet_attitude_frame_cartesian_rpy_` for cartesian CRS. |
 | `ShaderIndex` | — | integer/var | No | Index of the active shader from the parent `<Planet>`'s `<PlanetShader>` library. Defaults to 0 (built-in shader). Each view can independently select its shader. |
-| `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3. Lower values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
+| `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3; non-positive values also use the default. Lower positive values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
 | `PositionX` | `X` | number/var | No | X position relative to parent |
 | `PositionY` | `Y` | number/var | No | Y position relative to parent |
 | `DimensionX` | `Width` | number/var | No | Viewport width |
@@ -482,24 +482,24 @@ DcPlanetLocalTransform transform = {
     .rotation_degrees = heading,
 };
 
-if (dc_draw->planet_local_push_geodetic(
+if (dc_draw->planet_container_push_geodetic(
         draw_ctx, view, latitude, longitude, height, transform)) {
     dc_draw->planet_polygon_local(
         draw_ctx, doghouse,
         (uint32_t)(sizeof(doghouse) / sizeof(doghouse[0])),
         line_width, line_color, fill_color);
-    dc_draw->planet_local_pop(draw_ctx);
+    dc_draw->planet_container_pop(draw_ctx);
 }
 ```
 
 The available scoped calls are:
 
 ```c
-bool (*planet_local_push_geodetic)(
+bool (*planet_container_push_geodetic)(
     DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view,
     double latitude, double longitude, double height,
     DcPlanetLocalTransform transform);
-void (*planet_local_pop)(DcDrawContext *draw_ctx);
+void (*planet_container_pop)(DcDrawContext *draw_ctx);
 void (*planet_line_local)(
     DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
     float line_width, DcVec4 color);
@@ -705,7 +705,7 @@ compatible planet view:
 DcPlanetGeojsonHandle features =
     dc_planet->load_geojson(app_ctx, "assets/features.geojson");
 
-DcPlanetGeojsonStyle style = dc_planet_geojson_style_default();
+DcPlanetGeojsonStyle style = {0};
 style.flags = DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR |
               DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR |
               DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH;

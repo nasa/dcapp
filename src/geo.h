@@ -1,21 +1,19 @@
-#ifndef _DC_UTILS_GEO_H_
-#define _DC_UTILS_GEO_H_
+#ifndef DC_GEO_H
+#define DC_GEO_H
 
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include "pl_math.h"
 
 // CRS definitions (complete coordinate system specifications)
-typedef struct {
+typedef struct DcGeoCrsGeodetic {
     double planet_radius;
 } DcGeoCrsGeodetic;
 
-typedef struct {
+typedef struct DcGeoCrsCartesian {
     double planet_radius;
 } DcGeoCrsCartesian;
 
-typedef struct {
+typedef struct DcGeoCrsPolarStereo {
     double planet_radius;
     double lat_origin;
     double lon_origin;

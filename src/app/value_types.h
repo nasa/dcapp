@@ -1,0 +1,12 @@
+#ifndef DC_VALUE_TYPES_H
+#define DC_VALUE_TYPES_H
+
+typedef enum DcValueType {
+    DC_VALUE_TYPE_UNDEFINED,
+    DC_VALUE_TYPE_STRING,
+    DC_VALUE_TYPE_INTEGER,
+    DC_VALUE_TYPE_DOUBLE,
+    DC_VALUE_TYPE_BOOLEAN,
+} DcValueType;
+
+#endif

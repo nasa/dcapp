@@ -1,32 +1,56 @@
-#ifndef _DCAPP_DRAW_H_
-#define _DCAPP_DRAW_H_
+#ifndef DC_APP_DRAW_H
+#define DC_APP_DRAW_H
 
-#include "dcapp.h"
+#include "draw_api.h"
+
+#include "pl.h"
+#include "pl_math.h"
+#include "dc_draw_ext.h"
+
+typedef struct _plApiRegistryI plApiRegistryI;
+typedef struct _plCamera plCamera;
+typedef struct _plPlanetView plPlanetView;
+typedef struct _plRenderEncoder plRenderEncoder;
+
+struct DcAppTextureContext;
 
 #ifndef DCAPP_LINE_WIDTH_FACTOR
 #define DCAPP_LINE_WIDTH_FACTOR 1.2f
-#endif
-
-#ifndef DCAPP_DRAW_CONTEXT_STACK_MAX
-#define DCAPP_DRAW_CONTEXT_STACK_MAX 64
 #endif
 
 #ifndef DCAPP_DRAW_POINT_COUNT_MAX
 #define DCAPP_DRAW_POINT_COUNT_MAX 65536
 #endif
 
-typedef struct _DcAppStencilHandler {
-    int depth;
-} DcAppStencilHandler;
+typedef struct DcAppDrawScope {
+    DcAppDrawArea area;
+    int container_count;
+    int stencil_count;
+    int planet_view_count;
+    int planet_container_count;
+} DcAppDrawScope;
 
-// draw batch utils
-void           dc_app_draw_batch_reset(_AppData *app_data);
-dcDrawLayer2D *dc_app_draw_batch_get_2d(_AppData *app_data);
-dcDrawList3D  *dc_app_draw_batch_get_3d(_AppData *app_data);
+typedef struct DcAppDrawFrameInput {
+    plVec2 mouse_position;
+    bool mouse_position_valid;
+    bool mouse_down;
+} DcAppDrawFrameInput;
 
-// DrawFunction context and placement helpers
-DcAppDrawContext dc_app_draw_context(_AppData *app_data, _NodeIndex node_index, plVec2 parent_position, plVec2 parent_dimensions, const plMat4 *parent_transform);
-void             dc_app_draw_context_cleanup(DcAppDrawContext *draw_ctx);
+// draw module and frame context
+void dc_app_draw_init(plApiRegistryI *api_registry);
+DcAppDrawContext *dc_app_draw_context_create(dcFont *default_font, struct DcAppTextureContext *texture_ctx);
+void dc_app_draw_context_destroy(DcAppDrawContext *draw_ctx);
+// Begins a frame from raw input; pressed/released edges are derived internally.
+void dc_app_draw_context_begin(DcAppDrawContext *draw_ctx, DcAppDrawFrameInput input);
+void dc_app_draw_context_end(DcAppDrawContext *draw_ctx);
+void dc_app_draw_context_submit(DcAppDrawContext *draw_ctx, plRenderEncoder *encoder);
+// Publishes targets registered during the frame for the next draw pass.
+void dc_app_draw_context_commit(DcAppDrawContext *draw_ctx);
+// Renderer nodes install resolved frames here; logic callbacks use container helpers below.
+void dc_app_draw_context_push(DcAppDrawContext *draw_ctx, plVec2 position, plVec2 dimensions, const plMat4 *transform);
+void dc_app_draw_context_pop(DcAppDrawContext *draw_ctx);
+DcAppDrawScope dc_app_draw_scope_begin(DcAppDrawContext *draw_ctx);
+void dc_app_draw_scope_end(DcAppDrawContext *draw_ctx, DcAppDrawScope scope);
 
 // DrawFunction primitive API
 const DcAppDrawArea *dc_app_draw_get_area(DcAppDrawContext *draw_ctx);
@@ -88,8 +112,8 @@ void dc_app_draw_stencil_draw(DcAppDrawContext *draw_ctx);
 void dc_app_draw_stencil_end(DcAppDrawContext *draw_ctx);
 DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
 DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
-bool dc_app_draw_planet_local_push_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppPlanetLocalTransform transform);
-void dc_app_draw_planet_local_pop(DcAppDrawContext *draw_ctx);
+bool dc_app_draw_planet_container_push_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppPlanetLocalTransform transform);
+void dc_app_draw_planet_container_pop(DcAppDrawContext *draw_ctx);
 void dc_app_draw_planet_line_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color);
 void dc_app_draw_planet_polygon_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
 void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcAppVec4 color);
@@ -123,19 +147,11 @@ bool dc_app_mouse_clicked(DcAppDrawContext *draw_ctx, const char *id);
 bool dc_app_mouse_down(DcAppDrawContext *draw_ctx);
 const DcAppMouse *dc_app_mouse_get_state(DcAppDrawContext *draw_ctx);
 
-// stencil state helpers
-bool dc_app_draw_stencil_begin_handler(_AppData *app_data, DcAppStencilHandler *handler);
-void dc_app_draw_set_stencil_add(_AppData *app_data, const DcAppStencilHandler *handler);
-void dc_app_draw_set_stencil_remove(_AppData *app_data, const DcAppStencilHandler *handler);
-void dc_app_draw_set_stencil_draw(_AppData *app_data, const DcAppStencilHandler *handler);
-void dc_app_draw_set_stencil_cleanup(_AppData *app_data, const DcAppStencilHandler *handler);
-void dc_app_draw_stencil_end_handler(_AppData *app_data, const DcAppStencilHandler *handler);
-
 // Internal XML/node draw helpers not exposed through DrawFunction yet
 plVec2 dc_app_draw_text_options_size(const char *text, dcDrawTextOptions options);
-void   dc_app_draw_text_options(_AppData *app_data, const char *text, dcDrawTextOptions options);
-void   dc_app_draw_3d_sphere_textured(_AppData *app_data, uint32_t texture_id, plSphere sphere, const plMat4 *transform, uint32_t color);
-void   dc_app_draw_3d_sphere_filled(_AppData *app_data, plSphere sphere, uint32_t color);
+void   dc_app_draw_text_options(DcAppDrawContext *draw_ctx, const char *text, dcDrawTextOptions options);
+void   dc_app_draw_3d_sphere_textured(DcAppDrawContext *draw_ctx, uint32_t texture_id, plSphere sphere, const plMat4 *transform, uint32_t color);
+void   dc_app_draw_3d_sphere_filled(DcAppDrawContext *draw_ctx, plSphere sphere, uint32_t color);
 void   dc_app_draw_planet_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color);
 void   dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color);
 void   dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color);
@@ -145,7 +161,5 @@ void   dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 posi
 
 const DcAppDrawApi *dc_app_draw_api(void);
 const DcAppMouseApi *dc_app_mouse_api(void);
-const DcAppTextureApi *dc_app_texture_api(void);
-const DcAppPlanetApi *dc_app_planet_api(void);
 
 #endif

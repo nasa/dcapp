@@ -154,7 +154,7 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
     }
 }
 
-DcAppElemType dc_app_string_to_elem_type(const char *name) {
+DcAppElemType dc_app_elem_type_from_string(const char *name) {
     if (strcmp(name, "Arc") == 0)
         return DC_APP_ELEM_TYPE_ARC;
     if (strcmp(name, "Arg") == 0)
@@ -296,12 +296,12 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
     return DC_APP_ELEM_TYPE_UNDEFINED;
 }
 
-DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node) {
+DcAppElemType dc_app_elem_type_from_xml_node(xmlNodePtr node) {
     if (node && node->type == XML_ELEMENT_NODE) {
         const char   *name = (const char *)(node->name);
-        DcAppElemType type = dc_app_string_to_elem_type(name);
+        DcAppElemType type = dc_app_elem_type_from_string(name);
         if (type == DC_APP_ELEM_TYPE_UNDEFINED) {
-            DC_LOG_WARN("Elem", "dc_app_xml_node_to_elem_type: Undefined element name: %s", name);
+            DC_LOG_WARN("Elem", "dc_app_elem_type_from_xml_node: Undefined element name: %s", name);
         }
         return type;
     }

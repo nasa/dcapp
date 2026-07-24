@@ -10,9 +10,22 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 ### Added
 - Added logic APIs for planet ellipses, app-owned GeoJSON overlays, projected texture origins, and runtime light direction.
-- Added geodetic planet-local push/pop drawing for reusable local line and polygon shapes, with matching `<PlanetContainer>` XML support.
+- Added geodetic planet-container push/pop drawing for reusable local line and polygon shapes, with matching `<PlanetContainer>` XML support.
 
 ### Changed
+- Runtime state is now owned by focused opaque subsystem contexts, with `_AppData` reduced to a private composition root.
+- Unified XML and logic drawing under one persistent draw context that owns layout scopes, stencil state, planet-view queues, and draw-batch pools.
+- dcapp modules now compile as separate translation units and refresh their own Pilotlight API bindings through module initialization functions.
+- Split the draw pipeline into node resolution, reusable draw APIs, draw-list
+  storage, and GPU submission while preserving immediate XML-order drawing;
+  focused `*_types.h` headers are limited to enums and basic scalar/ID aliases.
+- Restored the generated logic header as an explicitly curated short-name
+  public contract instead of copying and aliasing internal `DcApp*` headers.
+- Removed placement, GeoJSON-style, and planet-view convenience constructors
+  whose defaults are represented by zero-initialized structs; non-positive
+  planet-view tau values now select the default of `0.3`.
+- Added a generated logic API fixture that checks C/C++ compilation, shared
+  layouts, and function-table signatures during the top-level build.
 - Planet polygon logic calls now omit zero-alpha fill or outline passes, matching XML's independently optional components.
 - Updated the planet sample to exercise logic-side lighting, GeoJSON loading, ellipse rendering, and a moving local doghouse beside their XML equivalents.
 

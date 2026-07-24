@@ -17,7 +17,7 @@
 #define DC_EDGE_END_OF_MSG 0x04
 #define DC_EDGE_DEFAULT_PORT 5451
 
-typedef struct __DcEdgeContext {
+struct DcEdge {
     char  ip[46]; // INET6_ADDRSTRLEN
     int   port;
     float data_rate;
@@ -28,7 +28,7 @@ typedef struct __DcEdgeContext {
     bool has_new_data;
 
     // socket
-    DcSockHandle sock;
+    DcSock      *sock;
     DcSockState  state;
 
     // time tracking
@@ -55,113 +55,122 @@ typedef struct __DcEdgeContext {
 
     // general use buffer
     char *temp_buffer;
-} _DcEdgeContext;
-
-static _DcEdgeContext *_contexts = NULL; // stretchy buffer
+};
 
 #define DC_EDGE_TEMP_BUFFER_SIZE 16384
 
 // internal helpers
-static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge);
-static void         _dc_edge_close(DcEdgeHandle edge);
-static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, char **response);
-static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response);
-static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge);
+static DcEdgeResult _dc_edge_connect(DcEdge *edge);
+static void         _dc_edge_close(DcEdge *edge);
+static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **response);
+static DcEdgeResult _dc_edge_read_message(DcEdge *edge, char **response);
+static DcEdgeResult _dc_edge_setup_command_group(DcEdge *edge);
 
 void dc_edge_init(void) {
-    sbresize(_contexts, 1);
+    // Retained for API compatibility; each connection now initializes itself.
 }
 
-DcEdgeHandle dc_edge_create(const char *host, int port, float data_rate, int timeout_s) {
+DcEdge *dc_edge_create(const char *host, int port, float data_rate, int timeout_s) {
 
-    _DcEdgeContext context;
-    dc_sock_host_to_ip(host, context.ip);
-    context.port            = port > 0 ? port : DC_EDGE_DEFAULT_PORT;
-    context.data_rate       = data_rate;
-    context.timeout_s       = timeout_s;
-    context.is_connected    = false;
-    context.has_new_data    = false;
-    context.sock            = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
-    context.state           = DC_SOCK_STATE_DISCONNECTED;
-    context.reconnect_start = 0;
-    context.last_update     = 0;
-    context.cmd_group_id    = NULL;
-    context.rx_cmds         = NULL;
-    context.rx_cmd_offsets  = NULL;
-    context.tx_cmds         = NULL;
-    context.tx_cmd_offsets  = NULL;
-    context.rx_var_values   = NULL;
-    context.rx_var_offsets  = NULL;
-    context.tx_buffer       = NULL;
-    context.temp_buffer     = (char *)malloc(DC_EDGE_TEMP_BUFFER_SIZE);
-    if (!context.temp_buffer) {
-        DC_LOG_ERROR("Edge", "Failed to allocate temp buffer");
-        DcEdgeHandle edge = {0};
-        return edge;
+    DcEdge *edge = (DcEdge *)calloc(1, sizeof(DcEdge));
+    if (!edge) {
+        DC_LOG_ERROR("Edge", "Failed to allocate Edge");
+        return NULL;
     }
-    sbpush(_contexts, context);
 
-    DcEdgeHandle edge;
-    edge.index = (uint8_t)(sbcount(_contexts) - 1);
+    if (dc_sock_host_to_ip(host, edge->ip) != DC_SOCK_RESULT_SUCCESS) {
+        free(edge);
+        return NULL;
+    }
+    edge->port            = port > 0 ? port : DC_EDGE_DEFAULT_PORT;
+    edge->data_rate       = data_rate;
+    edge->timeout_s       = timeout_s;
+    edge->is_connected    = false;
+    edge->has_new_data    = false;
+    edge->sock            = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    if (!edge->sock) {
+        free(edge);
+        return NULL;
+    }
+    edge->state           = DC_SOCK_STATE_DISCONNECTED;
+    edge->reconnect_start = 0;
+    edge->last_update     = 0;
+    edge->cmd_group_id    = NULL;
+    edge->rx_cmds         = NULL;
+    edge->rx_cmd_offsets  = NULL;
+    edge->tx_cmds         = NULL;
+    edge->tx_cmd_offsets  = NULL;
+    edge->rx_var_values   = NULL;
+    edge->rx_var_offsets  = NULL;
+    edge->tx_buffer       = NULL;
+    edge->temp_buffer     = (char *)malloc(DC_EDGE_TEMP_BUFFER_SIZE);
+    if (!edge->temp_buffer) {
+        DC_LOG_ERROR("Edge", "Failed to allocate temp buffer");
+        dc_sock_close(edge->sock);
+        free(edge);
+        return NULL;
+    }
+
     return edge;
 }
 
-void dc_edge_cleanup(DcEdgeHandle edge) {
+void dc_edge_cleanup(DcEdge *edge) {
 
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+    if (!edge) return;
 
     _dc_edge_close(edge);
-    sbfree(context->rx_cmds);
-    sbfree(context->rx_cmd_offsets);
-    sbfree(context->tx_cmds);
-    sbfree(context->tx_cmd_offsets);
-    sbfree(context->rx_var_values);
-    sbfree(context->rx_var_offsets);
-    sbfree(context->tx_buffer);
-    free(context->cmd_group_id);
-    free(context->temp_buffer);
+    sbfree(edge->rx_cmds);
+    sbfree(edge->rx_cmd_offsets);
+    sbfree(edge->tx_cmds);
+    sbfree(edge->tx_cmd_offsets);
+    sbfree(edge->rx_var_values);
+    sbfree(edge->rx_var_offsets);
+    sbfree(edge->tx_buffer);
+    free(edge->cmd_group_id);
+    free(edge->temp_buffer);
+    free(edge);
 }
 
-void dc_edge_update(DcEdgeHandle edge) {
+void dc_edge_update(DcEdge *edge) {
 
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+    if (!edge) return;
 
-    context->has_new_data = false;
+    edge->has_new_data = false;
 
     // check if we need to reconnect
-    if (!context->is_connected) {
-        if (difftime(time(NULL), context->reconnect_start) > context->timeout_s) {
-            DC_LOG_INFO("EDGE", "[%s:%d] Attempting reconnect..", context->ip, context->port);
+    if (!edge->is_connected) {
+        if (difftime(time(NULL), edge->reconnect_start) > edge->timeout_s) {
+            DC_LOG_INFO("EDGE", "[%s:%d] Attempting reconnect..", edge->ip, edge->port);
             DcEdgeResult result = _dc_edge_connect(edge);
             if (result == DC_EDGE_RESULT_SUCCESS) {
-                DC_LOG_INFO("EDGE", "[%s:%d] Connected", context->ip, context->port);
-                context->is_connected = true;
+                DC_LOG_INFO("EDGE", "[%s:%d] Connected", edge->ip, edge->port);
+                edge->is_connected = true;
 
                 // setup command group for rx variables
-                if (sbcount(context->rx_cmd_offsets) > 0) {
+                if (sbcount(edge->rx_cmd_offsets) > 0) {
                     result = _dc_edge_setup_command_group(edge);
                     if (result != DC_EDGE_RESULT_SUCCESS) {
-                        DC_LOG_ERROR("EDGE", "[%s:%d] Failed to setup command group", context->ip, context->port);
+                        DC_LOG_ERROR("EDGE", "[%s:%d] Failed to setup command group", edge->ip, edge->port);
                         _dc_edge_close(edge);
                     }
                 }
             } else {
-                context->reconnect_start = time(NULL);
+                edge->reconnect_start = time(NULL);
             }
         }
         return;
     }
 
     // check if enough time has passed for an update
-    if (difftime(time(NULL), context->last_update) < context->data_rate) {
+    if (difftime(time(NULL), edge->last_update) < edge->data_rate) {
         return;
     }
-    context->last_update = time(NULL);
+    edge->last_update = time(NULL);
 
     // send any pending tx commands
-    for (int ii = 0; ii < sbcount(context->tx_buffer);) {
+    for (int ii = 0; ii < sbcount(edge->tx_buffer);) {
         // find end of command (null terminated)
-        char *cmd     = &context->tx_buffer[ii];
+        char *cmd     = &edge->tx_buffer[ii];
         int   cmd_len = (int)strlen(cmd);
 
         char        *response = NULL;
@@ -169,32 +178,32 @@ void dc_edge_update(DcEdgeHandle edge) {
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {
-            DC_LOG_WARN("EDGE", "[%s:%d] TX command failed, disconnecting", context->ip, context->port);
+            DC_LOG_WARN("EDGE", "[%s:%d] TX command failed, disconnecting", edge->ip, edge->port);
             _dc_edge_close(edge);
             return;
         }
 
         ii += cmd_len + 1;
     }
-    sbclear(context->tx_buffer);
+    sbclear(edge->tx_buffer);
 
     // execute command group to read rx variables
-    if (context->cmd_group_id && sbcount(context->rx_cmd_offsets) > 0) {
-        snprintf(context->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE, "execute_command_group %s", context->cmd_group_id);
+    if (edge->cmd_group_id && sbcount(edge->rx_cmd_offsets) > 0) {
+        snprintf(edge->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE, "execute_command_group %s", edge->cmd_group_id);
 
         char        *response = NULL;
-        DcEdgeResult result   = _dc_edge_send_command(edge, context->temp_buffer, &response);
+        DcEdgeResult result   = _dc_edge_send_command(edge, edge->temp_buffer, &response);
 
         if (result != DC_EDGE_RESULT_SUCCESS || !response) {
-            DC_LOG_WARN("EDGE", "[%s:%d] execute_command_group failed, disconnecting", context->ip, context->port);
+            DC_LOG_WARN("EDGE", "[%s:%d] execute_command_group failed, disconnecting", edge->ip, edge->port);
             free(response);
             _dc_edge_close(edge);
             return;
         }
 
         // parse response - space-separated values
-        sbclear(context->rx_var_values);
-        sbclear(context->rx_var_offsets);
+        sbclear(edge->rx_var_values);
+        sbclear(edge->rx_var_offsets);
 
         char *ptr = response;
         while (*ptr) {
@@ -204,80 +213,74 @@ void dc_edge_update(DcEdgeHandle edge) {
             if (!*ptr) break;
 
             // record start offset
-            int start = sbcount(context->rx_var_values);
-            sbpush(context->rx_var_offsets, start);
+            int start = sbcount(edge->rx_var_values);
+            sbpush(edge->rx_var_offsets, start);
 
             // copy until whitespace or end
             while (*ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r') {
-                sbpush(context->rx_var_values, *ptr);
+                sbpush(edge->rx_var_values, *ptr);
                 ptr++;
             }
-            sbpush(context->rx_var_values, '\0');
+            sbpush(edge->rx_var_values, '\0');
         }
 
         free(response);
 
         // verify we got the expected number of values
-        if (sbcount(context->rx_var_offsets) == sbcount(context->rx_cmd_offsets)) {
-            context->has_new_data = true;
+        if (sbcount(edge->rx_var_offsets) == sbcount(edge->rx_cmd_offsets)) {
+            edge->has_new_data = true;
         } else {
             DC_LOG_WARN("EDGE", "[%s:%d] Value count mismatch (got %d, expected %d)",
-                        context->ip, context->port, sbcount(context->rx_var_offsets), sbcount(context->rx_cmd_offsets));
+                        edge->ip, edge->port, sbcount(edge->rx_var_offsets), sbcount(edge->rx_cmd_offsets));
         }
     }
 }
 
-bool dc_edge_is_connected(DcEdgeHandle edge) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
-    return context->is_connected;
+bool dc_edge_is_connected(DcEdge *edge) {
+    return edge && edge->is_connected;
 }
 
-bool dc_edge_has_new_data(DcEdgeHandle edge) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
-    return context->has_new_data;
+bool dc_edge_has_new_data(DcEdge *edge) {
+    return edge && edge->has_new_data;
 }
 
-DcEdgeVarIndex dc_edge_add_tx_var(DcEdgeHandle edge, const char *command) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+DcEdgeVarIndex dc_edge_add_tx_var(DcEdge *edge, const char *command) {
 
     // store command template (will append value when setting)
-    int start = sbcount(context->tx_cmds);
-    sbpush(context->tx_cmd_offsets, start);
-    sbpushn(context->tx_cmds, command, (int)strlen(command));
-    sbpush(context->tx_cmds, '\0');
+    int start = sbcount(edge->tx_cmds);
+    sbpush(edge->tx_cmd_offsets, start);
+    sbpushn(edge->tx_cmds, command, (int)strlen(command));
+    sbpush(edge->tx_cmds, '\0');
 
-    return sbcount(context->tx_cmd_offsets) - 1;
+    return sbcount(edge->tx_cmd_offsets) - 1;
 }
 
-DcEdgeVarIndex dc_edge_add_rx_var(DcEdgeHandle edge, const char *command) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+DcEdgeVarIndex dc_edge_add_rx_var(DcEdge *edge, const char *command) {
 
     // store command for command group
-    int start = sbcount(context->rx_cmds);
-    sbpush(context->rx_cmd_offsets, start);
-    sbpushn(context->rx_cmds, command, (int)strlen(command));
-    sbpush(context->rx_cmds, '\0');
+    int start = sbcount(edge->rx_cmds);
+    sbpush(edge->rx_cmd_offsets, start);
+    sbpushn(edge->rx_cmds, command, (int)strlen(command));
+    sbpush(edge->rx_cmds, '\0');
 
-    return sbcount(context->rx_cmd_offsets) - 1;
+    return sbcount(edge->rx_cmd_offsets) - 1;
 }
 
-void dc_edge_set_tx_var(DcEdgeHandle edge, DcEdgeVarIndex var, const char *value) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+void dc_edge_set_tx_var(DcEdge *edge, DcEdgeVarIndex var, const char *value) {
 
     // build command: "<command> <value>"
-    char *cmd_template = &(context->tx_cmds[context->tx_cmd_offsets[var]]);
-    snprintf(context->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE, "%s %s", cmd_template, value);
+    char *cmd_template = &(edge->tx_cmds[edge->tx_cmd_offsets[var]]);
+    snprintf(edge->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE, "%s %s", cmd_template, value);
 
     // append to tx buffer (null-terminated)
-    int len = (int)strlen(context->temp_buffer);
-    sbpushn(context->tx_buffer, context->temp_buffer, len + 1);
+    int len = (int)strlen(edge->temp_buffer);
+    sbpushn(edge->tx_buffer, edge->temp_buffer, len + 1);
 }
 
-void dc_edge_get_rx_var_value(DcEdgeHandle edge, DcEdgeVarIndex var_index, char *out) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+void dc_edge_get_rx_var_value(DcEdge *edge, DcEdgeVarIndex var_index, char *out) {
 
-    if (var_index < (DcEdgeVarIndex)sbcount(context->rx_var_offsets)) {
-        strcpy(out, &(context->rx_var_values[context->rx_var_offsets[var_index]]));
+    if (var_index < (DcEdgeVarIndex)sbcount(edge->rx_var_offsets)) {
+        strcpy(out, &(edge->rx_var_values[edge->rx_var_offsets[var_index]]));
     } else {
         out[0] = '\0';
     }
@@ -287,34 +290,38 @@ void dc_edge_get_rx_var_value(DcEdgeHandle edge, DcEdgeVarIndex var_index, char 
 // Internal helpers
 // ============================================================================
 
-static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+static DcEdgeResult _dc_edge_connect(DcEdge *edge) {
 
     // close any existing connection
     _dc_edge_close(edge);
 
     // create new socket
-    context->sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    edge->sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    if (!edge->sock)
+        return DC_EDGE_RESULT_FAIL;
 
     // attempt connection
-    dc_sock_connect(context->sock, context->ip, context->port);
+    if (dc_sock_connect(edge->sock, edge->ip, edge->port) != DC_SOCK_RESULT_SUCCESS) {
+        _dc_edge_close(edge);
+        return DC_EDGE_RESULT_FAIL;
+    }
 
     // wait for connection (with timeout)
     time_t start = time(NULL);
     while (difftime(time(NULL), start) < 2.0) {
-        DcSockState state = dc_sock_connection_status(context->sock);
+        DcSockState state = dc_sock_connection_status(edge->sock);
         if (state == DC_SOCK_STATE_CONNECTED) {
             // switch to blocking for data I/O
-            dc_sock_set_blocking(context->sock);
-            dc_sock_set_recv_timeout(context->sock, 2000);
+            dc_sock_set_blocking(edge->sock);
+            dc_sock_set_recv_timeout(edge->sock, 2000);
 
             // read server version string
             char        *version = NULL;
             DcEdgeResult result  = _dc_edge_read_message(edge, &version);
             if (result == DC_EDGE_RESULT_SUCCESS && version) {
-                DC_LOG_INFO("EDGE", "[%s:%d] Server version: %s", context->ip, context->port, version);
+                DC_LOG_INFO("EDGE", "[%s:%d] Server version: %s", edge->ip, edge->port, version);
                 free(version);
-                context->state = DC_SOCK_STATE_CONNECTED;
+                edge->state = DC_SOCK_STATE_CONNECTED;
                 return DC_EDGE_RESULT_SUCCESS;
             }
             free(version);
@@ -334,25 +341,29 @@ static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge) {
     return DC_EDGE_RESULT_FAIL;
 }
 
-static void _dc_edge_close(DcEdgeHandle edge) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+static void _dc_edge_close(DcEdge *edge) {
 
-    dc_sock_close(context->sock);
-    context->state        = DC_SOCK_STATE_DISCONNECTED;
-    context->is_connected = false;
-    context->has_new_data = false;
+    dc_sock_close(edge->sock);
+    edge->sock         = NULL;
+    edge->state        = DC_SOCK_STATE_DISCONNECTED;
+    edge->is_connected = false;
+    edge->has_new_data = false;
 
     // clear command group ID (will need to recreate on reconnect)
-    free(context->cmd_group_id);
-    context->cmd_group_id = NULL;
+    free(edge->cmd_group_id);
+    edge->cmd_group_id = NULL;
 }
 
-static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, char **response) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **response) {
 
     // EDGE RCS protocol requires a NEW connection for each command
-    DcSockHandle cmd_sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
-    dc_sock_connect(cmd_sock, context->ip, context->port);
+    DcSock *cmd_sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    if (!cmd_sock)
+        return DC_EDGE_RESULT_FAIL;
+    if (dc_sock_connect(cmd_sock, edge->ip, edge->port) != DC_SOCK_RESULT_SUCCESS) {
+        dc_sock_close(cmd_sock);
+        return DC_EDGE_RESULT_FAIL;
+    }
 
     // wait for connection (with timeout)
     time_t start     = time(NULL);
@@ -476,8 +487,7 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
     }
 }
 
-static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+static DcEdgeResult _dc_edge_read_message(DcEdge *edge, char **response) {
 
     int   buf_size = 256;
     int   nread    = 0;
@@ -489,7 +499,7 @@ static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
     for (;;) {
         char         c;
         int          recv_count;
-        DcSockResult result = dc_sock_receive(context->sock, &c, 1, &recv_count);
+        DcSockResult result = dc_sock_receive(edge->sock, &c, 1, &recv_count);
 
         if (result == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
         if (result != DC_SOCK_RESULT_SUCCESS || recv_count != 1) {
@@ -521,8 +531,7 @@ static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
     }
 }
 
-static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge) {
-    _DcEdgeContext *context = &(_contexts[edge.index]);
+static DcEdgeResult _dc_edge_setup_command_group(DcEdge *edge) {
 
     // create command group
     char        *group_id = NULL;
@@ -533,17 +542,17 @@ static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge) {
     }
 
     // store group ID
-    context->cmd_group_id = group_id;
+    edge->cmd_group_id = group_id;
 
     // add each rx command to the group
     // (_dc_edge_send_command creates a new connection for each command)
-    for (int ii = 0; ii < sbcount(context->rx_cmd_offsets); ii++) {
-        char *rx_cmd = &(context->rx_cmds[context->rx_cmd_offsets[ii]]);
-        snprintf(context->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE,
-                 "add_command_to_group %s \"%s\"", context->cmd_group_id, rx_cmd);
+    for (int ii = 0; ii < sbcount(edge->rx_cmd_offsets); ii++) {
+        char *rx_cmd = &(edge->rx_cmds[edge->rx_cmd_offsets[ii]]);
+        snprintf(edge->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE,
+                 "add_command_to_group %s \"%s\"", edge->cmd_group_id, rx_cmd);
 
         char *response = NULL;
-        result         = _dc_edge_send_command(edge, context->temp_buffer, &response);
+        result         = _dc_edge_send_command(edge, edge->temp_buffer, &response);
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {

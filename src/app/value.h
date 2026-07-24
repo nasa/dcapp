@@ -1,19 +1,14 @@
-#ifndef _DC_VALUE_
-#define _DC_VALUE_
+#ifndef DC_VALUE_H
+#define DC_VALUE_H
+
+#include "value_types.h"
 
 #include <stdbool.h>
 
 #define DC_VALUE_STRING_BUFFER_SIZE 256
 
-typedef enum _DcValueType {
-    DC_VALUE_TYPE_UNDEFINED,
-    DC_VALUE_TYPE_STRING,
-    DC_VALUE_TYPE_INTEGER,
-    DC_VALUE_TYPE_DOUBLE,
-    DC_VALUE_TYPE_BOOLEAN,
-} DcValueType;
-
-typedef struct _DcValue {
+// Each value caches every representation while type marks the authoritative field.
+typedef struct DcValue {
     DcValueType type;
 
     char   value_string[DC_VALUE_STRING_BUFFER_SIZE];
@@ -22,7 +17,7 @@ typedef struct _DcValue {
     bool   value_boolean;
 } DcValue;
 
-typedef struct _DcValue2 {
+typedef struct DcValue2 {
     union {
         DcValue x, r, lat;
     };
@@ -31,7 +26,7 @@ typedef struct _DcValue2 {
     };
 } DcValue2;
 
-typedef struct _DcValue3 {
+typedef struct DcValue3 {
     union {
         DcValue x, r, lat;
     };
@@ -43,7 +38,7 @@ typedef struct _DcValue3 {
     };
 } DcValue3;
 
-typedef struct _DcValue4 {
+typedef struct DcValue4 {
     union {
         DcValue x, r;
     };

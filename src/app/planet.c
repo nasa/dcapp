@@ -1,69 +1,184 @@
 #include "planet.h"
 
+#define PL_EXPERIMENTAL
+#include "pl.h"
+#include "pl_json.h"
+#include "pl_planet_ext.h"
+#include "pl_planet_processor_ext.h"
+#include "pl_starter_ext.h"
+#include "pl_vfs_ext.h"
 #include "geo.h"
+#include "geojson.h"
 #include "utils/file.h"
 #include "utils/log.h"
+#include "utils/stb_sb.h"
 #include "utils/string.h"
 
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-static void _planet_ensure_initialized(_AppData *app_data);
+static const plMemoryI  *_ext_memory  = NULL;
+static const plStarterI *_ext_starter = NULL;
+static const plPlanetI  *_ext_planet  = NULL;
+static const plVfsI     *_ext_vfs     = NULL;
+
+#define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
+#define PL_FREE(x)  _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+
+// Runtime handles are separately allocated so registry growth cannot invalidate them.
+struct DcAppPlanetContext {
+    char *asset_root;
+    bool extension_initialized;
+
+    plPlanet **sb_planets;
+    plPlanetView **sb_views;
+    DcAppPlanetHandle *sb_planet_handles;
+    DcAppPlanetViewHandle *sb_view_handles;
+    DcAppPlanetBreadcrumbsHandle *sb_breadcrumbs;
+    DcAppPlanetGeojsonHandle *sb_geojsons;
+};
+
+struct DcAppPlanet {
+    plPlanet *planet;
+    char *id;
+    double radius;
+    DcGeoCrsGeodetic geodetic_crs;
+    DcGeoCrsCartesian cartesian_crs;
+    DcGeoCrsPolarStereo polar_crs;
+    bool legacy_projected_origin;
+    uint8_t index;
+};
+
+struct DcAppPlanetView {
+    DcAppPlanetContext *owner;
+    DcAppPlanetHandle planet;
+    plPlanetView *view;
+    DcAppPlanetCrs crs;
+    uint32_t width;
+    uint32_t height;
+    uint8_t index;
+    char *vertex_shader_path;
+    char *fragment_shader_path;
+};
+
+struct DcAppPlanetBreadcrumbs {
+    DcAppPlanetCrs crs;
+    uint32_t max_points;
+    float point_spacing;
+    DcAppVec3 *sb_points;
+};
+
+struct DcAppPlanetGeojson {
+    DcGeojson *geojson;
+};
+
+static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx);
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin);
 static void _planet_free_process_info(plPlanetProcessInfo *info);
-static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size);
-static bool _planet_file_path_to_absolute(_AppData *app_data, const char *path, char *out, size_t out_size);
-static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
+static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
+static bool _planet_file_path_to_absolute(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
+static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
 static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
 static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3 a, DcAppVec3 b);
 
 #define DC_APP_PLANET_MIN_MESH_CACHE_SIZE (1024u * 1024u)
 
-// connects the public planet api table to the shared planet subsystem.
-static const DcAppPlanetApi dc_app_planet_interface = {
-    .get_planet_by_id           = dc_app_planet_get_planet_by_id,
-    .create_planet              = dc_app_planet_create_planet,
-    .create_planet_with_id      = dc_app_planet_create_planet_with_id,
-    .set_texture_geodetic       = dc_app_planet_set_texture_geodetic,
-    .set_texture_cartesian      = dc_app_planet_set_texture_cartesian,
-    .set_texture_geodetic_slot  = dc_app_planet_set_texture_geodetic_slot,
-    .set_texture_cartesian_slot = dc_app_planet_set_texture_cartesian_slot,
-    .set_texture_projected_slot = dc_app_planet_set_texture_projected_slot,
-    .clear_texture               = dc_app_planet_clear_texture,
-    .set_light_direction         = dc_app_planet_set_light_direction,
-    .create_geodetic_view        = dc_app_planet_create_geodetic_view,
-    .create_cartesian_view       = dc_app_planet_create_cartesian_view,
-    .set_view_shaders            = dc_app_planet_set_view_shaders,
-    .load_geojson                = dc_app_planet_load_geojson,
-    .create_breadcrumbs          = dc_app_planet_create_breadcrumbs,
-    .update_breadcrumbs_geodetic  = dc_app_planet_update_breadcrumbs_geodetic,
-    .update_breadcrumbs_cartesian = dc_app_planet_update_breadcrumbs_cartesian,
-    .clear_breadcrumbs            = dc_app_planet_clear_breadcrumbs,
-    .get_breadcrumbs_points       = dc_app_planet_get_breadcrumbs_points,
-};
-
-const DcAppPlanetApi *dc_app_planet_api(void) {
-    return &dc_app_planet_interface;
+void dc_app_planet_init(plApiRegistryI *api_registry) {
+    _ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_starter = pl_get_api_latest(api_registry, plStarterI);
+    _ext_planet  = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_vfs     = pl_get_api_latest(api_registry, plVfsI);
 }
 
-DcAppPlanetHandle dc_app_planet_get_planet_by_id(_AppData *app_data, const char *id) {
-    if (!app_data || !id || id[0] == '\0') return NULL;
+DcAppPlanetContext *dc_app_planet_context_create(const char *asset_root) {
+    DcAppPlanetContext *planet_ctx = (DcAppPlanetContext *)PL_ALLOC(sizeof(*planet_ctx));
+    if (!planet_ctx) return NULL;
+    memset(planet_ctx, 0, sizeof(*planet_ctx));
 
-    for (int i = 0; i < sbcount(app_data->sb_planet_handles); i++) {
-        DcAppPlanetHandle planet = app_data->sb_planet_handles[i];
+    if (asset_root && asset_root[0] != '\0') {
+        size_t length = strlen(asset_root) + 1;
+        planet_ctx->asset_root = (char *)PL_ALLOC(length);
+        if (!planet_ctx->asset_root) {
+            PL_FREE(planet_ctx);
+            return NULL;
+        }
+        memcpy(planet_ctx->asset_root, asset_root, length);
+    }
+
+    // Resource indices are one-based; index zero is always undefined.
+    sbpush(planet_ctx->sb_planets, NULL);
+    sbpush(planet_ctx->sb_views, NULL);
+    return planet_ctx;
+}
+
+void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx) {
+    if (!planet_ctx) return;
+
+    for (int i = 0; i < sbcount(planet_ctx->sb_geojsons); i++) {
+        DcAppPlanetGeojsonHandle geojson = planet_ctx->sb_geojsons[i];
+        if (!geojson) continue;
+        dc_geojson_free(geojson->geojson);
+        PL_FREE(geojson);
+    }
+    sbfree(planet_ctx->sb_geojsons);
+
+    for (int i = 0; i < sbcount(planet_ctx->sb_breadcrumbs); i++) {
+        DcAppPlanetBreadcrumbsHandle breadcrumbs = planet_ctx->sb_breadcrumbs[i];
+        if (!breadcrumbs) continue;
+        sbfree(breadcrumbs->sb_points);
+        PL_FREE(breadcrumbs);
+    }
+    sbfree(planet_ctx->sb_breadcrumbs);
+
+    // cleans up every planet view created by the shared planet subsystem.
+    for (int i = 0; i < sbcount(planet_ctx->sb_view_handles); i++) {
+        DcAppPlanetViewHandle view = planet_ctx->sb_view_handles[i];
+        if (!view) continue;
+        if (view->view) _ext_planet->cleanup_view(view->view);
+        if (view->vertex_shader_path) PL_FREE(view->vertex_shader_path);
+        if (view->fragment_shader_path) PL_FREE(view->fragment_shader_path);
+        PL_FREE(view);
+    }
+    sbfree(planet_ctx->sb_view_handles);
+
+    // cleans up every planet created by the shared planet subsystem.
+    for (int i = 0; i < sbcount(planet_ctx->sb_planet_handles); i++) {
+        DcAppPlanetHandle planet = planet_ctx->sb_planet_handles[i];
+        if (!planet) continue;
+        if (planet->planet) _ext_planet->cleanup_planet(planet->planet);
+        if (planet->id) PL_FREE(planet->id);
+        PL_FREE(planet);
+    }
+    sbfree(planet_ctx->sb_planet_handles);
+    sbfree(planet_ctx->sb_views);
+    sbfree(planet_ctx->sb_planets);
+
+    if (planet_ctx->extension_initialized) _ext_planet->cleanup();
+
+    if (planet_ctx->asset_root) PL_FREE(planet_ctx->asset_root);
+    PL_FREE(planet_ctx);
+}
+
+DcAppPlanetHandle dc_app_planet_get_planet_by_id(DcAppPlanetContext *planet_ctx, const char *id) {
+    if (!planet_ctx || !id || id[0] == '\0') return NULL;
+
+    for (int i = 0; i < sbcount(planet_ctx->sb_planet_handles); i++) {
+        DcAppPlanetHandle planet = planet_ctx->sb_planet_handles[i];
         if (planet && planet->id && strcmp(planet->id, id) == 0) return planet;
     }
 
     return NULL;
 }
 
-DcAppPlanetHandle dc_app_planet_create_planet(_AppData *app_data, DcAppPlanetCreateInfo info) {
-    if (!app_data || !info.data_path || info.data_path[0] == '\0') return NULL;
+DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, DcAppPlanetCreateInfo info) {
+    if (!planet_ctx || !info.data_path || info.data_path[0] == '\0') return NULL;
 
     // initializes the planet extension on first use.
-    _planet_ensure_initialized(app_data);
-    if (sbcount(app_data->sb_planets) > UINT8_MAX) {
+    _planet_ensure_initialized(planet_ctx);
+    if (sbcount(planet_ctx->sb_planets) > UINT8_MAX) {
         DC_LOG_ERROR("Planet", "Too many planets; dcapp supports at most %u planet handles", UINT8_MAX);
         return NULL;
     }
@@ -100,7 +215,6 @@ DcAppPlanetHandle dc_app_planet_create_planet(_AppData *app_data, DcAppPlanetCre
 
     DcAppPlanetHandle handle = (DcAppPlanetHandle)PL_ALLOC(sizeof(*handle));
     memset(handle, 0, sizeof(*handle));
-    handle->app_data = app_data;
     handle->planet = planet;
     handle->radius = radius;
     // stores crs helpers so xml and logic share the same conversions.
@@ -113,20 +227,20 @@ DcAppPlanetHandle dc_app_planet_create_planet(_AppData *app_data, DcAppPlanetCre
     handle->polar_crs.false_easting = projection.tPolarStereo.dFalseEasting;
     handle->polar_crs.false_northing = projection.tPolarStereo.dFalseNorthing;
     handle->legacy_projected_origin = legacy_projected_origin;
-    sbpush(app_data->sb_planets, planet);
-    handle->index = (uint8_t)(sbcount(app_data->sb_planets) - 1);
-    sbpush(app_data->sb_planet_handles, handle);
+    sbpush(planet_ctx->sb_planets, planet);
+    handle->index = (uint8_t)(sbcount(planet_ctx->sb_planets) - 1);
+    sbpush(planet_ctx->sb_planet_handles, handle);
     return handle;
 }
 
-DcAppPlanetHandle dc_app_planet_create_planet_with_id(_AppData *app_data, const char *id, DcAppPlanetCreateInfo info) {
-    if (!app_data || !id || id[0] == '\0') return NULL;
-    if (dc_app_planet_get_planet_by_id(app_data, id)) {
+DcAppPlanetHandle dc_app_planet_create_planet_with_id(DcAppPlanetContext *planet_ctx, const char *id, DcAppPlanetCreateInfo info) {
+    if (!planet_ctx || !id || id[0] == '\0') return NULL;
+    if (dc_app_planet_get_planet_by_id(planet_ctx, id)) {
         DC_LOG_ERROR("Planet", "Planet id already exists: %s", id);
         return NULL;
     }
 
-    DcAppPlanetHandle planet = dc_app_planet_create_planet(app_data, info);
+    DcAppPlanetHandle planet = dc_app_planet_create_planet(planet_ctx, info);
     if (planet) {
         size_t len = strlen(id) + 1;
         planet->id = (char *)PL_ALLOC(len);
@@ -135,16 +249,16 @@ DcAppPlanetHandle dc_app_planet_create_planet_with_id(_AppData *app_data, const 
     return planet;
 }
 
-bool dc_app_planet_set_texture_geodetic(_AppData *app_data, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel) {
-    return dc_app_planet_set_texture_geodetic_slot(app_data, planet, 0, path, lat, lon, meters_per_pixel);
+bool dc_app_planet_set_texture_geodetic(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel) {
+    return dc_app_planet_set_texture_geodetic_slot(planet_ctx, planet, 0, path, lat, lon, meters_per_pixel);
 }
 
-bool dc_app_planet_set_texture_geodetic_slot(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel) {
+bool dc_app_planet_set_texture_geodetic_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel) {
     if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+    if (!planet_ctx || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) return false;
 
     plVec3d geodetic_in = {lat, lon, 0.0};
     plVec2d polar_out;
@@ -167,16 +281,16 @@ bool dc_app_planet_set_texture_geodetic_slot(_AppData *app_data, DcAppPlanetHand
     return true;
 }
 
-bool dc_app_planet_set_texture_cartesian(_AppData *app_data, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel) {
-    return dc_app_planet_set_texture_cartesian_slot(app_data, planet, 0, path, position, meters_per_pixel);
+bool dc_app_planet_set_texture_cartesian(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel) {
+    return dc_app_planet_set_texture_cartesian_slot(planet_ctx, planet, 0, path, position, meters_per_pixel);
 }
 
-bool dc_app_planet_set_texture_cartesian_slot(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel) {
+bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel) {
     if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+    if (!planet_ctx || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) return false;
 
     plVec3d cartesian_in = {position.x, position.y, position.z};
     plVec3d geodetic_out;
@@ -201,12 +315,12 @@ bool dc_app_planet_set_texture_cartesian_slot(_AppData *app_data, DcAppPlanetHan
     return true;
 }
 
-bool dc_app_planet_set_texture_projected_slot(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel) {
+bool dc_app_planet_set_texture_projected_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel) {
     if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+    if (!planet_ctx || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) return false;
 
     plPlanetTexture texture = {
         .pcPath = vfs_path,
@@ -218,8 +332,8 @@ bool dc_app_planet_set_texture_projected_slot(_AppData *app_data, DcAppPlanetHan
     return true;
 }
 
-bool dc_app_planet_clear_texture(_AppData *app_data, DcAppPlanetHandle planet, uint32_t slot) {
-    if (!app_data || !planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
+bool dc_app_planet_clear_texture(DcAppPlanetHandle planet, uint32_t slot) {
+    if (!planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
     _ext_planet->set_texture(planet->planet, NULL, slot);
     return true;
 }
@@ -232,12 +346,12 @@ bool dc_app_planet_set_light_direction(DcAppPlanetHandle planet, DcAppVec3 direc
     return true;
 }
 
-DcAppPlanetViewHandle dc_app_planet_create_geodetic_view(_AppData *app_data, DcAppPlanetHandle planet, uint32_t width, uint32_t height) {
-    return _planet_create_view(app_data, planet, DC_APP_PLANET_CRS_GEODETIC, width, height);
+DcAppPlanetViewHandle dc_app_planet_create_geodetic_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height) {
+    return _planet_create_view(planet_ctx, planet, DC_APP_PLANET_CRS_GEODETIC, width, height);
 }
 
-DcAppPlanetViewHandle dc_app_planet_create_cartesian_view(_AppData *app_data, DcAppPlanetHandle planet, uint32_t width, uint32_t height) {
-    return _planet_create_view(app_data, planet, DC_APP_PLANET_CRS_CARTESIAN, width, height);
+DcAppPlanetViewHandle dc_app_planet_create_cartesian_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height) {
+    return _planet_create_view(planet_ctx, planet, DC_APP_PLANET_CRS_CARTESIAN, width, height);
 }
 
 bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader) {
@@ -249,20 +363,44 @@ bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vert
     const char *fragment_path = NULL;
 
     if (vertex_shader && vertex_shader[0] != '\0') {
-        if (!_planet_file_path_to_vfs(view->app_data, vertex_shader, vertex_vfs, sizeof(vertex_vfs))) return false;
+        if (!_planet_file_path_to_vfs(view->owner, vertex_shader, vertex_vfs, sizeof(vertex_vfs))) return false;
         vertex_path = vertex_vfs;
     }
     if (fragment_shader && fragment_shader[0] != '\0') {
-        if (!_planet_file_path_to_vfs(view->app_data, fragment_shader, fragment_vfs, sizeof(fragment_vfs))) return false;
+        if (!_planet_file_path_to_vfs(view->owner, fragment_shader, fragment_vfs, sizeof(fragment_vfs))) return false;
         fragment_path = fragment_vfs;
     }
 
-    _ext_planet->set_shaders(view->view, vertex_path, fragment_path);
+    // The view owns copies because the planet extension retains both path pointers.
+    char *owned_vertex_path = NULL;
+    char *owned_fragment_path = NULL;
+    if (vertex_path) {
+        const size_t size = strlen(vertex_path) + 1;
+        owned_vertex_path = PL_ALLOC(size);
+        if (!owned_vertex_path) return false;
+        memcpy(owned_vertex_path, vertex_path, size);
+    }
+    if (fragment_path) {
+        const size_t size = strlen(fragment_path) + 1;
+        owned_fragment_path = PL_ALLOC(size);
+        if (!owned_fragment_path) {
+            if (owned_vertex_path) PL_FREE(owned_vertex_path);
+            return false;
+        }
+        memcpy(owned_fragment_path, fragment_path, size);
+    }
+
+    _ext_planet->set_shaders(view->view, owned_vertex_path, owned_fragment_path);
+
+    if (view->vertex_shader_path) PL_FREE(view->vertex_shader_path);
+    if (view->fragment_shader_path) PL_FREE(view->fragment_shader_path);
+    view->vertex_shader_path   = owned_vertex_path;
+    view->fragment_shader_path = owned_fragment_path;
     return true;
 }
 
-DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(_AppData *app_data, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing) {
-    if (!app_data) return NULL;
+DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(DcAppPlanetContext *planet_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing) {
+    if (!planet_ctx) return NULL;
     if (crs != DC_APP_PLANET_CRS_GEODETIC && crs != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
     if (max_points < 2) max_points = 2;
     if (point_spacing < 0.0f) point_spacing = 0.0f;
@@ -270,11 +408,10 @@ DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(_AppData *app_data
     DcAppPlanetBreadcrumbsHandle breadcrumbs = (DcAppPlanetBreadcrumbsHandle)PL_ALLOC(sizeof(*breadcrumbs));
     if (!breadcrumbs) return NULL;
     memset(breadcrumbs, 0, sizeof(*breadcrumbs));
-    breadcrumbs->app_data = app_data;
     breadcrumbs->crs = crs;
     breadcrumbs->max_points = max_points;
     breadcrumbs->point_spacing = point_spacing;
-    sbpush(app_data->sb_planet_breadcrumbs, breadcrumbs);
+    sbpush(planet_ctx->sb_breadcrumbs, breadcrumbs);
     return breadcrumbs;
 }
 
@@ -302,12 +439,12 @@ DcAppPlanetBreadcrumbsPoints dc_app_planet_get_breadcrumbs_points(DcAppPlanetBre
     };
 }
 
-DcAppPlanetGeojsonHandle dc_app_planet_load_geojson(_AppData *app_data, const char *path) {
+DcAppPlanetGeojsonHandle dc_app_planet_load_geojson(DcAppPlanetContext *planet_ctx, const char *path) {
     char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_absolute(app_data, path, absolute_path, sizeof(absolute_path))) return NULL;
+    if (!_planet_file_path_to_absolute(planet_ctx, path, absolute_path, sizeof(absolute_path))) return NULL;
 
-    DcGeojsonHandle geojson = dc_geojson_load(absolute_path);
-    if (geojson.index == DC_GEOJSON_UNDEFINED) return NULL;
+    DcGeojson *geojson = dc_geojson_load(absolute_path);
+    if (!geojson) return NULL;
     if (dc_geojson_feature_count(geojson) == 0) {
         dc_geojson_free(geojson);
         return NULL;
@@ -318,51 +455,67 @@ DcAppPlanetGeojsonHandle dc_app_planet_load_geojson(_AppData *app_data, const ch
         dc_geojson_free(geojson);
         return NULL;
     }
-    handle->app_data = app_data;
     handle->geojson = geojson;
-    sbpush(app_data->sb_planet_geojsons, handle);
+    sbpush(planet_ctx->sb_geojsons, handle);
     return handle;
 }
 
-void dc_app_planet_free_wrappers(_AppData *app_data) {
-    if (!app_data) return;
+uint32_t dc_app_planet_count(const DcAppPlanetContext *planet_ctx) {
+    return planet_ctx ? (uint32_t)sbcount(planet_ctx->sb_planet_handles) : 0;
+}
 
-    for (int i = 0; i < sbcount(app_data->sb_planet_geojsons); i++) {
-        DcAppPlanetGeojsonHandle geojson = app_data->sb_planet_geojsons[i];
-        if (!geojson) continue;
-        dc_geojson_free(geojson->geojson);
-        PL_FREE(geojson);
-    }
-    sbfree(app_data->sb_planet_geojsons);
+uint32_t dc_app_planet_view_count(const DcAppPlanetContext *planet_ctx) {
+    return planet_ctx ? (uint32_t)sbcount(planet_ctx->sb_view_handles) : 0;
+}
 
-    for (int i = 0; i < sbcount(app_data->sb_planet_breadcrumbs); i++) {
-        DcAppPlanetBreadcrumbsHandle breadcrumbs = app_data->sb_planet_breadcrumbs[i];
-        if (!breadcrumbs) continue;
-        sbfree(breadcrumbs->sb_points);
-        PL_FREE(breadcrumbs);
-    }
-    sbfree(app_data->sb_planet_breadcrumbs);
+DcAppPlanetHandle dc_app_planet_at(const DcAppPlanetContext *planet_ctx, uint32_t index) {
+    if (!planet_ctx || index >= (uint32_t)sbcount(planet_ctx->sb_planet_handles)) return NULL;
+    return planet_ctx->sb_planet_handles[index];
+}
 
-    // cleans up every planet view created by the shared planet subsystem.
-    for (int i = 0; i < sbcount(app_data->sb_planet_view_handles); i++) {
-        DcAppPlanetViewHandle view = app_data->sb_planet_view_handles[i];
-        if (!view) continue;
-        if (view->view) _ext_planet->cleanup_view(view->view);
-        PL_FREE(view);
-    }
-    sbfree(app_data->sb_planet_view_handles);
+DcAppPlanetViewHandle dc_app_planet_view_at(const DcAppPlanetContext *planet_ctx, uint32_t index) {
+    if (!planet_ctx || index >= (uint32_t)sbcount(planet_ctx->sb_view_handles)) return NULL;
+    return planet_ctx->sb_view_handles[index];
+}
 
-    // cleans up every planet created by the shared planet subsystem.
-    for (int i = 0; i < sbcount(app_data->sb_planet_handles); i++) {
-        DcAppPlanetHandle planet = app_data->sb_planet_handles[i];
-        if (!planet) continue;
-        if (planet->planet) _ext_planet->cleanup_planet(planet->planet);
-        if (planet->id) PL_FREE(planet->id);
-        PL_FREE(planet);
-    }
-    sbfree(app_data->sb_planet_handles);
-    sbfree(app_data->sb_planet_views);
-    sbfree(app_data->sb_planets);
+uint8_t dc_app_planet_index(DcAppPlanetHandle planet) {
+    return planet ? planet->index : 0;
+}
+
+uint8_t dc_app_planet_view_index(DcAppPlanetViewHandle view) {
+    return view ? view->index : 0;
+}
+
+uint32_t dc_app_planet_view_width(DcAppPlanetViewHandle view) {
+    return view ? view->width : 0;
+}
+
+uint32_t dc_app_planet_view_height(DcAppPlanetViewHandle view) {
+    return view ? view->height : 0;
+}
+
+double dc_app_planet_radius(DcAppPlanetHandle planet) {
+    return planet ? planet->radius : 0.0;
+}
+
+const DcGeoCrsGeodetic *dc_app_planet_geodetic_crs(DcAppPlanetHandle planet) {
+    return planet ? &planet->geodetic_crs : NULL;
+}
+
+const DcGeoCrsCartesian *dc_app_planet_cartesian_crs(DcAppPlanetHandle planet) {
+    return planet ? &planet->cartesian_crs : NULL;
+}
+
+const DcGeoCrsPolarStereo *dc_app_planet_polar_crs(DcAppPlanetHandle planet) {
+    return planet ? &planet->polar_crs : NULL;
+}
+
+bool dc_app_planet_uses_legacy_projected_origin(DcAppPlanetHandle planet) {
+    return planet ? planet->legacy_projected_origin : false;
+}
+
+DcGeojson *dc_app_planet_geojson(DcAppPlanetGeojsonHandle geojson) {
+    return geojson ? geojson->geojson : NULL;
 }
 
 plPlanet *dc_app_planet_pl(DcAppPlanetHandle planet) {
@@ -415,21 +568,17 @@ static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetC
     return sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
-static void _planet_ensure_initialized(_AppData *app_data) {
-    if (!app_data || app_data->planet_ext_initialized) return;
+static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx) {
+    if (!planet_ctx || planet_ctx->extension_initialized) return;
 
     plPlanetExtInit init = {0};
     init.ptDevice = _ext_starter->get_device();
     _ext_planet->initialize(init);
-    app_data->planet_ext_initialized = true;
-
-    // keeps xml lookup arrays in their initialized one-based shape.
-    sbpush(app_data->sb_planets, NULL);
-    sbpush(app_data->sb_planet_views, NULL);
+    planet_ctx->extension_initialized = true;
 }
 
-static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size) {
-    if (!app_data || !path || path[0] == '\0' || !out || out_size == 0) return false;
+static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size) {
+    if (!planet_ctx || !path || path[0] == '\0' || !out || out_size == 0) return false;
 
     char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     strncpy(cleaned, path, sizeof(cleaned) - 1);
@@ -444,7 +593,7 @@ static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char 
 
     char abs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     if (dc_utils_is_relative_path(cleaned)) {
-        const char *base_dir = app_data->config ? app_data->config->config_dir_path : NULL;
+        const char *base_dir = planet_ctx->asset_root;
         if (!base_dir || base_dir[0] == '\0') return false;
         char joined[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
         if (dc_utils_join_paths(base_dir, cleaned, joined, sizeof(joined)) != 0) return false;
@@ -456,6 +605,7 @@ static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char 
     char dir[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     dc_utils_get_directory(abs_path, dir, sizeof(dir));
 
+    // Mount the containing directory under a stable hash for VFS-based planet loading.
     char hash[32] = {0};
     dc_utils_string_to_hash(dir, hash, sizeof(hash));
 
@@ -472,8 +622,8 @@ static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char 
     return _ext_vfs->does_file_exist(out);
 }
 
-static bool _planet_file_path_to_absolute(_AppData *app_data, const char *path, char *out, size_t out_size) {
-    if (!app_data || !path || path[0] == '\0' || !out || out_size == 0) return false;
+static bool _planet_file_path_to_absolute(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size) {
+    if (!planet_ctx || !path || path[0] == '\0' || !out || out_size == 0) return false;
 
     char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     strncpy(cleaned, path, sizeof(cleaned) - 1);
@@ -482,7 +632,7 @@ static bool _planet_file_path_to_absolute(_AppData *app_data, const char *path, 
 
     char joined[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     if (dc_utils_is_relative_path(cleaned)) {
-        const char *base_dir = app_data->config ? app_data->config->config_dir_path : NULL;
+        const char *base_dir = planet_ctx->asset_root;
         if (!base_dir || base_dir[0] == '\0') return false;
         if (dc_utils_join_paths(base_dir, cleaned, joined, sizeof(joined)) != 0) return false;
     } else {
@@ -492,11 +642,11 @@ static bool _planet_file_path_to_absolute(_AppData *app_data, const char *path, 
     return dc_utils_canonicalize_path(joined, out, out_size) == 0;
 }
 
-static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height) {
-    if (!app_data || !planet || !planet->planet) return NULL;
+static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height) {
+    if (!planet_ctx || !planet || !planet->planet) return NULL;
 
-    _planet_ensure_initialized(app_data);
-    if (sbcount(app_data->sb_planet_views) > UINT8_MAX) {
+    _planet_ensure_initialized(planet_ctx);
+    if (sbcount(planet_ctx->sb_views) > UINT8_MAX) {
         DC_LOG_ERROR("PlanetView", "Too many planet views; dcapp supports at most %u planet view handles", UINT8_MAX);
         return NULL;
     }
@@ -512,15 +662,15 @@ static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanet
 
     DcAppPlanetViewHandle handle = (DcAppPlanetViewHandle)PL_ALLOC(sizeof(*handle));
     memset(handle, 0, sizeof(*handle));
-    handle->app_data = app_data;
+    handle->owner = planet_ctx;
     handle->planet = planet;
     handle->view = view;
     handle->crs = crs;
     handle->width = view_init.uOutputWidth;
     handle->height = view_init.uOutputHeight;
-    sbpush(app_data->sb_planet_views, view);
-    handle->index = (uint8_t)(sbcount(app_data->sb_planet_views) - 1);
-    sbpush(app_data->sb_planet_view_handles, handle);
+    sbpush(planet_ctx->sb_views, view);
+    handle->index = (uint8_t)(sbcount(planet_ctx->sb_views) - 1);
+    sbpush(planet_ctx->sb_view_handles, handle);
     return handle;
 }
 
@@ -638,7 +788,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
         return false;
     }
 
-    char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
+    char json_dir[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_get_directory(json_path, json_dir, sizeof(json_dir));
 
     for (uint32_t t = 0; t < tile_count; t++) {
@@ -675,7 +825,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
 
         char chunk_file[256] = {0};
         pl_json_string_member(tile_obj, "file", chunk_file, sizeof(chunk_file));
-        char abs_chunk_path[DC_VALUE_STRING_BUFFER_SIZE] = {0};
+        char abs_chunk_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
         if (dc_utils_is_relative_path(chunk_file))
             dc_utils_join_paths(json_dir, chunk_file, abs_chunk_path, sizeof(abs_chunk_path));
         else

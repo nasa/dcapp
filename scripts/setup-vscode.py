@@ -16,7 +16,6 @@ vscode_dir = os.path.join(project_root, ".vscode")
 # include paths relative to project root (shared across all platforms)
 common_includes = [
     "apps",
-    "apps/dcapp",
     "src",
     "extensions",
     "shaders",
@@ -82,14 +81,20 @@ def existing_relative_paths(paths):
     return result
 
 def discover_sample_logic_includes():
-    """Find sample logic directories, even before generated headers exist."""
+    """Find sample logic directories that still contain source files."""
     result = []
     samples_dir = os.path.join(project_root, "samples")
     if not os.path.isdir(samples_dir):
         return result
     for entry in sorted(os.listdir(samples_dir)):
         logic_dir = os.path.join(samples_dir, entry, "logic")
-        if os.path.isdir(logic_dir):
+        if not os.path.isdir(logic_dir):
+            continue
+        has_source = any(
+            name.endswith((".c", ".cc", ".cpp", ".cxx"))
+            for name in os.listdir(logic_dir)
+        )
+        if has_source:
             result.append(f"samples/{entry}/logic")
     return result
 
@@ -324,40 +329,53 @@ else:
     validate_command = "${workspaceFolder}/bin/dcapp-validate.sh"
     genheader_command = "${workspaceFolder}/bin/dcapp-genheader.sh"
 
+task_entries = [
+    {
+        "label": "build",
+        "type": "shell",
+        "command": build_command,
+        "group": {"kind": "build", "isDefault": True},
+        "problemMatcher": "$gcc",
+    },
+    {
+        "label": "build debug",
+        "type": "shell",
+        "command": build_command,
+        "args": ["-c", "debug"],
+        "group": "build",
+        "problemMatcher": "$gcc",
+    },
+    {
+        "label": "validate selected sample",
+        "type": "shell",
+        "command": validate_command,
+        "args": ["${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
+        "group": "test",
+        "problemMatcher": [],
+    },
+    {
+        "label": "generate selected sample logic header",
+        "type": "shell",
+        "command": genheader_command,
+        "args": ["${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
+        "problemMatcher": [],
+    },
+]
+
+# The generated API fixture uses a POSIX shell runner. It remains part of the
+# normal Unix build and is also exposed separately for quick iteration.
+if plat != "Windows":
+    task_entries.append({
+        "label": "check generated logic API",
+        "type": "shell",
+        "command": "${workspaceFolder}/scripts/check-logic-api.sh",
+        "group": "test",
+        "problemMatcher": "$gcc",
+    })
+
 tasks = {
     "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build",
-            "type": "shell",
-            "command": build_command,
-            "group": {"kind": "build", "isDefault": True},
-            "problemMatcher": "$gcc",
-        },
-        {
-            "label": "build debug",
-            "type": "shell",
-            "command": build_command,
-            "args": ["-c", "debug"],
-            "group": "build",
-            "problemMatcher": "$gcc",
-        },
-        {
-            "label": "validate selected sample",
-            "type": "shell",
-            "command": validate_command,
-            "args": ["${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
-            "group": "test",
-            "problemMatcher": [],
-        },
-        {
-            "label": "generate selected sample logic header",
-            "type": "shell",
-            "command": genheader_command,
-            "args": ["${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
-            "problemMatcher": [],
-        },
-    ],
+    "tasks": task_entries,
     "inputs": [
         {
             "id": "sampleName",

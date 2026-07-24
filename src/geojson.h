@@ -8,11 +8,7 @@
 // types
 //-----------------------------------------------------------------------------
 
-#define DC_GEOJSON_UNDEFINED 0
-
-typedef struct DcGeojsonHandle {
-    uint8_t index;
-} DcGeojsonHandle;
+typedef struct DcGeojson DcGeojson;
 
 typedef enum {
     DC_GEOJSON_FEATURE_UNDEFINED,
@@ -91,10 +87,10 @@ struct DcGeojsonFeature {
 extern "C" {
 #endif
 
-DcGeojsonHandle         dc_geojson_load(const char *filepath);
-void                    dc_geojson_free(DcGeojsonHandle geojson);
-uint32_t                dc_geojson_feature_count(DcGeojsonHandle geojson);
-const DcGeojsonFeature *dc_geojson_feature(DcGeojsonHandle geojson, uint32_t index);
+DcGeojson              *dc_geojson_load(const char *filepath);
+void                    dc_geojson_free(DcGeojson *geojson);
+uint32_t                dc_geojson_feature_count(DcGeojson *geojson);
+const DcGeojsonFeature *dc_geojson_feature(DcGeojson *geojson, uint32_t index);
 
 #ifdef __cplusplus
 }

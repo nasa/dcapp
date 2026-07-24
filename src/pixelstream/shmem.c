@@ -22,7 +22,9 @@ typedef struct {
 
 #define _SHM_HEADER_SIZE 1024 // safe size for shmget
 
-typedef struct {
+struct DcPsShmemSource {
+    DcPsShmemContext *context;
+
     // config
     char *filepath;
 
@@ -43,26 +45,36 @@ typedef struct {
     uint32_t       height;
     size_t         alloc_size;
 
-} _Context;
+};
+
+struct DcPsShmemContext {
+    // Sources are separate allocations so registry growth cannot invalidate their addresses.
+    DcPsShmemSource **sb_sources;
+};
 
 #define _MAX_SOURCES      10
 #define _STALE_THRESHOLD 300 // frames without new data before reconnect (~5s at 60fps)
 
-// static vars
-static _Context *_sb_contexts = NULL;
-
 // static functions
-static int  _try_attach_shm(_Context *ctx);
-static int  _read_frame(_Context *ctx);
-static void _detach_shm(_Context *ctx);
+static int  _try_attach_shm(DcPsShmemSource *ctx);
+static int  _read_frame(DcPsShmemSource *ctx);
+static void _detach_shm(DcPsShmemSource *ctx);
+static void _source_cleanup(DcPsShmemSource *ctx);
 
-void dc_ps_shmem_init(void) {
-    sbgrow(_sb_contexts, _MAX_SOURCES, sizeof(*_sb_contexts));
+DcPsShmemContext *dc_ps_shmem_context_create(void) {
+    DcPsShmemContext *context = calloc(1, sizeof(DcPsShmemContext));
+    if (!context) return NULL;
+
+    sbgrow(context->sb_sources, _MAX_SOURCES, sizeof(*context->sb_sources));
+    return context;
 }
 
-void dc_ps_shmem_update(void) {
-    for (int ii = 0; ii < sbcount(_sb_contexts); ii++) {
-        _Context *ctx = &_sb_contexts[ii];
+void dc_ps_shmem_update(DcPsShmemContext *context) {
+    if (!context) return;
+
+    for (int ii = 0; ii < sbcount(context->sb_sources); ii++) {
+        DcPsShmemSource *ctx = context->sb_sources[ii];
+        if (!ctx) continue;
 
         ctx->has_new_data = false;
 
@@ -78,60 +90,88 @@ void dc_ps_shmem_update(void) {
     }
 }
 
-void dc_ps_shmem_cleanup(void) {
-    for (int ii = 0; ii < sbcount(_sb_contexts); ii++) {
-        _Context *ctx = &_sb_contexts[ii];
-        _detach_shm(ctx);
-        free(ctx->filepath);
-        free(ctx->pixels);
+void dc_ps_shmem_context_destroy(DcPsShmemContext *context) {
+    if (!context) return;
+
+    for (int ii = 0; ii < sbcount(context->sb_sources); ii++) {
+        DcPsShmemSource *ctx = context->sb_sources[ii];
+        if (!ctx) continue;
+        _source_cleanup(ctx);
+        free(ctx);
     }
-    sbfree(_sb_contexts);
-    _sb_contexts = NULL;
+    sbfree(context->sb_sources);
+    free(context);
 }
 
-DcPsShmemHandle dc_ps_shmem_add_source(const char *filepath) {
-    _Context ctx = {0};
+DcPsShmemSource *dc_ps_shmem_add_source(DcPsShmemContext *context, const char *filepath) {
+    if (!context) return NULL;
 
-    ctx.filepath = strdup(filepath);
-    if (!ctx.filepath) {
+    DcPsShmemSource *ctx = (DcPsShmemSource *)malloc(sizeof(DcPsShmemSource));
+    if (!ctx) return NULL;
+    memset(ctx, 0, sizeof(DcPsShmemSource));
+
+    ctx->filepath = strdup(filepath);
+    if (!ctx->filepath) {
         DC_LOG_ERROR("Shmem", "Failed to allocate filepath");
-        DcPsShmemHandle handle = {0};
-        return handle;
+        free(ctx);
+        return NULL;
     }
-    ctx.shm          = NULL;
-    ctx.connected    = false;
-    ctx.has_new_data = false;
-    ctx.buffercount  = 0;
-    ctx.pixels       = NULL;
-    ctx.width        = 0;
-    ctx.height       = 0;
-    ctx.alloc_size   = 0;
-
-    sbpush(_sb_contexts, ctx);
-
-    DcPsShmemHandle handle = {0};
-    handle._index          = (uint8_t)(sbcount(_sb_contexts) - 1);
-    return handle;
-}
-
-void dc_ps_shmem_remove_source(DcPsShmemHandle handle) {
-    _Context *ctx = &_sb_contexts[handle._index];
-    _detach_shm(ctx);
-    free(ctx->pixels);
-    ctx->pixels       = NULL;
+    ctx->shm          = NULL;
+    ctx->connected    = false;
     ctx->has_new_data = false;
+    ctx->buffercount  = 0;
+    ctx->pixels       = NULL;
+    ctx->width        = 0;
+    ctx->height       = 0;
+    ctx->alloc_size   = 0;
+    ctx->context      = context;
+
+    bool stored = false;
+    for (int ii = 0; ii < sbcount(context->sb_sources); ii++) {
+        if (!context->sb_sources[ii]) {
+            context->sb_sources[ii] = ctx;
+            stored = true;
+            break;
+        }
+    }
+    if (!stored)
+        sbpush(context->sb_sources, ctx);
+
+    return ctx;
 }
 
-bool dc_ps_shmem_is_connected(DcPsShmemHandle handle) {
-    return _sb_contexts[handle._index].connected;
+void dc_ps_shmem_remove_source(DcPsShmemSource *source) {
+    DcPsShmemSource *ctx = source;
+    if (!ctx) return;
+
+    DcPsShmemContext *context = ctx->context;
+    if (context) {
+        for (int ii = 0; ii < sbcount(context->sb_sources); ii++) {
+            if (context->sb_sources[ii] == ctx) {
+                context->sb_sources[ii] = NULL;
+                break;
+            }
+        }
+    }
+
+    _source_cleanup(ctx);
+    free(ctx);
 }
 
-bool dc_ps_shmem_has_new_data(DcPsShmemHandle handle) {
-    return _sb_contexts[handle._index].has_new_data;
+bool dc_ps_shmem_is_connected(DcPsShmemSource *source) {
+    return source && source->connected;
 }
 
-void dc_ps_shmem_get_data(DcPsShmemHandle handle, unsigned char *out_data, size_t out_data_size, size_t *out_size) {
-    _Context *ctx = &_sb_contexts[handle._index];
+bool dc_ps_shmem_has_new_data(DcPsShmemSource *source) {
+    return source && source->has_new_data;
+}
+
+void dc_ps_shmem_get_data(DcPsShmemSource *source, unsigned char *out_data, size_t out_data_size, size_t *out_size) {
+    DcPsShmemSource *ctx = source;
+    if (!ctx) {
+        *out_size = 0;
+        return;
+    }
 
     size_t frame_size = (size_t)ctx->width * ctx->height * 4; // RGBA
 
@@ -149,19 +189,19 @@ void dc_ps_shmem_get_data(DcPsShmemHandle handle, unsigned char *out_data, size_
     }
 }
 
-uint32_t dc_ps_shmem_get_width(DcPsShmemHandle handle) {
-    return _sb_contexts[handle._index].width;
+uint32_t dc_ps_shmem_get_width(DcPsShmemSource *source) {
+    return source ? source->width : 0;
 }
 
-uint32_t dc_ps_shmem_get_height(DcPsShmemHandle handle) {
-    return _sb_contexts[handle._index].height;
+uint32_t dc_ps_shmem_get_height(DcPsShmemSource *source) {
+    return source ? source->height : 0;
 }
 
 // ----------------------------------------------------------------------------
 // Static functions
 // ----------------------------------------------------------------------------
 
-static int _try_attach_shm(_Context *ctx) {
+static int _try_attach_shm(DcPsShmemSource *ctx) {
     // Check if file exists
     FILE *fp = fopen(ctx->filepath, "r");
     if (!fp) {
@@ -194,7 +234,7 @@ static int _try_attach_shm(_Context *ctx) {
     return 0;
 }
 
-static void _detach_shm(_Context *ctx) {
+static void _detach_shm(DcPsShmemSource *ctx) {
     if (ctx->shm) {
         shmdt(ctx->shm);
         ctx->shm = NULL;
@@ -204,7 +244,7 @@ static void _detach_shm(_Context *ctx) {
     ctx->stale_frames = 0;
 }
 
-static int _read_frame(_Context *ctx) {
+static int _read_frame(DcPsShmemSource *ctx) {
     uint32_t on = 1, off = 0;
 
     ctx->connected = true;
@@ -263,6 +303,12 @@ static int _read_frame(_Context *ctx) {
     memcpy(&ctx->shm->reading, &off, 4);
 
     return ctx->has_new_data ? 1 : 0;
+}
+
+static void _source_cleanup(DcPsShmemSource *ctx) {
+    _detach_shm(ctx);
+    free(ctx->filepath);
+    free(ctx->pixels);
 }
 
 #else

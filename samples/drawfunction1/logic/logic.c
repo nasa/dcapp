@@ -85,7 +85,12 @@ void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, vo
                 .a = 1.0f,
             },
             .size = 18.0f,
-        }, dc_place_center(), NULL);
+        }, (DcPlacement){
+            .parent_align_x = DC_ALIGN_CENTER,
+            .parent_align_y = DC_ALIGN_MIDDLE,
+            .local_align_x = DC_ALIGN_CENTER,
+            .local_align_y = DC_ALIGN_MIDDLE,
+        }, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -198,7 +203,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
         dc_draw->line(draw_ctx, horizontal_start, horizontal_end, axis_stroke);
         dc_draw->line(draw_ctx, vertical_start, vertical_end, axis_stroke);
 
-        DcPlacement spin = dc_place_center();
+        DcPlacement spin = {
+            .parent_align_x = DC_ALIGN_CENTER,
+            .parent_align_y = DC_ALIGN_MIDDLE,
+            .local_align_x = DC_ALIGN_CENTER,
+            .local_align_y = DC_ALIGN_MIDDLE,
+        };
         spin.pivot_align_x = DC_ALIGN_CENTER;
         spin.pivot_align_y = DC_ALIGN_MIDDLE;
         spin.rotation      = t * 25.0f;
@@ -209,7 +219,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .a = 0.95f,
         }, spin, NULL);
 
-        DcPlacement left = dc_place_left();
+        DcPlacement left = {
+            .parent_align_x = DC_ALIGN_LEFT,
+            .parent_align_y = DC_ALIGN_MIDDLE,
+            .local_align_x = DC_ALIGN_LEFT,
+            .local_align_y = DC_ALIGN_MIDDLE,
+        };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){18.0f, 0.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
             .r = 0.70f,
             .g = 0.90f,
@@ -217,7 +232,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .a = 0.90f,
         }, left, NULL);
 
-        DcPlacement right = dc_place_right();
+        DcPlacement right = {
+            .parent_align_x = DC_ALIGN_RIGHT,
+            .parent_align_y = DC_ALIGN_MIDDLE,
+            .local_align_x = DC_ALIGN_RIGHT,
+            .local_align_y = DC_ALIGN_MIDDLE,
+        };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){-18.0f, 0.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
             .r = 0.70f,
             .g = 0.90f,
@@ -225,7 +245,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .a = 0.90f,
         }, right, NULL);
 
-        DcPlacement top = dc_place_top();
+        DcPlacement top = {
+            .parent_align_x = DC_ALIGN_CENTER,
+            .parent_align_y = DC_ALIGN_TOP,
+            .local_align_x = DC_ALIGN_CENTER,
+            .local_align_y = DC_ALIGN_TOP,
+        };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, -18.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
             .r = 0.70f,
             .g = 0.90f,
@@ -233,7 +258,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .a = 0.90f,
         }, top, NULL);
 
-        DcPlacement bottom = dc_place_bottom();
+        DcPlacement bottom = {
+            .parent_align_x = DC_ALIGN_CENTER,
+            .parent_align_y = DC_ALIGN_BOTTOM,
+            .local_align_x = DC_ALIGN_CENTER,
+            .local_align_y = DC_ALIGN_BOTTOM,
+        };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 18.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
             .r = 0.70f,
             .g = 0.90f,

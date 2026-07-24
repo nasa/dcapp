@@ -304,7 +304,7 @@
                 <PlanetText Latitude="-89.67" Longitude="129.78" HeightAboveTerrain="50000" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton 21 km</PlanetText>
             </PlanetView>
 
-            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">Logic: local push/pop</Text>
+            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">Logic: planet container</Text>
             <Container X="535" Y="300" Width="450" Height="450" VirtualWidth="450" VirtualHeight="450">
                 <DrawFunction Name="draw_logic_planet_view"/>
             </Container>

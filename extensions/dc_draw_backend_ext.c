@@ -32,6 +32,8 @@ Index of this file:
 #include "pl_stats_ext.h"
 #include "pl_log_ext.h"
 
+static const dcDrawI*     gptDraw   = NULL;
+
 #ifdef PL_UNITY_BUILD
     #include "pl_unity_ext.inc"
 #else
@@ -48,7 +50,6 @@ Index of this file:
 
     static const plGraphicsI* gptGfx    = NULL;
     static const plStatsI*    gptStats  = NULL;
-    static const dcDrawI*     gptDraw   = NULL;
     static const plShaderI*   gptShader = NULL;
     static const plLogI*      gptLog    = NULL;
     static const plIOI*       gptIOI    = NULL;

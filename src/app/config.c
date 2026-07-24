@@ -1,9 +1,11 @@
 #include "config.h"
 #include "elem.h"
-#include "enums.h"
+#include "draw_types.h"
+#include "node_types.h"
+#include "pixelstream_types.h"
+#include "planet_types.h"
 #include "libxml/tree.h"
-#include "lookup.h"
-#include "../value.h"
+#include "value.h"
 #include "../utils/env.h"
 #include "../utils/file.h"
 #include "../utils/log.h"
@@ -24,7 +26,18 @@ static const _StyleIndex _STYLE_INDEX_UNDEFINED = 0;
 static const _StyleIndex _STYLE_INDEX_DEFAULT   = 1;
 
 // const utils
+typedef int              _ConstIndex;
+static const _ConstIndex _CONST_INDEX_UNDEFINED = 0;
 #define _CONST_FIRST_INDEX 1
+
+// Warning suppression flags (used by SuppressWarnings attribute on DCAPP element)
+enum {
+    _SUPPRESS_NONE             = 0,
+    _SUPPRESS_MISSING_CONSTANT = 1 << 0,
+    _SUPPRESS_MISSING_VARIABLE = 1 << 1,
+    _SUPPRESS_MISSING_STYLE    = 1 << 2,
+    _SUPPRESS_STYLE_OVERRIDE   = 1 << 3,
+};
 
 typedef struct __ElemStyle {
     xmlNodePtr xml_nodes[DC_APP_ELEM_TYPE__COUNT];
@@ -51,27 +64,41 @@ typedef struct __ConfigContext {
     _ElemStyle *sb_styles;
 
 } _ConfigContext;
-_ConfigContext *_sb_contexts;
+
+struct DcAppConfig {
+    _ConfigContext context;
+
+    // xml pointer
+    xmlDocPtr xml_doc;
+    bool      xml_doc_is_cleaned;
+
+    // filepaths
+    char *dcapp_dir_path;
+    char *config_file_path;
+    char *config_dir_path;
+    char *cache_dir_path;
+};
 
 // constant functions
 static void             _register_const_by_name(_ConfigContext *context, const char *name, const char *new_value, bool is_immutable);
 static const char      *_get_const_by_name(_ConfigContext *context, const char *name);
 static void             _dereference_constants(_ConfigContext *context, const char *in, char *out, size_t out_size);
-static DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name);
-static void             _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new_value);
+static _ConstIndex      _get_const_index(_ConfigContext *context, const char *name);
+static void             _set_const(_ConfigContext *context, _ConstIndex index, const char *new_value);
 static void             _add_const(_ConfigContext *context, const char *name, const char *value, bool is_immutable);
 static void             _add_const_int(_ConfigContext *context, const char *name, int value_int, bool is_immutable);
 
 // style functions
-static DcAppStyleIndex _get_style_index(_ConfigContext *context, const char *name);
-static void            _add_style(_ConfigContext *context, const char *name, DcAppElemType elem_type, xmlNodePtr xml_node);
-static xmlChar        *_get_style_attr(_ConfigContext *context, int style_index, DcAppElemType elem_type, const char *name);
-static xmlChar        *_get_style_content(_ConfigContext *context, int style_index, DcAppElemType elem_type);
+static _StyleIndex _get_style_index(_ConfigContext *context, const char *name);
+static void        _add_style(_ConfigContext *context, const char *name, DcAppElemType elem_type, xmlNodePtr xml_node);
+static xmlChar    *_get_style_attr(_ConfigContext *context, int style_index, DcAppElemType elem_type, const char *name);
+static xmlChar    *_get_style_content(_ConfigContext *context, int style_index, DcAppElemType elem_type);
 
 // xml utils
 static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
 static void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
 static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
+static void _save_to_file(DcAppConfig *config, const char *filepath);
 
 // arg utils
 static char *_unquote(const char *str);
@@ -373,21 +400,19 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
         free(arg_value);
     }
 
-    // add to contexts
-    sbpush(_sb_contexts, context);
-    config->_index = sbcount(_sb_contexts) - 1;
+    config->context = context;
 
     return config;
 }
 
-void dc_app_config_cleanup(DcAppConfig *config) {
+void dc_app_config_destroy(DcAppConfig *config) {
     free(config->config_file_path);
     free(config->config_dir_path);
     free(config->dcapp_dir_path);
     free(config->cache_dir_path);
     xmlFreeDoc(config->xml_doc);
 
-    _ConfigContext *context = &(_sb_contexts[config->_index]);
+    _ConfigContext *context = &config->context;
     sbfree(context->sb_style_name_offsets);
     sbfree(context->sb_style_names);
 
@@ -410,19 +435,19 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     free(config);
 }
 
-void dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup) {
+void dc_app_config_preprocess(DcAppConfig *config) {
 
-    _ConfigContext *context = &(_sb_contexts[config->_index]);
+    _ConfigContext *context = &config->context;
 
     // get root element
     xmlNodePtr node = xmlDocGetRootElement(config->xml_doc);
     if (node == NULL) {
-        DC_LOG_ERROR("Config", "dc_app_config_preprocess_xml(): unable to get root element of config file");
+        DC_LOG_ERROR("Config", "dc_app_config_preprocess(): unable to get root element of config file");
     }
 
     // verify root node is valid
-    if (dc_app_xml_node_to_elem_type(node) != DC_APP_ELEM_TYPE_DCAPP) {
-        DC_LOG_ERROR("Config", "dc_app_config_preprocess_xml(): configuration root element is not DCAPP");
+    if (dc_app_elem_type_from_xml_node(node) != DC_APP_ELEM_TYPE_DCAPP) {
+        DC_LOG_ERROR("Config", "dc_app_config_preprocess(): configuration root element is not DCAPP");
     }
 
     // parse SuppressWarnings attribute from DCAPP element
@@ -441,25 +466,40 @@ void dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup) {
             if (strcmp(token, "all") == 0) {
                 suppress_flags = ~0u; // all bits set
             } else if (strcmp(token, "missing-constants") == 0) {
-                suppress_flags |= DC_APP_SUPPRESS_MISSING_CONSTANT;
+                suppress_flags |= _SUPPRESS_MISSING_CONSTANT;
             } else if (strcmp(token, "missing-variables") == 0) {
-                suppress_flags |= DC_APP_SUPPRESS_MISSING_VARIABLE;
+                suppress_flags |= _SUPPRESS_MISSING_VARIABLE;
             } else if (strcmp(token, "missing-styles") == 0) {
-                suppress_flags |= DC_APP_SUPPRESS_MISSING_STYLE;
+                suppress_flags |= _SUPPRESS_MISSING_STYLE;
             } else if (strcmp(token, "style-overrides") == 0) {
-                suppress_flags |= DC_APP_SUPPRESS_STYLE_OVERRIDE;
+                suppress_flags |= _SUPPRESS_STYLE_OVERRIDE;
             }
             token = strtok(NULL, ",");
         }
         xmlFree(suppress_warnings_attr);
 
         context->suppress_warnings = suppress_flags;
-        dc_app_lookup_set_suppress_warnings(lookup, suppress_flags);
     }
 
     // clean XML file
     _preprocess_xml_node(context, node, config->config_dir_path);
     config->xml_doc_is_cleaned = true;
+}
+
+const char *dc_app_config_directory(const DcAppConfig *config) {
+    return config->config_dir_path;
+}
+
+const char *dc_app_config_root_directory(const DcAppConfig *config) {
+    return config->dcapp_dir_path;
+}
+
+xmlNodePtr dc_app_config_root(const DcAppConfig *config) {
+    return xmlDocGetRootElement(config->xml_doc);
+}
+
+bool dc_app_config_suppresses_missing_variable(const DcAppConfig *config) {
+    return (config->context.suppress_warnings & _SUPPRESS_MISSING_VARIABLE) != 0;
 }
 
 // Helper function to splice a node's children into its parent and free the wrapper node.
@@ -545,7 +585,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
     }
 
     // get element type
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(node);
+    DcAppElemType elem_type = dc_app_elem_type_from_xml_node(node);
 
     // dereference attributes/content
     _dereference_node_attrs_and_content(context, node);
@@ -555,9 +595,9 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
         xmlChar *style_name = xmlGetProp(node, BAD_CAST "Style");
         if (style_name) {
 
-            DcAppStyleIndex style_index = _get_style_index(context, (char *)style_name);
+            _StyleIndex style_index = _get_style_index(context, (char *)style_name);
 
-            if (style_index != DC_APP_STYLE_INDEX_UNDEFINED) {
+            if (style_index != _STYLE_INDEX_UNDEFINED) {
                 xmlNodePtr style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
 
                 if (style_xml_node) {
@@ -573,7 +613,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                     }
                 }
             } else {
-                if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_STYLE)) {
+                if (!(context->suppress_warnings & _SUPPRESS_MISSING_STYLE)) {
                     DC_LOG_WARN("Config", "_preprocess_xml_node(): style %s is undefined", (char *)style_name);
                 }
             }
@@ -822,7 +862,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 _dereference_node_attrs_and_content(context, orphan_child);
 
                 // add to styles
-                DcAppElemType child_type = dc_app_xml_node_to_elem_type(orphan_child);
+                DcAppElemType child_type = dc_app_elem_type_from_xml_node(orphan_child);
                 _add_style(context, style_name, child_type, orphan_child);
 
                 // increment
@@ -843,7 +883,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
             while (child) {
                 xmlNodePtr next = child->next;
                 if (child->type == XML_ELEMENT_NODE) {
-                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                    DcAppElemType child_type = dc_app_elem_type_from_xml_node(child);
                     if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
                         wrapper = NULL;
                     } else {
@@ -1046,7 +1086,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 while (child) {
                     xmlNodePtr next = child->next;
                     if (child->type == XML_ELEMENT_NODE) {
-                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        DcAppElemType child_type = dc_app_elem_type_from_xml_node(child);
                         if ((child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) && child_type != keep_type) {
                             xmlUnlinkNode(child);
                             xmlFreeNode(child);
@@ -1068,7 +1108,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 while (child) {
                     xmlNodePtr next = child->next;
                     if (child->type == XML_ELEMENT_NODE) {
-                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        DcAppElemType child_type = dc_app_elem_type_from_xml_node(child);
                         if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
                             _splice_children_into_parent_and_free_wrapper(child);
                         }
@@ -1198,10 +1238,10 @@ void dc_app_config_save_preprocessed(DcAppConfig *config, const char *output_nam
     }
     char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_join_paths(config->cache_dir_path, preprocessed_name, filepath, sizeof(filepath));
-    dc_app_config_save_to_file(config, filepath);
+    _save_to_file(config, filepath);
 }
 
-void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
+static void _save_to_file(DcAppConfig *config, const char *filepath) {
     FILE *f = fopen(filepath, "w");
     if (!f) return;
 
@@ -1215,7 +1255,7 @@ void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
     fclose(f);
 }
 
-static DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
+static _ConstIndex _get_const_index(_ConfigContext *context, const char *name) {
 
     for (int ii = _CONST_FIRST_INDEX; ii < sbcount(context->sb_const_name_offsets); ii++) {
         const char *lookup_name = &(context->sb_const_names[context->sb_const_name_offsets[ii]]);
@@ -1223,11 +1263,11 @@ static DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *na
             return ii;
         }
     }
-    return DC_APP_LOOKUP_INDEX_UNDEFINED;
+    return _CONST_INDEX_UNDEFINED;
 }
 
 // sets an existing constant
-static void _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new_value) {
+static void _set_const(_ConfigContext *context, _ConstIndex index, const char *new_value) {
 
     // set const value at index
     char **addr = &(context->sb_consts[index].val);
@@ -1260,8 +1300,8 @@ static void _add_const_int(_ConfigContext *context, const char *name, int value_
 
 // set a consts value
 static void _register_const_by_name(_ConfigContext *context, const char *name, const char *new_value, bool is_immutable) {
-    DcAppLookupIndex const_index = _get_const_index(context, name);
-    if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
+    _ConstIndex const_index = _get_const_index(context, name);
+    if (const_index == _CONST_INDEX_UNDEFINED) {
         _add_const(context, name, new_value, is_immutable);
     } else {
         if (context->sb_consts[const_index].is_immutable) {
@@ -1272,17 +1312,11 @@ static void _register_const_by_name(_ConfigContext *context, const char *name, c
     }
 }
 
-// set a consts value (public)
-void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name, const char *new_value, bool is_immutable) {
-    _ConfigContext *context = &(_sb_contexts[config->_index]);
-    _register_const_by_name(context, name, new_value, is_immutable);
-}
-
 // get a consts value
 static const char *_get_const_by_name(_ConfigContext *context, const char *name) {
-    DcAppLookupIndex const_index = _get_const_index(context, name);
-    if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        if (context->suppress_warnings & DC_APP_SUPPRESS_MISSING_CONSTANT) {
+    _ConstIndex const_index = _get_const_index(context, name);
+    if (const_index == _CONST_INDEX_UNDEFINED) {
+        if (context->suppress_warnings & _SUPPRESS_MISSING_CONSTANT) {
             return ""; // silently expand to nothing
         }
         DC_LOG_WARN("Config", "_get_const_by_name(): constant '%s' does not exist", name);
@@ -1405,7 +1439,7 @@ static void _dereference_constants(_ConfigContext *context, const char *in, char
     }
 }
 
-static DcAppStyleIndex _get_style_index(_ConfigContext *context, const char *name) {
+static _StyleIndex _get_style_index(_ConfigContext *context, const char *name) {
     if (name) {
         for (int ii = _STYLE_INDEX_DEFAULT; ii < sbcount(context->sb_styles); ii++) {
             const char *comp_name = &(context->sb_style_names[context->sb_style_name_offsets[ii]]);
@@ -1414,13 +1448,13 @@ static DcAppStyleIndex _get_style_index(_ConfigContext *context, const char *nam
             }
         }
     }
-    return DC_APP_STYLE_INDEX_UNDEFINED;
+    return _STYLE_INDEX_UNDEFINED;
 }
 
 static void _add_style(_ConfigContext *context, const char *name, DcAppElemType elem_type, xmlNodePtr xml_node) {
     if (name) {
 
-        DcAppStyleIndex style_index = _get_style_index(context, name);
+        _StyleIndex style_index = _get_style_index(context, name);
 
         // create new style if it doesn't exist
         if (style_index == _STYLE_INDEX_UNDEFINED) {
@@ -1434,14 +1468,14 @@ static void _add_style(_ConfigContext *context, const char *name, DcAppElemType 
         // update style
         _ElemStyle *style = &(context->sb_styles[style_index]);
         if (style->xml_nodes[elem_type] != NULL) {
-            if (!(context->suppress_warnings & DC_APP_SUPPRESS_STYLE_OVERRIDE)) {
+            if (!(context->suppress_warnings & _SUPPRESS_STYLE_OVERRIDE)) {
                 DC_LOG_WARN("Config", "_add_style(): style '%s' already contains an entry for element '%s'; overwriting", name, dc_app_elem_type_to_string(elem_type));
             }
             xmlFree(style->xml_nodes[elem_type]);
         }
         style->xml_nodes[elem_type] = xml_node;
     } else {
-        if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_STYLE)) {
+        if (!(context->suppress_warnings & _SUPPRESS_MISSING_STYLE)) {
             DC_LOG_WARN("Config", "_set_style(): name %s is undefined", name);
         }
     }

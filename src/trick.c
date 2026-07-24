@@ -8,7 +8,7 @@
 #include <string.h>
 #include <time.h>
 
-typedef struct __DcTrickContext {
+struct DcTrick {
     char  ip[46]; // INET6_ADDRSTRLEN
     int   port;
     float data_rate;
@@ -19,7 +19,7 @@ typedef struct __DcTrickContext {
     bool has_new_data;
 
     // socket
-    DcSockHandle sock;
+    DcSock      *sock;
     DcSockState  state;
 
     // time between reconnects
@@ -41,109 +41,118 @@ typedef struct __DcTrickContext {
 
     // general use buffer
     char *temp_buffer;
-} _DcTrickContext;
-
-static _DcTrickContext *_contexts = NULL; // stretchy buffer
+};
 
 // connect to trick variable server
-static void _dc_trick_connect(DcTrickHandle trick);
+static void _dc_trick_connect(DcTrick *trick);
 
 // disconnect from trick variable server
-static void _dc_trick_close(DcTrickHandle trick);
+static void _dc_trick_close(DcTrick *trick);
 
 // append data to tx buffer
-static void _dc_trick_append_to_tx_buffer(DcTrickHandle trick, const char *in, size_t in_size);
+static void _dc_trick_append_to_tx_buffer(DcTrick *trick, const char *in, size_t in_size);
 
 // send chunk of tx buffer, update internal tx buffer offset
-static DcTrickResult _dc_trick_send(DcTrickHandle trick);
+static DcTrickResult _dc_trick_send(DcTrick *trick);
 
 // receive chunk of rx buffer, process data if full packet, update internal tx buffer offset
-static DcTrickResult _dc_trick_receive(DcTrickHandle trick);
+static DcTrickResult _dc_trick_receive(DcTrick *trick);
 
 #define DC_TRICK_TEMP_BUFFER_SIZE 16384
 
 void dc_trick_init(void) {
-    sbresize(_contexts, 1);
+    // Retained for API compatibility; each connection now initializes itself.
 }
 
-DcTrickHandle dc_trick_create(const char *host, int port, float data_rate, int timeout_s) {
+DcTrick *dc_trick_create(const char *host, int port, float data_rate, int timeout_s) {
 
-    _DcTrickContext context;
-    dc_sock_host_to_ip(host, context.ip);
-    context.port                     = port;
-    context.data_rate                = data_rate;
-    context.timeout_s                = timeout_s;
-    context.is_connected             = false;
-    context.has_new_data             = false;
-    context.sock                     = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
-    context.state                    = DC_SOCK_STATE_DISCONNECTED;
-    context.reconnect_start          = 0;
-    context.rx_cmds                  = NULL;
-    context.rx_cmd_offsets           = NULL;
-    context.tx_cmds                  = NULL;
-    context.tx_cmd_offsets           = NULL;
-    context.rx_oad_vars              = NULL;
-    context.rx_oad_var_offsets       = NULL;
-    context.tx_buffer                = NULL;
-    context.rx_buffer                = NULL;
-    context.rx_var_values            = NULL;
-    context.rx_var_offsets           = NULL;
-    context.rx_oad_var_values        = NULL;
-    context.rx_oad_var_value_offsets = NULL;
-    context.temp_buffer              = (char *)malloc(DC_TRICK_TEMP_BUFFER_SIZE);
-    if (!context.temp_buffer) {
-        DC_LOG_ERROR("Trick", "Failed to allocate temp buffer");
-        DcTrickHandle trick = {0};
-        return trick;
+    DcTrick *trick = (DcTrick *)calloc(1, sizeof(DcTrick));
+    if (!trick) {
+        DC_LOG_ERROR("Trick", "Failed to allocate Trick");
+        return NULL;
     }
-    sbpush(_contexts, context);
 
-    DcTrickHandle trick;
-    trick.index = (uint8_t)(sbcount(_contexts) - 1);
+    if (dc_sock_host_to_ip(host, trick->ip) != DC_SOCK_RESULT_SUCCESS) {
+        free(trick);
+        return NULL;
+    }
+    trick->port                     = port;
+    trick->data_rate                = data_rate;
+    trick->timeout_s                = timeout_s;
+    trick->is_connected             = false;
+    trick->has_new_data             = false;
+    trick->sock                     = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    if (!trick->sock) {
+        free(trick);
+        return NULL;
+    }
+    trick->state                    = DC_SOCK_STATE_DISCONNECTED;
+    trick->reconnect_start          = 0;
+    trick->rx_cmds                  = NULL;
+    trick->rx_cmd_offsets           = NULL;
+    trick->tx_cmds                  = NULL;
+    trick->tx_cmd_offsets           = NULL;
+    trick->rx_oad_vars              = NULL;
+    trick->rx_oad_var_offsets       = NULL;
+    trick->tx_buffer                = NULL;
+    trick->rx_buffer                = NULL;
+    trick->rx_var_values            = NULL;
+    trick->rx_var_offsets           = NULL;
+    trick->rx_oad_var_values        = NULL;
+    trick->rx_oad_var_value_offsets = NULL;
+    trick->temp_buffer              = (char *)malloc(DC_TRICK_TEMP_BUFFER_SIZE);
+    if (!trick->temp_buffer) {
+        DC_LOG_ERROR("Trick", "Failed to allocate temp buffer");
+        dc_sock_close(trick->sock);
+        free(trick);
+        return NULL;
+    }
+
     return trick;
 }
 
-void dc_trick_cleanup(DcTrickHandle trick) {
+void dc_trick_cleanup(DcTrick *trick) {
 
-    _DcTrickContext *context = &(_contexts[trick.index]);
+    if (!trick) return;
 
     _dc_trick_close(trick);
-    sbfree(context->rx_cmds);
-    sbfree(context->rx_cmd_offsets);
-    sbfree(context->rx_oad_vars);
-    sbfree(context->rx_oad_var_offsets);
-    sbfree(context->rx_oad_var_values);
-    sbfree(context->rx_oad_var_value_offsets);
-    sbfree(context->tx_cmds);
-    sbfree(context->tx_cmd_offsets);
-    sbfree(context->tx_buffer);
-    sbfree(context->rx_buffer);
-    sbfree(context->rx_var_values);
-    sbfree(context->rx_var_offsets);
-    free(context->temp_buffer);
+    sbfree(trick->rx_cmds);
+    sbfree(trick->rx_cmd_offsets);
+    sbfree(trick->rx_oad_vars);
+    sbfree(trick->rx_oad_var_offsets);
+    sbfree(trick->rx_oad_var_values);
+    sbfree(trick->rx_oad_var_value_offsets);
+    sbfree(trick->tx_cmds);
+    sbfree(trick->tx_cmd_offsets);
+    sbfree(trick->tx_buffer);
+    sbfree(trick->rx_buffer);
+    sbfree(trick->rx_var_values);
+    sbfree(trick->rx_var_offsets);
+    free(trick->temp_buffer);
+    free(trick);
 }
 
 // main update, called each frame
-void dc_trick_update(DcTrickHandle trick) {
+void dc_trick_update(DcTrick *trick) {
 
-    _DcTrickContext *context = &(_contexts[trick.index]);
+    if (!trick) return;
 
-    DcSockState last_state = context->state;
+    DcSockState last_state = trick->state;
     switch (last_state) {
         case DC_SOCK_STATE_DISCONNECTED:
         case DC_SOCK_STATE_CONNECTING: {
-            DcSockState curr_state = dc_sock_connection_status(context->sock);
+            DcSockState curr_state = dc_sock_connection_status(trick->sock);
             switch (curr_state) {
 
                 // if it's still disconnected, check the timeout and reconnect if needed
                 case DC_SOCK_STATE_DISCONNECTED:
                 case DC_SOCK_STATE_CONNECTING:
 
-                    if (difftime(time(NULL), context->reconnect_start) > context->timeout_s) {
+                    if (difftime(time(NULL), trick->reconnect_start) > trick->timeout_s) {
                         if (curr_state == DC_SOCK_STATE_CONNECTING) {
                             _dc_trick_close(trick);
                         }
-                        DC_LOG_ERROR("Trick", "[%s:%d] Attempting reconnect..", context->ip, context->port);
+                        DC_LOG_ERROR("Trick", "[%s:%d] Attempting reconnect..", trick->ip, trick->port);
                         _dc_trick_connect(trick);
                     }
                     break;
@@ -152,27 +161,27 @@ void dc_trick_update(DcTrickHandle trick) {
                 case DC_SOCK_STATE_CONNECTED: {
 
                     // clear buffers
-                    sbclear(context->tx_buffer);
-                    sbclear(context->rx_buffer);
+                    sbclear(trick->tx_buffer);
+                    sbclear(trick->rx_buffer);
 
                     // send initial conditions
                     // 1) pause variable server
-                    strcpy(context->temp_buffer, "trick.var_pause()\n");
-                    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+                    strcpy(trick->temp_buffer, "trick.var_pause()\n");
+                    _dc_trick_append_to_tx_buffer(trick, trick->temp_buffer, strlen(trick->temp_buffer));
 
                     // 2) set sample rate
-                    snprintf(context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_cycle(%f)\n", context->data_rate);
-                    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+                    snprintf(trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_cycle(%f)\n", trick->data_rate);
+                    _dc_trick_append_to_tx_buffer(trick, trick->temp_buffer, strlen(trick->temp_buffer));
 
                     // 3) write list of variables to listen to
-                    for (int ii = 0; ii < sbcount(context->rx_cmd_offsets); ii++) {
-                        char *varAddCmd = &(context->rx_cmds[context->rx_cmd_offsets[ii]]);
+                    for (int ii = 0; ii < sbcount(trick->rx_cmd_offsets); ii++) {
+                        char *varAddCmd = &(trick->rx_cmds[trick->rx_cmd_offsets[ii]]);
                         _dc_trick_append_to_tx_buffer(trick, varAddCmd, strlen(varAddCmd));
                     }
 
                     // 4) unpause
-                    strcpy(context->temp_buffer, "trick.var_unpause()\n");
-                    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+                    strcpy(trick->temp_buffer, "trick.var_unpause()\n");
+                    _dc_trick_append_to_tx_buffer(trick, trick->temp_buffer, strlen(trick->temp_buffer));
 
                     // 5) send
                     DcTrickResult result = _dc_trick_send(trick);
@@ -181,8 +190,8 @@ void dc_trick_update(DcTrickHandle trick) {
                     }
 
                     // update connection state
-                    context->state        = curr_state;
-                    context->is_connected = curr_state == DC_SOCK_STATE_CONNECTED;
+                    trick->state        = curr_state;
+                    trick->is_connected = curr_state == DC_SOCK_STATE_CONNECTED;
 
                     break;
                 }
@@ -209,117 +218,107 @@ void dc_trick_update(DcTrickHandle trick) {
             break;
         }
         default:
-            DC_LOG_ERROR("Trick", "[%s:%d] Unknown sock state: %d", context->ip, context->port, last_state);
+            DC_LOG_ERROR("Trick", "[%s:%d] Unknown sock state: %d", trick->ip, trick->port, last_state);
             break;
     }
 }
 
-bool dc_trick_is_connected(DcTrickHandle trick) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    return context->is_connected;
+bool dc_trick_is_connected(DcTrick *trick) {
+    return trick && trick->is_connected;
 }
 
-bool dc_trick_has_new_data(DcTrickHandle trick) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    return context->has_new_data;
+bool dc_trick_has_new_data(DcTrick *trick) {
+    return trick && trick->has_new_data;
 }
 
-DcTrickVarIndex dc_trick_add_tx_var(DcTrickHandle trick, const char *path, const char *units, bool is_string) {
+DcTrickVarIndex dc_trick_add_tx_var(DcTrick *trick, const char *path, const char *units, bool is_string) {
 
-    _DcTrickContext *context = &(_contexts[trick.index]);
 
     // create cmd
     if (is_string) {
-        snprintf(context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_set(\"%s\", \"%%s\"", path);
+        snprintf(trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_set(\"%s\", \"%%s\"", path);
     } else {
-        snprintf(context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_set(\"%s\", %%s", path);
+        snprintf(trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_set(\"%s\", %%s", path);
     }
     if (units) {
-        strcat(context->temp_buffer, ", \"");
-        strcat(context->temp_buffer, units);
-        strcat(context->temp_buffer, "\")\n");
+        strcat(trick->temp_buffer, ", \"");
+        strcat(trick->temp_buffer, units);
+        strcat(trick->temp_buffer, "\")\n");
     } else {
-        strcat(context->temp_buffer, ")\n");
+        strcat(trick->temp_buffer, ")\n");
     }
 
     // copy
-    int start = sbcount(context->tx_cmds);
-    sbpush(context->tx_cmd_offsets, start);
-    sbpushn(context->tx_cmds, context->temp_buffer, (int)strlen(context->temp_buffer));
-    sbpush(context->tx_cmds, '\0');
+    int start = sbcount(trick->tx_cmds);
+    sbpush(trick->tx_cmd_offsets, start);
+    sbpushn(trick->tx_cmds, trick->temp_buffer, (int)strlen(trick->temp_buffer));
+    sbpush(trick->tx_cmds, '\0');
 
     // return index
-    return sbcount(context->tx_cmd_offsets) - 1;
+    return sbcount(trick->tx_cmd_offsets) - 1;
 }
 
-DcTrickVarIndex dc_trick_add_rx_var(DcTrickHandle trick, const char *path, const char *units) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
+DcTrickVarIndex dc_trick_add_rx_var(DcTrick *trick, const char *path, const char *units) {
 
     // create cmd
-    snprintf(context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_add(\"%s\"", path);
+    snprintf(trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, "trick.var_add(\"%s\"", path);
     if (units) {
-        strcat(context->temp_buffer, ", \"");
-        strcat(context->temp_buffer, units);
-        strcat(context->temp_buffer, "\")\n");
+        strcat(trick->temp_buffer, ", \"");
+        strcat(trick->temp_buffer, units);
+        strcat(trick->temp_buffer, "\")\n");
     } else {
-        strcat(context->temp_buffer, ")\n");
+        strcat(trick->temp_buffer, ")\n");
     }
 
     // copy
-    int start = sbcount(context->rx_cmds);
-    sbpush(context->rx_cmd_offsets, start);
-    sbpushn(context->rx_cmds, context->temp_buffer, (int)strlen(context->temp_buffer));
-    sbpush(context->rx_cmds, '\0');
+    int start = sbcount(trick->rx_cmds);
+    sbpush(trick->rx_cmd_offsets, start);
+    sbpushn(trick->rx_cmds, trick->temp_buffer, (int)strlen(trick->temp_buffer));
+    sbpush(trick->rx_cmds, '\0');
 
     // return index
-    return sbcount(context->rx_cmd_offsets) - 1;
+    return sbcount(trick->rx_cmd_offsets) - 1;
 }
 
-DcTrickVarIndex dc_trick_add_rx_oad_var(DcTrickHandle trick, const char *path, const char *units) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
+DcTrickVarIndex dc_trick_add_rx_oad_var(DcTrick *trick, const char *path, const char *units) {
 
     // copy
-    int start = sbcount(context->rx_oad_vars);
-    sbpush(context->rx_oad_var_offsets, start);
-    sbpushn(context->rx_oad_vars, path, (int)strlen(path));
-    sbpush(context->rx_oad_vars, '\0');
+    int start = sbcount(trick->rx_oad_vars);
+    sbpush(trick->rx_oad_var_offsets, start);
+    sbpushn(trick->rx_oad_vars, path, (int)strlen(path));
+    sbpush(trick->rx_oad_vars, '\0');
 
     // return index
-    return sbcount(context->rx_oad_var_offsets) - 1;
+    return sbcount(trick->rx_oad_var_offsets) - 1;
 }
 
-void dc_trick_set_tx_var(DcTrickHandle trick, DcTrickVarIndex var, const char *value) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    snprintf(context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &(context->tx_cmds[context->tx_cmd_offsets[var]]), value);
-    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+void dc_trick_set_tx_var(DcTrick *trick, DcTrickVarIndex var, const char *value) {
+    snprintf(trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &(trick->tx_cmds[trick->tx_cmd_offsets[var]]), value);
+    _dc_trick_append_to_tx_buffer(trick, trick->temp_buffer, strlen(trick->temp_buffer));
 }
 
-void dc_trick_get_rx_var_value(DcTrickHandle trick, DcTrickVarIndex var_index, char *out) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    strcpy(out, &(context->rx_var_values[context->rx_var_offsets[var_index]]));
+void dc_trick_get_rx_var_value(DcTrick *trick, DcTrickVarIndex var_index, char *out) {
+    strcpy(out, &(trick->rx_var_values[trick->rx_var_offsets[var_index]]));
 }
 
-void dc_trick_get_rx_oad_value(DcTrickHandle trick, DcTrickVarIndex oad_index, char *out) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    strcpy(out, &(context->rx_oad_var_values[context->rx_oad_var_value_offsets[oad_index]]));
+void dc_trick_get_rx_oad_value(DcTrick *trick, DcTrickVarIndex oad_index, char *out) {
+    strcpy(out, &(trick->rx_oad_var_values[trick->rx_oad_var_value_offsets[oad_index]]));
 }
 
 // static helpers
 
-static void _dc_trick_append_to_tx_buffer(DcTrickHandle trick, const char *in, size_t in_size) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    sbpushn(context->tx_buffer, in, (int)in_size);
+static void _dc_trick_append_to_tx_buffer(DcTrick *trick, const char *in, size_t in_size) {
+    sbpushn(trick->tx_buffer, in, (int)in_size);
 }
 
 // send chunk of tx buffer, update internal tx buffer offset
-static DcTrickResult _dc_trick_send(DcTrickHandle trick) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
+static DcTrickResult _dc_trick_send(DcTrick *trick) {
 
     // only send if there is data to send
-    if (sbcount(context->tx_buffer)) {
+    if (sbcount(trick->tx_buffer)) {
 
         int          sent_count;
-        DcSockResult result = dc_sock_send(context->sock, context->tx_buffer, sbcount(context->tx_buffer), &sent_count);
+        DcSockResult result = dc_sock_send(trick->sock, trick->tx_buffer, sbcount(trick->tx_buffer), &sent_count);
         switch (result) {
             case DC_SOCK_RESULT_FAIL:
             case DC_SOCK_RESULT_CONN_CLOSED:
@@ -333,12 +332,12 @@ static DcTrickResult _dc_trick_send(DcTrickHandle trick) {
 
             case DC_SOCK_RESULT_SUCCESS:
                 // remove the sent elements from the buffer
-                sbshiftn(context->tx_buffer, sent_count);
+                sbshiftn(trick->tx_buffer, sent_count);
                 return DC_TRICK_RESULT_SUCCESS;
                 break;
 
             default:
-                DC_LOG_ERROR("Trick", "[%s:%d] Unknown result from dc_sock_send(): %d", context->ip, context->port, result);
+                DC_LOG_ERROR("Trick", "[%s:%d] Unknown result from dc_sock_send(): %d", trick->ip, trick->port, result);
                 return DC_TRICK_RESULT_FAIL;
                 break;
         }
@@ -347,38 +346,37 @@ static DcTrickResult _dc_trick_send(DcTrickHandle trick) {
     }
 }
 
-static DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
+static DcTrickResult _dc_trick_receive(DcTrick *trick) {
 
     // read all available data from socket, not just one chunk
     bool received_any = false;
     for (;;) {
         int          recv_count;
-        DcSockResult result = dc_sock_receive(context->sock, context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &recv_count);
+        DcSockResult result = dc_sock_receive(trick->sock, trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &recv_count);
         if (result == DC_SOCK_RESULT_FAIL || result == DC_SOCK_RESULT_CONN_CLOSED) {
-            context->has_new_data = false;
+            trick->has_new_data = false;
             return DC_TRICK_RESULT_FAIL;
         }
         if (result == DC_SOCK_RESULT_CONN_WOULD_BLOCK || result == DC_SOCK_RESULT_CONN_INTERRUPTED) {
             break;
         }
         if (result != DC_SOCK_RESULT_SUCCESS) {
-            DC_LOG_ERROR("Trick", "[%s:%d] unknown result from dc_sock_receive(): %d", context->ip, context->port, result);
+            DC_LOG_ERROR("Trick", "[%s:%d] unknown result from dc_sock_receive(): %d", trick->ip, trick->port, result);
             return DC_TRICK_RESULT_FAIL;
         }
-        sbpushn(context->rx_buffer, context->temp_buffer, recv_count);
+        sbpushn(trick->rx_buffer, trick->temp_buffer, recv_count);
         received_any = true;
     }
 
     if (!received_any) {
-        context->has_new_data = false;
+        trick->has_new_data = false;
         return DC_TRICK_RESULT_SUCCESS;
     }
 
     // find last newline (end of last complete line)
     int end_index;
-    for (end_index = sbcount(context->rx_buffer) - 1; end_index >= 0; end_index--) {
-        if (context->rx_buffer[end_index] == '\n') {
+    for (end_index = sbcount(trick->rx_buffer) - 1; end_index >= 0; end_index--) {
+        if (trick->rx_buffer[end_index] == '\n') {
             break;
         }
     }
@@ -387,13 +385,13 @@ static DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
     int start_index = -1;
     if (end_index > 0) {
         for (start_index = end_index - 1; start_index >= 0; start_index--) {
-            if (context->rx_buffer[start_index] == '\n') {
+            if (trick->rx_buffer[start_index] == '\n') {
                 break;
             }
         }
     }
 
-    context->has_new_data = false;
+    trick->has_new_data = false;
 
     // if there is a complete line
     if (end_index > 0) {
@@ -401,67 +399,70 @@ static DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
         int key_index = (start_index >= 0) ? start_index + 1 : 0;
 
         // result from var updates (message type 0)
-        if (context->rx_buffer[key_index] == '0' && context->rx_buffer[key_index + 1] == '\t') {
+        if (trick->rx_buffer[key_index] == '0' && trick->rx_buffer[key_index + 1] == '\t') {
 
             // copy to value buffer
-            sbclear(context->rx_var_values);
+            sbclear(trick->rx_var_values);
             int first_value_index = key_index + 2;
-            sbpushn(context->rx_var_values, &(context->rx_buffer[first_value_index]), end_index - first_value_index);
+            sbpushn(trick->rx_var_values, &(trick->rx_buffer[first_value_index]), end_index - first_value_index);
 
             // for loop to replace tabs with nulls, set indices
-            sbclear(context->rx_var_offsets);
-            sbpush(context->rx_var_offsets, 0);
-            for (int ii = 0; ii < sbcount(context->rx_var_values); ii++) {
-                if (context->rx_var_values[ii] == '\t') {
-                    if (ii + 1 < sbcount(context->rx_var_values)) {
-                        sbpush(context->rx_var_offsets, ii + 1);
+            sbclear(trick->rx_var_offsets);
+            sbpush(trick->rx_var_offsets, 0);
+            for (int ii = 0; ii < sbcount(trick->rx_var_values); ii++) {
+                if (trick->rx_var_values[ii] == '\t') {
+                    if (ii + 1 < sbcount(trick->rx_var_values)) {
+                        sbpush(trick->rx_var_offsets, ii + 1);
                     }
-                    context->rx_var_values[ii] = '\0';
+                    trick->rx_var_values[ii] = '\0';
 
-                } else if (context->rx_var_values[ii] == ' ') {
-                    if (ii + 1 < sbcount(context->rx_var_values) && context->rx_var_values[ii + 1] == '{') {
+                } else if (trick->rx_var_values[ii] == ' ') {
+                    if (ii + 1 < sbcount(trick->rx_var_values) && trick->rx_var_values[ii + 1] == '{') {
                         // also put a null before the units, if it exists
-                        context->rx_var_values[ii] = '\0';
+                        trick->rx_var_values[ii] = '\0';
                     }
                 }
             }
 
             // set last character to null
-            sbpush(context->rx_var_values, '\0');
+            sbpush(trick->rx_var_values, '\0');
 
             // raise flag that there are new values
-            context->has_new_data = true;
-            if (sbcount(context->rx_var_offsets) != sbcount(context->rx_cmd_offsets)) {
-                DC_LOG_ERROR("Trick", "[%s:%d] Size mismatch between expected and received variable count", context->ip, context->port);
-                context->has_new_data = false;
+            trick->has_new_data = true;
+            if (sbcount(trick->rx_var_offsets) != sbcount(trick->rx_cmd_offsets)) {
+                DC_LOG_ERROR("Trick", "[%s:%d] Size mismatch between expected and received variable count", trick->ip, trick->port);
+                trick->has_new_data = false;
             }
         }
 
         // always remove processed data, regardless of message type
-        sbshiftn(context->rx_buffer, end_index);
+        sbshiftn(trick->rx_buffer, end_index);
     }
 
     return DC_TRICK_RESULT_SUCCESS;
 }
 
-static void _dc_trick_connect(DcTrickHandle trick) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
-    dc_sock_connect(context->sock, context->ip, context->port);
-    context->reconnect_start = time(NULL);
+static void _dc_trick_connect(DcTrick *trick) {
+    // Closing a socket destroys the socket object, so reconnects need a new one.
+    if (!trick->sock)
+        trick->sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    if (trick->sock)
+        dc_sock_connect(trick->sock, trick->ip, trick->port);
+    trick->reconnect_start = time(NULL);
 }
 
-static void _dc_trick_close(DcTrickHandle trick) {
-    _DcTrickContext *context = &(_contexts[trick.index]);
+static void _dc_trick_close(DcTrick *trick) {
 
     // send cleanup commands if connected
-    if (context->is_connected) {
+    if (trick->is_connected) {
         int sent;
-        dc_sock_send(context->sock, "trick.var_clear()\n", 18, &sent);
-        dc_sock_send(context->sock, "trick.var_exit()\n", 17, &sent);
+        dc_sock_send(trick->sock, "trick.var_clear()\n", 18, &sent);
+        dc_sock_send(trick->sock, "trick.var_exit()\n", 17, &sent);
     }
 
-    dc_sock_close(context->sock);
-    context->state        = DC_SOCK_STATE_DISCONNECTED;
-    context->is_connected = false;
-    context->has_new_data = false;
+    dc_sock_close(trick->sock);
+    trick->sock         = NULL;
+    trick->state        = DC_SOCK_STATE_DISCONNECTED;
+    trick->is_connected = false;
+    trick->has_new_data = false;
 }

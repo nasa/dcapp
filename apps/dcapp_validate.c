@@ -1,9 +1,7 @@
 #include "../src/app/config.h"
 #include "../src/app/elem.h"
-#include "../src/app/enums.h"
-#include "../src/app/lookup.h"
+#include "../src/app/planet_types.h"
 #include "../src/utils/env.h"
-#include "../src/utils/file.h"
 #include "../src/utils/log.h"
 
 #include <libxml/parser.h>
@@ -70,21 +68,18 @@ int main(int argc, char **argv) {
     free(const_args);
 
     // set environment
-    dc_utils_set_env("dcappDisplayHome", config->config_dir_path, 1);
-    dc_utils_set_env("dcappHome", config->dcapp_dir_path, 1);
-
-    // create lookup (needed for config_clean_xml)
-    DcAppLookup *lookup = dc_app_lookup_create();
+    dc_utils_set_env("dcappDisplayHome", dc_app_config_directory(config), 1);
+    dc_utils_set_env("dcappHome", dc_app_config_root_directory(config), 1);
 
     // preprocess XML file (expands includes, constants, staticifs)
-    dc_app_config_preprocess_xml(config, lookup);
+    dc_app_config_preprocess(config);
 
     // dump preprocessed XML for debugging
     dc_app_config_save_preprocessed(config, preprocessed_output);
 
     // validate
     ValidationContext ctx       = {0};
-    xmlNodePtr        root_node = xmlDocGetRootElement(config->xml_doc);
+    xmlNodePtr        root_node = dc_app_config_root(config);
 
     _validate_node(&ctx, root_node, DC_APP_ELEM_TYPE_NONELEM);
 
@@ -104,7 +99,7 @@ void _validate_children(ValidationContext *ctx, xmlNodePtr node, DcAppElemType p
 
 void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType parent_type) {
 
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(node);
+    DcAppElemType elem_type = dc_app_elem_type_from_xml_node(node);
 
     // skip non-element nodes
     if (elem_type == DC_APP_ELEM_TYPE_NONELEM) {
@@ -155,7 +150,7 @@ static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr
         (parent_type != DC_APP_ELEM_TYPE_PLANET_LINE && parent_type != DC_APP_ELEM_TYPE_PLANET_POLYGON)) return;
 
     xmlNodePtr container = node->parent ? node->parent->parent : NULL;
-    if (!container || dc_app_xml_node_to_elem_type(container) != DC_APP_ELEM_TYPE_PLANET_CONTAINER) return;
+    if (!container || dc_app_elem_type_from_xml_node(container) != DC_APP_ELEM_TYPE_PLANET_CONTAINER) return;
 
     if (!xmlHasProp(node, BAD_CAST "X")) {
         DC_LOG_ERROR("Validate", "<Vertex> inside <PlanetContainer> requires 'X' (line %ld)", xmlGetLineNo(node));
@@ -1021,7 +1016,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
 
             int texture_count = 0;
             for (xmlNodePtr child = node->children; child; child = child->next) {
-                if (dc_app_xml_node_to_elem_type(child) == DC_APP_ELEM_TYPE_PLANET_TEXTURE && ++texture_count > 5) {
+                if (dc_app_elem_type_from_xml_node(child) == DC_APP_ELEM_TYPE_PLANET_TEXTURE && ++texture_count > 5) {
                     DC_LOG_ERROR("Validate", "<Planet> supports at most five <PlanetTexture> elements (line %ld)", xmlGetLineNo(child));
                     ctx->error_count++;
                     break;

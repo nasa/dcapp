@@ -1,147 +1,42 @@
-#ifndef _DCAPP_LOGIC_API_H_
-#define _DCAPP_LOGIC_API_H_
+#ifndef DC_APP_DRAW_API_H
+#define DC_APP_DRAW_API_H
 
-#include "app/enums.h"
+#include "app/draw_types.h"
+#include "app/planet_api.h"
+#include "app/texture_types.h"
+#include "app/vector.h"
+#include "value_types.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct __AppData DcAppContext;
-typedef struct _DcAppDrawContext DcAppDrawContext;
-typedef struct _DcAppPlanet *DcAppPlanetHandle;
-typedef struct _DcAppPlanetView *DcAppPlanetViewHandle;
-typedef struct _DcAppDrawPlanetView *DcAppDrawPlanetViewHandle;
-typedef struct _DcAppPlanetBreadcrumbs *DcAppPlanetBreadcrumbsHandle;
-typedef struct _DcAppPlanetGeojson *DcAppPlanetGeojsonHandle;
+typedef struct DcAppDrawContext DcAppDrawContext;
+// This handle is borrowed and valid only within its current draw scope.
+typedef struct DcAppDrawPlanetView *DcAppDrawPlanetViewHandle;
+typedef struct DcAppStroke DcAppStroke;
+typedef struct DcAppTextStyle DcAppTextStyle;
+typedef struct DcAppPlacement DcAppPlacement;
+typedef struct DcAppMouse DcAppMouse;
+typedef struct DcAppDrawArea DcAppDrawArea;
+typedef struct DcAppDrawResult DcAppDrawResult;
+typedef struct DcAppDrawFuncArg DcAppDrawFuncArg;
+typedef struct DcAppDrawFuncArgs DcAppDrawFuncArgs;
+typedef struct DcAppDrawApi DcAppDrawApi;
+typedef struct DcAppMouseApi DcAppMouseApi;
 
-#define DC_APP_PLANET_TEXTURE_SLOT_COUNT 5u
-#define DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS 1000u
-
-typedef uint32_t DcAppTextureId;
-
-typedef union _DcAppVec2 {
-    struct { float x, y; };
-    struct { float r, g; };
-    struct { float u, v; };
-    float d[2];
-} DcAppVec2;
-
-typedef union _DcAppVec3 {
-    struct { float x, y, z; };
-    struct { float r, g, b; };
-    struct { float u, v, __; };
-    struct { float roll, pitch, yaw; };
-    struct { DcAppVec2 xy; float ignore0_; };
-    struct { DcAppVec2 rg; float ignore1_; };
-    struct { DcAppVec2 uv; float ignore2_; };
-    struct { float ignore3_; DcAppVec2 yz; };
-    struct { float ignore4_; DcAppVec2 gb; };
-    struct { float ignore5_; DcAppVec2 v__; };
-    float d[3];
-} DcAppVec3;
-
-typedef struct _DcAppPlanetLocalTransform {
-    DcAppVec2 scale;
-    float rotation_degrees;
-} DcAppPlanetLocalTransform;
-
-typedef struct _DcAppPlanetBreadcrumbsPoints {
-    const DcAppVec3 *points;
-    uint32_t count;
-    DcAppPlanetCrs crs;
-} DcAppPlanetBreadcrumbsPoints;
-
-typedef enum _DcAppPlanetViewFlags {
-    DC_APP_PLANET_VIEW_FLAGS_NONE = 0,
-    DC_APP_PLANET_VIEW_FLAGS_WIREFRAME = 1 << 0,
-    DC_APP_PLANET_VIEW_FLAGS_SHOW_LEVELS = 1 << 1,
-    DC_APP_PLANET_VIEW_FLAGS_SHOW_ORIGIN = 1 << 2,
-    DC_APP_PLANET_VIEW_FLAGS_SHOW_CHUNKS = 1 << 3,
-    DC_APP_PLANET_VIEW_FLAGS_FLATTEN = 1 << 4,
-} DcAppPlanetViewFlags;
-
-typedef struct _DcAppPlanetViewOptions {
-    int flags;
-    float tau;
-} DcAppPlanetViewOptions;
-
-static inline DcAppPlanetViewOptions dc_app_planet_view_options_default(void) {
-    return (DcAppPlanetViewOptions){
-        .tau = 0.3f,
-    };
-}
-
-typedef union _DcAppVec4 {
-    struct {
-        union {
-            DcAppVec3 xyz;
-            struct { float x, y, z; };
-        };
-        float w;
-    };
-    struct {
-        union {
-            DcAppVec3 rgb;
-            struct { float r, g, b; };
-        };
-        float a;
-    };
-    struct {
-        DcAppVec2 xy;
-        float ignored0_, ignored1_;
-    };
-    struct {
-        float ignored2_;
-        DcAppVec2 yz;
-        float ignored3_;
-    };
-    struct {
-        float ignored4_, ignored5_;
-        DcAppVec2 zw;
-    };
-    float d[4];
-} DcAppVec4;
-
-typedef enum _DcAppPlanetGeojsonStyleFlags {
-    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_NONE = 0,
-    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR = 1 << 0,
-    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR = 1 << 1,
-    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH = 1 << 2,
-} DcAppPlanetGeojsonStyleFlags;
-
-typedef struct _DcAppPlanetGeojsonStyle {
-    int flags;
-    double height_above_terrain;
-    float line_width;
-    DcAppVec4 line_color;
-    DcAppVec4 fill_color;
-} DcAppPlanetGeojsonStyle;
-
-static inline DcAppPlanetGeojsonStyle dc_app_planet_geojson_style_default(void) {
-    return (DcAppPlanetGeojsonStyle){
-        .line_width = 1.0f,
-        .line_color = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
-    };
-}
-
-typedef struct _DcAppStroke {
+struct DcAppStroke {
     DcAppVec4 color;
     float width;
     uint8_t pattern;
-} DcAppStroke;
+};
 
-typedef struct _DcAppTextStyle {
+struct DcAppTextStyle {
     DcAppVec4 color;
     float size;
     float wrap;
-} DcAppTextStyle;
+};
 
-typedef struct _DcAppPlanetCreateInfo {
-    const char *data_path;
-    uint32_t mesh_cache_size; // bytes, 0 = renderer default
-} DcAppPlanetCreateInfo;
-
-typedef struct _DcAppPlacement {
+struct DcAppPlacement {
     float rotation;
     DcAppAlignType parent_align_x;
     DcAppAlignType parent_align_y;
@@ -151,52 +46,42 @@ typedef struct _DcAppPlacement {
     DcAppAlignType pivot_align_y;
     float pivot_x;
     float pivot_y;
-} DcAppPlacement;
+};
 
-typedef struct _DcAppMouse {
+struct DcAppMouse {
     float x;
     float y;
     bool position_valid;
     bool pressed;
     bool released;
     bool down;
-} DcAppMouse;
+};
 
-typedef struct _DcAppDrawArea {
+struct DcAppDrawArea {
     float position[2];
     float dimensions[2];
     float transform[16];
-} DcAppDrawArea;
-
-typedef struct _DcAppDrawResult {
-    DcAppDrawArea area;
-} DcAppDrawResult;
-
-struct _DcAppDrawContext {
-    void *_runtime;
-    void *_container_data;
-    void *_stencil_data;
-    void *_planet_view_data;
-    bool _owns_stencil_data;
-    int _stencil_base_depth;
-    DcAppDrawArea area;
-    DcAppMouse mouse;
 };
 
-typedef struct _DcAppDrawFuncArg {
+struct DcAppDrawResult {
+    DcAppDrawArea area;
+};
+
+struct DcAppDrawFuncArg {
     DcValueType type;
     const char *value_string;
     int value_integer;
     double value_double;
     bool value_boolean;
-} DcAppDrawFuncArg;
+};
 
-typedef struct _DcAppDrawFuncArgs {
+// The values are borrowed for the duration of the DrawFunction callback.
+struct DcAppDrawFuncArgs {
     uint32_t count;
     const DcAppDrawFuncArg *values;
-} DcAppDrawFuncArgs;
+};
 
-typedef struct _DcAppDrawApi {
+struct DcAppDrawApi {
     // Current draw area.
     const DcAppDrawArea *(*get_area)(DcAppDrawContext *draw_ctx);
 
@@ -261,8 +146,8 @@ typedef struct _DcAppDrawApi {
     // draws planet views and overlays through dcapp handles.
     DcAppDrawPlanetViewHandle (*planet_view_geodetic)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
     DcAppDrawPlanetViewHandle (*planet_view_cartesian)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
-    bool (*planet_local_push_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppPlanetLocalTransform transform);
-    void (*planet_local_pop)(DcAppDrawContext *draw_ctx);
+    bool (*planet_container_push_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppPlanetLocalTransform transform);
+    void (*planet_container_pop)(DcAppDrawContext *draw_ctx);
     void (*planet_line_local)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color);
     void (*planet_polygon_local)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
     void (*planet_sphere_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcAppVec4 color);
@@ -278,9 +163,9 @@ typedef struct _DcAppDrawApi {
     void (*planet_text_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color);
     void (*planet_text_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, const char *text, float size, DcAppVec4 color);
     void (*planet_geojson)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppPlanetGeojsonHandle geojson, DcAppPlanetGeojsonStyle style);
-} DcAppDrawApi;
+};
 
-typedef struct _DcAppMouseApi {
+struct DcAppMouseApi {
     // Basic mouse hit registration.
     void (*rect)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 position, DcAppVec2 size);
     void (*circle)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 center, float radius);
@@ -303,53 +188,6 @@ typedef struct _DcAppMouseApi {
     // Current mouse state in the draw context's local space.
     bool (*down)(DcAppDrawContext *draw_ctx);
     const DcAppMouse *(*get_state)(DcAppDrawContext *draw_ctx);
-} DcAppMouseApi;
-
-typedef struct _DcAppTextureApi {
-    DcAppTextureId (*load_image)(DcAppContext *app_ctx, const char *path, DcAppVec2 *out_size);
-    bool (*get_size)(DcAppContext *app_ctx, DcAppTextureId texture_id, DcAppVec2 *out_size);
-} DcAppTextureApi;
-
-typedef struct _DcAppPlanetApi {
-    // planet resources live until app shutdown.
-    DcAppPlanetHandle (*get_planet_by_id)(DcAppContext *app_ctx, const char *id);
-    DcAppPlanetHandle (*create_planet)(DcAppContext *app_ctx, DcAppPlanetCreateInfo info);
-    // fails if id already exists.
-    DcAppPlanetHandle (*create_planet_with_id)(DcAppContext *app_ctx, const char *id, DcAppPlanetCreateInfo info);
-    bool (*set_texture_geodetic)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
-    bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel);
-    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
-    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel);
-    bool (*set_texture_projected_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);
-    bool (*clear_texture)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot);
-    bool (*set_light_direction)(DcAppPlanetHandle planet, DcAppVec3 direction);
-    DcAppPlanetViewHandle (*create_geodetic_view)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
-    DcAppPlanetViewHandle (*create_cartesian_view)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
-    bool (*set_view_shaders)(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
-    DcAppPlanetGeojsonHandle (*load_geojson)(DcAppContext *app_ctx, const char *path);
-    DcAppPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
-    void (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
-    void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position);
-    void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
-    DcAppPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
-} DcAppPlanetApi;
-
-typedef void *(*DcAppGetVariableFn)(DcAppContext *app_ctx, const char *name);
-
-typedef struct _DcAppApi {
-    void *(*get_variable)(DcAppContext *app_ctx, const char *name);
-} DcAppApi;
-
-typedef struct _DcAppInit {
-    uint32_t size;
-    uint32_t version;
-    DcAppContext *app_ctx;
-    DcAppGetVariableFn get_variable;
-    const DcAppDrawApi *draw;
-    const DcAppMouseApi *mouse;
-    const DcAppTextureApi *texture;
-    const DcAppPlanetApi *planet;
-    const DcAppApi *app;
-} DcAppInit;
+};
 
 #endif

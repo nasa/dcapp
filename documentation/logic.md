@@ -48,15 +48,31 @@ This writes `path/to/logic/dcapp.h`. The header contains:
 
 - pointers for every XML variable
 - lifecycle callback prototypes
+- typed callback prototypes for every XML `Function` and `DrawFunction`
 - `display_pre_init()`, called internally by dcapp
-- API tables for drawing, mouse hit targets, textures, and planet helpers
+- the curated drawing, mouse, texture, planet, and lifecycle API contract
 
 Do not edit `logic/dcapp.h`; regenerate it when XML variables change.
+
+The generated file deliberately contains only the short logic-facing names,
+such as `DcVec2`, `DcStroke`, and `DcDrawApi`. It does not expose dcapp's
+internal `DcApp*` headers or aliases. The public declarations are maintained
+explicitly in `apps/dcapp_genheader.c`, so changing an internal API requires
+updating the generated contract in the same change.
 
 The generated header exists so the logic library and XML stay coupled by the
 display definition, not by hand-written declarations. If an XML variable is
 renamed or its type changes, regenerating the header updates the C pointer
-declarations and catches stale code at compile time.
+declarations and catches stale code at compile time. The same applies to
+`Function` and `DrawFunction` names and signatures.
+
+The generated declarations use C linkage in C++ and carry the platform export
+annotation needed by dynamically loaded callbacks. Include `dcapp.h` before
+defining callbacks; no separate Windows export list is required.
+
+dcapp and its logic library use the exact current generated interface. There is
+no size/version or field-offset compatibility layer: after updating dcapp,
+regenerate `dcapp.h` and rebuild the logic library before loading it.
 
 ## Lifecycle
 
@@ -149,11 +165,11 @@ logic library's own state.
 For additional source files compiled into the same logic library:
 
 ```c
-#define _DCAPP_LOGIC_EXTERN_
+#define DCAPP_LOGIC_EXTERN
 #include "dcapp.h"
 ```
 
-Do not define `_DCAPP_LOGIC_EXTERN_` in the source file that owns
+Do not define `DCAPP_LOGIC_EXTERN` in the source file that owns
 `display_init`, `display_draw`, and `display_close`.
 
 ## Variables
@@ -278,12 +294,14 @@ For a hand-built Linux/macOS library:
 cc -shared -fPIC -o logic/liblogic.so logic/logic.c
 ```
 
-On Windows, export the lifecycle symbols:
+For a hand-built Windows library:
 
 ```bat
-cl /LD logic\logic.c /Fe:logic\logic.dll ^
-  /link -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+cl /LD logic\logic.c /Fe:logic\logic.dll
 ```
+
+The generated `dcapp.h` declarations export the lifecycle callbacks and all
+callbacks named by XML `Function` and `DrawFunction` elements.
 
 ## Samples
 
@@ -301,7 +319,11 @@ cl /LD logic\logic.c /Fe:logic\logic.dll ^
 
 - If variables are missing, regenerate `logic/dcapp.h`.
 - If a symbol is missing, check that the function name in XML exactly matches
-  the exported C function.
+  the generated declaration and C function definition, then regenerate
+  `logic/dcapp.h`.
+- A callback name cannot be used by both `Function` and `DrawFunction`, because
+  those elements require different C signatures.
 - If the library fails to load, check the `Logic File` path and platform
   filename (`liblogic.so`, `liblogic.dylib`, or `logic.dll`).
-- On Windows, make sure the four lifecycle symbols are exported.
+- In C++, include the generated header before callback definitions so they
+  inherit its C linkage and export annotation.

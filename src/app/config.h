@@ -1,30 +1,13 @@
-#ifndef _DC_APP_CONFIG_
-#define _DC_APP_CONFIG_
+#ifndef DC_APP_CONFIG_H
+#define DC_APP_CONFIG_H
 
 #include <stdbool.h>
 
 // forward declarations
-typedef struct _DcAppLookup DcAppLookup;
-typedef struct _xmlDoc     *xmlDocPtr;
-typedef struct _xmlNode    *xmlNodePtr;
+struct _xmlNode;
 
 // config type
-typedef struct _DcAppConfig {
-
-    // index
-    int _index;
-
-    // xml pointer
-    xmlDocPtr xml_doc;
-    bool      xml_doc_is_cleaned;
-
-    // filepaths
-    char *dcapp_dir_path;
-    char *config_file_path;
-    char *config_dir_path;
-    char *cache_dir_path;
-
-} DcAppConfig;
+typedef struct DcAppConfig DcAppConfig;
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,13 +15,15 @@ extern "C" {
 
 // config functions
 DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_count);
-void         dc_app_config_cleanup(DcAppConfig *config);
-void         dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup);
-void         dc_app_config_save_to_file(DcAppConfig *config, const char *filepath);
+void         dc_app_config_destroy(DcAppConfig *config);
+// Expands the configuration in place while retaining ownership of the XML tree.
+void         dc_app_config_preprocess(DcAppConfig *config);
 void         dc_app_config_save_preprocessed(DcAppConfig *config, const char *output_path);
 
-// const
-void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name, const char *new_value, bool is_immutable);
+const char *dc_app_config_directory(const DcAppConfig *config);
+const char *dc_app_config_root_directory(const DcAppConfig *config);
+struct _xmlNode *dc_app_config_root(const DcAppConfig *config);
+bool        dc_app_config_suppresses_missing_variable(const DcAppConfig *config);
 
 #ifdef __cplusplus
 }

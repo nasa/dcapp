@@ -133,7 +133,7 @@ if [[ "$FORCE" -eq 1 ||
       ! -f "$PILOTLIGHT_STAMP" ||
       "$(cat "$PILOTLIGHT_STAMP")" != "$PILOTLIGHT_HEAD" ]]; then
     BUILD_PILOTLIGHT=1
-    echo "[1/3] Building pilotlight..."
+    echo "[1/4] Building pilotlight..."
     cd "$DCAPP_HOME/pilotlight/src"
     bash "$PL_BUILD_SCRIPT" -c "$PILOTLIGHT_CONFIG"
 
@@ -142,7 +142,7 @@ if [[ "$FORCE" -eq 1 ||
         echo "$PILOTLIGHT_HEAD" > "$PILOTLIGHT_STAMP"
     fi
 else
-    echo "[1/3] Skipping pilotlight; cached $PILOTLIGHT_CONFIG build is current."
+    echo "[1/4] Skipping pilotlight; cached $PILOTLIGHT_CONFIG build is current."
 fi
 
 BUILD_DCAPP=0
@@ -158,23 +158,27 @@ fi
 
 echo ""
 if [[ "$BUILD_DCAPP" -eq 1 ]]; then
-    echo "[2/3] Building dcapp apps..."
+    echo "[2/4] Building dcapp apps..."
     bash "$DCAPP_HOME/scripts/internal/build-apps-${PLATFORM}.sh" -c "$CONFIG"
 else
-    echo "[2/3] Skipping dcapp apps; cached $CONFIG build is current."
+    echo "[2/4] Skipping dcapp apps; cached $CONFIG build is current."
 fi
 
 echo ""
 if [[ "$BUILD_DCAPP" -eq 1 ]]; then
-    echo "[3/3] Building dcapp samples..."
+    echo "[3/4] Building dcapp samples..."
     bash "$DCAPP_HOME/scripts/internal/build-samples-${PLATFORM}.sh" -c "$CONFIG"
     if [[ -n "$DCAPP_HEAD" && "$DCAPP_DIRTY" -eq 0 ]]; then
         mkdir -p "$PILOTLIGHT_OUT"
         echo "$DCAPP_HEAD" > "$DCAPP_BUILD_STAMP"
     fi
 else
-    echo "[3/3] Skipping dcapp samples; cached $CONFIG build is current."
+    echo "[3/4] Skipping dcapp samples; cached $CONFIG build is current."
 fi
+
+echo ""
+echo "[4/4] Checking generated logic API..."
+bash "$DCAPP_HOME/scripts/check-logic-api.sh"
 
 echo ""
 echo "========================================"

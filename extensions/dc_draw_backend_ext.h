@@ -36,11 +36,11 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // external
-typedef struct _dcFontAtlas     dcFontAtlas;       // pl_draw_ext.h
-typedef struct _dcDrawList2D    dcDrawList2D;      // pl_draw_ext.h
-typedef struct _dcDrawList3D    dcDrawList3D;      // pl_draw_ext.h
-typedef struct _dcDrawLayer2D   dcDrawLayer2D;     // pl_draw_ext.h
-typedef int    dcDrawFlags;                        // pl_draw_ext.h
+typedef struct _dcFontAtlas     dcFontAtlas;       // dc_draw_ext.h
+typedef struct _dcDrawList2D    dcDrawList2D;      // dc_draw_ext.h
+typedef struct _dcDrawList3D    dcDrawList3D;      // dc_draw_ext.h
+typedef struct _dcDrawLayer2D   dcDrawLayer2D;     // dc_draw_ext.h
+typedef int    dcDrawFlags;                        // dc_draw_ext.h
 typedef struct _plDevice        plDevice;          // pl_graphics_ext.h
 typedef struct _plRenderEncoder plRenderEncoder;   // pl_graphics_ext.h
 typedef struct _plCommandBuffer plCommandBuffer;   // pl_graphics_ext.h

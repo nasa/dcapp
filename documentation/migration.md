@@ -884,7 +884,7 @@ To support legacy conversion, `<Set>` elements accept an optional `Defer` attrib
 <Set Variable="myVar" Operator="#_set_equal_" Defer="true">newValue</Set>
 ```
 
-When `Defer` is `"true"`, the Set operation is collected during the draw pass and applied atomically AFTER the entire draw pass completes. This matches the legacy engine's deferred execution behavior. `Defer` is a standard `DcAppValIndex` boolean, parsed via `dc_app_create_and_register_typed_value_from_string`.
+When `Defer` is `"true"`, the Set operation is collected during the draw pass and applied atomically AFTER the entire draw pass completes. This matches the legacy engine's deferred execution behavior. `Defer` is a standard `DcAppValIndex` boolean, parsed via `dc_app_lookup_register_value_from_string`.
 
 Without `Defer`, Sets execute immediately as before. Modern XML should NOT use `Defer` -- it exists solely for legacy conversion compatibility.
 

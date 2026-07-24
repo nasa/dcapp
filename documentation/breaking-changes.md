@@ -7,6 +7,49 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-24 - Current Generated Logic ABI
+
+#### Affected Code
+- Logic libraries built from an older generated `logic/dcapp.h`.
+- Logic code that calls `dc_planet->clear_texture`.
+- Logic code that calls the generated `dc_place_*`,
+  `dc_planet_geojson_style_default`, or
+  `dc_planet_view_options_default` convenience functions.
+- Multi-file logic builds that define the old `_DCAPP_LOGIC_EXTERN_` macro.
+
+#### Changed
+- Generated headers now expose only the explicitly curated short-name draw,
+  mouse, texture, planet, and initialization contracts. Internal `DcApp*`
+  declarations are no longer copied into logic headers.
+- `DcInit` is the exact current six-field initialization aggregate. The old
+  `size`, `version`, and duplicate direct `get_variable` fields were removed.
+- `DcPlanetApi.clear_texture` now takes only `(planet, slot)`; the planet handle
+  already identifies the owning resource.
+- Every XML `Function` and `DrawFunction` receives a typed, C-linked exported
+  declaration. One name cannot be used for both callback kinds.
+- The generated placement convenience functions were removed. A zeroed
+  `DcPlacement` is already the default; use a designated initializer when
+  alignment or pivot fields are needed.
+- `dc_planet_geojson_style_default` was removed because a zeroed
+  `DcPlanetGeojsonStyle` already selects the renderer's fallback behavior.
+- `dc_planet_view_options_default` was removed. A non-positive `tau` now
+  selects the renderer's default value of `0.3`.
+- `DCAPP_LOGIC_EXTERN` is the public multi-translation-unit macro. The old
+  spelling remains accepted as a compatibility alias.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild the complete logic library.
+- Change `dc_planet->clear_texture(dc_app_ctx, planet, slot)` to
+  `dc_planet->clear_texture(planet, slot)`.
+- Replace `dc_place_default()` with `(DcPlacement){0}`. The directional
+  placement helpers remain available.
+- Replace `dc_planet_geojson_style_default()` with
+  `(DcPlanetGeojsonStyle){0}` before setting any desired fallback flags.
+- Replace `dc_planet_view_options_default()` with
+  `(DcPlanetViewOptions){0}` before setting any desired flags.
+- Define `DCAPP_LOGIC_EXTERN` before including `dcapp.h` in additional logic
+  translation units.
+
 ### 2026-07-20 - Planet Extension API 0.7.0
 
 #### Affected Code
@@ -18,18 +61,17 @@ Source and ABI changes that may require edits outside XML display files.
 - `plPlanetI_version` changed from `{0, 6, 0}` to `{0, 7, 0}`.
 - The existing `plPlanetI.set_texture(..., index)` parameter now selects one
   of five independent slots instead of being ignored.
-- `plGpuDynPlanetData` appends four texture indices and four UV transforms.
-  Existing slot-0 field names and offsets are unchanged.
-- `DcPlanetApi` appends slot-aware geodetic/cartesian texture setters and a
-  per-slot clear function. Existing function-pointer offsets are unchanged.
+- `plGpuDynPlanetData` adds four texture indices and four UV transforms.
+- `DcPlanetApi` adds slot-aware geodetic/cartesian texture setters and a
+  per-slot clear function, grouped with the existing texture controls.
 
 #### Migration
 - Rebuild consumers and request `plPlanetI` version `{0, 7, 0}`.
 - Existing custom shaders continue to render slot 0. To render every overlay,
   sample `uTextureIndex1` through `uTextureIndex4` with their matching
   `tUVInfo1` through `tUVInfo4` values.
-- Regenerate `logic/dcapp.h` to call the new slot-aware functions. Existing
-  logic binaries and the original setters remain slot-0 compatible.
+- Regenerate `logic/dcapp.h` and rebuild logic modules. The original setters
+  remain source-compatible and continue to target slot 0.
 
 ### 2026-06-12 - Planet Extension API 0.6.0
 

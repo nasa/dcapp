@@ -1,7 +1,9 @@
 #include "../src/app/config.h"
+#include "../src/app/draw_types.h"
 #include "../src/app/elem.h"
-#include "../src/app/enums.h"
 #include "../src/app/lookup.h"
+#include "../src/app/planet_types.h"
+#include "../src/app/value.h"
 #include "../src/utils/env.h"
 #include "../src/utils/file.h"
 #include "../src/utils/log.h"
@@ -13,9 +15,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup);
-static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup);
-static void _write_draw_api(FILE *file);
+typedef enum DcLogicCallbackType {
+    DC_LOGIC_CALLBACK_TYPE_FUNCTION,
+    DC_LOGIC_CALLBACK_TYPE_DRAW_FUNCTION,
+} DcLogicCallbackType;
+
+typedef struct DcLogicCallback {
+    char *name;
+    DcLogicCallbackType type;
+} DcLogicCallback;
+
+typedef struct DcLogicCallbacks {
+    DcLogicCallback *values;
+    size_t count;
+    size_t capacity;
+    bool failed;
+} DcLogicCallbacks;
+
+static void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks);
+static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks);
+static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, DcLogicCallbacks *callbacks);
 
 int main(int argc, char **argv) {
 
@@ -59,24 +78,30 @@ int main(int argc, char **argv) {
 
     // create lookup
     DcAppLookup *lookup = dc_app_lookup_create();
+    DcLogicCallbacks callbacks = {};
 
     // set environment (used for dcapp XMLs)
-    dc_utils_set_env("dcappDisplayHome", config->config_dir_path, 1);
-    dc_utils_set_env("dcappHome", config->dcapp_dir_path, 1);
+    dc_utils_set_env("dcappDisplayHome", dc_app_config_directory(config), 1);
+    dc_utils_set_env("dcappHome", dc_app_config_root_directory(config), 1);
 
     // preprocess XML file
-    dc_app_config_preprocess_xml(config, lookup);
+    dc_app_config_preprocess(config);
+    dc_app_lookup_set_suppress_missing_variable(
+        lookup,
+        dc_app_config_suppresses_missing_variable(config));
 
     // dump preprocessed XML for debugging
     dc_app_config_save_preprocessed(config, preprocessed_output);
 
     // process XML
-    xmlNodePtr root_node = xmlDocGetRootElement(config->xml_doc);
-    _process_node(root_node, lookup);
+    _process_node(dc_app_config_root(config), lookup, &callbacks);
+    if (callbacks.failed) {
+        return 1;
+    }
 
     // create directory
     char logic_dir[DC_UTILS_FILEPATH_BUFFER_SIZE];
-    dc_utils_join_paths(config->config_dir_path, "logic", logic_dir, sizeof(logic_dir));
+    dc_utils_join_paths(dc_app_config_directory(config), "logic", logic_dir, sizeof(logic_dir));
     dc_utils_create_directory(logic_dir);
 
     // open/create file
@@ -104,168 +129,9 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#ifndef DCAPP_H");
     fprintf(file, "%s\n", "#define DCAPP_H");
     fprintf(file, "%s\n", "");
-    _write_draw_api(file);
-    fprintf(file, "%s\n", "#ifndef _DCAPP_LOGIC_EXTERN_");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "#ifdef __cplusplus");
-    fprintf(file, "%s\n", "extern \"C\" {");
-    fprintf(file, "%s\n", "#endif");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "// api tables are filled by dcapp before display_init().");
-    fprintf(file, "%s\n", "DcAppContext *dc_app_ctx;");
-    fprintf(file, "%s\n", "const DcAppApi *dc_app;");
-    fprintf(file, "%s\n", "const DcDrawApi *dc_draw;");
-    fprintf(file, "%s\n", "const DcMouseApi *dc_mouse;");
-    fprintf(file, "%s\n", "const DcTextureApi *dc_texture;");
-    fprintf(file, "%s\n", "const DcPlanetApi *dc_planet;");
-    fprintf(file, "%s\n", "");
 
-    // file variable definitions
-    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) {
-        fprintf(file, "%s\n", "// XML variable pointers resolved during display_pre_init().");
-    }
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
-        const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
-        DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
-        switch (value->type) {
-            case DC_VALUE_TYPE_STRING:
-                fprintf(file, "char   (*%s)[%d];\n", var_name, DC_VALUE_STRING_BUFFER_SIZE);
-                break;
-            case DC_VALUE_TYPE_DOUBLE:
-                fprintf(file, "double *%s;\n", var_name);
-                break;
-            case DC_VALUE_TYPE_INTEGER:
-                fprintf(file, "int    *%s;\n", var_name);
-                break;
-            case DC_VALUE_TYPE_BOOLEAN:
-                fprintf(file, "bool   *%s;\n", var_name);
-                break;
-            default:
-                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
-                break;
-        }
-    }
-    fprintf(file, "%s\n", "");
-
-    // file function declarations
-    fprintf(file, "%s\n", "// lifecycle callbacks get app_ctx for app-owned resources and optional user_data.");
-    fprintf(file, "%s\n", "void display_init(DcAppContext *app_ctx, void **user_data);");
-    fprintf(file, "%s\n", "void display_draw(DcAppContext *app_ctx, void *user_data);");
-    fprintf(file, "%s\n", "void display_close(DcAppContext *app_ctx, void *user_data);");
-    fprintf(file, "%s\n", "");
-
-    // define dc_get_variable() and display_pre_init()
-    fprintf(file, "%s\n", "// Legacy lookup helper for variables declared in XML.");
-    fprintf(file, "%s\n", "// Deprecated: use generated variable pointers instead.");
-    fprintf(file, "%s\n", "void *dc_get_variable(const char *name) {");
-    fprintf(file, "%s\n", "    if (!dc_app || !dc_app->get_variable) return NULL;");
-    fprintf(file, "%s\n", "    return dc_app->get_variable(dc_app_ctx, name);");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "// Internal setup called before display_init().");
-    fprintf(file, "%s\n", "void display_pre_init(const DcInit *init) {");
-    fprintf(file, "%s\n", "    if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {");
-    fprintf(file, "%s\n", "        dc_app_ctx = init->app_ctx;");
-    fprintf(file, "%s\n", "        dc_app = init->app;");
-    fprintf(file, "%s\n", "        dc_draw = init->draw;");
-    fprintf(file, "%s\n", "        dc_mouse = init->mouse;");
-    fprintf(file, "%s\n", "        dc_texture = init->texture;");
-    fprintf(file, "%s\n", "        dc_planet = init->planet;");
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
-        const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
-        DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
-        switch (value->type) {
-            case DC_VALUE_TYPE_STRING:
-                fprintf(file, "        %s = (char (*)[%d])(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, DC_VALUE_STRING_BUFFER_SIZE, var_name);
-                break;
-            case DC_VALUE_TYPE_DOUBLE:
-                fprintf(file, "        %s = (double *)(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, var_name);
-                break;
-            case DC_VALUE_TYPE_INTEGER:
-                fprintf(file, "        %s = (int *)(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, var_name);
-                break;
-            case DC_VALUE_TYPE_BOOLEAN:
-                fprintf(file, "        %s = (bool *)(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, var_name);
-                break;
-            default:
-                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
-                break;
-        }
-    }
-    fprintf(file, "%s\n", "    }");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
-
-    // C/C++ compatibility guard closer
-    fprintf(file, "%s\n", "#ifdef __cplusplus");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "#endif");
-    fprintf(file, "%s\n", "");
-
-    // extern definitions for logic externs
-    fprintf(file, "%s\n", "#else");
-    fprintf(file, "%s\n", "");
-
-    // lookup function for externs
-    fprintf(file, "%s\n", "#ifdef __cplusplus");
-    fprintf(file, "%s\n", "extern \"C\" {");
-    fprintf(file, "%s\n", "#endif");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "// Deprecated: use generated variable pointers instead.");
-    fprintf(file, "%s\n", "void *dc_get_variable(const char *name);");
-    fprintf(file, "%s\n", "extern DcAppContext *dc_app_ctx;");
-    fprintf(file, "%s\n", "extern const DcAppApi *dc_app;");
-    fprintf(file, "%s\n", "extern const DcDrawApi *dc_draw;");
-    fprintf(file, "%s\n", "extern const DcMouseApi *dc_mouse;");
-    fprintf(file, "%s\n", "extern const DcTextureApi *dc_texture;");
-    fprintf(file, "%s\n", "extern const DcPlanetApi *dc_planet;");
-    fprintf(file, "%s\n", "");
-
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        if (var_index == DC_APP_LOOKUP_FIRST_INDEX) {
-            fprintf(file, "%s\n", "// XML variable pointers shared from the main logic translation unit.");
-        }
-        DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
-        const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
-        DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
-        switch (value->type) {
-            case DC_VALUE_TYPE_STRING:
-                fprintf(file, "extern char   (*%s)[%d];\n", var_name, DC_VALUE_STRING_BUFFER_SIZE);
-                break;
-            case DC_VALUE_TYPE_DOUBLE:
-                fprintf(file, "extern double *%s;\n", var_name);
-                break;
-            case DC_VALUE_TYPE_INTEGER:
-                fprintf(file, "extern int    *%s;\n", var_name);
-                break;
-            case DC_VALUE_TYPE_BOOLEAN:
-                fprintf(file, "extern bool   *%s;\n", var_name);
-                break;
-            default:
-                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
-                break;
-        }
-    }
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "#ifdef __cplusplus");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "#endif");
-    fprintf(file, "%s\n", "");
-
-    // file closer
-    fprintf(file, "%s\n", "#endif");
-    fprintf(file, "%s\n", "#endif");
-
-    // exit
-    fclose(file);
-    return 0;
-}
-
-static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "// Alignment values used by DcPlacement.");
-    fprintf(file, "%s\n", "typedef enum _DcAlign {");
+    fprintf(file, "%s\n", "typedef enum DcAlign {");
     fprintf(file, "    DC_ALIGN_UNDEFINED = %d,\n", DC_APP_ALIGN_TYPE_UNDEFINED);
     fprintf(file, "    DC_ALIGN_LEFT = %d,\n", DC_APP_ALIGN_TYPE_LEFT);
     fprintf(file, "    DC_ALIGN_CENTER = %d,\n", DC_APP_ALIGN_TYPE_CENTER);
@@ -277,7 +143,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Type values used by XML <Arg> entries.");
-    fprintf(file, "%s\n", "typedef enum _DcValueType {");
+    fprintf(file, "%s\n", "typedef enum DcValueType {");
     fprintf(file, "    DC_VALUE_TYPE_UNDEFINED = %d,\n", DC_VALUE_TYPE_UNDEFINED);
     fprintf(file, "    DC_VALUE_TYPE_STRING = %d,\n", DC_VALUE_TYPE_STRING);
     fprintf(file, "    DC_VALUE_TYPE_INTEGER = %d,\n", DC_VALUE_TYPE_INTEGER);
@@ -287,7 +153,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Coordinate reference systems for planet positions.");
-    fprintf(file, "%s\n", "typedef enum _DcPlanetCrs {");
+    fprintf(file, "%s\n", "typedef enum DcPlanetCrs {");
     fprintf(file, "    DC_PLANET_CRS_UNDEFINED = %d,\n", DC_APP_PLANET_CRS_UNDEFINED);
     fprintf(file, "    DC_PLANET_CRS_GEODETIC = %d,\n", DC_APP_PLANET_CRS_GEODETIC);
     fprintf(file, "    DC_PLANET_CRS_CARTESIAN = %d,\n", DC_APP_PLANET_CRS_CARTESIAN);
@@ -295,14 +161,14 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Basic vector types used by the draw API.");
-    fprintf(file, "%s\n", "typedef union _DcVec2 {");
+    fprintf(file, "%s\n", "typedef union DcVec2 {");
     fprintf(file, "%s\n", "    struct { float x, y; };");
     fprintf(file, "%s\n", "    struct { float r, g; };");
     fprintf(file, "%s\n", "    struct { float u, v; };");
     fprintf(file, "%s\n", "    float d[2];");
     fprintf(file, "%s\n", "} DcVec2;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef union _DcVec3 {");
+    fprintf(file, "%s\n", "typedef union DcVec3 {");
     fprintf(file, "%s\n", "    struct { float x, y, z; };");
     fprintf(file, "%s\n", "    struct { float r, g, b; };");
     fprintf(file, "%s\n", "    struct { float u, v, ignored_uv_; };");
@@ -316,12 +182,12 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    float d[3];");
     fprintf(file, "%s\n", "} DcVec3;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcPlanetLocalTransform {");
+    fprintf(file, "%s\n", "typedef struct DcPlanetLocalTransform {");
     fprintf(file, "%s\n", "    DcVec2 scale;");
     fprintf(file, "%s\n", "    float rotation_degrees;");
     fprintf(file, "%s\n", "} DcPlanetLocalTransform;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef union _DcVec4 {");
+    fprintf(file, "%s\n", "typedef union DcVec4 {");
     fprintf(file, "%s\n", "    struct {");
     fprintf(file, "%s\n", "        union {");
     fprintf(file, "%s\n", "            DcVec3 xyz;");
@@ -363,7 +229,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Stroke settings for outline-style drawing.");
-    fprintf(file, "%s\n", "typedef struct _DcStroke {");
+    fprintf(file, "%s\n", "typedef struct DcStroke {");
     fprintf(file, "%s\n", "    DcVec4 color;");
     fprintf(file, "%s\n", "    float width;");
     fprintf(file, "%s\n", "    uint8_t pattern;");
@@ -371,7 +237,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Text settings for DrawFunction text rendering.");
-    fprintf(file, "%s\n", "typedef struct _DcTextStyle {");
+    fprintf(file, "%s\n", "typedef struct DcTextStyle {");
     fprintf(file, "%s\n", "    DcVec4 color;");
     fprintf(file, "%s\n", "    float size;");
     fprintf(file, "%s\n", "    float wrap;");
@@ -379,7 +245,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Placement controls alignment, rotation, and pivot behavior.");
-    fprintf(file, "%s\n", "typedef struct _DcPlacement {");
+    fprintf(file, "%s\n", "typedef struct DcPlacement {");
     fprintf(file, "%s\n", "    float rotation;");
     fprintf(file, "%s\n", "    DcAlign parent_align_x;");
     fprintf(file, "%s\n", "    DcAlign parent_align_y;");
@@ -391,23 +257,9 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    float pivot_y;");
     fprintf(file, "%s\n", "} DcPlacement;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "static inline DcPlacement dc_place_default(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement;");
-    fprintf(file, "%s\n", "    placement.rotation = 0.0f;");
-    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_UNDEFINED;");
-    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_UNDEFINED;");
-    fprintf(file, "%s\n", "    placement.local_align_x = DC_ALIGN_UNDEFINED;");
-    fprintf(file, "%s\n", "    placement.local_align_y = DC_ALIGN_UNDEFINED;");
-    fprintf(file, "%s\n", "    placement.pivot_align_x = DC_ALIGN_UNDEFINED;");
-    fprintf(file, "%s\n", "    placement.pivot_align_y = DC_ALIGN_UNDEFINED;");
-    fprintf(file, "%s\n", "    placement.pivot_x = 0.0f;");
-    fprintf(file, "%s\n", "    placement.pivot_y = 0.0f;");
-    fprintf(file, "%s\n", "    return placement;");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Convenience constructors for common placement patterns.");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_center(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_CENTER;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_MIDDLE;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_CENTER;");
@@ -416,7 +268,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_left(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_LEFT;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_MIDDLE;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_LEFT;");
@@ -425,7 +277,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_right(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_RIGHT;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_MIDDLE;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_RIGHT;");
@@ -434,7 +286,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_top(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_CENTER;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_TOP;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_CENTER;");
@@ -443,7 +295,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_bottom(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_CENTER;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_BOTTOM;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_CENTER;");
@@ -452,7 +304,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_top_left(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_LEFT;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_TOP;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_LEFT;");
@@ -461,7 +313,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_top_right(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_RIGHT;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_TOP;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_RIGHT;");
@@ -470,7 +322,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_bottom_left(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_LEFT;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_BOTTOM;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_LEFT;");
@@ -479,7 +331,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "static inline DcPlacement dc_place_bottom_right(void) {");
-    fprintf(file, "%s\n", "    DcPlacement placement = dc_place_default();");
+    fprintf(file, "%s\n", "    DcPlacement placement = {};");
     fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_RIGHT;");
     fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_BOTTOM;");
     fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_RIGHT;");
@@ -489,7 +341,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Mouse state in the current DrawFunction coordinate system.");
-    fprintf(file, "%s\n", "typedef struct _DcMouse {");
+    fprintf(file, "%s\n", "typedef struct DcMouse {");
     fprintf(file, "%s\n", "    float x;");
     fprintf(file, "%s\n", "    float y;");
     fprintf(file, "%s\n", "    bool position_valid;");
@@ -500,22 +352,22 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// A resolved drawing area that can be reused as another shape's parent.");
-    fprintf(file, "%s\n", "typedef struct _DcDrawArea {");
+    fprintf(file, "%s\n", "typedef struct DcDrawArea {");
     fprintf(file, "%s\n", "    float position[2];");
     fprintf(file, "%s\n", "    float dimensions[2];");
     fprintf(file, "%s\n", "    float transform[16];");
     fprintf(file, "%s\n", "} DcDrawArea;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Extended draw output. More fields can be added without changing every draw call.");
-    fprintf(file, "%s\n", "typedef struct _DcDrawResult {");
+    fprintf(file, "%s\n", "typedef struct DcDrawResult {");
     fprintf(file, "%s\n", "    DcDrawArea area;");
     fprintf(file, "%s\n", "} DcDrawResult;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// app_ctx is passed to lifecycle callbacks and app-owned APIs.");
-    fprintf(file, "%s\n", "typedef struct _DcAppContext DcAppContext;");
+    fprintf(file, "%s\n", "typedef struct DcAppContext DcAppContext;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// draw context passed only to DrawFunction callbacks.");
-    fprintf(file, "%s\n", "typedef struct _DcDrawContext DcDrawContext;");
+    fprintf(file, "%s\n", "typedef struct DcDrawContext DcDrawContext;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Texture handle returned by dc_texture->load_image() and consumed by dc_draw->image().");
     fprintf(file, "%s\n", "typedef uint32_t DcTextureId;");
@@ -530,14 +382,14 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "#define DC_PLANET_TEXTURE_SLOT_COUNT 5u");
     fprintf(file, "%s\n", "#define DC_PLANET_ELLIPSE_MAX_SEGMENTS 1000u");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef enum _DcPlanetGeojsonStyleFlags {");
+    fprintf(file, "%s\n", "typedef enum DcPlanetGeojsonStyleFlags {");
     fprintf(file, "%s\n", "    DC_PLANET_GEOJSON_STYLE_FLAGS_NONE = 0,");
     fprintf(file, "%s\n", "    DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR = 1 << 0,");
     fprintf(file, "%s\n", "    DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR = 1 << 1,");
     fprintf(file, "%s\n", "    DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH = 1 << 2,");
     fprintf(file, "%s\n", "} DcPlanetGeojsonStyleFlags;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcPlanetGeojsonStyle {");
+    fprintf(file, "%s\n", "typedef struct DcPlanetGeojsonStyle {");
     fprintf(file, "%s\n", "    int flags;");
     fprintf(file, "%s\n", "    double height_above_terrain;");
     fprintf(file, "%s\n", "    float line_width;");
@@ -545,28 +397,18 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    DcVec4 fill_color;");
     fprintf(file, "%s\n", "} DcPlanetGeojsonStyle;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "static inline DcPlanetGeojsonStyle dc_planet_geojson_style_default(void) {");
-    fprintf(file, "%s\n", "    DcPlanetGeojsonStyle style = {0};");
-    fprintf(file, "%s\n", "    style.line_width = 1.0f;");
-    fprintf(file, "%s\n", "    style.line_color.r = 1.0f;");
-    fprintf(file, "%s\n", "    style.line_color.g = 1.0f;");
-    fprintf(file, "%s\n", "    style.line_color.b = 1.0f;");
-    fprintf(file, "%s\n", "    style.line_color.a = 1.0f;");
-    fprintf(file, "%s\n", "    return style;");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcPlanetCreateInfo {");
+    fprintf(file, "%s\n", "typedef struct DcPlanetCreateInfo {");
     fprintf(file, "%s\n", "    const char *data_path;");
     fprintf(file, "%s\n", "    uint32_t mesh_cache_size; // bytes, 0 uses renderer default.");
     fprintf(file, "%s\n", "} DcPlanetCreateInfo;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcPlanetBreadcrumbsPoints {");
+    fprintf(file, "%s\n", "typedef struct DcPlanetBreadcrumbsPoints {");
     fprintf(file, "%s\n", "    const DcVec3 *points;");
     fprintf(file, "%s\n", "    uint32_t count;");
     fprintf(file, "%s\n", "    DcPlanetCrs crs;");
     fprintf(file, "%s\n", "} DcPlanetBreadcrumbsPoints;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef enum _DcPlanetViewFlags {");
+    fprintf(file, "%s\n", "typedef enum DcPlanetViewFlags {");
     fprintf(file, "%s\n", "    DC_PLANET_VIEW_FLAGS_NONE = 0,");
     fprintf(file, "%s\n", "    DC_PLANET_VIEW_FLAGS_WIREFRAME = 1 << 0,");
     fprintf(file, "%s\n", "    DC_PLANET_VIEW_FLAGS_SHOW_LEVELS = 1 << 1,");
@@ -575,20 +417,13 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    DC_PLANET_VIEW_FLAGS_FLATTEN = 1 << 4,");
     fprintf(file, "%s\n", "} DcPlanetViewFlags;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcPlanetViewOptions {");
+    fprintf(file, "%s\n", "typedef struct DcPlanetViewOptions {");
     fprintf(file, "%s\n", "    int flags;");
     fprintf(file, "%s\n", "    float tau;");
     fprintf(file, "%s\n", "} DcPlanetViewOptions;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "static inline DcPlanetViewOptions dc_planet_view_options_default(void) {");
-    fprintf(file, "%s\n", "    DcPlanetViewOptions options;");
-    fprintf(file, "%s\n", "    options.flags = DC_PLANET_VIEW_FLAGS_NONE;");
-    fprintf(file, "%s\n", "    options.tau = 0.3f;");
-    fprintf(file, "%s\n", "    return options;");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// One XML <Arg> value passed into a DrawFunction.");
-    fprintf(file, "%s\n", "typedef struct _DcDrawFuncArg {");
+    fprintf(file, "%s\n", "typedef struct DcDrawFuncArg {");
     fprintf(file, "%s\n", "    DcValueType type;");
     fprintf(file, "%s\n", "    const char *value_string;");
     fprintf(file, "%s\n", "    int value_integer;");
@@ -598,7 +433,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Full XML argument list passed into a DrawFunction.");
-    fprintf(file, "%s\n", "typedef struct _DcDrawFuncArgs {");
+    fprintf(file, "%s\n", "typedef struct DcDrawFuncArgs {");
     fprintf(file, "%s\n", "    uint32_t count;");
     fprintf(file, "%s\n", "    const DcDrawFuncArg *values;");
     fprintf(file, "%s\n", "} DcDrawFuncArgs;");
@@ -606,7 +441,7 @@ static void _write_draw_api(FILE *file) {
 
     fprintf(file, "%s\n", "// draw functions are only valid inside DrawFunction callbacks.");
     fprintf(file, "%s\n", "// use DcAppContext APIs for app-owned resources outside drawing.");
-    fprintf(file, "%s\n", "typedef struct _DcDrawApi {");
+    fprintf(file, "%s\n", "typedef struct DcDrawApi {");
     fprintf(file, "%s\n", "    // Current draw area.");
     fprintf(file, "%s\n", "    const DcDrawArea *(*get_area)(DcDrawContext *draw_ctx);");
     fprintf(file, "%s\n", "");
@@ -671,8 +506,8 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    // draws planet views and overlays through dcapp handles.");
     fprintf(file, "%s\n", "    DcDrawPlanetViewHandle (*planet_view_geodetic)(DcDrawContext *draw_ctx, DcPlanetViewHandle view, double lat, double lon, double elevation, DcVec3 rpy, float fov_degrees, bool orthographic, DcPlanetViewOptions options, DcVec2 position, DcVec2 size, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    DcDrawPlanetViewHandle (*planet_view_cartesian)(DcDrawContext *draw_ctx, DcPlanetViewHandle view, DcVec3 camera_position, DcVec3 rpy, float fov_degrees, bool orthographic, DcPlanetViewOptions options, DcVec2 position, DcVec2 size, DcPlacement placement, DcDrawResult *result);");
-    fprintf(file, "%s\n", "    bool (*planet_local_push_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, DcPlanetLocalTransform transform);");
-    fprintf(file, "%s\n", "    void (*planet_local_pop)(DcDrawContext *draw_ctx);");
+    fprintf(file, "%s\n", "    bool (*planet_container_push_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, DcPlanetLocalTransform transform);");
+    fprintf(file, "%s\n", "    void (*planet_container_pop)(DcDrawContext *draw_ctx);");
     fprintf(file, "%s\n", "    void (*planet_line_local)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float line_width, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_polygon_local)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float line_width, DcVec4 line_color, DcVec4 fill_color);");
     fprintf(file, "%s\n", "    void (*planet_sphere_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcVec4 color);");
@@ -691,7 +526,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "} DcDrawApi;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Mouse hit registration and event queries available through dc_mouse.");
-    fprintf(file, "%s\n", "typedef struct _DcMouseApi {");
+    fprintf(file, "%s\n", "typedef struct DcMouseApi {");
     fprintf(file, "%s\n", "    // Basic mouse hit registration.");
     fprintf(file, "%s\n", "    void (*rect)(DcDrawContext *draw_ctx, const char *id, DcVec2 position, DcVec2 size);");
     fprintf(file, "%s\n", "    void (*circle)(DcDrawContext *draw_ctx, const char *id, DcVec2 center, float radius);");
@@ -718,13 +553,13 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// texture resources are owned by the app context.");
-    fprintf(file, "%s\n", "typedef struct _DcTextureApi {");
+    fprintf(file, "%s\n", "typedef struct DcTextureApi {");
     fprintf(file, "%s\n", "    DcTextureId (*load_image)(DcAppContext *app_ctx, const char *path, DcVec2 *out_size);");
     fprintf(file, "%s\n", "    bool (*get_size)(DcAppContext *app_ctx, DcTextureId texture_id, DcVec2 *out_size);");
     fprintf(file, "%s\n", "} DcTextureApi;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// planet resources are owned by the app context.");
-    fprintf(file, "%s\n", "typedef struct _DcPlanetApi {");
+    fprintf(file, "%s\n", "typedef struct DcPlanetApi {");
     fprintf(file, "%s\n", "    // planet resources live until app shutdown.");
     fprintf(file, "%s\n", "    DcPlanetHandle (*get_planet_by_id)(DcAppContext *app_ctx, const char *id);");
     fprintf(file, "%s\n", "    DcPlanetHandle (*create_planet)(DcAppContext *app_ctx, DcPlanetCreateInfo info);");
@@ -735,7 +570,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);");
     fprintf(file, "%s\n", "    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, DcVec3 position, float meters_per_pixel);");
     fprintf(file, "%s\n", "    bool (*set_texture_projected_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);");
-    fprintf(file, "%s\n", "    bool (*clear_texture)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot);");
+    fprintf(file, "%s\n", "    bool (*clear_texture)(DcPlanetHandle planet, uint32_t slot);");
     fprintf(file, "%s\n", "    bool (*set_light_direction)(DcPlanetHandle planet, DcVec3 direction);");
     fprintf(file, "%s\n", "    DcPlanetViewHandle (*create_geodetic_view)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t width, uint32_t height);");
     fprintf(file, "%s\n", "    DcPlanetViewHandle (*create_cartesian_view)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t width, uint32_t height);");
@@ -750,39 +585,290 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// app-level functions require an explicit app context.");
-    fprintf(file, "%s\n", "typedef void *(*DcGetVariableFn)(DcAppContext *app_ctx, const char *name);");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcAppApi {");
+    fprintf(file, "%s\n", "typedef struct DcAppApi {");
     fprintf(file, "%s\n", "    void *(*get_variable)(DcAppContext *app_ctx, const char *name);");
     fprintf(file, "%s\n", "} DcAppApi;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// runtime hooks filled in by dcapp before user display_init().");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef struct _DcInit {");
-    fprintf(file, "%s\n", "    uint32_t size;");
-    fprintf(file, "%s\n", "    uint32_t version;");
+    fprintf(file, "%s\n", "typedef struct DcInit {");
     fprintf(file, "%s\n", "    DcAppContext *app_ctx;");
-    fprintf(file, "%s\n", "    DcGetVariableFn get_variable;");
+    fprintf(file, "%s\n", "    const DcAppApi *app;");
     fprintf(file, "%s\n", "    const DcDrawApi *draw;");
     fprintf(file, "%s\n", "    const DcMouseApi *mouse;");
     fprintf(file, "%s\n", "    const DcTextureApi *texture;");
     fprintf(file, "%s\n", "    const DcPlanetApi *planet;");
-    fprintf(file, "%s\n", "    const DcAppApi *app;");
     fprintf(file, "%s\n", "} DcInit;");
     fprintf(file, "%s\n", "");
+
+    // file function declarations
+    fprintf(file, "%s\n", "#if defined(_WIN32)");
+    fprintf(file, "%s\n", "#define DCAPP_LOGIC_EXPORT __declspec(dllexport)");
+    fprintf(file, "%s\n", "#elif defined(__GNUC__) || defined(__clang__)");
+    fprintf(file, "%s\n", "#define DCAPP_LOGIC_EXPORT __attribute__((visibility(\"default\")))");
+    fprintf(file, "%s\n", "#else");
+    fprintf(file, "%s\n", "#define DCAPP_LOGIC_EXPORT");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "extern \"C\" {");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// lifecycle callbacks get app_ctx for app-owned resources and optional user_data.");
+    fprintf(file, "%s\n", "DCAPP_LOGIC_EXPORT void display_pre_init(const DcInit *init);");
+    fprintf(file, "%s\n", "DCAPP_LOGIC_EXPORT void display_init(DcAppContext *app_ctx, void **user_data);");
+    fprintf(file, "%s\n", "DCAPP_LOGIC_EXPORT void display_draw(DcAppContext *app_ctx, void *user_data);");
+    fprintf(file, "%s\n", "DCAPP_LOGIC_EXPORT void display_close(DcAppContext *app_ctx, void *user_data);");
+    fprintf(file, "%s\n", "");
+
+    if (callbacks.count > 0) {
+        fprintf(file, "%s\n", "// Callbacks referenced by XML Function and DrawFunction nodes.");
+    }
+    for (size_t ii = 0; ii < callbacks.count; ii++) {
+        const DcLogicCallback *callback = &callbacks.values[ii];
+        if (callback->type == DC_LOGIC_CALLBACK_TYPE_FUNCTION) {
+            fprintf(
+                file,
+                "DCAPP_LOGIC_EXPORT void %s(DcAppContext *app_ctx, void *user_data);\n",
+                callback->name);
+        } else {
+            fprintf(
+                file,
+                "DCAPP_LOGIC_EXPORT void %s(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data);\n",
+                callback->name);
+        }
+    }
+    if (callbacks.count > 0) fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "#if defined(_DCAPP_LOGIC_EXTERN_) && !defined(DCAPP_LOGIC_EXTERN)");
+    fprintf(file, "%s\n", "#define DCAPP_LOGIC_EXTERN");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifndef DCAPP_LOGIC_EXTERN");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "extern \"C\" {");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// api tables are filled by dcapp before display_init().");
+    fprintf(file, "%s\n", "DcAppContext *dc_app_ctx;");
+    fprintf(file, "%s\n", "const DcAppApi *dc_app;");
+    fprintf(file, "%s\n", "const DcDrawApi *dc_draw;");
+    fprintf(file, "%s\n", "const DcMouseApi *dc_mouse;");
+    fprintf(file, "%s\n", "const DcTextureApi *dc_texture;");
+    fprintf(file, "%s\n", "const DcPlanetApi *dc_planet;");
+    fprintf(file, "%s\n", "");
+
+    // file variable definitions
+    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) {
+        fprintf(file, "%s\n", "// XML variable pointers resolved during display_pre_init().");
+    }
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
+        const char   *var_name    = dc_app_lookup_get_var_name(lookup, var_index);
+        DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, var_index);
+        DcValue      *value       = dc_app_lookup_get_value(lookup, value_index);
+        switch (value->type) {
+            case DC_VALUE_TYPE_STRING:
+                fprintf(file, "char   (*%s)[%d];\n", var_name, DC_VALUE_STRING_BUFFER_SIZE);
+                break;
+            case DC_VALUE_TYPE_DOUBLE:
+                fprintf(file, "double *%s;\n", var_name);
+                break;
+            case DC_VALUE_TYPE_INTEGER:
+                fprintf(file, "int    *%s;\n", var_name);
+                break;
+            case DC_VALUE_TYPE_BOOLEAN:
+                fprintf(file, "bool   *%s;\n", var_name);
+                break;
+            default:
+                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
+                break;
+        }
+    }
+    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) fprintf(file, "%s\n", "");
+
+    // define dc_get_variable() and display_pre_init()
+    fprintf(file, "%s\n", "// Legacy lookup helper for variables declared in XML.");
+    fprintf(file, "%s\n", "// Deprecated: use generated variable pointers instead.");
+    fprintf(file, "%s\n", "void *dc_get_variable(const char *name) {");
+    fprintf(file, "%s\n", "    return dc_app->get_variable(dc_app_ctx, name);");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Internal setup called before display_init().");
+    fprintf(file, "%s\n", "DCAPP_LOGIC_EXPORT void display_pre_init(const DcInit *init) {");
+    fprintf(file, "%s\n", "    if (!init) return;");
+    fprintf(file, "%s\n", "    dc_app_ctx = init->app_ctx;");
+    fprintf(file, "%s\n", "    dc_app = init->app;");
+    fprintf(file, "%s\n", "    dc_draw = init->draw;");
+    fprintf(file, "%s\n", "    dc_mouse = init->mouse;");
+    fprintf(file, "%s\n", "    dc_texture = init->texture;");
+    fprintf(file, "%s\n", "    dc_planet = init->planet;");
+
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
+        const char   *var_name    = dc_app_lookup_get_var_name(lookup, var_index);
+        DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, var_index);
+        DcValue      *value       = dc_app_lookup_get_value(lookup, value_index);
+        switch (value->type) {
+            case DC_VALUE_TYPE_STRING:
+                fprintf(
+                    file,
+                    "    %s = (char (*)[%d])dc_get_variable(\"%s\");\n",
+                    var_name,
+                    DC_VALUE_STRING_BUFFER_SIZE,
+                    var_name);
+                break;
+            case DC_VALUE_TYPE_DOUBLE:
+                fprintf(file, "    %s = (double *)dc_get_variable(\"%s\");\n", var_name, var_name);
+                break;
+            case DC_VALUE_TYPE_INTEGER:
+                fprintf(file, "    %s = (int *)dc_get_variable(\"%s\");\n", var_name, var_name);
+                break;
+            case DC_VALUE_TYPE_BOOLEAN:
+                fprintf(file, "    %s = (bool *)dc_get_variable(\"%s\");\n", var_name, var_name);
+                break;
+            default:
+                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
+                break;
+        }
+    }
+
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+
+    // C/C++ compatibility guard closer
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+
+    // extern definitions for logic externs
+    fprintf(file, "%s\n", "#else");
+    fprintf(file, "%s\n", "");
+
+    // lookup function for externs
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "extern \"C\" {");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Deprecated: use generated variable pointers instead.");
+    fprintf(file, "%s\n", "void *dc_get_variable(const char *name);");
+    fprintf(file, "%s\n", "extern DcAppContext *dc_app_ctx;");
+    fprintf(file, "%s\n", "extern const DcAppApi *dc_app;");
+    fprintf(file, "%s\n", "extern const DcDrawApi *dc_draw;");
+    fprintf(file, "%s\n", "extern const DcMouseApi *dc_mouse;");
+    fprintf(file, "%s\n", "extern const DcTextureApi *dc_texture;");
+    fprintf(file, "%s\n", "extern const DcPlanetApi *dc_planet;");
+    fprintf(file, "%s\n", "");
+
+    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) {
+        fprintf(file, "%s\n", "// XML variable pointers shared from the main logic translation unit.");
+    }
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
+        const char   *var_name    = dc_app_lookup_get_var_name(lookup, var_index);
+        DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, var_index);
+        DcValue      *value       = dc_app_lookup_get_value(lookup, value_index);
+        switch (value->type) {
+            case DC_VALUE_TYPE_STRING:
+                fprintf(file, "extern char   (*%s)[%d];\n", var_name, DC_VALUE_STRING_BUFFER_SIZE);
+                break;
+            case DC_VALUE_TYPE_DOUBLE:
+                fprintf(file, "extern double *%s;\n", var_name);
+                break;
+            case DC_VALUE_TYPE_INTEGER:
+                fprintf(file, "extern int    *%s;\n", var_name);
+                break;
+            case DC_VALUE_TYPE_BOOLEAN:
+                fprintf(file, "extern bool   *%s;\n", var_name);
+                break;
+            default:
+                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
+                break;
+        }
+    }
+    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+
+    // file closer
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "#endif");
+
+    // exit
+    fclose(file);
+    return 0;
 }
 
-void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup) {
+// Collect XML callback names for declaration in the generated logic header.
+static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, DcLogicCallbacks *callbacks) {
+    xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
+    if (!raw_name || raw_name[0] == '\0') {
+        if (raw_name) xmlFree(raw_name);
+        return;
+    }
+
+    // Repeated uses share a declaration, but the two callback kinds have different signatures.
+    for (size_t ii = 0; ii < callbacks->count; ii++) {
+        if (strcmp(callbacks->values[ii].name, (const char *)raw_name) != 0) continue;
+        if (callbacks->values[ii].type != type) {
+            DC_LOG_ERROR(
+                "GenHeader",
+                "Callback '%s' is used by both <Function> and <DrawFunction>",
+                (const char *)raw_name);
+            callbacks->failed = true;
+        }
+        xmlFree(raw_name);
+        return;
+    }
+
+    if (callbacks->count == callbacks->capacity) {
+        size_t new_capacity = callbacks->capacity ? callbacks->capacity * 2 : 8;
+        void *new_values = realloc(callbacks->values, new_capacity * sizeof(*callbacks->values));
+        if (!new_values) {
+            DC_LOG_ERROR("GenHeader", "Unable to allocate callback declarations");
+            callbacks->failed = true;
+            xmlFree(raw_name);
+            return;
+        }
+        callbacks->values = new_values;
+        callbacks->capacity = new_capacity;
+    }
+
+    size_t name_length = strlen((const char *)raw_name);
+    char *name = malloc(name_length + 1);
+    if (!name) {
+        DC_LOG_ERROR("GenHeader", "Unable to allocate callback name");
+        callbacks->failed = true;
+        xmlFree(raw_name);
+        return;
+    }
+
+    memcpy(name, raw_name, name_length + 1);
+    callbacks->values[callbacks->count++] = (DcLogicCallback){
+        .name = name,
+        .type = type,
+    };
+    xmlFree(raw_name);
+}
+
+void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks) {
     xmlNodePtr xml_child_node = xml_node->children;
     while (xml_child_node) {
-        _process_node(xml_child_node, lookup);
+        _process_node(xml_child_node, lookup, callbacks);
         xml_child_node = xml_child_node->next;
     }
 }
 
-void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
+void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks) {
 
-    switch (dc_app_xml_node_to_elem_type(xml_node)) {
+    switch (dc_app_elem_type_from_xml_node(xml_node)) {
 
         // ignore non-element nodes
         case DC_APP_ELEM_TYPE_NONELEM: {
@@ -823,17 +909,28 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
             // xmlChar *raw_init_value = xmlGetProp(xml_node, BAD_CAST "InitialValue");
 
             // register variable
-            DcValue value      = {};
-            value.type         = dc_utils_string_to_integer((const char *)clean_type);
-            DcAppLookupVar var = {};
-            var.value_index    = dc_app_lookup_register_value(lookup, &value);
-            dc_app_lookup_register_var(lookup, clean_name, &var);
+            DcValue value = {};
+            value.type    = dc_utils_string_to_integer((const char *)clean_type);
+            DcAppValIndex value_index = dc_app_lookup_register_value(lookup, &value);
+            dc_app_lookup_register_var(lookup, clean_name, value_index);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_FUNCTION: {
+            _register_callback(xml_node, DC_LOGIC_CALLBACK_TYPE_FUNCTION, callbacks);
+            _process_node_children(xml_node, lookup, callbacks);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_DRAW_FUNCTION: {
+            _register_callback(xml_node, DC_LOGIC_CALLBACK_TYPE_DRAW_FUNCTION, callbacks);
+            _process_node_children(xml_node, lookup, callbacks);
             break;
         }
 
         // for anything else, just process the children inside
         default: {
-            _process_node_children(xml_node, lookup);
+            _process_node_children(xml_node, lookup, callbacks);
             break;
         }
     }

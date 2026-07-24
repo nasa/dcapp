@@ -16,8 +16,8 @@ At startup, dcapp:
 3. Preprocesses XML authoring helpers such as `Include`, `Constant`, `Default`,
    `Style`, `Dummy`, and static `If`.
 4. Parses the cleaned XML into runtime node structs.
-5. Initializes draw, texture, pixel stream, Trick, Edge, logic, and planet
-   systems as needed.
+5. Creates focused scene, draw, texture, font, pixel stream, data-link, logic,
+   and planet contexts as needed.
 
 Every frame, dcapp:
 
@@ -25,14 +25,14 @@ Every frame, dcapp:
 2. Runs fixed-rate display logic callbacks.
 3. Refreshes variables and mouse state.
 4. Traverses the runtime node tree.
-5. Emits draw commands into dcapp draw lists.
-6. Submits those lists through the dcapp draw backend and PilotLight graphics.
+5. Resolves and draws each node into dcapp draw lists in XML order.
+6. Submits those lists through the dcapp draw GPU extension and PilotLight graphics.
 
 ## PilotLight Relationship
 
 dcapp uses PilotLight as the host application, platform layer, renderer, memory
 tracker, resource manager, and extension registry. The app entry points are the
-PilotLight callbacks in `apps/dcapp/dcapp.c`:
+PilotLight callbacks in `apps/dcapp.c`:
 
 - `pl_app_load`
 - `pl_app_shutdown`
@@ -48,10 +48,10 @@ PilotLight callbacks in `apps/dcapp/dcapp.c`:
 - `pl_planet_processor_ext`
 - `pl_planet_ext`
 
-After extension loading, dcapp resolves PilotLight and dcapp APIs into the
-global `_ext_*` pointers declared in `apps/dcapp/dcapp.h`, such as
-`_ext_starter`, `_ext_gfx`, `_ext_resource`, `_ext_dc_draw`,
-`_ext_dc_draw_backend`, `_ext_planet`, and `_ext_planet_processor`.
+After extension loading, `dcapp.c` calls each subsystem's `*_init` function.
+Each implementation file resolves the PilotLight APIs it uses into file-local
+`_ext_*` pointers. Subsystems do not include a root umbrella header or reach
+through the application root to use another subsystem's state.
 
 The important boundary is:
 
@@ -61,15 +61,41 @@ The important boundary is:
   display logic integration, external IO mappings, mouse display semantics, and
   the higher-level drawing commands used by XML and logic files.
 
+## Runtime Ownership
+
+The private `_AppData` definition in `apps/dcapp.c` is the composition
+root. It contains the window, config, and opaque pointers to the owning
+subsystem contexts; it does not contain their arrays, allocators, callbacks,
+mouse state, or renderer scratch data.
+
+The contexts themselves are separately allocated, so their addresses remain
+stable. Movable stretchy buffers stay private inside their owning context:
+
+- Scene nodes, textures, and pixel-stream sources are referenced by append-only
+  integer IDs.
+- Planet and planet-view handles are separately allocated opaque objects because
+  callers retain those handles.
+- The scene owns parsed planet definitions and its PlanetView-node registry.
+  The planet context owns only resolved planet, view, breadcrumb, and GeoJSON
+  resources.
+- Socket, Trick, Edge, GeoJSON, MJPEG, and shared-memory handles refer to
+  separately allocated objects. Their addresses do not depend on a
+  module-static registry or a movable stretchy buffer.
+
+The XML context is a startup-only builder. The scene renderer borrows the
+focused runtime services it needs and owns its deferred operations and render
+scratch. Neither receives `_AppData`.
+
 ## XML Pipeline
 
 XML handling is split into three stages.
 
 ### Element Names
 
-The canonical list of XML element names lives in `src/app/elem.h` and
-`src/app/elem.c`. If an element is not recognized there, the parser and
-validator will not treat it as a first-class dcapp XML element.
+The canonical XML element enum lives in `src/app/elem_types.h`, with its API
+in `src/app/elem.h` and name mapping in `src/app/elem.c`. If an element is not
+recognized there, the parser and validator will not treat it as a first-class
+dcapp XML element.
 
 ### Preprocessing
 
@@ -92,13 +118,14 @@ The preprocessed XML can be written with:
 
 ### Runtime Parsing
 
-`apps/dcapp/xml.c` parses the cleaned XML into `_Node` structs from
-`apps/dcapp/node.h`. The main parser entry point is
+`src/app/xml.c` parses the cleaned XML into `_Node` structs from
+`src/app/node.h`. The main parser entry point is
 `dc_app_process_xml_node`. Most runtime XML elements have a matching
 `_process_xml_node_*` helper in `xml.c`.
 
 The runtime node tree stores node indexes rather than pointers. Index `0` is
-reserved as undefined for nodes and textures.
+reserved as undefined for nodes and textures. The scene context owns both the
+node buffer and variable lookup.
 
 ## Validation
 
@@ -108,32 +135,34 @@ preprocessing are not expected to remain as runtime nodes.
 
 When changing XML, keep these in sync:
 
+- `src/app/elem_types.h`
 - `src/app/elem.h`
 - `src/app/elem.c`
-- `apps/dcapp/xml.c`
+- `src/app/xml.c`
 - `apps/dcapp_validate.c`
 - Relevant docs and samples
 
 ## Runtime Frame Loop
 
-The frame loop is in `pl_app_update` in `apps/dcapp/dcapp.c`.
+The frame loop is in `pl_app_update` in `apps/dcapp.c`.
 
 The high-level order is:
 
 1. `_ext_starter->begin_frame()`
 2. `_ext_resource->new_frame()`
-3. Trick transmit/receive update
-4. Edge transmit/receive update
-5. PixelStream update
-6. Fixed-rate display logic update
-7. Value refresh
-8. Mouse state update
-9. `_ext_dc_draw_backend->new_frame()`
-10. Draw batch reset
-11. Planet definition updates
-12. XML node traversal through `dc_app_draw_node`
-13. Deferred `Set` flush
-14. Draw-list submission during the PilotLight main render pass
+3. Data-link context update (Trick and Edge)
+4. PixelStream update
+5. Fixed-rate display logic update
+6. Value refresh
+7. Raw mouse input is passed to the draw context
+8. `_ext_dc_draw_backend->new_frame()`
+9. Draw batch reset
+10. Planet definition updates
+11. The scene renderer traverses the node tree in XML order, resolving and
+    drawing each node before moving to the next node
+12. Deferred `Set` flush
+13. Draw-list submission during the PilotLight main render pass
+14. Draw-context interaction state commit
 
 This order matters. Logic and external IO update variables before the XML tree
 is drawn. Deferred `Set` operations flush after drawing so updates from the
@@ -143,11 +172,15 @@ current traversal apply atomically.
 
 The drawing path is intentionally layered:
 
-- `apps/dcapp/draw_node.c` knows how each XML node behaves. It evaluates node
-  values, manages layout, handles mouse state, and decides what to draw.
-- `apps/dcapp/draw.c` exposes the drawing helpers used by XML nodes and
-  `DrawFunction` logic callbacks. It also manages draw batches, textures, and
-  mouse hit registration.
+- `src/app/renderer.c` knows how each XML node behaves. It evaluates node
+  values, resolves nested layout, handles mouse state, and immediately calls
+  the matching draw helper before continuing traversal. This preserves XML
+  ordering for `Function`, `DrawFunction`, stencil, and planet-view nodes.
+- `src/app/draw.c` exposes the drawing helpers used by XML nodes and
+  `DrawFunction` logic callbacks. It also manages draw batches, transform and
+  stencil stacks, and mouse hit registration.
+- `src/app/texture.c` owns texture IDs, GPU textures, bind groups, and the
+  reusable upload staging buffer.
 - `extensions/dc_draw_ext.*` stores immediate-mode 2D and 3D draw lists.
 - `extensions/dc_draw_backend_ext.*` uploads and submits those draw lists using
   PilotLight graphics.
@@ -164,7 +197,8 @@ Displays can load one C/C++ logic library with the `Logic` element. The logic
 file is resolved relative to the XML file directory, and dcapp will try platform
 library names with and without a `lib` prefix.
 
-Logic callback symbols are loaded dynamically from `apps/dcapp/xml.c`:
+`src/app/xml.c` recognizes the `Logic` element, while
+`src/app/logic_runtime.c` owns the dynamic library and callback lifecycle:
 
 - `display_pre_init`
 - `display_init`
@@ -175,15 +209,21 @@ Logic callback symbols are loaded dynamically from `apps/dcapp/xml.c`:
 preprocessing. The generated header exports:
 
 - XML variables as pointers.
-- `Function` callback registration.
-- `DrawFunction` callback registration.
+- Typed, C-linked declarations for every `Function` and `DrawFunction`
+  callback, including the Windows export annotation.
 - API tables such as `dc_draw`, `dc_mouse`, `dc_texture`, and `dc_planet`.
+
+Draw/mouse, texture, and planet own their respective public contracts in
+`draw_api.h`, `texture_api.h`, and `planet_api.h`. `logic_api.h` only
+aggregates those capabilities for initialization. The generator emits a
+separate, explicitly curated short-name contract for standalone logic builds;
+it does not expose the internal headers or `DcApp*` namespace.
 
 See [logic.md](logic.md) for the full logic workflow.
 
 ## Variables And Values
 
-Runtime values are represented by `DcValue` in `src/value.c`. Named XML
+Runtime values are represented by `DcValue` in `src/app/value.c`. Named XML
 variables and values are tracked by the lookup system in `src/app/lookup.c`.
 
 Common value users include:
@@ -206,7 +246,11 @@ runtime contexts:
 - Edge support lives in `src/edge.c` and the `EdgeIO`, `EdgeVariable`,
   `EdgeFrom`, and `EdgeTo` XML nodes.
 - Pixel streams live in `src/pixelstream/mjpeg.c` and
-  `src/pixelstream/shmem.c`, then draw through `PixelStream` XML nodes.
+  `src/pixelstream/shmem.c`; `src/app/pixelstream.c` owns their manager
+  contexts, source IDs, frame storage, and texture uploads before
+  `PixelStream` nodes draw them.
+- `src/app/data_link.c` owns Trick and Edge connections and variable
+  bindings.
 
 See [trick.md](trick.md), [edge.md](edge.md), and [pixelstream.md](pixelstream.md).
 
@@ -217,8 +261,9 @@ Planet rendering has two major halves:
 - Data processing and chunk generation use `extensions/pl_planet_processor_ext.c`
   and the `./bin/dcapp-planet-chunkgen.*` wrappers.
 - Runtime rendering and overlays use `extensions/pl_planet_ext.c`,
-  `apps/dcapp/planet.c`, and the planet XML nodes parsed in
-  `apps/dcapp/xml.c`.
+  `src/app/planet.c`, and the planet XML nodes parsed in `src/app/xml.c`.
+  The scene owns the parsed definitions, the renderer resolves and updates
+  those definitions, and `planet.c` owns the resulting runtime resources.
 
 Geo helpers live in `src/geo.c` and `src/geojson.c`. XML planet views draw
 through the same frame loop as the rest of dcapp, but use PilotLight planet
@@ -226,22 +271,39 @@ resources and dcapp's planet draw helpers.
 
 See [planet.md](planet.md) and [coordinate-frame.md](coordinate-frame.md).
 
+## App Hot Reload
+
+When PilotLight reloads the dcapp application library, `pl_app_load` keeps the
+heap-owned subsystem contexts, reacquires every extension API, and reruns logic
+pre-initialization so the logic library receives the new capability-table
+addresses. MJPEG also refreshes libcurl callback pointers before libcurl may
+invoke them.
+
+This supports code-only reloads whose retained context layouts are unchanged.
+Changing the layout or meaning of a retained private struct still requires a
+full application restart; dcapp does not attempt live state migration.
+
 ## Source Map
 
 | Area | Main Files |
 |------|------------|
-| App lifecycle and frame loop | `apps/dcapp/dcapp.c`, `apps/dcapp/dcapp.h` |
+| App lifecycle and frame loop | `apps/dcapp.c` |
 | XML preprocessing | `src/app/config.c` |
-| XML element names | `src/app/elem.h`, `src/app/elem.c` |
-| XML runtime parsing | `apps/dcapp/xml.c` |
-| Runtime node structs | `apps/dcapp/node.h` |
-| XML node drawing | `apps/dcapp/draw_node.c` |
-| Draw API and batches | `apps/dcapp/draw.c`, `apps/dcapp/draw.h` |
+| XML element names | `src/app/elem_types.h`, `src/app/elem.h`, `src/app/elem.c` |
+| XML runtime parsing | `src/app/xml.c` |
+| Scene, variable, and parsed planet-definition ownership | `src/app/scene.c` |
+| Runtime node structs | `src/app/node.h` |
+| XML node resolution and ordered drawing | `src/app/renderer.c` |
+| Draw API and batches | `src/app/draw.c`, `src/app/draw.h`, `src/app/draw_api.h` |
+| Fonts and textures | `src/app/font.c`, `src/app/texture.c` |
+| Logic library lifecycle | `src/app/logic_runtime.c` |
+| Trick and Edge bindings | `src/app/data_link.c` |
+| Pixel-stream runtime | `src/app/pixelstream.c` |
 | dcapp draw extensions | `extensions/dc_draw_ext.*`, `extensions/dc_draw_backend_ext.*` |
 | Generated logic header | `apps/dcapp_genheader.c` |
 | XML validator | `apps/dcapp_validate.c` |
-| Planet runtime | `apps/dcapp/planet.c`, `extensions/pl_planet_ext.c` |
+| Planet resource runtime | `src/app/planet.c`, `extensions/pl_planet_ext.c` |
 | Planet processing | `extensions/pl_planet_processor_ext.c`, `apps/dcapp_planet_chunkgen.c` |
 | Trick and Edge | `src/trick.c`, `src/edge.c` |
 | Pixel streams | `src/pixelstream/mjpeg.c`, `src/pixelstream/shmem.c` |
-| Values and lookup | `src/value.c`, `src/app/lookup.c` |
+| Values and lookup | `src/app/value.c`, `src/app/lookup.c` |

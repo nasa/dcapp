@@ -36,7 +36,6 @@ jobs:
 
           INCLUDES=(
             -I apps
-            -I apps/dcapp
             -I src
             -I extensions
             -I shaders
@@ -61,12 +60,6 @@ jobs:
             git diff --name-only -z --diff-filter=ACMR "$BASE_REF"...HEAD |
               while IFS= read -r -d '' f; do
                 case "$f" in
-                  apps/dcapp/dcapp.c)
-                    printf '%s\0' "$f"
-                    ;;
-                  apps/dcapp/*.c)
-                    printf '%s\0' apps/dcapp/dcapp.c
-                    ;;
                   apps/*.c|extensions/*.c|src/*.c|src/*/*.c)
                     printf '%s\0' "$f"
                     ;;
@@ -110,7 +103,7 @@ jobs:
             git diff --name-only -z --diff-filter=ACMR "$BASE_REF"...HEAD |
               while IFS= read -r -d '' f; do
                 case "$f" in
-                  apps/*.c|apps/*.h|apps/dcapp/*.c|apps/dcapp/*.h|extensions/*.c|extensions/*.h|src/*.c|src/*.h|src/*/*.c|src/*/*.h|samples/*.c|samples/*.h|samples/*/logic/*.c|samples/*/logic/*.h|samples/trick/sim/*.c|samples/trick/sim/*.h)
+                  apps/*.c|apps/*.h|extensions/*.c|extensions/*.h|src/*.c|src/*.h|src/*/*.c|src/*/*.h|samples/*.c|samples/*.h|samples/*/logic/*.c|samples/*/logic/*.h|samples/trick/sim/*.c|samples/trick/sim/*.h)
                     printf '%s\0' "$f"
                     ;;
                 esac
