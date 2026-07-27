@@ -4,6 +4,16 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.171.0] - 2026-07-27
+--------------------
+
+### Changed
+- Added double-precision `DcVec2d`, `DcVec3d`, and `DcVec4d` equivalents with
+  the same component aliases as the existing float vectors.
+- Promoted absolute planet positions, point arrays, and breadcrumbs to double
+  precision throughout the Logic and XML rendering paths.
+
+
 [2.170.0] - 2026-07-27
 --------------------
 

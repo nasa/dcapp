@@ -68,7 +68,7 @@ struct DcAppPlanetBreadcrumbs {
     DcAppPlanetCrs crs;
     uint32_t max_points;
     float point_spacing;
-    DcAppVec3 *sb_points;
+    DcAppVec3d *sb_points;
 };
 
 struct DcAppPlanetGeojson {
@@ -81,8 +81,8 @@ static void _planet_free_process_info(plPlanetProcessInfo *info);
 static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
 static bool _planet_file_path_to_absolute(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
 static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
-static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
-static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3 a, DcAppVec3 b);
+static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
+static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b);
 
 #define DC_APP_PLANET_MIN_MESH_CACHE_SIZE (1024u * 1024u)
 
@@ -286,11 +286,11 @@ bool dc_app_planet_set_texture_geodetic_slot(DcAppPlanetContext *planet_ctx, DcA
     return _ext_planet->set_texture(planet->planet, &texture, slot);
 }
 
-bool dc_app_planet_set_texture_cartesian(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel) {
+bool dc_app_planet_set_texture_cartesian(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel) {
     return dc_app_planet_set_texture_cartesian_slot(planet_ctx, planet, 0, path, position, meters_per_pixel);
 }
 
-bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel) {
+bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3d position, float meters_per_pixel) {
     if (!planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
     if (!planet_ctx || meters_per_pixel <= 0.0f) {
         _ext_planet->set_texture(planet->planet, NULL, slot);
@@ -429,12 +429,12 @@ DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(DcAppPlanetContext
     return breadcrumbs;
 }
 
-void dc_app_planet_update_breadcrumbs_geodetic(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position) {
+void dc_app_planet_update_breadcrumbs_geodetic(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
     if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_GEODETIC || !planet) return;
     _planet_update_breadcrumbs(breadcrumbs, planet, position);
 }
 
-void dc_app_planet_update_breadcrumbs_cartesian(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position) {
+void dc_app_planet_update_breadcrumbs_cartesian(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position) {
     if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_CARTESIAN) return;
     _planet_update_breadcrumbs(breadcrumbs, NULL, position);
 }
@@ -548,7 +548,7 @@ DcAppPlanetHandle dc_app_planet_view_planet(DcAppPlanetViewHandle view) {
     return view ? view->planet : NULL;
 }
 
-static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position) {
+static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
     if (!isfinite(position.x) || !isfinite(position.y) || !isfinite(position.z)) return;
 
     int point_count = sbcount(breadcrumbs->sb_points);
@@ -563,23 +563,23 @@ static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs,
     }
 }
 
-static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3 a, DcAppVec3 b) {
-    plVec3 pa = {a.x, a.y, a.z};
-    plVec3 pb = {b.x, b.y, b.z};
+static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b) {
+    plVec3d pa = {a.x, a.y, a.z};
+    plVec3d pb = {b.x, b.y, b.z};
 
     if (crs == DC_APP_PLANET_CRS_GEODETIC && planet) {
-        plVec3 ca = {0};
-        plVec3 cb = {0};
-        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &pa, &ca, 1);
-        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &pb, &cb, 1);
+        plVec3d ca = {0};
+        plVec3d cb = {0};
+        dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &pa, &ca, 1);
+        dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &pb, &cb, 1);
         pa = ca;
         pb = cb;
     }
 
-    float dx = pb.x - pa.x;
-    float dy = pb.y - pa.y;
-    float dz = pb.z - pa.z;
-    return sqrtf(dx * dx + dy * dy + dz * dz);
+    double dx = pb.x - pa.x;
+    double dy = pb.y - pa.y;
+    double dz = pb.z - pa.z;
+    return sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx) {

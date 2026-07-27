@@ -286,9 +286,9 @@ static _DcAppPlanetContainerFrame *_planet_container_frame(DcAppDrawContext *ctx
 static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count);
 static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
-static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3 position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
+static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
 static void     _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
-static bool     _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size);
+static bool     _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size);
 static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
 static void     _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
 static void     _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
@@ -1649,7 +1649,7 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx
     return draw_view;
 }
 
-DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, DcAppVec3d camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
     if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
 
@@ -1790,7 +1790,7 @@ void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetVi
     dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), (float)lon, (float)lat, (float)height, (float)radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
 }
 
-void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, float radius, DcAppVec4 color) {
+void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float radius, DcAppVec4 color) {
     (void)ctx;
     if (!draw_view) return;
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
@@ -1798,13 +1798,13 @@ void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetV
     const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
     if (!cartesian_crs || !geodetic_crs) return;
     // converts cartesian centers because pl_planet draws spheres from geodetic centers.
-    plVec3 cartesian = {position.x, position.y, position.z};
-    plVec3 geodetic;
-    dc_geo_cartesian_to_geodetic(cartesian_crs, geodetic_crs, &cartesian, &geodetic, 1);
-    dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), geodetic.y, geodetic.x, geodetic.z, radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    plVec3d cartesian = {position.x, position.y, position.z};
+    plVec3d geodetic;
+    dc_geo_cartesian_to_geodetic_d(cartesian_crs, geodetic_crs, &cartesian, &geodetic, 1);
+    dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), (float)geodetic.y, (float)geodetic.x, (float)geodetic.z, radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
 }
 
-void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
     (void)ctx;
     if (!draw_view || !points || point_count < 2) return;
 
@@ -1817,15 +1817,17 @@ void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetView
     if (!cartesian) return;
 
     for (uint32_t i = 0; i < point_count; i++) {
-        plVec3 geodetic = {points[i].x, points[i].y, points[i].z};
-        dc_geo_geodetic_to_cartesian(geodetic_crs, cartesian_crs, &geodetic, &cartesian[i], 1);
+        plVec3d geodetic = {points[i].x, points[i].y, points[i].z};
+        plVec3d converted;
+        dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &converted, 1);
+        cartesian[i] = (plVec3){(float)converted.x, (float)converted.y, (float)converted.z};
     }
 
     dc_app_draw_planet_line(dc_app_planet_view_pl(draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
     (void)ctx;
     if (!draw_view || !points || point_count < 2) return;
 
@@ -1833,7 +1835,7 @@ void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     if (!cartesian) return;
 
     for (uint32_t i = 0; i < point_count; i++) {
-        cartesian[i] = (plVec3){points[i].x, points[i].y, points[i].z};
+        cartesian[i] = (plVec3){(float)points[i].x, (float)points[i].y, (float)points[i].z};
     }
 
     dc_app_draw_planet_line(dc_app_planet_view_pl(draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
@@ -1842,7 +1844,7 @@ void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
 
 static void _draw_planet_polygon_geodetic_enabled(
     DcAppDrawPlanetViewHandle draw_view,
-    const DcAppVec3 *points,
+    const DcAppVec3d *points,
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
@@ -1860,8 +1862,10 @@ static void _draw_planet_polygon_geodetic_enabled(
     if (!cartesian) return;
 
     for (uint32_t i = 0; i < point_count; i++) {
-        plVec3 geodetic = {points[i].x, points[i].y, points[i].z};
-        dc_geo_geodetic_to_cartesian(geodetic_crs, cartesian_crs, &geodetic, &cartesian[i], 1);
+        plVec3d geodetic = {points[i].x, points[i].y, points[i].z};
+        plVec3d converted;
+        dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &converted, 1);
+        cartesian[i] = (plVec3){(float)converted.x, (float)converted.y, (float)converted.z};
     }
 
     plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
@@ -1872,7 +1876,7 @@ static void _draw_planet_polygon_geodetic_enabled(
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
     (void)ctx;
     _draw_planet_polygon_geodetic_enabled(
         draw_view,
@@ -1885,7 +1889,7 @@ void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetV
         false);
 }
 
-void dc_app_draw_planet_convex_polygon_filled_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, DcAppVec4 color) {
+void dc_app_draw_planet_convex_polygon_filled_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppVec4 color) {
     (void)ctx;
     _draw_planet_polygon_geodetic_enabled(
         draw_view,
@@ -1898,7 +1902,7 @@ void dc_app_draw_planet_convex_polygon_filled_geodetic(DcAppDrawContext *ctx, Dc
         true);
 }
 
-void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
     (void)ctx;
     dc_app_draw_planet_polygon_cartesian_enabled(
         draw_view,
@@ -1911,7 +1915,7 @@ void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanet
         false);
 }
 
-void dc_app_draw_planet_convex_polygon_filled_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, DcAppVec4 color) {
+void dc_app_draw_planet_convex_polygon_filled_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppVec4 color) {
     (void)ctx;
     dc_app_draw_planet_polygon_cartesian_enabled(
         draw_view,
@@ -1926,7 +1930,7 @@ void dc_app_draw_planet_convex_polygon_filled_cartesian(DcAppDrawContext *ctx, D
 
 void dc_app_draw_planet_polygon_cartesian_enabled(
     DcAppDrawPlanetViewHandle draw_view,
-    const DcAppVec3 *points,
+    const DcAppVec3d *points,
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
@@ -1939,7 +1943,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
     if (!cartesian) return;
 
     for (uint32_t i = 0; i < point_count; i++) {
-        cartesian[i] = (plVec3){points[i].x, points[i].y, points[i].z};
+        cartesian[i] = (plVec3){(float)points[i].x, (float)points[i].y, (float)points[i].z};
     }
 
     plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
@@ -1960,10 +1964,10 @@ void dc_app_draw_planet_image_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     plVec3d geodetic_in = {lat, lon, height};
     plVec3d cartesian_out;
     dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic_in, &cartesian_out, 1);
-    dc_app_draw_planet_image_cartesian(ctx, draw_view, (DcAppVec3){(float)cartesian_out.x, (float)cartesian_out.y, (float)cartesian_out.z}, texture_id, size, tint);
+    dc_app_draw_planet_image_cartesian(ctx, draw_view, (DcAppVec3d){cartesian_out.x, cartesian_out.y, cartesian_out.z}, texture_id, size, tint);
 }
 
-void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint) {
+void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint) {
     if (!ctx || !draw_view || !draw_view->view || texture_id == 0) return;
 
     DcAppVec2 size_meters = _planet_image_size_meters(ctx, texture_id, size);
@@ -1971,7 +1975,7 @@ void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVi
 
     DcAppVec2 image_position = {0};
     float image_width = 0.0f;
-    if (!_planet_project_overlay(draw_view, (plVec3){position.x, position.y, position.z}, size_meters.x, &image_position, &image_width)) return;
+    if (!_planet_project_overlay(draw_view, position, size_meters.x, &image_position, &image_width)) return;
 
     float image_height = image_width * (size_meters.y / size_meters.x);
     _planet_draw_image_label(ctx, draw_view, texture_id, image_position, (DcAppVec2){image_width, image_height}, tint);
@@ -1989,15 +1993,15 @@ void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetView
     dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic_in, &cartesian_out, 1);
     DcAppVec2 position = {0};
     float text_size = 0.0f;
-    if (!_planet_project_overlay(draw_view, (plVec3){(float)cartesian_out.x, (float)cartesian_out.y, (float)cartesian_out.z}, size, &position, &text_size)) return;
+    if (!_planet_project_overlay(draw_view, (DcAppVec3d){cartesian_out.x, cartesian_out.y, cartesian_out.z}, size, &position, &text_size)) return;
     _planet_draw_text_label(ctx, draw_view, position, text, text_size, color);
 }
 
-void dc_app_draw_planet_text_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, const char *text, float size, DcAppVec4 color) {
+void dc_app_draw_planet_text_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, const char *text, float size, DcAppVec4 color) {
     if (!ctx || !draw_view || !draw_view->view || !text) return;
     DcAppVec2 text_position = {0};
     float text_size = 0.0f;
-    if (!_planet_project_overlay(draw_view, (plVec3){position.x, position.y, position.z}, size, &text_position, &text_size)) return;
+    if (!_planet_project_overlay(draw_view, position, size, &text_position, &text_size)) return;
     _planet_draw_text_label(ctx, draw_view, text_position, text, text_size, color);
 }
 
@@ -2014,7 +2018,7 @@ void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetV
     dc_app_draw_planet_ellipse_cartesian(
         ctx,
         draw_view,
-        (DcAppVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z},
+        (DcAppVec3d){cartesian.x, cartesian.y, cartesian.z},
         radius,
         rotation_degrees,
         segments,
@@ -2022,7 +2026,7 @@ void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetV
         color);
 }
 
-void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 color) {
     (void)ctx;
     dc_app_draw_planet_ellipse_cartesian_enabled(
         draw_view,
@@ -2050,14 +2054,14 @@ void dc_app_draw_planet_ellipse_filled_geodetic(DcAppDrawContext *ctx, DcAppDraw
     dc_app_draw_planet_ellipse_filled_cartesian(
         ctx,
         draw_view,
-        (DcAppVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z},
+        (DcAppVec3d){cartesian.x, cartesian.y, cartesian.z},
         radius,
         rotation_degrees,
         segments,
         color);
 }
 
-void dc_app_draw_planet_ellipse_filled_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, DcAppVec4 color) {
+void dc_app_draw_planet_ellipse_filled_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, DcAppVec4 color) {
     (void)ctx;
     dc_app_draw_planet_ellipse_cartesian_enabled(
         draw_view,
@@ -2074,7 +2078,7 @@ void dc_app_draw_planet_ellipse_filled_cartesian(DcAppDrawContext *ctx, DcAppDra
 
 void dc_app_draw_planet_ellipse_cartesian_enabled(
     DcAppDrawPlanetViewHandle draw_view,
-    const DcAppVec3 *center,
+    const DcAppVec3d *center,
     const DcAppVec2 *radius,
     float rotation_degrees,
     uint32_t segments,
@@ -2087,7 +2091,7 @@ void dc_app_draw_planet_ellipse_cartesian_enabled(
 
     dc_app_draw_planet_ellipse(
         dc_app_planet_view_pl(draw_view->view),
-        (plVec3){center->x, center->y, center->z},
+        (plVec3){(float)center->x, (float)center->y, (float)center->z},
         (plVec2){radius->x, radius->y}, rotation_degrees, segments, line_width,
         line_color, line_enabled,
         fill_color, fill_enabled);
@@ -2155,12 +2159,14 @@ static plVec3 *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonC
 
     for (uint32_t i = 0; i < coordinates->count; i++) {
         const DcGeojsonPosition *position = &coordinates->positions[i];
-        plVec3 geodetic = {
-            (float)position->lat,
-            (float)position->lon,
-            (float)(position->has_alt ? position->alt : height_above_terrain),
+        plVec3d geodetic = {
+            position->lat,
+            position->lon,
+            position->has_alt ? position->alt : height_above_terrain,
         };
-        dc_geo_geodetic_to_cartesian(geodetic_crs, cartesian_crs, &geodetic, &points[i], 1);
+        plVec3d cartesian;
+        dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &cartesian, 1);
+        points[i] = (plVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z};
     }
     return points;
 }
@@ -2503,7 +2509,7 @@ static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCame
     camera->tProjMat.col[3].w = 1.0f;
 }
 
-static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size) {
+static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size) {
     if (out_position) *out_position = (DcAppVec2){0};
     if (out_size) *out_size = 0.0f;
     if (!draw_view || !draw_view->view || !out_position || !out_size || size_meters <= 0.0f) return false;
@@ -2514,10 +2520,10 @@ static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
     double planet_radius = dc_app_planet_radius(planet);
+    double dx = position.x - draw_view->camera.tPosDouble.x;
+    double dy = position.y - draw_view->camera.tPosDouble.y;
+    double dz = position.z - draw_view->camera.tPosDouble.z;
     if (planet_radius > 0.0) {
-        double dx = (double)position.x - draw_view->camera.tPosDouble.x;
-        double dy = (double)position.y - draw_view->camera.tPosDouble.y;
-        double dz = (double)position.z - draw_view->camera.tPosDouble.z;
         double a = dx * dx + dy * dy + dz * dz;
         double b = 2.0 * (draw_view->camera.tPosDouble.x * dx +
                           draw_view->camera.tPosDouble.y * dy +
@@ -2533,8 +2539,10 @@ static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 
         }
     }
 
-    plMat4 mvp = pl_mul_mat4(&draw_view->camera.tProjMat, &draw_view->camera.tViewMat);
-    plVec4 projected = pl_mul_mat4_vec4(&mvp, (plVec4){.xyz = position, .w = 1.0f});
+    plMat4 mvp = pl_mul_mat4(&draw_view->camera.tProjMat, &draw_view->camera.tViewMatDouble);
+    plVec4 projected = pl_mul_mat4_vec4(
+        &mvp,
+        (plVec4){(float)dx, (float)dy, (float)dz, 1.0f});
     if (fabsf(projected.w) <= 0.000001f) return false;
     projected = pl_div_vec4_scalarf(projected, projected.w);
     if (projected.z < 0.0f || projected.z > 1.0f) return false;
@@ -2545,15 +2553,11 @@ static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, plVec3 
     float pixel_y = output_height * 0.5f * (1.0f + projected.y);
     if (pixel_x < 0.0f || pixel_x > output_width || pixel_y < 0.0f || pixel_y > output_height) return false;
 
-    plVec3 ray = {
-        position.x - (float)draw_view->camera.tPosDouble.x,
-        position.y - (float)draw_view->camera.tPosDouble.y,
-        position.z - (float)draw_view->camera.tPosDouble.z,
-    };
-    float distance = sqrtf(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z);
-    if (distance < 0.001f) distance = 0.001f;
+    double distance = sqrt(dx * dx + dy * dy + dz * dz);
+    if (distance < 0.001) distance = 0.001;
 
-    float pixel_size = size_meters * output_height / (2.0f * distance * tanf(draw_view->camera.fFieldOfView * 0.5f));
+    float pixel_size = (float)((double)size_meters * (double)output_height /
+                               (2.0 * distance * tan((double)draw_view->camera.fFieldOfView * 0.5)));
     if (pixel_size < 1.0f) pixel_size = 1.0f;
     if (pixel_size > 500.0f) pixel_size = 500.0f;
 
@@ -2687,7 +2691,7 @@ static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, do
     return camera;
 }
 
-static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3 position, DcAppVec3 rpy_degrees, float fov_degrees, bool orthographic, DcAppVec2 size) {
+static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d position, DcAppVec3 rpy_degrees, float fov_degrees, bool orthographic, DcAppVec2 size) {
     plCamera camera = _planet_camera_base(fov_degrees, orthographic, size);
     // applies cartesian attitude through pilotlight camera pitch, yaw, and roll.
     _ext_camera->set_pos(&camera, position.x, position.y, position.z);

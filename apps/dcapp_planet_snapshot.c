@@ -751,18 +751,18 @@ static bool _load_planet_data(AppData *app) {
             polar_crs.scale_factor = info->tProjection.tPolarStereo.dScaleFactor;
             polar_crs.false_easting = info->tProjection.tPolarStereo.dFalseEasting;
             polar_crs.false_northing = info->tProjection.tPolarStereo.dFalseNorthing;
-            plVec3 geodetic_in = {(float)lat, (float)lon, 0.0f};
-            plVec2 polar_out;
+            plVec3d geodetic_in = {lat, lon, 0.0};
+            plVec2d polar_out;
             if (legacy_projected_origin) {
                 // Compatibility path for old lat/lon tile metadata. New metadata
                 // should provide originX/originY directly in projected CRS meters.
-                dc_geo_user_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
+                dc_geo_user_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
                 polar_out.y = -polar_out.y;
             } else {
-                dc_geo_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
+                dc_geo_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
             }
-            tile->dOriginX = (double)polar_out.x;
-            tile->dOriginY = (double)polar_out.y;
+            tile->dOriginX = polar_out.x;
+            tile->dOriginY = polar_out.y;
         }
 
         tile->dMaxBaseError = max_base_error;

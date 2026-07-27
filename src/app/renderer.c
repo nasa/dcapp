@@ -59,7 +59,7 @@ struct DcAppRenderer {
     DcAppLookup             *lookup;
     _DcAppDeferredSetOp     *sb_deferred_sets;
     DcAppDrawFuncArg        *sb_draw_function_args;
-    DcAppVec3               *sb_planet_points;
+    DcAppVec3d              *sb_planet_points;
     char                    *sb_planet_text;
     char                    *sb_render_text;
     // Persistent storage avoids a large stack allocation that can cause issues
@@ -4785,34 +4785,34 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppRenderer *ren
     }
     if (!enabled) return;
 
-    plVec3 point = {0};
+    plVec3d point = {0};
     bool   have_point = false;
     if (breadcrumbs->crs == DC_APP_PLANET_CRS_CARTESIAN) {
         if (breadcrumbs->xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
             breadcrumbs->xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
             breadcrumbs->xyz.z != DC_APP_VAL_INDEX_UNDEFINED) {
-            point = (plVec3){
-                (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->xyz.x)->value_double,
-                (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->xyz.y)->value_double,
-                (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->xyz.z)->value_double
+            point = (plVec3d){
+                dc_app_lookup_get_value(renderer->lookup, breadcrumbs->xyz.x)->value_double,
+                dc_app_lookup_get_value(renderer->lookup, breadcrumbs->xyz.y)->value_double,
+                dc_app_lookup_get_value(renderer->lookup, breadcrumbs->xyz.z)->value_double
             };
             have_point = true;
         }
     } else {
         if (breadcrumbs->lat != DC_APP_VAL_INDEX_UNDEFINED &&
             breadcrumbs->lon != DC_APP_VAL_INDEX_UNDEFINED) {
-            float alt = 0.0f;
+            double alt = 0.0;
             if (breadcrumbs->alt != DC_APP_VAL_INDEX_UNDEFINED) {
-                alt = (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->alt)->value_double;
+                alt = dc_app_lookup_get_value(renderer->lookup, breadcrumbs->alt)->value_double;
             } else if (breadcrumbs->height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED) {
-                alt = (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->height_above_terrain)->value_double;
+                alt = dc_app_lookup_get_value(renderer->lookup, breadcrumbs->height_above_terrain)->value_double;
             }
-            plVec3 geodetic = {
-                (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->lat)->value_double,
-                (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->lon)->value_double,
+            plVec3d geodetic = {
+                dc_app_lookup_get_value(renderer->lookup, breadcrumbs->lat)->value_double,
+                dc_app_lookup_get_value(renderer->lookup, breadcrumbs->lon)->value_double,
                 alt
             };
-            dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &geodetic, &point, 1);
+            dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &geodetic, &point, 1);
             have_point = true;
         }
     }
@@ -4826,12 +4826,12 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppRenderer *ren
     if (point_count == 0) {
         sbpush(breadcrumbs->sb_points, point);
     } else {
-        plVec3 last = breadcrumbs->sb_points[point_count - 1];
-        float  dx   = point.x - last.x;
-        float  dy   = point.y - last.y;
-        float  dz   = point.z - last.z;
-        float  dist = sqrtf(dx * dx + dy * dy + dz * dz);
-        if ((point_spacing == 0.0f && dist > 0.0f) || dist >= point_spacing) {
+        plVec3d last = breadcrumbs->sb_points[point_count - 1];
+        double  dx   = point.x - last.x;
+        double  dy   = point.y - last.y;
+        double  dz   = point.z - last.z;
+        double  dist = sqrt(dx * dx + dy * dy + dz * dz);
+        if ((point_spacing == 0.0f && dist > 0.0) || dist >= (double)point_spacing) {
             sbpush(breadcrumbs->sb_points, point);
         }
     }
@@ -4859,8 +4859,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppRenderer *ren
     }
     sbclear(renderer->sb_planet_points);
     for (int ii = 0; ii < point_count; ii++) {
-        plVec3 point = breadcrumbs->sb_points[ii];
-        sbpush(renderer->sb_planet_points, ((DcAppVec3){point.x, point.y, point.z}));
+        plVec3d point = breadcrumbs->sb_points[ii];
+        sbpush(renderer->sb_planet_points, ((DcAppVec3d){point.x, point.y, point.z}));
     }
     dc_app_draw_planet_line_cartesian(
         ctx,
@@ -4907,18 +4907,18 @@ static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *rendere
     DcAppPlanetDefinition *def = dc_app_scene_get_planet_definition(renderer->scene, node->planet_ellipse.planet_def_index);
 
     // resolve values
-    float lat = node->planet_ellipse.lat != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.lat)->value_double : 0.0f;
-    float lon = node->planet_ellipse.lon != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.lon)->value_double : 0.0f;
+    double lat = node->planet_ellipse.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.lat)->value_double : 0.0;
+    double lon = node->planet_ellipse.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.lon)->value_double : 0.0;
     float radius_x = node->planet_ellipse.radius_x != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.radius_x)->value_double : 0.0f;
     float radius_y = node->planet_ellipse.radius_y != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.radius_y)->value_double : 0.0f;
     float rotation = node->planet_ellipse.rotation != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.rotation)->value_double : 0.0f;
-    float height = node->planet_ellipse.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.height_above_terrain)->value_double : 0.0f;
+    double height = node->planet_ellipse.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.height_above_terrain)->value_double : 0.0;
     int segments = node->planet_ellipse.segments != DC_APP_VAL_INDEX_UNDEFINED
         ? (int)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.segments)->value_double : 64;
     float line_width = node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
@@ -4928,16 +4928,17 @@ static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *rendere
     if (segments < 3) segments = 3;
     if (segments > DC_APP_NODE_ELLIPSE_MAX_SEGMENTS) segments = DC_APP_NODE_ELLIPSE_MAX_SEGMENTS;
 
-    plVec3 center_in = {lat, lon, height};
-    plVec3 center;
-    dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &center_in, &center, 1);
+    plVec3d center;
     if (node->planet_ellipse.crs == DC_APP_PLANET_CRS_CARTESIAN) {
         // cartesian centers are already in renderer-native planet space
-        center = (plVec3){
-            node->planet_ellipse.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.xyz.x)->value_double : 0.0f,
-            node->planet_ellipse.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.xyz.y)->value_double : 0.0f,
-            node->planet_ellipse.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.xyz.z)->value_double : 0.0f
+        center = (plVec3d){
+            node->planet_ellipse.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.xyz.x)->value_double : 0.0,
+            node->planet_ellipse.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.xyz.y)->value_double : 0.0,
+            node->planet_ellipse.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.xyz.z)->value_double : 0.0
         };
+    } else {
+        plVec3d geodetic = {lat, lon, height};
+        dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &geodetic, &center, 1);
     }
 
     bool fill_enabled = (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) != 0;
@@ -4964,7 +4965,7 @@ static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *rendere
         line_color = (DcAppVec4){lc[0], lc[1], lc[2], lc[3]};
     }
 
-    DcAppVec3 draw_center = {center.x, center.y, center.z};
+    DcAppVec3d draw_center = {center.x, center.y, center.z};
     DcAppVec2 draw_radius = {radius_x, radius_y};
     dc_app_draw_planet_ellipse_cartesian_enabled(
         draw_view,
@@ -4988,8 +4989,8 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
         : (uint32_t)sbcount(node->planet_line.sb_points_static);
     if (count < 2) return;
 
-    float height = node->planet_line.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.height_above_terrain)->value_double : 0.0f;
+    double height = node->planet_line.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(renderer->lookup, node->planet_line.height_above_terrain)->value_double : 0.0;
     float line_width = node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_width)->value_double : 1.0f;
 
@@ -5002,37 +5003,37 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
         lc[3] = node->planet_line.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_color.a)->value_double : 1.0f;
     }
     // convert to 3D
-    DcAppVec3 *pts3d = (DcAppVec3 *)malloc(sizeof(DcAppVec3) * count);
+    DcAppVec3d *pts3d = (DcAppVec3d *)malloc(sizeof(DcAppVec3d) * count);
     if (!pts3d) return;
 
     if (node->planet_line.is_dynamic) {
         for (uint32_t p = 0; p < count; p++) {
             DcAppPlanetVertexDynamic *v = &node->planet_line.sb_points_dynamic[p];
-            float lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->lat)->value_double : 0.0f;
-            float lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->lon)->value_double : 0.0f;
-            float alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->alt)->value_double : height;
+            double lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->lat)->value_double : 0.0;
+            double lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->lon)->value_double : 0.0;
+            double alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->alt)->value_double : height;
             if (node->planet_line.crs == DC_APP_PLANET_CRS_CARTESIAN) {
                 // cartesian vertices are already in renderer-native planet space
-                pts3d[p] = (DcAppVec3){
-                    v->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->xyz.x)->value_double : 0.0f,
-                    v->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->xyz.y)->value_double : 0.0f,
-                    v->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->xyz.z)->value_double : 0.0f
+                pts3d[p] = (DcAppVec3d){
+                    v->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->xyz.x)->value_double : 0.0,
+                    v->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->xyz.y)->value_double : 0.0,
+                    v->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->xyz.z)->value_double : 0.0
                 };
             } else {
-                plVec3 in = {lat, lon, alt};
-                plVec3 out;
-                dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
-                pts3d[p] = (DcAppVec3){out.x, out.y, out.z};
+                plVec3d in = {lat, lon, alt};
+                plVec3d out;
+                dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
+                pts3d[p] = (DcAppVec3d){out.x, out.y, out.z};
             }
         }
     } else {
         for (uint32_t p = 0; p < count; p++) {
             DcAppPlanetVertexStatic *pt = &node->planet_line.sb_points_static[p];
-            float pt_height = pt->has_alt ? (float)pt->alt : height;
-            plVec3 in = {(float)pt->lat, (float)pt->lon, pt_height};
-            plVec3 out;
-            dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
-            pts3d[p] = (DcAppVec3){out.x, out.y, out.z};
+            double pt_height = pt->has_alt ? pt->alt : height;
+            plVec3d in = {pt->lat, pt->lon, pt_height};
+            plVec3d out;
+            dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
+            pts3d[p] = (DcAppVec3d){out.x, out.y, out.z};
         }
     }
 
@@ -5085,43 +5086,43 @@ static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppRenderer *rendere
         : (uint32_t)sbcount(node->planet_polygon.sb_points_static);
     if (count < 3) return;
 
-    float height = node->planet_polygon.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.height_above_terrain)->value_double : 0.0f;
+    double height = node->planet_polygon.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.height_above_terrain)->value_double : 0.0;
     float line_width = node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double : 1.0f;
 
     // convert to 3D
-    DcAppVec3 *pts3d = (DcAppVec3 *)malloc(sizeof(DcAppVec3) * count);
+    DcAppVec3d *pts3d = (DcAppVec3d *)malloc(sizeof(DcAppVec3d) * count);
     if (!pts3d) return;
 
     if (node->planet_polygon.is_dynamic) {
         for (uint32_t p = 0; p < count; p++) {
             DcAppPlanetVertexDynamic *v = &node->planet_polygon.sb_points_dynamic[p];
-            float lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->lat)->value_double : 0.0f;
-            float lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->lon)->value_double : 0.0f;
-            float alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->alt)->value_double : height;
+            double lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->lat)->value_double : 0.0;
+            double lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->lon)->value_double : 0.0;
+            double alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->alt)->value_double : height;
             if (node->planet_polygon.crs == DC_APP_PLANET_CRS_CARTESIAN) {
                 // cartesian vertices are already in renderer-native planet space
-                pts3d[p] = (DcAppVec3){
-                    v->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->xyz.x)->value_double : 0.0f,
-                    v->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->xyz.y)->value_double : 0.0f,
-                    v->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, v->xyz.z)->value_double : 0.0f
+                pts3d[p] = (DcAppVec3d){
+                    v->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->xyz.x)->value_double : 0.0,
+                    v->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->xyz.y)->value_double : 0.0,
+                    v->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, v->xyz.z)->value_double : 0.0
                 };
             } else {
-                plVec3 in = {lat, lon, alt};
-                plVec3 out;
-                dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
-                pts3d[p] = (DcAppVec3){out.x, out.y, out.z};
+                plVec3d in = {lat, lon, alt};
+                plVec3d out;
+                dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
+                pts3d[p] = (DcAppVec3d){out.x, out.y, out.z};
             }
         }
     } else {
         for (uint32_t p = 0; p < count; p++) {
             DcAppPlanetVertexStatic *pt = &node->planet_polygon.sb_points_static[p];
-            float pt_height = pt->has_alt ? (float)pt->alt : height;
-            plVec3 in = {(float)pt->lat, (float)pt->lon, pt_height};
-            plVec3 out;
-            dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
-            pts3d[p] = (DcAppVec3){out.x, out.y, out.z};
+            double pt_height = pt->has_alt ? pt->alt : height;
+            plVec3d in = {pt->lat, pt->lon, pt_height};
+            plVec3d out;
+            dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &in, &out, 1);
+            pts3d[p] = (DcAppVec3d){out.x, out.y, out.z};
         }
     }
 
@@ -5224,10 +5225,10 @@ static void _render_planet_sphere(DcAppDrawContext *ctx, DcAppRenderer *renderer
         node->planet_sphere.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.fill_color.a)->value_double : 1.0f
     };
     if (node->planet_sphere.crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        DcAppVec3 pos = {
-            node->planet_sphere.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.xyz.x)->value_double : 0.0f,
-            node->planet_sphere.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.xyz.y)->value_double : 0.0f,
-            node->planet_sphere.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.xyz.z)->value_double : 0.0f
+        DcAppVec3d pos = {
+            node->planet_sphere.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.xyz.x)->value_double : 0.0,
+            node->planet_sphere.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.xyz.y)->value_double : 0.0,
+            node->planet_sphere.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.xyz.z)->value_double : 0.0
         };
         dc_app_draw_planet_sphere_cartesian(ctx, draw_view, pos, (float)radius, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
     } else {
@@ -5257,10 +5258,10 @@ static void _render_planet_image(DcAppDrawContext *ctx, DcAppRenderer *renderer,
     }
 
     if (node->planet_image.crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        DcAppVec3 position = {
-            node->planet_image.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_image.xyz.x)->value_double : 0.0f,
-            node->planet_image.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_image.xyz.y)->value_double : 0.0f,
-            node->planet_image.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_image.xyz.z)->value_double : 0.0f
+        DcAppVec3d position = {
+            node->planet_image.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_image.xyz.x)->value_double : 0.0,
+            node->planet_image.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_image.xyz.y)->value_double : 0.0,
+            node->planet_image.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_image.xyz.z)->value_double : 0.0
         };
         dc_app_draw_planet_image_cartesian(ctx, draw_view, position, (DcAppTextureId)node->planet_image.texture_index, size, tint);
     } else {
@@ -5321,12 +5322,12 @@ static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
     sbpushn(*sb_text, filler, (int)strlen(filler));
     sbpush(*sb_text, '\0');
 
-    DcAppVec3 pos = {0};
+    DcAppVec3d pos = {0};
     if (node->planet_text.crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        pos = (DcAppVec3){
-            node->planet_text.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.x)->value_double : 0.0f,
-            node->planet_text.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.y)->value_double : 0.0f,
-            node->planet_text.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.z)->value_double : 0.0f
+        pos = (DcAppVec3d){
+            node->planet_text.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.x)->value_double : 0.0,
+            node->planet_text.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.y)->value_double : 0.0,
+            node->planet_text.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.z)->value_double : 0.0
         };
     }
 
@@ -5684,10 +5685,10 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
             NULL);
         view_added = true;
     } else if (node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        DcAppVec3 position = {
-            node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_view.xyz.x)->value_double : 0.0f,
-            node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_view.xyz.y)->value_double : 0.0f,
-            node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_view.xyz.z)->value_double : 0.0f
+        DcAppVec3d position = {
+            node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_view.xyz.x)->value_double : 0.0,
+            node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_view.xyz.y)->value_double : 0.0,
+            node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? dc_app_lookup_get_value(renderer->lookup, node->planet_view.xyz.z)->value_double : 0.0
         };
         draw_view = dc_app_draw_planet_view_cartesian(
             ctx,

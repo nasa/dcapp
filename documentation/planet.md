@@ -750,6 +750,14 @@ Planet outlines do not use the 2D line-width compatibility factor. Outside a
 `line_width` directly for XML, Logic, and GeoJSON drawing. Inside a
 `<PlanetContainer>`, line widths remain local units scaled by the container.
 
+Logic APIs use `DcVec3d` for absolute geodetic or cartesian planet positions
+and point arrays. This includes cartesian cameras, texture centers, overlays,
+and both breadcrumb inputs and returned points. `DcVec3` remains the
+single-precision type for attitude and light direction, while `DcVec2` remains
+the type for screen-space and planet-local coordinates. `DcVec2d`,
+`DcVec3d`, and `DcVec4d` expose the same coordinate, color, UV, and component
+aliases as their float equivalents.
+
 ---
 
 ## Custom Shaders

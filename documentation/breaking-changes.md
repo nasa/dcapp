@@ -7,6 +7,26 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Double-Precision Planet Coordinates
+
+#### Affected Code
+- Logic code that passes absolute planet positions or point arrays through
+  `dc_draw` or `dc_planet`.
+- Logic code that reads `DcPlanetBreadcrumbsPoints.points`.
+
+#### Changed
+- Generated Logic headers now define `DcVec2d`, `DcVec3d`, and `DcVec4d` with
+  the same component aliases as their float equivalents.
+- Absolute geodetic and cartesian planet vectors now use `DcVec3d`.
+  `DcVec3` remains the float type for attitude and light direction.
+- Planet coordinate conversions and overlay projection preserve double
+  precision until the float-based planet renderer boundary.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+- Replace `DcVec3` with `DcVec3d` for planet world positions and point arrays.
+  Do not change `DcVec3` values passed as RPY attitude or light direction.
+
 ### 2026-07-27 - Planet Line-Width Scaling
 
 #### Affected Code

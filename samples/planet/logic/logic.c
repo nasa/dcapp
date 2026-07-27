@@ -162,7 +162,7 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
 
     if (logic_planet && logic_orbit_breadcrumbs) {
         dc_planet->update_breadcrumbs_geodetic(logic_orbit_breadcrumbs, logic_planet,
-                                              (DcVec3){.x = (float)*OrbitLat, .y = (float)*OrbitLon, .z = 50000.0f});
+                                              (DcVec3d){.x = *OrbitLat, .y = *OrbitLon, .z = 50000.0});
     }
 
     if (logic_planet && LightY) {

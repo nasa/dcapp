@@ -30,7 +30,7 @@ struct DcAppPlanetLocalTransform {
 
 // The points are borrowed until the breadcrumbs are next mutated or destroyed.
 struct DcAppPlanetBreadcrumbsPoints {
-    const DcAppVec3 *points;
+    const DcAppVec3d *points;
     uint32_t count;
     DcAppPlanetCrs crs;
 };
@@ -60,9 +60,9 @@ struct DcAppPlanetApi {
     // fails if id already exists.
     DcAppPlanetHandle (*create_planet_with_id)(DcAppContext *app_ctx, const char *id, DcAppPlanetCreateInfo info);
     bool (*set_texture_geodetic)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
-    bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel);
+    bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel);
     bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
-    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel);
+    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3d position, float meters_per_pixel);
     bool (*set_texture_projected_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);
     bool (*clear_texture)(DcAppPlanetHandle planet, uint32_t slot);
     bool (*set_light_direction)(DcAppPlanetHandle planet, DcAppVec3 direction);
@@ -71,8 +71,8 @@ struct DcAppPlanetApi {
     bool (*set_view_shaders)(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
     DcAppPlanetGeojsonHandle (*load_geojson)(DcAppContext *app_ctx, const char *path);
     DcAppPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
-    void (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
-    void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position);
+    void (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
+    void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position);
     void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
     DcAppPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
 };

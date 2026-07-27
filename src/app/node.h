@@ -528,7 +528,7 @@ typedef struct DcAppNodePlanetBreadcrumbs {
     DcAppValIndex       enabled;
     DcAppValIndex4      line_color;
     DcAppValIndex       line_width;
-    plVec3         *sb_points;
+    plVec3d        *sb_points;
     uint8_t         config_flags;
     uint8_t         planet_def_index;
     DcAppPlanetCrs  crs;

@@ -28,7 +28,7 @@ void dc_app_draw_planet_polygon_local_enabled(
     bool fill_enabled);
 void dc_app_draw_planet_polygon_cartesian_enabled(
     DcAppDrawPlanetViewHandle view,
-    const DcAppVec3 *points,
+    const DcAppVec3d *points,
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
@@ -37,7 +37,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
     bool fill_enabled);
 void dc_app_draw_planet_ellipse_cartesian_enabled(
     DcAppDrawPlanetViewHandle view,
-    const DcAppVec3 *center,
+    const DcAppVec3d *center,
     const DcAppVec2 *radius,
     float rotation_degrees,
     uint32_t segments,

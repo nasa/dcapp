@@ -102,9 +102,9 @@ static DcAppPlanetHandle _planet_get_by_id(DcAppContext *app_context, const char
 static DcAppPlanetHandle _planet_create(DcAppContext *app_context, DcAppPlanetCreateInfo info);
 static DcAppPlanetHandle _planet_create_with_id(DcAppContext *app_context, const char *id, DcAppPlanetCreateInfo info);
 static bool _planet_set_texture_geodetic(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
-static bool _planet_set_texture_cartesian(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel);
+static bool _planet_set_texture_cartesian(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel);
 static bool _planet_set_texture_geodetic_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
-static bool _planet_set_texture_cartesian_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel);
+static bool _planet_set_texture_cartesian_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3d position, float meters_per_pixel);
 static bool _planet_set_texture_projected_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);
 static DcAppPlanetViewHandle _planet_create_geodetic_view(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
 static DcAppPlanetViewHandle _planet_create_cartesian_view(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
@@ -569,7 +569,7 @@ static bool _planet_set_texture_geodetic(DcAppContext *app_context, DcAppPlanetH
     return dc_app_planet_set_texture_geodetic(app_data ? app_data->planets : NULL, planet, path, lat, lon, meters_per_pixel);
 }
 
-static bool _planet_set_texture_cartesian(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel) {
+static bool _planet_set_texture_cartesian(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel) {
     _AppData *app_data = (_AppData *)app_context;
     return dc_app_planet_set_texture_cartesian(app_data ? app_data->planets : NULL, planet, path, position, meters_per_pixel);
 }
@@ -579,7 +579,7 @@ static bool _planet_set_texture_geodetic_slot(DcAppContext *app_context, DcAppPl
     return dc_app_planet_set_texture_geodetic_slot(app_data ? app_data->planets : NULL, planet, slot, path, lat, lon, meters_per_pixel);
 }
 
-static bool _planet_set_texture_cartesian_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel) {
+static bool _planet_set_texture_cartesian_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3d position, float meters_per_pixel) {
     _AppData *app_data = (_AppData *)app_context;
     return dc_app_planet_set_texture_cartesian_slot(app_data ? app_data->planets : NULL, planet, slot, path, position, meters_per_pixel);
 }
