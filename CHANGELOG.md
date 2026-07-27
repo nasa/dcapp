@@ -26,7 +26,8 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
   planet-view tau values now select the default of `0.3`.
 - Added a generated logic API fixture that checks C/C++ compilation, shared
   layouts, and function-table signatures during the top-level build.
-- Planet polygon logic calls now omit zero-alpha fill or outline passes, matching XML's independently optional components.
+- Planet polygon logic drawing now exposes separate outline and convex-fill
+  calls instead of using color alpha to select passes.
 - Planet containers now use one uniform scale for local geometry and line
   widths; the separate `ScaleX` and `ScaleY` attributes were removed.
 - Updated the planet sample to exercise logic-side lighting, GeoJSON loading, ellipse rendering, and a moving local doghouse beside their XML equivalents.

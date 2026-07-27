@@ -5178,20 +5178,30 @@ static void _render_planet_polygon_local(DcAppDrawContext *ctx, DcAppRenderer *r
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double : 1.0f;
     DcAppVec4 line_color = {0};
     DcAppVec4 fill_color = {0};
-    if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+    bool line_enabled = (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) != 0;
+    if (line_enabled) {
         line_color.r = node->planet_polygon.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_color.r)->value_double : 1.0f;
         line_color.g = node->planet_polygon.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_color.g)->value_double : 1.0f;
         line_color.b = node->planet_polygon.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_color.b)->value_double : 1.0f;
         line_color.a = node->planet_polygon.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_color.a)->value_double : 1.0f;
     }
-    if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+    bool fill_enabled = (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) != 0;
+    if (fill_enabled) {
         fill_color.r = node->planet_polygon.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.fill_color.r)->value_double : 1.0f;
         fill_color.g = node->planet_polygon.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.fill_color.g)->value_double : 1.0f;
         fill_color.b = node->planet_polygon.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.fill_color.b)->value_double : 1.0f;
         fill_color.a = node->planet_polygon.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.fill_color.a)->value_double : 1.0f;
     }
 
-    dc_app_draw_planet_polygon_local(ctx, points, count, line_width, line_color, fill_color);
+    dc_app_draw_planet_polygon_local_enabled(
+        ctx,
+        points,
+        count,
+        line_width,
+        PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a),
+        line_enabled,
+        PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a),
+        fill_enabled);
     free(points);
 }
 

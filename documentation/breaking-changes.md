@@ -7,6 +7,31 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Planet Polygon Draw API Split
+
+#### Affected Code
+- Logic code that calls `planet_polygon_local`, `planet_polygon_geodetic`, or
+  `planet_polygon_cartesian`.
+- Plugins or tools that fetch `plPlanetI` by version or call
+  `draw_polygon_filled`.
+
+#### Changed
+- Planet polygon outline and fill rendering now use separate calls.
+  `planet_polygon_*` draws only the outline, and
+  `planet_convex_polygon_filled_*` draws only the convex fill.
+- A call always submits its requested pass; color alpha no longer selects
+  which pass a combined call performs.
+- `plPlanetI.draw_polygon_filled` was renamed to
+  `draw_convex_polygon_filled`, and `plPlanetI_version` changed from
+  `{0, 8, 0}` to `{0, 9, 0}`.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+- Replace each combined polygon call with a convex-fill call followed by an
+  outline call when both passes are wanted.
+- Rebuild `plPlanetI` consumers, request version `{0, 9, 0}`, and rename calls
+  to `draw_convex_polygon_filled`.
+
 ### 2026-07-24 - Current Generated Logic ABI
 
 #### Affected Code

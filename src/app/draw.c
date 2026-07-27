@@ -196,12 +196,15 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .planet_container_pop           = dc_app_draw_planet_container_pop,
     .planet_line_local              = dc_app_draw_planet_line_local,
     .planet_polygon_local           = dc_app_draw_planet_polygon_local,
+    .planet_convex_polygon_filled_local = dc_app_draw_planet_convex_polygon_filled_local,
     .planet_sphere_geodetic         = dc_app_draw_planet_sphere_geodetic,
     .planet_sphere_cartesian        = dc_app_draw_planet_sphere_cartesian,
     .planet_line_geodetic           = dc_app_draw_planet_line_geodetic,
     .planet_line_cartesian          = dc_app_draw_planet_line_cartesian,
     .planet_polygon_geodetic        = dc_app_draw_planet_polygon_geodetic,
     .planet_polygon_cartesian       = dc_app_draw_planet_polygon_cartesian,
+    .planet_convex_polygon_filled_geodetic = dc_app_draw_planet_convex_polygon_filled_geodetic,
+    .planet_convex_polygon_filled_cartesian = dc_app_draw_planet_convex_polygon_filled_cartesian,
     .planet_ellipse_geodetic        = dc_app_draw_planet_ellipse_geodetic,
     .planet_ellipse_cartesian       = dc_app_draw_planet_ellipse_cartesian,
     .planet_image_geodetic          = dc_app_draw_planet_image_geodetic,
@@ -1551,9 +1554,9 @@ void dc_app_draw_3d_sphere_filled(DcAppDrawContext *ctx, plSphere sphere, uint32
     _ext_dc_draw->add_3d_sphere_filled(_draw_batch_get_3d(ctx), sphere, 32, 32, (dcDrawSolidOptions){.uColor = color});
 }
 
-void dc_app_draw_planet_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color) {
+void dc_app_draw_planet_convex_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color) {
     if (!view || !points || point_count < 3) return;
-    _ext_planet->draw_polygon_filled(view, points, point_count, color);
+    _ext_planet->draw_convex_polygon_filled(view, points, point_count, color);
 }
 
 void dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color) {
@@ -1598,7 +1601,7 @@ void dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius
         };
     }
 
-    if (fill_enabled) dc_app_draw_planet_polygon_filled(view, points, segments, fill_color);
+    if (fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, segments, fill_color);
     if (line_enabled) dc_app_draw_planet_polygon(view, points, segments, line_width, line_color);
 }
 
@@ -1731,7 +1734,39 @@ void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *point
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+    dc_app_draw_planet_polygon_local_enabled(
+        ctx,
+        points,
+        point_count,
+        line_width,
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true,
+        0,
+        false);
+}
+
+void dc_app_draw_planet_convex_polygon_filled_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color) {
+    dc_app_draw_planet_polygon_local_enabled(
+        ctx,
+        points,
+        point_count,
+        0.0f,
+        0,
+        false,
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true);
+}
+
+void dc_app_draw_planet_polygon_local_enabled(
+    DcAppDrawContext *ctx,
+    const DcAppVec2 *points,
+    uint32_t point_count,
+    float line_width,
+    uint32_t line_color,
+    bool line_enabled,
+    uint32_t fill_color,
+    bool fill_enabled) {
     if (!points || point_count < 3) return;
 
     _DcAppPlanetContainerFrame *frame = _planet_container_frame(ctx);
@@ -1740,10 +1775,10 @@ void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *po
 
     plPlanetView *view = dc_app_planet_view_pl(frame->draw_view->view);
     float scaled_line_width = line_width * (float)fabs(frame->scale);
-    if (fill_color.a > 0.0f)
-        dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
-    if (line_color.a > 0.0f)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, scaled_line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    if (fill_enabled)
+        dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
+    if (line_enabled)
+        dc_app_draw_planet_polygon(view, cartesian, point_count, scaled_line_width, line_color);
     PL_FREE(cartesian);
 }
 
@@ -1803,8 +1838,15 @@ void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
-    (void)ctx;
+static void _draw_planet_polygon_geodetic_enabled(
+    DcAppDrawPlanetViewHandle draw_view,
+    const DcAppVec3 *points,
+    uint32_t point_count,
+    float line_width,
+    uint32_t line_color,
+    bool line_enabled,
+    uint32_t fill_color,
+    bool fill_enabled) {
     if (!draw_view || !points || point_count < 3) return;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
@@ -1821,24 +1863,63 @@ void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetV
     }
 
     plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
-    if (fill_color.a > 0.0f)
-        dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
-    if (line_color.a > 0.0f)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    if (fill_enabled)
+        dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
+    if (line_enabled)
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color);
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+    (void)ctx;
+    _draw_planet_polygon_geodetic_enabled(
+        draw_view,
+        points,
+        point_count,
+        line_width,
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true,
+        0,
+        false);
+}
+
+void dc_app_draw_planet_convex_polygon_filled_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, DcAppVec4 color) {
+    (void)ctx;
+    _draw_planet_polygon_geodetic_enabled(
+        draw_view,
+        points,
+        point_count,
+        0.0f,
+        0,
+        false,
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true);
+}
+
+void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
     (void)ctx;
     dc_app_draw_planet_polygon_cartesian_enabled(
         draw_view,
         points,
         point_count,
         line_width,
-        PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a),
-        line_color.a > 0.0f,
-        PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a),
-        fill_color.a > 0.0f);
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true,
+        0,
+        false);
+}
+
+void dc_app_draw_planet_convex_polygon_filled_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, DcAppVec4 color) {
+    (void)ctx;
+    dc_app_draw_planet_polygon_cartesian_enabled(
+        draw_view,
+        points,
+        point_count,
+        0.0f,
+        0,
+        false,
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true);
 }
 
 void dc_app_draw_planet_polygon_cartesian_enabled(
@@ -1861,7 +1942,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
 
     plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
     if (fill_enabled)
-        dc_app_draw_planet_polygon_filled(view, cartesian, point_count, fill_color);
+        dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
     if (line_enabled)
         dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color);
     PL_FREE(cartesian);
@@ -2099,7 +2180,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             const DcGeojsonCoordArray *coordinates = &feature->geom.polygon.rings[0];
             plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
             if (points) {
-                if (style.fill_enabled) dc_app_draw_planet_polygon_filled(view, points, coordinates->count, fill_color);
+                if (style.fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, coordinates->count, fill_color);
                 if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, line_width, line_color);
                 PL_FREE(points);
             }
@@ -2113,7 +2194,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
                 const DcGeojsonCoordArray *coordinates = &polygon->rings[0];
                 plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
                 if (points) {
-                    if (style.fill_enabled) dc_app_draw_planet_polygon_filled(view, points, coordinates->count, fill_color);
+                    if (style.fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, coordinates->count, fill_color);
                     if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, line_width, line_color);
                     PL_FREE(points);
                 }

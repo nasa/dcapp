@@ -486,10 +486,14 @@ DcPlanetLocalTransform transform = {
 
 if (dc_draw->planet_container_push_geodetic(
         draw_ctx, view, latitude, longitude, height, transform)) {
+    dc_draw->planet_convex_polygon_filled_local(
+        draw_ctx, doghouse,
+        (uint32_t)(sizeof(doghouse) / sizeof(doghouse[0])),
+        fill_color);
     dc_draw->planet_polygon_local(
         draw_ctx, doghouse,
         (uint32_t)(sizeof(doghouse) / sizeof(doghouse[0])),
-        line_width, line_color, fill_color);
+        line_width, line_color);
     dc_draw->planet_container_pop(draw_ctx);
 }
 ```
@@ -507,7 +511,10 @@ void (*planet_line_local)(
     float line_width, DcVec4 color);
 void (*planet_polygon_local)(
     DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
-    float line_width, DcVec4 line_color, DcVec4 fill_color);
+    float line_width, DcVec4 color);
+void (*planet_convex_polygon_filled_local)(
+    DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
+    DcVec4 color);
 ```
 
 Scale must be initialized explicitly; a zero-initialized transform collapses
@@ -531,8 +538,9 @@ antipodal scale.
 
 The initial implementation maps only the authored vertices to the reference
 sphere and then uses the existing line and polygon renderer unchanged. Lines
-and outlines remain straight chords, and fills remain triangle fans; there is
-no automatic subdivision or terrain elevation sampling. Add authored vertices
+and outlines remain straight chords, and convex fills remain triangle fans;
+there is no automatic subdivision or terrain elevation sampling. Filled
+polygons must be convex with vertices in perimeter order. Add authored vertices
 when a smoother large curve is needed.
 
 ### `<PlanetLine>`
@@ -665,9 +673,15 @@ Draws a filled or outlined polygon on the terrain surface.
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
-The logic `planet_polygon_geodetic()` and `planet_polygon_cartesian()` calls
-omit a component whose color has zero alpha. This provides the same independent
-fill/outline behavior as omitting `FillColor` or `LineColor` in XML.
+Filled `<PlanetPolygon>` elements must be convex with vertices in perimeter
+order. Outline-only polygons do not have that convexity restriction.
+
+Logic uses separate calls for the two passes:
+`planet_polygon_geodetic()` and `planet_polygon_cartesian()` draw outlines,
+while `planet_convex_polygon_filled_geodetic()` and
+`planet_convex_polygon_filled_cartesian()` draw convex fills. Call the fill
+first and the outline second to render both like an XML element with
+`FillColor` and `LineColor`.
 
 ### `<Vertex>`
 

@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 8, 0}
+#define plPlanetI_version {0, 9, 0}
 #define PL_PLANET_TEXTURE_SLOT_COUNT 5u
 
 //-----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ typedef struct _plPlanetI
     // drawing
     void (*draw_sphere)         (plPlanetView*, float longitude, float latitude, float height, float radius, uint32_t color);
     void (*draw_polygon)        (plPlanetView*, plVec3* points, uint32_t count, float line_width, uint32_t color);
-    void (*draw_polygon_filled) (plPlanetView*, plVec3* points, uint32_t count, uint32_t color);
+    void (*draw_convex_polygon_filled)(plPlanetView*, plVec3* points, uint32_t count, uint32_t color);
     void (*draw_line)       (plPlanetView*, plVec3* points, uint32_t count, float line_width, uint32_t color);
     void (*draw_text)           (plPlanetView*, plCamera*, plVec3 position, const char* text, float size_meters, uint32_t color);
 

@@ -1302,7 +1302,7 @@ pl_draw_line(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLin
 }
 
 void
-pl_draw_polygon_filled(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, uint32_t uColor)
+pl_draw_convex_polygon_filled(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, uint32_t uColor)
 {
     for(uint32_t i = 1; i + 1 < uCount; i++)
         gptDraw->add_3d_triangle_filled(ptView->pt3dDrawlist, atPoints[0], atPoints[i], atPoints[i + 1],
@@ -2537,7 +2537,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .set_shaders              = pl_planet_set_shaders,
         .draw_sphere              = pl_draw_sphere,
         .draw_polygon             = pl_draw_polygon,
-        .draw_polygon_filled      = pl_draw_polygon_filled,
+        .draw_convex_polygon_filled = pl_draw_convex_polygon_filled,
         .draw_line                = pl_draw_line,
         .draw_text                = pl_draw_text,
         .set_texture              = pl_planet_set_texture,

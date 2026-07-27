@@ -115,13 +115,16 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *dr
 bool dc_app_draw_planet_container_push_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppPlanetLocalTransform transform);
 void dc_app_draw_planet_container_pop(DcAppDrawContext *draw_ctx);
 void dc_app_draw_planet_line_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color);
-void dc_app_draw_planet_polygon_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
+void dc_app_draw_planet_polygon_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color);
+void dc_app_draw_planet_convex_polygon_filled_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color);
 void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcAppVec4 color);
 void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, float radius, DcAppVec4 color);
 void dc_app_draw_planet_line_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
 void dc_app_draw_planet_line_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
-void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
-void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
+void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
+void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
+void dc_app_draw_planet_convex_polygon_filled_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, DcAppVec4 color);
+void dc_app_draw_planet_convex_polygon_filled_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, DcAppVec4 color);
 void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
 void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
 void dc_app_draw_planet_image_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint);
@@ -152,7 +155,7 @@ plVec2 dc_app_draw_text_options_size(const char *text, dcDrawTextOptions options
 void   dc_app_draw_text_options(DcAppDrawContext *draw_ctx, const char *text, dcDrawTextOptions options);
 void   dc_app_draw_3d_sphere_textured(DcAppDrawContext *draw_ctx, uint32_t texture_id, plSphere sphere, const plMat4 *transform, uint32_t color);
 void   dc_app_draw_3d_sphere_filled(DcAppDrawContext *draw_ctx, plSphere sphere, uint32_t color);
-void   dc_app_draw_planet_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color);
+void   dc_app_draw_planet_convex_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color);
 void   dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color);
 void   dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color);
 void   dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius, float rotation_degrees, uint32_t segments, float line_width, uint32_t line_color, bool line_enabled, uint32_t fill_color, bool fill_enabled);

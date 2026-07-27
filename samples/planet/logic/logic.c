@@ -268,12 +268,15 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
     };
     if (dc_draw->planet_container_push_geodetic(
             draw_ctx, view, *OrbitLat, *OrbitLon, 60000.0, doghouse_transform)) {
+        dc_draw->planet_convex_polygon_filled_local(
+            draw_ctx, logic_doghouse,
+            (uint32_t)(sizeof(logic_doghouse) / sizeof(logic_doghouse[0])),
+            (DcVec4){.r = 1.0f, .g = 0.45f, .b = 0.10f, .a = 0.22f});
         dc_draw->planet_polygon_local(
             draw_ctx, logic_doghouse,
             (uint32_t)(sizeof(logic_doghouse) / sizeof(logic_doghouse[0])),
             2.1f,
-            (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f},
-            (DcVec4){.r = 1.0f, .g = 0.45f, .b = 0.10f, .a = 0.22f});
+            (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f});
         dc_draw->planet_line_local(
             draw_ctx, logic_doghouse_door,
             (uint32_t)(sizeof(logic_doghouse_door) / sizeof(logic_doghouse_door[0])),
