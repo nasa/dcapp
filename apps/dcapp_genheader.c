@@ -920,15 +920,14 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
             }
 
             // type
-            xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
-            char     clean_type[DC_VALUE_STRING_BUFFER_SIZE];
+            xmlChar    *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
+            DcValueType type     = DC_VALUE_TYPE_STRING;
             if (raw_type) {
+                char clean_type[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(clean_type, (const char *)raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 clean_type[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_type);
-            } else {
-                DC_LOG_ERROR("GenHeader", "Attribute 'Type' missing in <Variable> definition");
-                clean_type[0] = '\0';
+                type = (DcValueType)dc_utils_string_to_integer(clean_type);
             }
 
             // don't care about initial value here
@@ -940,7 +939,7 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
 
             // register variable
             DcValue value = {};
-            value.type    = dc_utils_string_to_integer((const char *)clean_type);
+            value.type    = type;
             DcAppValIndex value_index = dc_app_lookup_register_value(lookup, &value);
             dc_app_lookup_register_var(lookup, clean_name, value_index);
             break;

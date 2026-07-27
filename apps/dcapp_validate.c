@@ -817,14 +817,6 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
     switch (elem_type) {
 
         case DC_APP_ELEM_TYPE_VARIABLE: {
-            xmlChar *type = xmlGetProp(node, BAD_CAST "Type");
-            if (!type) {
-                DC_LOG_ERROR("Validate", "<Variable> missing required attribute 'Type' (line %ld)", xmlGetLineNo(node));
-                ctx->error_count++;
-            } else {
-                xmlFree(type);
-            }
-
             xmlChar *content = xmlNodeGetContent(node);
             if (content) {
                 dc_utils_trim_whitespace_inplace((char *)content);
