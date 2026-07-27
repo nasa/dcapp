@@ -254,11 +254,17 @@ bool dc_app_planet_set_texture_geodetic(DcAppPlanetContext *planet_ctx, DcAppPla
 }
 
 bool dc_app_planet_set_texture_geodetic_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel) {
-    if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    if (!planet_ctx || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+    if (!planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
+    if (!planet_ctx || meters_per_pixel <= 0.0f) {
+        _ext_planet->set_texture(planet->planet, NULL, slot);
+        return false;
+    }
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) {
+        _ext_planet->set_texture(planet->planet, NULL, slot);
+        return false;
+    }
 
     plVec3d geodetic_in = {lat, lon, 0.0};
     plVec2d polar_out;
@@ -277,8 +283,7 @@ bool dc_app_planet_set_texture_geodetic_slot(DcAppPlanetContext *planet_ctx, DcA
         .dOriginX = polar_out.x,
         .dOriginY = polar_out.y,
     };
-    _ext_planet->set_texture(planet->planet, &texture, slot);
-    return true;
+    return _ext_planet->set_texture(planet->planet, &texture, slot);
 }
 
 bool dc_app_planet_set_texture_cartesian(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel) {
@@ -286,11 +291,17 @@ bool dc_app_planet_set_texture_cartesian(DcAppPlanetContext *planet_ctx, DcAppPl
 }
 
 bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3 position, float meters_per_pixel) {
-    if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    if (!planet_ctx || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+    if (!planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
+    if (!planet_ctx || meters_per_pixel <= 0.0f) {
+        _ext_planet->set_texture(planet->planet, NULL, slot);
+        return false;
+    }
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) {
+        _ext_planet->set_texture(planet->planet, NULL, slot);
+        return false;
+    }
 
     plVec3d cartesian_in = {position.x, position.y, position.z};
     plVec3d geodetic_out;
@@ -311,16 +322,21 @@ bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, Dc
         .dOriginX = polar_out.x,
         .dOriginY = polar_out.y,
     };
-    _ext_planet->set_texture(planet->planet, &texture, slot);
-    return true;
+    return _ext_planet->set_texture(planet->planet, &texture, slot);
 }
 
 bool dc_app_planet_set_texture_projected_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel) {
-    if (slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    if (!planet_ctx || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
+    if (!planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
+    if (!planet_ctx || meters_per_pixel <= 0.0f) {
+        _ext_planet->set_texture(planet->planet, NULL, slot);
+        return false;
+    }
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(planet_ctx, path, vfs_path, sizeof(vfs_path))) {
+        _ext_planet->set_texture(planet->planet, NULL, slot);
+        return false;
+    }
 
     plPlanetTexture texture = {
         .pcPath = vfs_path,
@@ -328,14 +344,12 @@ bool dc_app_planet_set_texture_projected_slot(DcAppPlanetContext *planet_ctx, Dc
         .dOriginX = origin_x,
         .dOriginY = origin_y,
     };
-    _ext_planet->set_texture(planet->planet, &texture, slot);
-    return true;
+    return _ext_planet->set_texture(planet->planet, &texture, slot);
 }
 
 bool dc_app_planet_clear_texture(DcAppPlanetHandle planet, uint32_t slot) {
     if (!planet || !planet->planet || slot >= PL_PLANET_TEXTURE_SLOT_COUNT) return false;
-    _ext_planet->set_texture(planet->planet, NULL, slot);
-    return true;
+    return _ext_planet->set_texture(planet->planet, NULL, slot);
 }
 
 bool dc_app_planet_set_light_direction(DcAppPlanetHandle planet, DcAppVec3 direction) {

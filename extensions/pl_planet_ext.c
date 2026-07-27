@@ -784,15 +784,13 @@ static inline int clampi(int v, int lo, int hi)
     return v < lo ? lo : (v > hi ? hi : v);
 }
 
-void
+bool
 pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint32_t uSlot)
 {
-    if (uSlot >= PL_PLANET_TEXTURE_SLOT_COUNT)
-        return;
+    if (ptPlanet == NULL || uSlot >= PL_PLANET_TEXTURE_SLOT_COUNT)
+        return false;
 
-    // ---------------------------------------------------------------------
-    // Evict/unbind the previous textures in this slot
-    // ---------------------------------------------------------------------
+    // Evict/unbind the previous textures before attempting a replacement.
     for (uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
     {
         plChunkFileData* ptChunkFileData = &ptPlanet->sbtChunkFiles[i];
@@ -806,7 +804,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
     }
 
     if (ptPlanetTexture == NULL)
-        return;
+        return true;
 
     // ---------------------------------------------------------------------
     // Tile grid (use tInfo counts consistently)
@@ -818,7 +816,9 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
     if (ptPlanetTexture)
     {
         if (ptPlanetTexture->pcPath == NULL || ptPlanetTexture->pcPath[0] == '\0' || ptPlanetTexture->fMetersPerPixel <= 0.0f)
-            return;
+            return false;
+        if (uH == 0 || uV == 0 || uTileCount == 0 || ptPlanet->atTiles == NULL)
+            return false;
 
         // Texture center is already in projected meters
         const float fX = (float)ptPlanetTexture->dOriginX;
@@ -828,9 +828,9 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
         // Compute world-space bounds of the incoming image in meters
         // -----------------------------------------------------------------
         plImageInfo tImageInfo = (plImageInfo){0};
-        gptImage->get_info_from_file(ptPlanetTexture->pcPath, &tImageInfo);
-        if (tImageInfo.iWidth <= 0 || tImageInfo.iHeight <= 0)
-            return;
+        if (!gptImage->get_info_from_file(ptPlanetTexture->pcPath, &tImageInfo) ||
+            tImageInfo.iWidth <= 0 || tImageInfo.iHeight <= 0)
+            return false;
 
         const float imgWm = (float)tImageInfo.iWidth  * ptPlanetTexture->fMetersPerPixel;
         const float imgHm = (float)tImageInfo.iHeight * ptPlanetTexture->fMetersPerPixel;
@@ -854,7 +854,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
         int brx = (int)ceilf((tTextureMax.x - ptPlanet->tTopLeftGlobal.x) / tileSizeM) - 1;
         int bry = (int)ceilf((ptPlanet->tTopLeftGlobal.y - tTextureMin.y) / tileSizeM) - 1;
 
-        // No overlap with tile grid? Early out
+        // A valid replacement outside the planet leaves the cleared slot empty.
         if (!(tlx > (int)uH - 1 || tly > (int)uV - 1 || brx < 0 || bry < 0))
         {
 
@@ -905,14 +905,14 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                 // -----------------------------------------------------------------
                 int iImageWidth  = 0;
                 int iImageHeight = 0;
-                int _unused      = 0;
+                int iChannels    = 0;
                 unsigned char* pucImageData = gptImage->load_from_file(
-                    ptPlanetTexture->pcPath, &iImageWidth, &iImageHeight, &_unused, 4);
+                    ptPlanetTexture->pcPath, &iImageWidth, &iImageHeight, &iChannels, 4);
                 if (pucImageData == NULL || iImageWidth <= 0 || iImageHeight <= 0)
                 {
                     if (pucImageData)
                         gptImage->free(pucImageData);
-                    return;
+                    return false;
                 }
 
                 plImageOpInit tFullInfo = {
@@ -977,7 +977,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                             uInc,
                             (double)uTileBytes / (1024.0 * 1024.0));
                     gptImageOps->cleanup(&tFullData);
-                    return;
+                    return false;
                 }
 
                 const uint32_t uActiveX0 = tFullData.uActiveXOffset;
@@ -1086,10 +1086,14 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                     }
                 }
                 gptImageOps->cleanup(&tFullData);
+                return true;
             }
+            return false;
         }
+        return true;
     }
 
+    return false;
 }
 
 bool

@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 7, 0}
+#define plPlanetI_version {0, 8, 0}
 #define PL_PLANET_TEXTURE_SLOT_COUNT 5u
 
 //-----------------------------------------------------------------------------
@@ -80,7 +80,7 @@ typedef struct _plPlanetI
     plPlanet* (*create_planet) (plCommandBuffer*, plPlanetInit, plPlanetProcessInfo*);
     void      (*cleanup_planet)(plPlanet*);
 
-    void (*set_texture)(plPlanet*, plPlanetTexture*, uint32_t index);
+    bool (*set_texture)(plPlanet*, plPlanetTexture*, uint32_t index);
 
     // per frame
     void                (*prepare)         (plPlanet*, plCommandBuffer*);
