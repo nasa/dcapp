@@ -614,10 +614,13 @@ Draws an ellipse on the terrain surface at a geographic location.
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in meters |
 
-Logic uses `dc_draw->planet_ellipse_geodetic()` or
-`planet_ellipse_cartesian()`. Passing `segments == 0` selects the XML default
-of 64; values are limited to `DC_PLANET_ELLIPSE_MAX_SEGMENTS`. A line or fill
-with zero alpha is omitted, so either component can be drawn independently.
+Logic uses separate calls for the two passes:
+`planet_ellipse_geodetic()` and `planet_ellipse_cartesian()` draw outlines,
+while `planet_ellipse_filled_geodetic()` and
+`planet_ellipse_filled_cartesian()` draw fills. Call the fill first and the
+outline second to render both like an XML element with `FillColor` and
+`LineColor`. Passing `segments == 0` selects the XML default of 64; values are
+limited to `DC_PLANET_ELLIPSE_MAX_SEGMENTS`.
 
 ### `<PlanetSphere>`
 

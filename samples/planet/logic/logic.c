@@ -248,11 +248,14 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         dc_draw->planet_geojson(draw_ctx, view, logic_geojson, geojson_style);
     }
 
+    dc_draw->planet_ellipse_filled_geodetic(
+        draw_ctx, view, -55.0, 335.0, 1500.0,
+        (DcVec2){80000.0f, 40000.0f}, 25.0f, 64,
+        (DcVec4){.r = 1.0f, .g = 0.20f, .b = 0.70f, .a = 0.12f});
     dc_draw->planet_ellipse_geodetic(
         draw_ctx, view, -55.0, 335.0, 1500.0,
         (DcVec2){80000.0f, 40000.0f}, 25.0f, 64, 3000.0f,
-        (DcVec4){.r = 1.0f, .g = 0.35f, .b = 0.80f, .a = 0.90f},
-        (DcVec4){.r = 1.0f, .g = 0.20f, .b = 0.70f, .a = 0.12f});
+        (DcVec4){.r = 1.0f, .g = 0.35f, .b = 0.80f, .a = 0.90f});
 
     DcPlanetBreadcrumbsPoints orbit_trail = dc_planet->get_breadcrumbs_points(logic_orbit_breadcrumbs);
     if (orbit_trail.count >= 2 && orbit_trail.crs == DC_PLANET_CRS_GEODETIC) {

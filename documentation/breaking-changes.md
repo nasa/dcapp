@@ -7,6 +7,24 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Planet Ellipse Draw API Split
+
+#### Affected Code
+- Logic code that calls `planet_ellipse_geodetic` or
+  `planet_ellipse_cartesian`.
+
+#### Changed
+- Planet ellipse outline and fill rendering now use separate calls.
+  `planet_ellipse_*` draws only the outline, and
+  `planet_ellipse_filled_*` draws only the fill.
+- A call always submits its requested pass; color alpha no longer selects
+  which pass a combined call performs.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+- Replace each combined ellipse call with a filled call followed by an outline
+  call when both passes are wanted.
+
 ### 2026-07-27 - Planet Polygon Draw API Split
 
 #### Affected Code

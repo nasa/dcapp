@@ -207,6 +207,8 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .planet_convex_polygon_filled_cartesian = dc_app_draw_planet_convex_polygon_filled_cartesian,
     .planet_ellipse_geodetic        = dc_app_draw_planet_ellipse_geodetic,
     .planet_ellipse_cartesian       = dc_app_draw_planet_ellipse_cartesian,
+    .planet_ellipse_filled_geodetic = dc_app_draw_planet_ellipse_filled_geodetic,
+    .planet_ellipse_filled_cartesian = dc_app_draw_planet_ellipse_filled_cartesian,
     .planet_image_geodetic          = dc_app_draw_planet_image_geodetic,
     .planet_image_cartesian         = dc_app_draw_planet_image_cartesian,
     .planet_text_geodetic           = dc_app_draw_planet_text_geodetic,
@@ -1999,8 +2001,7 @@ void dc_app_draw_planet_text_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     _planet_draw_text_label(ctx, draw_view, text_position, text, text_size, color);
 }
 
-void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
-    (void)ctx;
+void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 color) {
     if (!draw_view || !draw_view->view) return;
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
     const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
@@ -2010,15 +2011,18 @@ void dc_app_draw_planet_ellipse_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetV
     plVec3d geodetic = {lat, lon, height};
     plVec3d cartesian;
     dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &cartesian, 1);
-    dc_app_draw_planet_ellipse(
-        dc_app_planet_view_pl(draw_view->view),
-        (plVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z},
-        (plVec2){radius.x, radius.y}, rotation_degrees, segments, line_width,
-        PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a), line_color.a > 0.0f,
-        PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a), fill_color.a > 0.0f);
+    dc_app_draw_planet_ellipse_cartesian(
+        ctx,
+        draw_view,
+        (DcAppVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z},
+        radius,
+        rotation_degrees,
+        segments,
+        line_width,
+        color);
 }
 
-void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, float line_width, DcAppVec4 color) {
     (void)ctx;
     dc_app_draw_planet_ellipse_cartesian_enabled(
         draw_view,
@@ -2027,10 +2031,45 @@ void dc_app_draw_planet_ellipse_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanet
         rotation_degrees,
         segments,
         line_width,
-        PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a),
-        line_color.a > 0.0f,
-        PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a),
-        fill_color.a > 0.0f);
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true,
+        0,
+        false);
+}
+
+void dc_app_draw_planet_ellipse_filled_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppVec2 radius, float rotation_degrees, uint32_t segments, DcAppVec4 color) {
+    if (!draw_view || !draw_view->view) return;
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
+    const DcGeoCrsCartesian *cartesian_crs = dc_app_planet_cartesian_crs(planet);
+    if (!geodetic_crs || !cartesian_crs) return;
+
+    plVec3d geodetic = {lat, lon, height};
+    plVec3d cartesian;
+    dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &cartesian, 1);
+    dc_app_draw_planet_ellipse_filled_cartesian(
+        ctx,
+        draw_view,
+        (DcAppVec3){(float)cartesian.x, (float)cartesian.y, (float)cartesian.z},
+        radius,
+        rotation_degrees,
+        segments,
+        color);
+}
+
+void dc_app_draw_planet_ellipse_filled_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 center, DcAppVec2 radius, float rotation_degrees, uint32_t segments, DcAppVec4 color) {
+    (void)ctx;
+    dc_app_draw_planet_ellipse_cartesian_enabled(
+        draw_view,
+        &center,
+        &radius,
+        rotation_degrees,
+        segments,
+        0.0f,
+        0,
+        false,
+        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        true);
 }
 
 void dc_app_draw_planet_ellipse_cartesian_enabled(
