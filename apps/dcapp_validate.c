@@ -3,6 +3,7 @@
 #include "../src/app/planet_types.h"
 #include "../src/utils/env.h"
 #include "../src/utils/log.h"
+#include "../src/utils/string.h"
 
 #include <libxml/parser.h>
 
@@ -793,8 +794,18 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             }
 
             xmlChar *content = xmlNodeGetContent(node);
-            if (!content || strlen((char *)content) == 0) {
+            if (content) {
+                dc_utils_trim_whitespace_inplace((char *)content);
+            }
+            if (!content || content[0] == '\0') {
                 DC_LOG_ERROR("Validate", "<Variable> missing variable name (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else if (!dc_utils_string_is_c_identifier((const char *)content)) {
+                DC_LOG_ERROR(
+                    "Validate",
+                    "<Variable> name '%s' is not a valid C identifier for a generated symbol (line %ld)",
+                    (const char *)content,
+                    xmlGetLineNo(node));
                 ctx->error_count++;
             }
             if (content)
@@ -967,12 +978,20 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_FUNCTION:
         case DC_APP_ELEM_TYPE_DRAW_FUNCTION: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
-            if (!name) {
+            if (!name || name[0] == '\0') {
                 DC_LOG_ERROR("Validate", "<%s> missing required attribute 'Name' (line %ld)", (const char *)node->name, xmlGetLineNo(node));
                 ctx->error_count++;
-            } else {
-                xmlFree(name);
+            } else if (!dc_utils_string_is_c_identifier((const char *)name)) {
+                DC_LOG_ERROR(
+                    "Validate",
+                    "<%s> Name '%s' is not a valid C identifier for a generated symbol (line %ld)",
+                    (const char *)node->name,
+                    (const char *)name,
+                    xmlGetLineNo(node));
+                ctx->error_count++;
             }
+            if (name)
+                xmlFree(name);
             break;
         }
 

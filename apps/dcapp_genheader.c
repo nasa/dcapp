@@ -810,7 +810,22 @@ int main(int argc, char **argv) {
 static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, DcLogicCallbacks *callbacks) {
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     if (!raw_name || raw_name[0] == '\0') {
+        DC_LOG_ERROR(
+            "GenHeader",
+            "<%s> is missing a callback Name",
+            (const char *)xml_node->name);
+        callbacks->failed = true;
         if (raw_name) xmlFree(raw_name);
+        return;
+    }
+    if (!dc_utils_string_is_c_identifier((const char *)raw_name)) {
+        DC_LOG_ERROR(
+            "GenHeader",
+            "<%s> Name '%s' is not a valid C identifier for a generated symbol",
+            (const char *)xml_node->name,
+            (const char *)raw_name);
+        callbacks->failed = true;
+        xmlFree(raw_name);
         return;
     }
 
@@ -880,6 +895,7 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
             // name
             xmlChar *raw_name = xmlNodeGetContent(xml_node);
             char     clean_name[DC_VALUE_STRING_BUFFER_SIZE];
+            bool     valid_name = false;
             if (raw_name) {
                 strncpy(clean_name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 clean_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
@@ -887,10 +903,20 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
                 dc_utils_trim_whitespace_inplace(clean_name);
                 if (clean_name[0] == '\0') {
                     DC_LOG_ERROR("GenHeader", "Empty variable name in <Variable> definition");
+                    callbacks->failed = true;
+                } else if (!dc_utils_string_is_c_identifier(clean_name)) {
+                    DC_LOG_ERROR(
+                        "GenHeader",
+                        "<Variable> name '%s' is not a valid C identifier for a generated symbol",
+                        clean_name);
+                    callbacks->failed = true;
+                } else {
+                    valid_name = true;
                 }
             } else {
                 DC_LOG_ERROR("GenHeader", "Node content missing in <Variable> definition");
                 clean_name[0] = '\0';
+                callbacks->failed = true;
             }
 
             // type
@@ -907,6 +933,10 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
 
             // don't care about initial value here
             // xmlChar *raw_init_value = xmlGetProp(xml_node, BAD_CAST "InitialValue");
+
+            if (!valid_name) {
+                break;
+            }
 
             // register variable
             DcValue value = {};

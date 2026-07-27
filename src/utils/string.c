@@ -81,6 +81,99 @@ bool dc_utils_string_is_boolean(const char *text) {
     return false;
 }
 
+bool dc_utils_string_is_c_identifier(const char *text) {
+    // These names are emitted at file scope, where every leading-underscore
+    // identifier is reserved to the implementation.
+    if (!text || text[0] == '\0' || text[0] == '_') {
+        return false;
+    }
+
+    unsigned char ch = (unsigned char)text[0];
+    if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))) {
+        return false;
+    }
+
+    for (size_t ii = 1; text[ii] != '\0'; ii++) {
+        ch = (unsigned char)text[ii];
+        if (!((ch >= 'a' && ch <= 'z') ||
+              (ch >= 'A' && ch <= 'Z') ||
+              (ch >= '0' && ch <= '9') ||
+              ch == '_')) {
+            return false;
+        }
+    }
+
+    // Standard C keywords through C23. "asm" is also excluded because dcapp
+    // builds generated logic in GNU C mode, where it is a keyword.
+    static const char *keywords[] = {
+        "_Alignas",
+        "_Alignof",
+        "_Atomic",
+        "_BitInt",
+        "_Bool",
+        "_Complex",
+        "_Generic",
+        "_Imaginary",
+        "_Noreturn",
+        "_Static_assert",
+        "_Thread_local",
+        "alignas",
+        "alignof",
+        "asm",
+        "auto",
+        "bool",
+        "break",
+        "case",
+        "char",
+        "const",
+        "constexpr",
+        "continue",
+        "default",
+        "do",
+        "double",
+        "else",
+        "enum",
+        "extern",
+        "false",
+        "float",
+        "for",
+        "goto",
+        "if",
+        "inline",
+        "int",
+        "long",
+        "nullptr",
+        "register",
+        "restrict",
+        "return",
+        "short",
+        "signed",
+        "sizeof",
+        "static",
+        "static_assert",
+        "struct",
+        "switch",
+        "thread_local",
+        "true",
+        "typedef",
+        "typeof",
+        "typeof_unqual",
+        "union",
+        "unsigned",
+        "void",
+        "volatile",
+        "while",
+    };
+
+    for (size_t ii = 0; ii < sizeof(keywords) / sizeof(keywords[0]); ii++) {
+        if (strcmp(text, keywords[ii]) == 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void dc_utils_trim_whitespace_inplace(char *text) {
     if (text == NULL) {
         return;
