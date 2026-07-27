@@ -614,6 +614,10 @@ Draws an ellipse on the terrain surface at a geographic location.
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in meters |
 
+After applying `RadiusX` and `RadiusY` overrides, both effective radii must be
+greater than zero; otherwise the ellipse is not drawn. Logic calls likewise
+require both components of the radius vector to be positive.
+
 Logic uses separate calls for the two passes:
 `planet_ellipse_geodetic()` and `planet_ellipse_cartesian()` draw outlines,
 while `planet_ellipse_filled_geodetic()` and

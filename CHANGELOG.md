@@ -36,6 +36,8 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 ### Fixed
 - Planet ellipse rotation now rotates the ellipse axes in the local tangent plane.
+- Planet ellipses now reject non-positive values for either radius instead of
+  submitting degenerate geometry.
 
 
 [2.152.0] - 2026-07-20

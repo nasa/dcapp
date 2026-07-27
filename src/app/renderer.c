@@ -4924,7 +4924,7 @@ static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *rendere
     float line_width = (node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
 
-    if (radius_x <= 0.0f && radius_y <= 0.0f) return;
+    if (radius_x <= 0.0f || radius_y <= 0.0f) return;
     if (segments < 3) segments = 3;
     if (segments > DC_APP_NODE_ELLIPSE_MAX_SEGMENTS) segments = DC_APP_NODE_ELLIPSE_MAX_SEGMENTS;
 

@@ -1572,7 +1572,7 @@ void dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_
 }
 
 void dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius, float rotation_degrees, uint32_t segments, float line_width, uint32_t line_color, bool line_enabled, uint32_t fill_color, bool fill_enabled) {
-    if (!view || (radius.x <= 0.0f && radius.y <= 0.0f)) return;
+    if (!view || radius.x <= 0.0f || radius.y <= 0.0f) return;
     if (segments == 0) segments = 64;
     if (segments < 3) segments = 3;
     if (segments > DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS) segments = DC_APP_PLANET_ELLIPSE_MAX_SEGMENTS;
