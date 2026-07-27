@@ -82,9 +82,9 @@ static void draw_example_05_polygon(DcDrawContext *draw_ctx, const DcDrawFuncArg
     dc_draw->polygon(draw_ctx, points, 5, (DcStroke){ .color = (DcVec4){ .r = 0.72f, .g = 0.92f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
 }
 
-// 06: filled polygons use the same point list, but take a fill color instead
-// of a stroke.
-static void draw_example_06_polygon_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+// 06: convex_polygon_filled() makes the fill constraint explicit in its name.
+// Points must be convex and ordered around the perimeter.
+static void draw_example_06_convex_polygon_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     DcVec2 points[] = {
         {72.0f, 28.0f},
@@ -93,7 +93,7 @@ static void draw_example_06_polygon_filled(DcDrawContext *draw_ctx, const DcDraw
         {104.0f, 90.0f},
         {52.0f, 62.0f},
     };
-    dc_draw->polygon_filled(draw_ctx, points, 5, (DcVec4){ .r = 0.20f, .g = 0.42f, .b = 0.58f, .a = 0.80f });
+    dc_draw->convex_polygon_filled(draw_ctx, points, 5, (DcVec4){ .r = 0.20f, .g = 0.42f, .b = 0.58f, .a = 0.80f });
 }
 
 // 07: rounded polygons soften the corners by a radius. The radius is in the
@@ -110,9 +110,9 @@ static void draw_example_07_rounded_polygon(DcDrawContext *draw_ctx, const DcDra
     dc_draw->rounded_polygon(draw_ctx, points, 5, 10.0f, (DcStroke){ .color = (DcVec4){ .r = 0.86f, .g = 0.78f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
 }
 
-// 08: filled rounded polygons follow the same shape rules as rounded_polygon(),
-// but they render a filled surface.
-static void draw_example_08_rounded_polygon_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+// 08: rounded_convex_polygon_filled() has the same convex point requirement
+// and adds a corner radius.
+static void draw_example_08_rounded_convex_polygon_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     DcVec2 points[] = {
         {72.0f, 28.0f},
@@ -121,7 +121,7 @@ static void draw_example_08_rounded_polygon_filled(DcDrawContext *draw_ctx, cons
         {112.0f, 88.0f},
         {44.0f, 58.0f},
     };
-    dc_draw->rounded_polygon_filled(draw_ctx, points, 5, 10.0f, (DcVec4){ .r = 0.28f, .g = 0.28f, .b = 0.60f, .a = 0.82f });
+    dc_draw->rounded_convex_polygon_filled(draw_ctx, points, 5, 10.0f, (DcVec4){ .r = 0.28f, .g = 0.28f, .b = 0.60f, .a = 0.82f });
 }
 
 // 09: quads are explicit four-point shapes. They are useful when a rectangle is
@@ -433,7 +433,7 @@ static void draw_example_34_mouse_polygon(DcDrawContext *draw_ctx, const DcDrawF
     };
     dc_mouse->polygon(draw_ctx, id, points, 4, (DcVec2){0.0f, 0.0f});
     DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){ .r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f } : (DcVec4){ .r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f };
-    dc_draw->polygon_filled(draw_ctx, points, 4, fill);
+    dc_draw->convex_polygon_filled(draw_ctx, points, 4, fill);
     dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "polygon hit", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
 }
 
@@ -492,9 +492,9 @@ static const Example examples[] = {
     {"03 polyline", draw_example_03_polyline},
     {"04 polyline_ex", draw_example_04_polyline_ex},
     {"05 polygon", draw_example_05_polygon},
-    {"06 polygon_filled", draw_example_06_polygon_filled},
+    {"06 convex_polygon_filled", draw_example_06_convex_polygon_filled},
     {"07 rounded_polygon", draw_example_07_rounded_polygon},
-    {"08 rounded_polygon_filled", draw_example_08_rounded_polygon_filled},
+    {"08 rounded_convex_polygon_filled", draw_example_08_rounded_convex_polygon_filled},
     {"09 quad", draw_example_09_quad},
     {"10 quad_filled", draw_example_10_quad_filled},
     {"11 rounded_quad", draw_example_11_rounded_quad},

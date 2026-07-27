@@ -90,9 +90,9 @@ struct DcAppDrawApi {
     void (*line)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppStroke stroke);
     void (*polyline)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke);
     void (*polygon)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke);
-    void (*polygon_filled)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color);
+    void (*convex_polygon_filled)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color);
     void (*rounded_polygon)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppStroke stroke);
-    void (*rounded_polygon_filled)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color);
+    void (*rounded_convex_polygon_filled)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color);
     void (*quad)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppStroke stroke);
     void (*quad_filled)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec4 color);
     void (*rounded_quad)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppStroke stroke);
@@ -113,9 +113,9 @@ struct DcAppDrawApi {
     void (*line_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*polyline_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*polygon_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
-    void (*polygon_filled_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
+    void (*convex_polygon_filled_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rounded_polygon_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
-    void (*rounded_polygon_filled_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
+    void (*rounded_convex_polygon_filled_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*quad_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*quad_filled_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rounded_quad_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);

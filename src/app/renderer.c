@@ -1822,7 +1822,7 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAp
         } else if (!is_pie) {
             plMat4 identity = pl_identity_mat4();
             dc_app_draw_context_push(ctx, (plVec2){0.0f, 0.0f}, (plVec2){diameter_x, diameter_y}, &identity);
-            dc_app_draw_polygon_filled(ctx, points, (uint32_t)num_points, (DcAppVec4){
+            dc_app_draw_convex_polygon_filled(ctx, points, (uint32_t)num_points, (DcAppVec4){
                 .r = fill_color[0],
                 .g = fill_color[1],
                 .b = fill_color[2],
@@ -3547,7 +3547,7 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAp
         };
     dc_app_draw_context_push(ctx, min_pos, (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y}, &transform);
     if (node->polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
-        dc_app_draw_rounded_polygon_filled(ctx, points, (uint32_t)num_points, corner_radius, (DcAppVec4){
+        dc_app_draw_rounded_convex_polygon_filled(ctx, points, (uint32_t)num_points, corner_radius, (DcAppVec4){
             .r = fill_color[0],
             .g = fill_color[1],
             .b = fill_color[2],

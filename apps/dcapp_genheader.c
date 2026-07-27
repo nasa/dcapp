@@ -449,9 +449,9 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    void (*line)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcStroke stroke);");
     fprintf(file, "%s\n", "    void (*polyline)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke);");
     fprintf(file, "%s\n", "    void (*polygon)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke);");
-    fprintf(file, "%s\n", "    void (*polygon_filled)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*convex_polygon_filled)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*rounded_polygon)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcStroke stroke);");
-    fprintf(file, "%s\n", "    void (*rounded_polygon_filled)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*rounded_convex_polygon_filled)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*quad)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcStroke stroke);");
     fprintf(file, "%s\n", "    void (*quad_filled)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*rounded_quad)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcStroke stroke);");
@@ -472,9 +472,9 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    void (*line_ex)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*polyline_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*polygon_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
-    fprintf(file, "%s\n", "    void (*polygon_filled_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*convex_polygon_filled_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rounded_polygon_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
-    fprintf(file, "%s\n", "    void (*rounded_polygon_filled_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_convex_polygon_filled_ex)(DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*quad_ex)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*quad_filled_ex)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rounded_quad_ex)(DcDrawContext *draw_ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");

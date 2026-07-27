@@ -365,6 +365,9 @@ Draws a filled or outlined polygon.
 
 **Children:** `<Vertex>` elements, `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`
 
+Filled polygons must be convex with vertices in perimeter order. Outlined
+polygons do not have that convexity restriction.
+
 ---
 
 ### `<Vertex>`

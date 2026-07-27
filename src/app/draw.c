@@ -143,9 +143,9 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .line                           = dc_app_draw_line,
     .polyline                       = dc_app_draw_polyline,
     .polygon                        = dc_app_draw_polygon,
-    .polygon_filled                 = dc_app_draw_polygon_filled,
+    .convex_polygon_filled          = dc_app_draw_convex_polygon_filled,
     .rounded_polygon                = dc_app_draw_rounded_polygon,
-    .rounded_polygon_filled         = dc_app_draw_rounded_polygon_filled,
+    .rounded_convex_polygon_filled  = dc_app_draw_rounded_convex_polygon_filled,
     .quad                           = dc_app_draw_quad,
     .quad_filled                    = dc_app_draw_quad_filled,
     .rounded_quad                   = dc_app_draw_rounded_quad,
@@ -164,9 +164,9 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .line_ex                        = dc_app_draw_line_ex,
     .polyline_ex                    = dc_app_draw_polyline_ex,
     .polygon_ex                     = dc_app_draw_polygon_ex,
-    .polygon_filled_ex              = dc_app_draw_polygon_filled_ex,
+    .convex_polygon_filled_ex       = dc_app_draw_convex_polygon_filled_ex,
     .rounded_polygon_ex             = dc_app_draw_rounded_polygon_ex,
-    .rounded_polygon_filled_ex      = dc_app_draw_rounded_polygon_filled_ex,
+    .rounded_convex_polygon_filled_ex = dc_app_draw_rounded_convex_polygon_filled_ex,
     .quad_ex                        = dc_app_draw_quad_ex,
     .quad_filled_ex                 = dc_app_draw_quad_filled_ex,
     .rounded_quad_ex                = dc_app_draw_rounded_quad_ex,
@@ -1177,16 +1177,16 @@ void dc_app_draw_polygon(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_
     dc_app_draw_polygon_ex(ctx, points, point_count, stroke, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
 }
 
-void dc_app_draw_polygon_filled(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color) {
-    dc_app_draw_polygon_filled_ex(ctx, points, point_count, color, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
+void dc_app_draw_convex_polygon_filled(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color) {
+    dc_app_draw_convex_polygon_filled_ex(ctx, points, point_count, color, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
 }
 
 void dc_app_draw_rounded_polygon(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppStroke stroke) {
     dc_app_draw_rounded_polygon_ex(ctx, points, point_count, corner_radius, stroke, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
 }
 
-void dc_app_draw_rounded_polygon_filled(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color) {
-    dc_app_draw_rounded_polygon_filled_ex(ctx, points, point_count, corner_radius, color, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
+void dc_app_draw_rounded_convex_polygon_filled(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color) {
+    dc_app_draw_rounded_convex_polygon_filled_ex(ctx, points, point_count, corner_radius, color, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
 }
 
 void dc_app_draw_quad(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppStroke stroke) {
@@ -1286,8 +1286,8 @@ void dc_app_draw_polygon_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint
     dc_app_draw_rounded_polygon_ex(ctx, points, point_count, 0.0f, stroke, position, placement, result);
 }
 
-void dc_app_draw_polygon_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
-    dc_app_draw_rounded_polygon_filled_ex(ctx, points, point_count, 0.0f, color, position, placement, result);
+void dc_app_draw_convex_polygon_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
+    dc_app_draw_rounded_convex_polygon_filled_ex(ctx, points, point_count, 0.0f, color, position, placement, result);
 }
 
 void dc_app_draw_rounded_polygon_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
@@ -1311,7 +1311,7 @@ void dc_app_draw_rounded_polygon_ex(DcAppDrawContext *ctx, const DcAppVec2 *poin
     PL_FREE(draw_points);
 }
 
-void dc_app_draw_rounded_polygon_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
+void dc_app_draw_rounded_convex_polygon_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
     if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !points || point_count < 3) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
@@ -1356,7 +1356,7 @@ void dc_app_draw_rounded_quad_filled_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcA
         p2,
         p3,
     };
-    dc_app_draw_rounded_polygon_filled_ex(ctx, points, 4, corner_radius, color, position, placement, result);
+    dc_app_draw_rounded_convex_polygon_filled_ex(ctx, points, 4, corner_radius, color, position, placement, result);
 }
 
 void dc_app_draw_image_ex(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result) {
@@ -1497,7 +1497,7 @@ void dc_app_draw_ellipse_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAp
         points[i] = (DcAppVec2){radius.x + cosf(theta) * radius.x, radius.y + sinf(theta) * radius.y};
     }
 
-    dc_app_draw_polygon_filled_ex(ctx, points, SEGMENTS, color, center, placement, result);
+    dc_app_draw_convex_polygon_filled_ex(ctx, points, SEGMENTS, color, center, placement, result);
 }
 
 DcAppVec2 dc_app_draw_text_size(DcAppDrawContext *ctx, const char *text, DcAppTextStyle style) {
