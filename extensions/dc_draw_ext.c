@@ -1982,6 +1982,8 @@ pl_add_font_from_file_ttf(dcFontAtlas* ptAtlas, dcFontConfig tConfig, const char
 static plVec2
 pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
 {
+    if(pcText == NULL)
+        return (plVec2){0};
 
     if(tOptions.pcTextEnd == NULL)
     {
@@ -1989,9 +1991,12 @@ pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
         while(*tOptions.pcTextEnd != '\0')
             tOptions.pcTextEnd++;
     }
+    if(tOptions.pcTextEnd == pcText)
+        return (plVec2){0};
     
-    plVec2 tResult = {0};
-    plVec2 tCursor = {0};
+    plVec2 tBoundsMin = {FLT_MAX, FLT_MAX};
+    plVec2 tBoundsMax = {-FLT_MAX, -FLT_MAX};
+    plVec2 tCursor    = {0};
 
     dcFont* ptFont = tOptions.ptFont;
     const float fSize = tOptions.fSize == 0.0f ? ptFont->fSize : tOptions.fSize;
@@ -1999,10 +2004,10 @@ pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
 
     const float fScale = fSize > 0.0f ? fSize / ptFont->fSize : 1.0f;
 
+    const float fLineOriginX = 0.0f;
     const float fLineSpacing = fScale * ptFont->_fLineSpacing;
-    plVec2 tOriginalPosition = {FLT_MAX, FLT_MAX};
     bool bFirstCharacter = true;
-    bool bNoTransform = tOptions.tTransform.x11 == 0;
+    bool bNoTransform    = tOptions.tTransform.x11 == 0;
 
     while(pcText < pcTextEnd)
     {
@@ -2018,7 +2023,7 @@ pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
 
         if(c == '\n')
         {
-            tCursor.x = tOriginalPosition.x;
+            tCursor.x = fLineOriginX;
             tCursor.y += fLineSpacing;
         }
         else if(c == '\r')
@@ -2030,17 +2035,16 @@ pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
 
             const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
 
-            float x0,y0,s0,t0; // top-left
-            float x1,y1,s1,t1; // bottom-right
+            float x0,y0; // top-left
+            float x1,y1; // bottom-right
 
             // adjust for left side bearing if first char
+            bool bFirstGlyph = bFirstCharacter;
             if(bFirstCharacter)
             {
                 if(ptGlyph->fLeftBearing > 0.0f)
                     tCursor.x += ptGlyph->fLeftBearing * fScale;
                 bFirstCharacter = false;
-                tOriginalPosition.x = tCursor.x + ptGlyph->x0 * fScale;
-                tOriginalPosition.y = tCursor.y + ptGlyph->y0 * fScale;
             }
 
             x0 = tCursor.x + ptGlyph->x0 * fScale;
@@ -2048,38 +2052,44 @@ pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
             y0 = tCursor.y + ptGlyph->y0 * fScale;
             y1 = tCursor.y + ptGlyph->y1 * fScale;
 
-            if(tOptions.fWrap > 0.0f && x1 > tOriginalPosition.x + tOptions.fWrap)
+            if(tOptions.fWrap > 0.0f && x1 > fLineOriginX + tOptions.fWrap)
             {
-                x0 = tOriginalPosition.x + ptGlyph->x0 * fScale;
+                x0 = fLineOriginX + ptGlyph->x0 * fScale;
                 y0 = y0 + fLineSpacing;
-                x1 = tOriginalPosition.x + ptGlyph->x1 * fScale;
+                x1 = fLineOriginX + ptGlyph->x1 * fScale;
                 y1 = y1 + fLineSpacing;
 
-                tCursor.x = tOriginalPosition.x;
+                tCursor.x = fLineOriginX;
                 tCursor.y += fLineSpacing;
             }
 
-            if(x0 < tOriginalPosition.x)
-                tOriginalPosition.x = x0;
-            if(y0 < tOriginalPosition.y)
-                tOriginalPosition.y = y0;
+            if(bFirstGlyph)
+            {
+                tBoundsMin.x = x0;
+                // Include blank lines before the first glyph in the height.
+                tBoundsMin.y = y0 - tCursor.y;
+            }
+            else
+            {
+                if(x0 < tBoundsMin.x)
+                    tBoundsMin.x = x0;
+                if(y0 < tBoundsMin.y)
+                    tBoundsMin.y = y0;
+            }
 
-            s0 = ptGlyph->u0;
-            t0 = ptGlyph->v0;
-            s1 = ptGlyph->u1;
-            t1 = ptGlyph->v1;
-
-            if(x1 > tResult.x)
-                tResult.x = x1;
-            if(y1 > tResult.y)
-                tResult.y = y1;
+            if(x1 > tBoundsMax.x)
+                tBoundsMax.x = x1;
+            if(y1 > tBoundsMax.y)
+                tBoundsMax.y = y1;
 
             tCursor.x += ptGlyph->fXAdvance * fScale;
+            if(tCursor.x > tBoundsMax.x)
+                tBoundsMax.x = tCursor.x;
         }   
     }
-    if(tCursor.x > tResult.x)
-        tResult.x = tCursor.x;
-    plVec2 tTextSize = pl_sub_vec2(tResult, tOriginalPosition);
+    if(bFirstCharacter)
+        return (plVec2){0};
+    plVec2 tTextSize = pl_sub_vec2(tBoundsMax, tBoundsMin);
     if(bNoTransform)
         return tTextSize;
     else

@@ -187,11 +187,11 @@ static void draw_example_18_circle_filled(DcDrawContext *draw_ctx, const DcDrawF
     dc_draw->circle_filled(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){ .r = 0.20f, .g = 0.56f, .b = 0.34f, .a = 0.88f });
 }
 
-// 19: text_size() lets logic measure text before drawing it. This cell draws a
-// measured rectangle first, then draws the text at the same placement.
+// 19: text_size() includes multiline height. This cell draws the measured
+// rectangle first, then draws the text at the same placement.
 static void draw_example_19_text_size(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    const char *text = "text_size";
+    const char *text = "text\nsize";
     DcTextStyle style = (DcTextStyle){ .size = 10.0f, .color = (DcVec4){ .r = 0.70f, .g = 0.96f, .b = 0.76f, .a = 1.0f } };
     DcVec2 size = dc_draw->text_size(draw_ctx, text, style);
     DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };

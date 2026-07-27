@@ -1501,11 +1501,11 @@ void dc_app_draw_ellipse_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAp
 }
 
 DcAppVec2 dc_app_draw_text_size(DcAppDrawContext *ctx, const char *text, DcAppTextStyle style) {
-    if (!ctx || !text) return (DcAppVec2){0.0f, 0.0f};
+    if (!ctx || !text || text[0] == '\0') return (DcAppVec2){0.0f, 0.0f};
 
     dcDrawTextOptions options = _text_options(ctx, style);
     plVec2 size = _ext_dc_draw->calculate_text_size(text, options);
-    if (options.fSize > 0.0f) {
+    if (size.x > 0.0f && options.fSize > 0.0f && size.y < options.fSize) {
         size.y = options.fSize;
     }
     return (DcAppVec2){size.x, size.y};
