@@ -1665,6 +1665,10 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ct
 
 bool dc_app_draw_planet_container_push_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppPlanetLocalTransform transform) {
     if (!ctx || !draw_view || !draw_view->view) return false;
+    if (sbcount(ctx->sb_planet_container_stack) > 0) {
+        DC_LOG_WARN("PlanetContainer", "Nested planet containers are not supported");
+        return false;
+    }
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
     double planet_radius = dc_app_planet_radius(planet);
