@@ -35,6 +35,9 @@ write `logic/logic.so`, dcapp strips the extension and tries both `logic.so`
 and `liblogic.so`, plus `.dylib` and `.dll` variants as appropriate.
 
 Only one `<Logic>` library may be loaded per display.
+`<Logic>` must be a direct child of `<DCAPP>`, but its position among the
+root children is irrelevant. dcapp loads the declaration before it resolves
+callbacks in the window render tree.
 
 ## Generated Header
 
@@ -210,6 +213,11 @@ double *phase = (double *)dc_app->get_variable(app_ctx, "PHASE");
 `FireCall`, it runs whenever the node is drawn. With `FireCall`, it runs when
 that value changes.
 
+`Function` is executable and must appear somewhere inside the `<Window>` render
+tree. It may be nested in a panel, container, conditional branch, or event
+element. A root-level `Function` is invalid because root declarations are not
+rendered.
+
 Use `Function` for event-like work that is triggered from XML but easier to
 write in C, such as resetting several variables, sending a command, or advancing
 a state machine. Use `display_draw` for regular per-update logic. Use
@@ -234,6 +242,9 @@ void reset_phase(DcAppContext *app_ctx, void *user_data) {
 `<DrawFunction Name="...">` calls a C drawing callback during XML drawing. It
 receives the current XML coordinate context, an optional typed argument list,
 and `user_data`.
+
+Like `Function`, `DrawFunction` must appear somewhere inside the `<Window>`
+render tree.
 
 Use `DrawFunction` when XML should own placement and surrounding layout, but C
 should generate the visual content. This is useful for plots, custom gauges,

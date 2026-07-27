@@ -1539,7 +1539,33 @@ static DcAppNodeIndex _process_xml_node_container(DcAppXmlContext *xml_ctx, xmlN
 static DcAppNodeIndex _process_xml_node_dcapp(DcAppXmlContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_elem_type_from_xml_node(xml_node);
 
-    _process_xml_node_children(xml_ctx, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+    // Logic is a root-level declaration used while executable nodes are
+    // parsed. Load it first so sibling order does not affect symbol lookup.
+    xmlNodePtr xml_child_node = xml_node->children;
+    while (xml_child_node) {
+        if (dc_app_elem_type_from_xml_node(xml_child_node) == DC_APP_ELEM_TYPE_LOGIC) {
+            dc_app_process_xml_node(
+                xml_ctx,
+                xml_child_node,
+                NODE_INDEX_UNDEFINED,
+                elem_type,
+                directory);
+        }
+        xml_child_node = xml_child_node->next;
+    }
+
+    xml_child_node = xml_node->children;
+    while (xml_child_node) {
+        if (dc_app_elem_type_from_xml_node(xml_child_node) != DC_APP_ELEM_TYPE_LOGIC) {
+            dc_app_process_xml_node(
+                xml_ctx,
+                xml_child_node,
+                NODE_INDEX_UNDEFINED,
+                elem_type,
+                directory);
+        }
+        xml_child_node = xml_child_node->next;
+    }
     return NODE_INDEX_UNDEFINED;
 }
 
@@ -1724,13 +1750,17 @@ static DcAppNodeIndex _process_xml_node_false(DcAppXmlContext *xml_ctx, xmlNodeP
 static DcAppNodeIndex _process_xml_node_function(DcAppXmlContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_elem_type_from_xml_node(xml_node);
 
+    if (parent_node_index == NODE_INDEX_UNDEFINED) {
+        DC_LOG_ERROR("Function", "<Function> must be inside the <Window> render tree");
+        return NODE_INDEX_UNDEFINED;
+    }
+
     DcAppNode dc_node  = {};
     dc_node.type   = NODE_TYPE_FUNCTION;
     dc_node.parent = parent_node_index;
     bool is_valid  = true;
 
     // get function name
-    // Function and DrawFunction symbols resolve during parsing, so Logic must appear first.
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     if (raw_name) {
         if (dc_app_logic_is_loaded(xml_ctx->logic)) {
@@ -1767,6 +1797,11 @@ static DcAppNodeIndex _process_xml_node_draw_function(DcAppXmlContext *xml_ctx, 
     (void)elem_type;
     (void)parent_elem_type;
     (void)directory;
+
+    if (parent_node_index == NODE_INDEX_UNDEFINED) {
+        DC_LOG_ERROR("DrawFunction", "<DrawFunction> must be inside the <Window> render tree");
+        return NODE_INDEX_UNDEFINED;
+    }
 
     DcAppNode dc_node = {};
     dc_node.type = NODE_TYPE_DRAW_FUNCTION;
@@ -2177,7 +2212,11 @@ static DcAppNodeIndex _process_xml_node_logic(DcAppXmlContext *xml_ctx, xmlNodeP
     DcAppElemType elem_type = dc_app_elem_type_from_xml_node(xml_node);
     (void)elem_type;
     (void)parent_node_index;
-    (void)parent_elem_type;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_DCAPP) {
+        DC_LOG_ERROR("Logic", "<Logic> must be a direct child of <DCAPP>");
+        return NODE_INDEX_UNDEFINED;
+    }
 
     xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
     if (raw_filepath) {

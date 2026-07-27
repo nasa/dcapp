@@ -172,6 +172,43 @@ static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr
     }
 }
 
+static bool _is_window_render_parent(DcAppElemType parent_type) {
+    switch (parent_type) {
+        case DC_APP_ELEM_TYPE_WINDOW:
+        case DC_APP_ELEM_TYPE_PANEL:
+        case DC_APP_ELEM_TYPE_CONTAINER:
+        case DC_APP_ELEM_TYPE_BLINK:
+        case DC_APP_ELEM_TYPE_BUTTON:
+        case DC_APP_ELEM_TYPE_BUTTON_PRESSED:
+        case DC_APP_ELEM_TYPE_BUTTON_RELEASED:
+        case DC_APP_ELEM_TYPE_BUTTON_ENABLED:
+        case DC_APP_ELEM_TYPE_BUTTON_DISABLED:
+        case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
+        case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
+        case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
+        case DC_APP_ELEM_TYPE_IF:
+        case DC_APP_ELEM_TYPE_TRUE:
+        case DC_APP_ELEM_TYPE_FALSE:
+        case DC_APP_ELEM_TYPE_STENCIL:
+        case DC_APP_ELEM_TYPE_STENCIL_ADD:
+        case DC_APP_ELEM_TYPE_STENCIL_REMOVE:
+        case DC_APP_ELEM_TYPE_STENCIL_DRAW:
+        case DC_APP_ELEM_TYPE_POLYGON:
+        case DC_APP_ELEM_TYPE_ELLIPSE:
+        case DC_APP_ELEM_TYPE_IMAGE:
+        case DC_APP_ELEM_TYPE_PIXELSTREAM:
+        case DC_APP_ELEM_TYPE_RECTANGLE:
+        case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
+        case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
+        case DC_APP_ELEM_TYPE_MOUSE_HOVERED:
+        case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
+        case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
 
     // These elements should have been removed during preprocessing
@@ -187,6 +224,12 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             break;
     }
 
+    // Callback nodes execute only when reached through the Window render tree.
+    if (child_type == DC_APP_ELEM_TYPE_FUNCTION ||
+        child_type == DC_APP_ELEM_TYPE_DRAW_FUNCTION) {
+        return _is_window_render_parent(parent_type);
+    }
+
     // DCAPP root can contain top-level elements
     if (parent_type == DC_APP_ELEM_TYPE_DCAPP) {
         switch (child_type) {
@@ -195,7 +238,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_TRICK_IO:
             case DC_APP_ELEM_TYPE_EDGE_IO:
             case DC_APP_ELEM_TYPE_LOGIC:
-            case DC_APP_ELEM_TYPE_FUNCTION:
             case DC_APP_ELEM_TYPE_PLANET:
                 return true;
             default:
@@ -224,7 +266,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -256,7 +297,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -288,7 +328,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -325,7 +364,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -357,7 +395,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -405,7 +442,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -438,7 +474,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -470,11 +505,9 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
-            case DC_APP_ELEM_TYPE_FUNCTION:
             case DC_APP_ELEM_TYPE_MOUSE_MOTION:
                 return true;
             default:
@@ -504,7 +537,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
-            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
