@@ -358,7 +358,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    float transform[16];");
     fprintf(file, "%s\n", "} DcDrawArea;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "// Extended draw output. More fields can be added without changing every draw call.");
+    fprintf(file, "%s\n", "// Every draw call that accepts this output clears it before validating inputs.");
     fprintf(file, "%s\n", "typedef struct DcDrawResult {");
     fprintf(file, "%s\n", "    DcDrawArea area;");
     fprintf(file, "%s\n", "} DcDrawResult;");

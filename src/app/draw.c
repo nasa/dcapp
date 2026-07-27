@@ -923,6 +923,7 @@ bool dc_app_draw_container_push(DcAppDrawContext *ctx, DcAppVec2 position, DcApp
 }
 
 bool dc_app_draw_container_push_ex(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec2 virtual_size, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || size.x == 0.0f || size.y == 0.0f) return false;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1253,6 +1254,7 @@ void dc_app_draw_line_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAp
 }
 
 void dc_app_draw_polyline_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !points || point_count < 2) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1267,6 +1269,7 @@ void dc_app_draw_polyline_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uin
 }
 
 void dc_app_draw_triangles_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !points || point_count < 3) return;
     if (point_count % 3 != 0) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
@@ -1288,6 +1291,7 @@ void dc_app_draw_polygon_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *point
 }
 
 void dc_app_draw_rounded_polygon_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !points || point_count < 3) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1308,6 +1312,7 @@ void dc_app_draw_rounded_polygon_ex(DcAppDrawContext *ctx, const DcAppVec2 *poin
 }
 
 void dc_app_draw_rounded_polygon_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !points || point_count < 3) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1355,6 +1360,7 @@ void dc_app_draw_rounded_quad_filled_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcA
 }
 
 void dc_app_draw_image_ex(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     DcAppDrawArea *out_area = _draw_result_area(result);
     uint32_t bind_group_id = 0;
     if (!_resolve_texture_id(ctx, texture_id, &bind_group_id)) return;
@@ -1415,6 +1421,7 @@ void dc_app_draw_rect_filled_ex(DcAppDrawContext *ctx, DcAppVec2 position, DcApp
 }
 
 void dc_app_draw_rounded_rect_ex(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, float corner_radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || size.x == 0.0f || size.y == 0.0f) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1432,6 +1439,7 @@ void dc_app_draw_rounded_rect_ex(DcAppDrawContext *ctx, DcAppVec2 position, DcAp
 }
 
 void dc_app_draw_rounded_rect_filled_ex(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, float corner_radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || size.x == 0.0f || size.y == 0.0f) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1457,6 +1465,7 @@ void dc_app_draw_circle_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, float
 }
 
 void dc_app_draw_ellipse_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
     if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
@@ -1474,6 +1483,7 @@ void dc_app_draw_ellipse_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 r
 }
 
 void dc_app_draw_ellipse_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
     if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
@@ -1502,6 +1512,7 @@ DcAppVec2 dc_app_draw_text_size(DcAppDrawContext *ctx, const char *text, DcAppTe
 }
 
 void dc_app_draw_text_ex(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !text) return;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
@@ -1602,6 +1613,7 @@ void dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 positi
 }
 
 DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_GEODETIC) return NULL;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
@@ -1633,6 +1645,7 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx
 }
 
 DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(view);

@@ -63,6 +63,7 @@ struct DcAppDrawArea {
     float transform[16];
 };
 
+// Every draw call that accepts this output clears it before validating inputs.
 struct DcAppDrawResult {
     DcAppDrawArea area;
 };
