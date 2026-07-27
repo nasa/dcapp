@@ -4,40 +4,174 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.169.0] - 2026-07-27
+--------------------
 
-[Unreleased]
-------------
+### Fixed
+- Rejected planet ellipses with either non-positive radius instead of submitting
+  degenerate geometry.
 
-### Added
-- Added logic APIs for planet ellipses, app-owned GeoJSON overlays, projected texture origins, and runtime light direction.
-- Added geodetic planet-container push/pop drawing for reusable local line and polygon shapes, with matching `<PlanetContainer>` XML support.
+
+[2.168.0] - 2026-07-27
+--------------------
 
 ### Changed
-- Runtime state is now owned by focused opaque subsystem contexts, with `_AppData` reduced to a private composition root.
-- Unified XML and logic drawing under one persistent draw context that owns layout scopes, stencil state, planet-view queues, and draw-batch pools.
-- dcapp modules now compile as separate translation units and refresh their own Pilotlight API bindings through module initialization functions.
+- Split planet ellipse Logic drawing into separate outline and filled calls
+  instead of using color alpha to select passes.
+
+
+[2.167.0] - 2026-07-27
+--------------------
+
+### Changed
+- Split planet polygon Logic drawing into separate outline and convex-fill
+  calls.
+- Renamed `plPlanetI.draw_polygon_filled` to
+  `plPlanetI.draw_convex_polygon_filled` in planet API 0.9.0.
+
+
+[2.166.0] - 2026-07-27
+--------------------
+
+### Changed
+- Renamed the 2D filled-polygon Logic APIs to `convex_polygon_filled*` and
+  `rounded_convex_polygon_filled*`, making their convex perimeter-order
+  requirement explicit.
+
+
+[2.165.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Corrected `text_size()` bounds for empty, multiline, leading-newline, and
+  wrapped text.
+
+
+[2.164.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Cleared `DcDrawResult` before validating draw calls so failed calls cannot
+  retain stale area metadata.
+
+
+[2.163.0] - 2026-07-27
+--------------------
+
+### Changed
+- Changed planet texture replacement to clear the target slot first and return
+  `false` when the image cannot be resolved, validated, or decoded.
+- Changed `plPlanetI.set_texture` to return `bool` in planet API 0.8.0.
+
+
+[2.162.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Made an omitted Logic `<Variable Type>` default to string consistently in
+  validation and generated headers.
+
+
+[2.161.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Made root `<Logic>` declarations independent of sibling order.
+- Rejected `<Function>` and `<DrawFunction>` elements outside a `<Window>`
+  render tree.
+
+
+[2.160.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Rejected invalid C identifiers, C keywords, and leading-underscore names for
+  generated Logic variables and callbacks.
+
+
+[2.159.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Rapid conflicting mouse and keyboard transitions are now trickled across
+  frames instead of being collapsed within one frame.
+
+
+[2.158.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Rejected nested planet containers with a warning instead of entering an
+  unsupported nested state.
+
+
+[2.157.0] - 2026-07-24
+--------------------
+
+### Changed
+- Planet containers now use one uniform `Scale`; the separate `ScaleX` and
+  `ScaleY` attributes were removed.
+
+### Fixed
+- Planet-container scale now applies consistently to local geometry and line
+  widths.
+
+
+[2.156.0] - 2026-07-24
+--------------------
+
+### Fixed
+- Made planet textures default to enabled when the `Enabled` attribute is
+  omitted.
+
+
+[2.155.0] - 2026-07-24
+--------------------
+
+### Changed
+- Runtime state is now owned by focused opaque subsystem contexts, with
+  `_AppData` reduced to a private composition root.
+- Unified XML and Logic drawing under one persistent draw context that owns
+  layout scopes, stencil state, planet-view queues, and draw-batch pools.
+- dcapp modules now compile as separate translation units and refresh their own
+  Pilotlight API bindings through module initialization functions.
 - Split the draw pipeline into node resolution, reusable draw APIs, draw-list
   storage, and GPU submission while preserving immediate XML-order drawing;
   focused `*_types.h` headers are limited to enums and basic scalar/ID aliases.
-- Restored the generated logic header as an explicitly curated short-name
+- Restored the generated Logic header as an explicitly curated short-name
   public contract instead of copying and aliasing internal `DcApp*` headers.
 - Removed placement, GeoJSON-style, and planet-view convenience constructors
   whose defaults are represented by zero-initialized structs; non-positive
   planet-view tau values now select the default of `0.3`.
-- Added a generated logic API fixture that checks C/C++ compilation, shared
-  layouts, and function-table signatures during the top-level build.
-- Planet polygon logic drawing now exposes separate outline and convex-fill
-  calls instead of using color alpha to select passes.
-- Planet ellipse logic drawing now exposes separate outline and fill calls
-  instead of using color alpha to select passes.
-- Planet containers now use one uniform scale for local geometry and line
-  widths; the separate `ScaleX` and `ScaleY` attributes were removed.
-- Updated the planet sample to exercise logic-side lighting, GeoJSON loading, ellipse rendering, and a moving local doghouse beside their XML equivalents.
+
+
+[2.154.0] - 2026-07-22
+--------------------
+
+### Added
+- Added `<PlanetContainer>` and matching geodetic push/pop Logic APIs for
+  drawing reusable local line and polygon geometry.
+
+### Changed
+- Updated the planet sample with a moving local doghouse beside its XML
+  equivalent.
+
+
+[2.153.0] - 2026-07-21
+--------------------
+
+### Added
+- Added Logic APIs for planet ellipses, app-owned GeoJSON overlays, projected
+  texture slots and origins, and runtime light direction.
+
+### Changed
+- Planet polygon Logic calls now independently omit fill or outline rendering
+  when the corresponding color is transparent.
+- Updated the planet sample to exercise Logic-side lighting, GeoJSON loading,
+  and ellipse rendering beside their XML equivalents.
 
 ### Fixed
-- Planet ellipse rotation now rotates the ellipse axes in the local tangent plane.
-- Planet ellipses now reject non-positive values for either radius instead of
-  submitting degenerate geometry.
+- Planet ellipse rotation now rotates its axes in the local tangent plane.
 
 
 [2.152.0] - 2026-07-20
