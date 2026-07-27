@@ -745,10 +745,10 @@ fallback flags, the XML-compatible defaults apply: points are white 1000-meter
 spheres, lines are white at the default width, and unstyled polygons are not
 drawn. GeoJSON resources remain valid until app shutdown.
 
-Logic planet line, polygon, and ellipse functions accept renderer line widths
-directly. XML planet primitives multiply their `LineWidth` by 1.2 before
-submission, so multiply by `1.2f` when exact side-by-side width matching matters.
-`planet_geojson()` applies that XML-compatible scaling itself.
+Planet outlines do not use the 2D line-width compatibility factor. Outside a
+`<PlanetContainer>`, pass the intended world-space-meter `LineWidth` or
+`line_width` directly for XML, Logic, and GeoJSON drawing. Inside a
+`<PlanetContainer>`, line widths remain local units scaled by the container.
 
 ---
 

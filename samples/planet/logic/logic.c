@@ -254,12 +254,12 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         (DcVec4){.r = 1.0f, .g = 0.20f, .b = 0.70f, .a = 0.12f});
     dc_draw->planet_ellipse_geodetic(
         draw_ctx, view, -55.0, 335.0, 1500.0,
-        (DcVec2){80000.0f, 40000.0f}, 25.0f, 64, 3000.0f,
+        (DcVec2){80000.0f, 40000.0f}, 25.0f, 64, 2500.0f,
         (DcVec4){.r = 1.0f, .g = 0.35f, .b = 0.80f, .a = 0.90f});
 
     DcPlanetBreadcrumbsPoints orbit_trail = dc_planet->get_breadcrumbs_points(logic_orbit_breadcrumbs);
     if (orbit_trail.count >= 2 && orbit_trail.crs == DC_PLANET_CRS_GEODETIC) {
-        dc_draw->planet_line_geodetic(draw_ctx, view, orbit_trail.points, orbit_trail.count, 4200.0f,
+        dc_draw->planet_line_geodetic(draw_ctx, view, orbit_trail.points, orbit_trail.count, 3500.0f,
                                       (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 0.85f});
     }
     dc_draw->planet_sphere_geodetic(draw_ctx, view, *OrbitLat, *OrbitLon, 50000.0, 18000.0,

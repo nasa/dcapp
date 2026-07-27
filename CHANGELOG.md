@@ -4,6 +4,15 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.170.0] - 2026-07-27
+--------------------
+
+### Changed
+- Removed the 2D line-width compatibility factor from planet XML, breadcrumb,
+  and GeoJSON drawing so planet outlines no longer receive 2D compatibility
+  scaling.
+
+
 [2.169.0] - 2026-07-27
 --------------------
 

@@ -7,6 +7,23 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Planet Line-Width Scaling
+
+#### Affected Code
+- Non-container planet XML and GeoJSON outlines.
+- Logic planet line, polygon, and ellipse calls that manually multiplied their
+  line width by `1.2f` to match XML rendering.
+
+#### Changed
+- Planet outlines no longer use `DCAPP_LINE_WIDTH_FACTOR`; it remains limited
+  to 2D drawing.
+- Non-container planet widths are submitted directly as world-space values.
+  Local-container widths continue to scale only with the container.
+
+#### Migration
+- Pass the intended planet line width directly and remove any caller-side
+  `* 1.2f` compensation.
+
 ### 2026-07-27 - Planet Ellipse Draw API Split
 
 #### Affected Code

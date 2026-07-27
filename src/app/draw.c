@@ -2172,7 +2172,6 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
 
     uint32_t line_color = PL_COLOR_32_RGBA(style.line_color.r, style.line_color.g, style.line_color.b, style.line_color.a);
     uint32_t fill_color = PL_COLOR_32_RGBA(style.fill_color.r, style.fill_color.g, style.fill_color.b, style.fill_color.a);
-    float line_width = style.line_width * DCAPP_LINE_WIDTH_FACTOR;
 
     switch (feature->type) {
         case DC_GEOJSON_FEATURE_POINT: {
@@ -2197,7 +2196,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             const DcGeojsonCoordArray *coordinates = &feature->geom.line_string;
             plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
             if (points) {
-                dc_app_draw_planet_line(view, points, coordinates->count, line_width, line_color);
+                dc_app_draw_planet_line(view, points, coordinates->count, style.line_width, line_color);
                 PL_FREE(points);
             }
             break;
@@ -2208,7 +2207,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
                 const DcGeojsonCoordArray *coordinates = &feature->geom.multi_line_string.line_strings[i];
                 plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
                 if (points) {
-                    dc_app_draw_planet_line(view, points, coordinates->count, line_width, line_color);
+                    dc_app_draw_planet_line(view, points, coordinates->count, style.line_width, line_color);
                     PL_FREE(points);
                 }
             }
@@ -2220,7 +2219,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
             if (points) {
                 if (style.fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, coordinates->count, fill_color);
-                if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, line_width, line_color);
+                if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, style.line_width, line_color);
                 PL_FREE(points);
             }
             break;
@@ -2234,7 +2233,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
                 plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
                 if (points) {
                     if (style.fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, coordinates->count, fill_color);
-                    if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, line_width, line_color);
+                    if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, style.line_width, line_color);
                     PL_FREE(points);
                 }
             }

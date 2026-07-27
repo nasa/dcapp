@@ -4847,8 +4847,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppRenderer *ren
     point_count = sbcount(breadcrumbs->sb_points);
     if (point_count < 2) return;
 
-    float line_width = (breadcrumbs->line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    float line_width = breadcrumbs->line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->line_width)->value_double : 1.0f;
 
     float lc[4] = {1.0f, 0.0f, 0.0f, 0.5f};
     if (breadcrumbs->config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
@@ -4921,8 +4921,8 @@ static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *rendere
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.height_above_terrain)->value_double : 0.0f;
     int segments = node->planet_ellipse.segments != DC_APP_VAL_INDEX_UNDEFINED
         ? (int)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.segments)->value_double : 64;
-    float line_width = (node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    float line_width = node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.line_width)->value_double : 1.0f;
 
     if (radius_x <= 0.0f || radius_y <= 0.0f) return;
     if (segments < 3) segments = 3;
@@ -4990,8 +4990,8 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
 
     float height = node->planet_line.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.height_above_terrain)->value_double : 0.0f;
-    float line_width = (node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    float line_width = node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_width)->value_double : 1.0f;
 
     // resolve line color
     float lc[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -5087,8 +5087,8 @@ static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppRenderer *rendere
 
     float height = node->planet_polygon.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.height_above_terrain)->value_double : 0.0f;
-    float line_width = (node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+    float line_width = node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double : 1.0f;
 
     // convert to 3D
     DcAppVec3 *pts3d = (DcAppVec3 *)malloc(sizeof(DcAppVec3) * count);
