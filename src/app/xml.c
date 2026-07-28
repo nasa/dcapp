@@ -3680,13 +3680,18 @@ static void _create_geojson_nodes(
 
         case DC_GEOJSON_FEATURE_POINT: {
             const DcGeojsonPosition *pos = &feat->geom.point.position;
+            DcAppValIndex point_height = height;
+            if (pos->has_alt) {
+                DcValue altitude = dc_value_create_value_double(pos->alt);
+                point_height = dc_app_lookup_register_value(_lookup(xml_ctx), &altitude);
+            }
             char lat_buf[32], lon_buf[32];
             snprintf(lat_buf, sizeof(lat_buf), "%f", pos->lat);
             snprintf(lon_buf, sizeof(lon_buf), "%f", pos->lon);
             dc_node.type = NODE_TYPE_PLANET_SPHERE;
             dc_node.planet_sphere.lat                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lat_buf);
             dc_node.planet_sphere.lon                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lon_buf);
-            dc_node.planet_sphere.height_above_terrain = height;
+            dc_node.planet_sphere.height_above_terrain = point_height;
             dc_node.planet_sphere.radius               = line_width;
             dc_node.planet_sphere.fill_color           = line_color;
             dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
@@ -3702,6 +3707,11 @@ static void _create_geojson_nodes(
         case DC_GEOJSON_FEATURE_MULTI_POINT:
             for (uint32_t i = 0; i < feat->geom.multi_point.count; i++) {
                 const DcGeojsonPosition *pos = &feat->geom.multi_point.positions[i];
+                DcAppValIndex point_height = height;
+                if (pos->has_alt) {
+                    DcValue altitude = dc_value_create_value_double(pos->alt);
+                    point_height = dc_app_lookup_register_value(_lookup(xml_ctx), &altitude);
+                }
                 char lat_buf[32], lon_buf[32];
                 snprintf(lat_buf, sizeof(lat_buf), "%f", pos->lat);
                 snprintf(lon_buf, sizeof(lon_buf), "%f", pos->lon);
@@ -3710,7 +3720,7 @@ static void _create_geojson_nodes(
                 dc_node.type = NODE_TYPE_PLANET_SPHERE;
                 dc_node.planet_sphere.lat                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lat_buf);
                 dc_node.planet_sphere.lon                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lon_buf);
-                dc_node.planet_sphere.height_above_terrain = height;
+                dc_node.planet_sphere.height_above_terrain = point_height;
                 dc_node.planet_sphere.radius               = line_width;
                 dc_node.planet_sphere.fill_color           = line_color;
                 dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;

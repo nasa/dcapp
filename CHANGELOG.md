@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.175.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Honored per-position altitude coordinates for GeoJSON Point and MultiPoint
+  features in XML and Logic rendering.
+
+
 [2.174.0] - 2026-07-27
 --------------------
 

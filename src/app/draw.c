@@ -2184,7 +2184,8 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             const DcGeojsonPosition *point = &feature->geom.point.position;
             float radius = style.line_width_set ? style.line_width : 1000.0f;
             dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
-                                      (float)style.height_above_terrain, radius, line_color);
+                (float)(point->has_alt ? point->alt : style.height_above_terrain),
+                radius, line_color);
             break;
         }
 
@@ -2193,7 +2194,8 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             for (uint32_t i = 0; i < feature->geom.multi_point.count; i++) {
                 const DcGeojsonPosition *point = &feature->geom.multi_point.positions[i];
                 dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
-                                          (float)style.height_above_terrain, radius, line_color);
+                    (float)(point->has_alt ? point->alt : style.height_above_terrain),
+                    radius, line_color);
             }
             break;
         }

@@ -720,10 +720,14 @@ Loads a GeoJSON file and renders its features (points, lines, polygons) on the t
 |-----------|------|----------|-------------|
 | `File` | string | Yes | Path to a `.geojson` file (relative to XML directory) |
 | `CRS` | enum | No | Only `#_planet_crs_geodetic_` is currently supported for GeoJSON |
-| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `HeightAboveTerrain` | double/var | No | Fallback altitude in meters for positions without a third coordinate |
 | `LineColor` | color | No | Default line color for features without simplestyle properties |
 | `LineWidth` | double/var | No | Default line width in meters |
 | `FillColor` | color | No | Default fill color for polygon features |
+
+An optional third coordinate supplies each position's altitude. Positions
+without an altitude use `HeightAboveTerrain`, or
+`DcPlanetGeojsonStyle.height_above_terrain` when drawn through Logic.
 
 Logic loads the file once as an app-owned resource, then draws it into any
 compatible planet view:
