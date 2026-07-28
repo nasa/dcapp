@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.181.0] - 2026-07-28
+--------------------
+
+### Changed
+- Changed `dcDrawI` to 2.0.0 because screen-space 3D lines changed the public
+  line-vertex layout and added API function-table entries.
+
+
 [2.180.0] - 2026-07-28
 --------------------
 
