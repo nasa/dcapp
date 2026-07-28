@@ -71,8 +71,9 @@ struct DcAppPlanetApi {
     bool (*set_view_shaders)(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
     DcAppPlanetGeojsonHandle (*load_geojson)(DcAppContext *app_ctx, const char *path);
     DcAppPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
-    void (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
-    void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position);
+    // returns true only when the position is appended.
+    bool (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
+    bool (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position);
     void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
     DcAppPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
 };

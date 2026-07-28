@@ -7,6 +7,21 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Breadcrumb Update Results
+
+#### Affected Code
+- Logic code that declares or copies the `DcPlanetApi` function table.
+
+#### Changed
+- `update_breadcrumbs_geodetic()` and `update_breadcrumbs_cartesian()` now
+  return `true` only when the supplied position is appended.
+- They return `false` for invalid arguments, a mismatched breadcrumb CRS,
+  non-finite coordinates, or positions below the configured spacing.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+- Existing calls may continue to ignore the returned value.
+
 ### 2026-07-27 - Double-Precision Planet Coordinates
 
 #### Affected Code

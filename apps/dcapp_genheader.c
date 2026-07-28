@@ -594,8 +594,9 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    bool (*set_view_shaders)(DcPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);");
     fprintf(file, "%s\n", "    DcPlanetGeojsonHandle (*load_geojson)(DcAppContext *app_ctx, const char *path);");
     fprintf(file, "%s\n", "    DcPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcPlanetCrs crs, uint32_t max_points, float point_spacing);");
-    fprintf(file, "%s\n", "    void (*update_breadcrumbs_geodetic)(DcPlanetBreadcrumbsHandle breadcrumbs, DcPlanetHandle planet, DcVec3d position);");
-    fprintf(file, "%s\n", "    void (*update_breadcrumbs_cartesian)(DcPlanetBreadcrumbsHandle breadcrumbs, DcVec3d position);");
+    fprintf(file, "%s\n", "    // returns true only when the position is appended.");
+    fprintf(file, "%s\n", "    bool (*update_breadcrumbs_geodetic)(DcPlanetBreadcrumbsHandle breadcrumbs, DcPlanetHandle planet, DcVec3d position);");
+    fprintf(file, "%s\n", "    bool (*update_breadcrumbs_cartesian)(DcPlanetBreadcrumbsHandle breadcrumbs, DcVec3d position);");
     fprintf(file, "%s\n", "    void (*clear_breadcrumbs)(DcPlanetBreadcrumbsHandle breadcrumbs);");
     fprintf(file, "%s\n", "    DcPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcPlanetBreadcrumbsHandle breadcrumbs);");
     fprintf(file, "%s\n", "} DcPlanetApi;");

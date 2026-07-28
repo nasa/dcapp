@@ -589,6 +589,10 @@ Records and draws a live breadcrumb trail from input position variables. The tra
 | `LineColor` | color | No | Trail color (RGBA). Defaults to semi-transparent red. |
 | `LineWidth` | double/var | No | Line width in meters |
 
+Logic breadcrumb update calls return `true` when the supplied position is
+appended and `false` when it is invalid or rejected by the configured point
+spacing. Existing callers may ignore the result.
+
 ### `<PlanetEllipse>`
 
 Draws an ellipse on the terrain surface at a geographic location.

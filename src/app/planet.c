@@ -81,7 +81,7 @@ static void _planet_free_process_info(plPlanetProcessInfo *info);
 static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
 static bool _planet_file_path_to_absolute(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
 static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
-static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
+static bool _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
 static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b);
 
 #define DC_APP_PLANET_MIN_MESH_CACHE_SIZE (1024u * 1024u)
@@ -429,14 +429,14 @@ DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(DcAppPlanetContext
     return breadcrumbs;
 }
 
-void dc_app_planet_update_breadcrumbs_geodetic(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
-    if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_GEODETIC || !planet) return;
-    _planet_update_breadcrumbs(breadcrumbs, planet, position);
+bool dc_app_planet_update_breadcrumbs_geodetic(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
+    if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_GEODETIC || !planet) return false;
+    return _planet_update_breadcrumbs(breadcrumbs, planet, position);
 }
 
-void dc_app_planet_update_breadcrumbs_cartesian(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position) {
-    if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_CARTESIAN) return;
-    _planet_update_breadcrumbs(breadcrumbs, NULL, position);
+bool dc_app_planet_update_breadcrumbs_cartesian(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position) {
+    if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_CARTESIAN) return false;
+    return _planet_update_breadcrumbs(breadcrumbs, NULL, position);
 }
 
 void dc_app_planet_clear_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs) {
@@ -548,19 +548,23 @@ DcAppPlanetHandle dc_app_planet_view_planet(DcAppPlanetViewHandle view) {
     return view ? view->planet : NULL;
 }
 
-static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
-    if (!isfinite(position.x) || !isfinite(position.y) || !isfinite(position.z)) return;
+static bool _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
+    if (!isfinite(position.x) || !isfinite(position.y) || !isfinite(position.z)) return false;
 
     int point_count = sbcount(breadcrumbs->sb_points);
-    if (point_count == 0 ||
-        _planet_breadcrumbs_distance(planet, breadcrumbs->crs, breadcrumbs->sb_points[point_count - 1], position) >= breadcrumbs->point_spacing) {
-        sbpush(breadcrumbs->sb_points, position);
+    if (point_count > 0) {
+        double distance = _planet_breadcrumbs_distance(
+            planet, breadcrumbs->crs, breadcrumbs->sb_points[point_count - 1], position);
+        if (!(distance >= breadcrumbs->point_spacing)) return false;
     }
+
+    sbpush(breadcrumbs->sb_points, position);
 
     point_count = sbcount(breadcrumbs->sb_points);
     if (point_count > (int)breadcrumbs->max_points) {
         sbshiftn(breadcrumbs->sb_points, point_count - (int)breadcrumbs->max_points);
     }
+    return true;
 }
 
 static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b) {

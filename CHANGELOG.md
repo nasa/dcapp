@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.172.0] - 2026-07-27
+--------------------
+
+### Changed
+- Changed Logic breadcrumb update calls to return whether the supplied
+  position was appended.
+
+
 [2.171.0] - 2026-07-27
 --------------------
 
