@@ -187,8 +187,10 @@ struct DcAppMouseApi {
     // Event queries.
     bool (*hovered)(DcAppDrawContext *draw_ctx, const char *id);
     bool (*pressed)(DcAppDrawContext *draw_ctx, const char *id);
+    // Captured press ended, possibly outside the target.
     bool (*released)(DcAppDrawContext *draw_ctx, const char *id);
     bool (*active)(DcAppDrawContext *draw_ctx, const char *id);
+    // Captured press ended while the pointer was over the target.
     bool (*clicked)(DcAppDrawContext *draw_ctx, const char *id);
 
     // Current mouse state in the draw context's local space.

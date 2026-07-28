@@ -452,15 +452,15 @@ static void draw_example_35_mouse_events(DcDrawContext *draw_ctx, const DcDrawFu
 
     DcVec4 fill = (DcVec4){ .r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f };
     const char *state = "hover/click/hold";
-    if (released) {
+    if (clicked) {
+        fill = (DcVec4){ .r = 0.96f, .g = 0.72f, .b = 0.34f, .a = 1.0f };
+        state = "clicked";
+    } else if (released) {
         fill = (DcVec4){ .r = 0.92f, .g = 0.70f, .b = 0.30f, .a = 1.0f };
         state = "released";
     } else if (pressed) {
         fill = (DcVec4){ .r = 1.0f, .g = 0.86f, .b = 0.42f, .a = 1.0f };
         state = "pressed";
-    } else if (clicked) {
-        fill = (DcVec4){ .r = 0.96f, .g = 0.72f, .b = 0.34f, .a = 1.0f };
-        state = "clicked";
     } else if (active) {
         fill = (DcVec4){ .r = 0.98f, .g = 0.62f, .b = 0.32f, .a = 1.0f };
         state = "active";

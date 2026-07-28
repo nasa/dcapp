@@ -7,6 +7,21 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Logic Mouse Click Semantics
+
+#### Affected Code
+- Logic code that relies on `dc_mouse->clicked()` after releasing outside the
+  registered target.
+
+#### Changed
+- `clicked()` now reports a completed activation only when a target's captured
+  press ends while the pointer is over that target.
+- `released()` continues to report captured releases outside the target.
+
+#### Migration
+- Use `dc_mouse->released()` instead if release outside the target should still
+  trigger the action.
+
 ### 2026-07-27 - Projected Texture Slot-Zero Setter
 
 #### Affected Code

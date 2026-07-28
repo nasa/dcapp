@@ -283,6 +283,12 @@ The generated header exposes these global API tables:
 | `dc_texture` | Load and query app-owned textures |
 | `dc_planet` | Create planet resources and load/configure textures, lighting, views, breadcrumbs, and GeoJSON |
 
+For a registered `dc_mouse` target, `pressed()` reports the initial button-down
+edge and `active()` remains true while that captured press is held.
+`released()` reports the end of the captured press even if the pointer has
+left the target. `clicked()` reports a completed activation only when that
+release occurs while the pointer is over the target.
+
 See the DrawFunction samples for concrete API usage.
 
 Planet overlays are drawn through `dc_draw`, including geodetic/cartesian

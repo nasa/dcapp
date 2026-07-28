@@ -1159,7 +1159,11 @@ bool dc_app_mouse_active(DcAppDrawContext *ctx, const char *id) {
 }
 
 bool dc_app_mouse_clicked(DcAppDrawContext *ctx, const char *id) {
-    return dc_app_mouse_released(ctx, id);
+    if (!ctx) return false;
+    uint64_t mouse_id = _mouse_id(id);
+    return mouse_id != 0 &&
+           _draw_mouse_target_is_id(ctx->released_target, mouse_id) &&
+           _draw_mouse_target_is_id(ctx->hovered_target, mouse_id);
 }
 
 bool dc_app_mouse_down(DcAppDrawContext *ctx) {

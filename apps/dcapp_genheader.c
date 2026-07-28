@@ -559,8 +559,10 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    // Event queries.");
     fprintf(file, "%s\n", "    bool (*hovered)(DcDrawContext *draw_ctx, const char *id);");
     fprintf(file, "%s\n", "    bool (*pressed)(DcDrawContext *draw_ctx, const char *id);");
+    fprintf(file, "%s\n", "    // Captured press ended, possibly outside the target.");
     fprintf(file, "%s\n", "    bool (*released)(DcDrawContext *draw_ctx, const char *id);");
     fprintf(file, "%s\n", "    bool (*active)(DcDrawContext *draw_ctx, const char *id);");
+    fprintf(file, "%s\n", "    // Captured press ended while the pointer was over the target.");
     fprintf(file, "%s\n", "    bool (*clicked)(DcDrawContext *draw_ctx, const char *id);");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "    // Current mouse state in the draw context's local space.");

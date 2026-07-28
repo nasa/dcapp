@@ -4,6 +4,15 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.176.0] - 2026-07-27
+--------------------
+
+### Fixed
+- Required the pointer to be over the originally pressed target when
+  `dc_mouse->clicked()` reports activation. `released()` continues to report
+  captured releases outside the target.
+
+
 [2.175.0] - 2026-07-27
 --------------------
 
