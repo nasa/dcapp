@@ -216,6 +216,8 @@ pl__add_3d_indexed_lines(
             {tP0.x, tP0.y, tP0.z},
             tOptions.uColor
         };
+        tNewVertex0.uLineData = tOptions.uDashPattern | DC_DRAW_3D_LINE_DATA_PATH_START;
+        tNewVertex1.uLineData = tNewVertex0.uLineData;
 
         ptDrawlist->sbtLineVertexBuffer[uCurrentVertex] = tNewVertex0;
         ptDrawlist->sbtLineVertexBuffer[uCurrentVertex + 1] = tNewVertex1;
@@ -274,6 +276,8 @@ pl__add_3d_lines(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoin
             {tP0.x, tP0.y, tP0.z},
             tOptions.uColor
         };
+        tNewVertex0.uLineData = tOptions.uDashPattern | DC_DRAW_3D_LINE_DATA_PATH_START;
+        tNewVertex1.uLineData = tNewVertex0.uLineData;
 
         ptDrawlist->sbtLineVertexBuffer[uCurrentVertex] = tNewVertex0;
         ptDrawlist->sbtLineVertexBuffer[uCurrentVertex + 1] = tNewVertex1;
@@ -297,23 +301,27 @@ pl__add_3d_lines(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoin
 }
 
 static inline void
-pl__add_3d_path(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, dcDrawLineOptions tOptions)
+pl__add_3d_path(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, bool bClosed, dcDrawLineOptions tOptions)
 {
+    if(atPoints == NULL || (bClosed ? uCount < 3 : uCount < 2))
+        return;
+
     pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_LINE, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
     const uint32_t uIndexStart = uIdxBefore;
+    const uint32_t uSegmentCount = bClosed ? uCount : uCount - 1;
 
-    pl_sb_resize(ptDrawlist->sbtLineVertexBuffer, uVertexStart + 4 * (uCount - 1));
-    pl_sb_resize(ptDrawlist->sbtLineIndexBuffer, uIndexStart + 6 * (uCount - 1));
+    pl_sb_resize(ptDrawlist->sbtLineVertexBuffer, uVertexStart + 4 * uSegmentCount);
+    pl_sb_resize(ptDrawlist->sbtLineIndexBuffer, uIndexStart + 6 * uSegmentCount);
 
     uint32_t uCurrentVertex = uVertexStart;
     uint32_t uCurrentIndex = uIndexStart;
-    for(uint32_t i = 0; i < uCount - 1; i++)
+    for(uint32_t i = 0; i < uSegmentCount; i++)
     {
         const plVec3 tP0 = atPoints[i];
-        const plVec3 tP1 = atPoints[i + 1];
+        const plVec3 tP1 = atPoints[(i + 1) % uCount];
 
         dcDrawVertex3DLine tNewVertex0 = {
             {tP0.x, tP0.y, tP0.z},
@@ -332,6 +340,8 @@ pl__add_3d_path(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoint
             {tP0.x, tP0.y, tP0.z},
             tOptions.uColor
         };
+        tNewVertex0.uLineData = tOptions.uDashPattern | (i == 0 ? DC_DRAW_3D_LINE_DATA_PATH_START : 0);
+        tNewVertex1.uLineData = tNewVertex0.uLineData;
 
         ptDrawlist->sbtLineVertexBuffer[uCurrentVertex] = tNewVertex0;
         ptDrawlist->sbtLineVertexBuffer[uCurrentVertex + 1] = tNewVertex1;
@@ -352,6 +362,18 @@ pl__add_3d_path(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoint
         uCurrentIndex += 6;
     }
     ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtLineIndexBuffer) - uIdxBefore;
+}
+
+static void
+pl__add_3d_polyline(dcDrawList3D* ptDrawlist, const plVec3* atPoints, uint32_t uCount, dcDrawLineOptions tOptions)
+{
+    pl__add_3d_path(ptDrawlist, uCount, atPoints, false, tOptions);
+}
+
+static void
+pl__add_3d_polygon(dcDrawList3D* ptDrawlist, const plVec3* atPoints, uint32_t uCount, dcDrawLineOptions tOptions)
+{
+    pl__add_3d_path(ptDrawlist, uCount, atPoints, true, tOptions);
 }
 
 //-----------------------------------------------------------------------------
@@ -3227,48 +3249,8 @@ pl__add_3d_cone_filled(dcDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegment
 static void
 pl__add_3d_line(dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, dcDrawLineOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_LINE, 0);
-    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
-
-    pl_sb_reserve(ptDrawlist->sbtLineVertexBuffer, pl_sb_size(ptDrawlist->sbtLineVertexBuffer) + 4);
-    pl_sb_reserve(ptDrawlist->sbtLineIndexBuffer, pl_sb_size(ptDrawlist->sbtLineIndexBuffer) + 6);
-
-    dcDrawVertex3DLine tNewVertex0 = {
-        {tP0.x, tP0.y, tP0.z},
-        -1.0f,
-        tOptions.fThickness,
-        1.0f,
-        {tP1.x, tP1.y, tP1.z},
-        tOptions.uColor
-    };
-
-    dcDrawVertex3DLine tNewVertex1 = {
-        {tP1.x, tP1.y, tP1.z},
-        -1.0f,
-        tOptions.fThickness,
-        -1.0f,
-        {tP0.x, tP0.y, tP0.z},
-        tOptions.uColor
-    };
-
-    const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
-    pl_sb_push(ptDrawlist->sbtLineVertexBuffer, tNewVertex0);
-    pl_sb_push(ptDrawlist->sbtLineVertexBuffer, tNewVertex1);
-
-    tNewVertex0.fDirection = 1.0f;
-    tNewVertex1.fDirection = 1.0f;
-    pl_sb_push(ptDrawlist->sbtLineVertexBuffer, tNewVertex1);
-    pl_sb_push(ptDrawlist->sbtLineVertexBuffer, tNewVertex0);
-
-    pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 0);
-    pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 1);
-    pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 2);
-
-    pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 0);
-    pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 2);
-    pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 3);
-
-    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtLineIndexBuffer) - uIdxBefore;
+    const plVec3 atPoints[] = {tP0, tP1};
+    pl__add_3d_path(ptDrawlist, 2, atPoints, false, tOptions);
 }
 
 static void
@@ -3632,7 +3614,7 @@ pl__add_3d_circle_xz(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fRadius, ui
         fTheta += fIncrement;
     }
     atPoints[uSegments] = atPoints[0];
-    pl__add_3d_path(ptDrawlist, uSegments + 1, atPoints, tOptions);
+    pl__add_3d_path(ptDrawlist, uSegments + 1, atPoints, false, tOptions);
     pl_temp_allocator_reset(&gptDrawCtx->tTempAllocator);
 }
 
@@ -3716,10 +3698,9 @@ pl__add_3d_bezier_quad(dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 
     if(uSegments == 0)
         uSegments = 12;
 
-    // set up first point
-    plVec3 atVerticies[2] = {(plVec3){0.0, 0.0, 0.0},tP0};
-
-    for (int i = 1; i < (int)uSegments; i++)
+    plVec3* atPoints = pl_temp_allocator_alloc(&gptDrawCtx->tTempAllocator, sizeof(plVec3) * (uSegments + 1));
+    atPoints[0] = tP0;
+    for(uint32_t i = 1; i < uSegments; i++)
     {
         const float t = i / (float)uSegments;
         const float u = 1.0f - t;
@@ -3730,19 +3711,12 @@ pl__add_3d_bezier_quad(dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 
         const plVec3 p1 = pl_mul_vec3_scalarf(tP1, (2.0f * u * t)); 
         const plVec3 p2 = pl_mul_vec3_scalarf(tP2, tt); 
         const plVec3 p3 = pl_add_vec3(p0,p1);
-        const plVec3 p4 = pl_add_vec3(p2,p3);
-        
-        // shift and add next point
-        atVerticies[0] = atVerticies[1];
-        atVerticies[1] = p4;
-
-        pl__add_3d_line(ptDrawlist, atVerticies[0], atVerticies[1], tOptions);
+        atPoints[i] = pl_add_vec3(p2,p3);
     }
 
-    // set up last point
-    atVerticies[0] = atVerticies[1];
-    atVerticies[1] = tP2;
-    pl__add_3d_line(ptDrawlist, atVerticies[0], atVerticies[1], tOptions);
+    atPoints[uSegments] = tP2;
+    pl__add_3d_path(ptDrawlist, uSegments + 1, atPoints, false, tOptions);
+    pl_temp_allocator_reset(&gptDrawCtx->tTempAllocator);
 }
 
 static void
@@ -3755,10 +3729,9 @@ pl__add_3d_bezier_cubic(
     if(uSegments == 0)
         uSegments = 12;
 
-    // set up first point
-    plVec3 atVerticies[2] = {(plVec3){0.0, 0.0, 0.0},tP0};
-
-    for (int i = 1; i < (int)uSegments; i++)
+    plVec3* atPoints = pl_temp_allocator_alloc(&gptDrawCtx->tTempAllocator, sizeof(plVec3) * (uSegments + 1));
+    atPoints[0] = tP0;
+    for(uint32_t i = 1; i < uSegments; i++)
     {
         const float t = i / (float)uSegments;
         const float u = 1.0f - t;
@@ -3773,19 +3746,12 @@ pl__add_3d_bezier_cubic(
         const plVec3 p3 = pl_mul_vec3_scalarf(tP3, (ttt));
         const plVec3 p5 = pl_add_vec3(p0,p1);
         const plVec3 p6 = pl_add_vec3(p2,p3);
-        const plVec3 p7 = pl_add_vec3(p5,p6);
-        
-        // shift and add next point
-        atVerticies[0] = atVerticies[1];
-        atVerticies[1] = p7;
-
-        pl__add_3d_line(ptDrawlist, atVerticies[0], atVerticies[1], tOptions);
+        atPoints[i] = pl_add_vec3(p5,p6);
     }
 
-    // set up last point
-    atVerticies[0] = atVerticies[1];
-    atVerticies[1] = tP3;
-    pl__add_3d_line(ptDrawlist, atVerticies[0], atVerticies[1], tOptions);
+    atPoints[uSegments] = tP3;
+    pl__add_3d_path(ptDrawlist, uSegments + 1, atPoints, false, tOptions);
+    pl_temp_allocator_reset(&gptDrawCtx->tTempAllocator);
 }
 
 //-----------------------------------------------------------------------------
@@ -4295,6 +4261,8 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .add_3d_plane_xy_filled     = pl__add_3d_plane_xy_filled,
         .add_3d_plane_yz_filled     = pl__add_3d_plane_yz_filled,
         .add_3d_line                = pl__add_3d_line,
+        .add_3d_polyline            = pl__add_3d_polyline,
+        .add_3d_polygon             = pl__add_3d_polygon,
         .add_3d_cross               = pl__add_3d_cross,
         .add_3d_transform           = pl__add_3d_transform,
         .add_3d_frustum             = pl__add_3d_frustum,
@@ -4371,7 +4339,14 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
 
     if(bReload)
+    {
         gptDrawCtx = ptDataRegistry->get_data("dcDrawContext");
+        for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount3D; i++)
+        {
+            pl_sb_free(gptDrawCtx->aptDrawlists3D[i]->sbtLineVertexBuffer);
+        }
+        pl_new_draw_3d_frame();
+    }
     else  // first load
     {
         static dcDrawContext tCtx = {0};

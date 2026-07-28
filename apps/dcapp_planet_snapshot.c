@@ -339,7 +339,7 @@ PL_EXPORT void pl_app_update(AppData *app) {
     // Render one frame and watch tile streaming settle.
     plCommandBuffer *cmd = _ext_starter->get_command_buffer();
     _ext_planet->prepare(app->planet, cmd);
-    _ext_planet->render_view(app->view, &camera, cmd);
+    _ext_planet->render_view(app->view, &camera, cmd, (plVec2){(float)app->width, (float)app->height});
 
     plPlanetStreamStats stream_stats = _ext_planet->get_stream_stats(app->planet);
     if (stream_stats.uPendingRequests == 0 && stream_stats.uFallbackChunks == 0)

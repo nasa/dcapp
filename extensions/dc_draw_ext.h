@@ -51,7 +51,7 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // dcapp's custom draw API (separate from pilotlight's plDrawI)
-#define dcDrawI_version {1, 7, 0}
+#define dcDrawI_version {1, 8, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -233,6 +233,8 @@ typedef struct _dcDrawI
 
     // wireframe
     void (*add_3d_line)        (dcDrawList3D*, plVec3 p0, plVec3 p1, dcDrawLineOptions);
+    void (*add_3d_polyline)    (dcDrawList3D*, const plVec3* points, uint32_t count, dcDrawLineOptions);
+    void (*add_3d_polygon)     (dcDrawList3D*, const plVec3* points, uint32_t count, dcDrawLineOptions);
     void (*add_3d_cross)       (dcDrawList3D*, plVec3 p, float length, dcDrawLineOptions);
     void (*add_3d_transform)   (dcDrawList3D*, const plMat4* transform, float length, dcDrawLineOptions);
     void (*add_3d_frustum)     (dcDrawList3D*, const plMat4* transform, dcDrawFrustumDesc, dcDrawLineOptions);
@@ -268,6 +270,12 @@ enum _dcDrawCommand3DType
     DC_DRAW_COMMAND_3D_SOLID,
     DC_DRAW_COMMAND_3D_LINE,
     DC_DRAW_COMMAND_3D_TEXTURED,
+};
+
+enum _dcDraw3DLineData
+{
+    DC_DRAW_3D_LINE_DATA_PATTERN_MASK = 0xFF,
+    DC_DRAW_3D_LINE_DATA_PATH_START   = 1 << 8,
 };
 
 enum _dcDrawCommandFlags
@@ -340,8 +348,8 @@ typedef struct _dcDrawFrustumDesc
 typedef struct _dcDrawLineOptions
 {
     uint32_t uColor;
-    float    fThickness;
-    uint8_t  uDashPattern;
+    float    fThickness;   // logical pixels
+    uint8_t  uDashPattern; // 20-logical-pixel cycle; 0 and 0xFF are solid
 } dcDrawLineOptions;
 
 typedef struct _dcDrawSolidOptions
@@ -450,6 +458,8 @@ typedef struct _dcDrawVertex3DLine
     float    fMultiply;
     float    afPosOther[3];
     uint32_t uColor;
+    float    fDashDistance;
+    uint32_t uLineData;
 } dcDrawVertex3DLine;
 
 typedef struct _dcDrawVertex3DTextured

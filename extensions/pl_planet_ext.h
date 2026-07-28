@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 9, 0}
+#define plPlanetI_version {0, 10, 0}
 #define PL_PLANET_TEXTURE_SLOT_COUNT 5u
 
 //-----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ typedef struct _plPlanetI
     // views (share terrain data, separate render targets)
     plPlanetView*     (*create_view)     (plPlanet*, plCommandBuffer*, plPlanetViewInit);
     void              (*cleanup_view)    (plPlanetView*);
-    void              (*render_view)     (plPlanetView*, plCamera*, plCommandBuffer*);
+    void              (*render_view)     (plPlanetView*, plCamera*, plCommandBuffer*, plVec2 logical_display_dimensions);
     plBindGroupHandle (*get_view_texture)(plPlanetView*);
     plTextureHandle   (*get_view_output_texture)(plPlanetView*);
 

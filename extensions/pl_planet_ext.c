@@ -712,7 +712,7 @@ pl_cleanup_planet_view(plPlanetView* ptView)
 }
 
 void
-pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer)
+pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer, plVec2 tLogicalDisplayDimensions)
 {
     const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
     ptView->ptPlanet->uLastFallbackChunks = 0;
@@ -759,14 +759,16 @@ pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuff
     {
         const plMat4 tOrigin = pl_identity_mat4();
         gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, (float)ptView->ptPlanet->dRadius * 1.2f,
-            (dcDrawLineOptions){.fThickness = 100000000.0f});
+            (dcDrawLineOptions){.fThickness = 2.0f});
     }
 
+    if(!(tLogicalDisplayDimensions.x > 0.0f && tLogicalDisplayDimensions.x < FLT_MAX))
+        tLogicalDisplayDimensions.x = (float)ptView->uOutputWidth;
+    if(!(tLogicalDisplayDimensions.y > 0.0f && tLogicalDisplayDimensions.y < FLT_MAX))
+        tLogicalDisplayDimensions.y = (float)ptView->uOutputHeight;
+
     const dcDrawSubmitInfo tSubmitInfo = {
-        .tLogicalDimensions = {
-            (float)ptView->uOutputWidth,
-            (float)ptView->uOutputHeight,
-        },
+        .tLogicalDimensions = tLogicalDisplayDimensions,
         .uFramebufferWidth = ptView->uOutputWidth,
         .uFramebufferHeight = ptView->uOutputHeight,
         .uMSAASampleCount = PL_SAMPLE_COUNT_1,
@@ -1302,17 +1304,15 @@ pl_draw_sphere(plPlanetView* ptPlanet, float fLongitude, float fLatitude, float 
 void
 pl_draw_polygon(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor)
 {
-    for(uint32_t i = 0; i < uCount; i++)
-        gptDraw->add_3d_line(ptView->pt3dDrawlist, atPoints[i], atPoints[(i + 1) % uCount],
-            (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+    gptDraw->add_3d_polygon(ptView->pt3dDrawlist, atPoints, uCount,
+        (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
 }
 
 void
 pl_draw_line(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor)
 {
-    for(uint32_t i = 0; i + 1 < uCount; i++)
-        gptDraw->add_3d_line(ptView->pt3dDrawlist, atPoints[i], atPoints[i + 1],
-            (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+    gptDraw->add_3d_polyline(ptView->pt3dDrawlist, atPoints, uCount,
+        (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
 }
 
 void

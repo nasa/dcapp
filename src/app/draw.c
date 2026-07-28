@@ -1739,8 +1739,7 @@ void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *point
     plVec3 *cartesian = _planet_container_transform_points(ctx, points, point_count);
     if (!frame || !cartesian) return;
 
-    float scaled_line_width = line_width * (float)fabs(frame->scale);
-    dc_app_draw_planet_line(dc_app_planet_view_pl(frame->draw_view->view), cartesian, point_count, scaled_line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    dc_app_draw_planet_line(dc_app_planet_view_pl(frame->draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
     PL_FREE(cartesian);
 }
 
@@ -1784,11 +1783,10 @@ void dc_app_draw_planet_polygon_local_enabled(
     if (!frame || !cartesian) return;
 
     plPlanetView *view = dc_app_planet_view_pl(frame->draw_view->view);
-    float scaled_line_width = line_width * (float)fabs(frame->scale);
     if (fill_enabled)
         dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
     if (line_enabled)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, scaled_line_width, line_color);
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color);
     PL_FREE(cartesian);
 }
 
@@ -2478,7 +2476,13 @@ static void _flush_planet_views(DcAppDrawContext *ctx, int first_view) {
 
         // renders the queued planet view into the texture drawn at call time.
         plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
-        _ext_planet->render_view(view, &draw_view->camera, cmd_buf);
+        plMat4 transform;
+        memcpy(transform.d, draw_view->area.transform, sizeof(transform.d));
+        const plVec2 logical_dimensions = {
+            hypotf(transform.x11 * draw_view->area.dimensions[0], transform.x21 * draw_view->area.dimensions[0]),
+            hypotf(transform.x12 * draw_view->area.dimensions[1], transform.x22 * draw_view->area.dimensions[1]),
+        };
+        _ext_planet->render_view(view, &draw_view->camera, cmd_buf, logical_dimensions);
         _ext_starter->submit_command_buffer(cmd_buf);
     }
 

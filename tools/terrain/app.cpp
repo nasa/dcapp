@@ -576,15 +576,17 @@ pl_app_update(plAppData* ptAppData)
     PL_PROFILE_END_SAMPLE_API(gptProfile, 0);
     gptStarter->submit_temporary_command_buffer(ptCmdBuffer);
 
+    static plVec2 tPlanetViewSize = {1024.0f, 1024.0f};
     ptCmdBuffer = gptStarter->get_command_buffer();
     PL_PROFILE_BEGIN_SAMPLE_API(gptProfile, 0, "terrain");
-    gptPlanet->render_view(ptAppData->ptPlanetView, ptCamera, ptCmdBuffer);
+    gptPlanet->render_view(ptAppData->ptPlanetView, ptCamera, ptCmdBuffer, tPlanetViewSize);
     PL_PROFILE_END_SAMPLE_API(gptProfile, 0);
     gptStarter->submit_command_buffer(ptCmdBuffer);
     
     if(ImGui::Begin("View 0"))
     {
         ImVec2 tContextSize = ImGui::GetContentRegionAvail();
+        tPlanetViewSize = {tContextSize.x, tContextSize.y};
         gptCamera->set_aspect(ptCamera, tContextSize.x / tContextSize.y);
 
         ImTextureID tTexture = gptDearImGui->get_texture_id_from_bindgroup(gptStarter->get_device(), gptPlanet->get_view_texture(ptAppData->ptPlanetView));

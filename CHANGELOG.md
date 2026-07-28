@@ -4,6 +4,18 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.180.0] - 2026-07-28
+--------------------
+
+### Added
+- Added connected dcDraw 3D polylines and polygons with continuous,
+  display-pixel-based dash patterns.
+
+### Changed
+- Made dcDraw 3D line widths use display pixels and kept planet overlay widths
+  independent of planet-container scale and offscreen texture resolution.
+
+
 [2.179.0] - 2026-07-28
 --------------------
 

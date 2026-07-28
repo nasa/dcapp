@@ -525,7 +525,7 @@ pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, d
 
     {
         const plShaderDesc t3DLineShaderDesc = {
-            .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
+            .tFragmentShader = gptShader->load_glsl("dc_draw_3d_line.frag", "main", NULL, NULL),
             .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
             .tGraphicsState = {
                 .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE,
@@ -541,12 +541,14 @@ pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, d
             },
             .atVertexBufferLayouts = {
                 {
-                    .uByteStride = sizeof(float) * 10,
+                    .uByteStride = sizeof(dcDrawVertex3DLine),
                     .atAttributes = {
-                        {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 6, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 9, .tFormat = PL_VERTEX_FORMAT_UINT},
+                        {.uByteOffset = 0,                  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 3,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 6,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 9,  .tFormat = PL_VERTEX_FORMAT_UINT},
+                        {.uByteOffset = sizeof(float) * 10, .tFormat = PL_VERTEX_FORMAT_FLOAT},
+                        {.uByteOffset = sizeof(float) * 11, .tFormat = PL_VERTEX_FORMAT_UINT},
                     }
                 }
             },
@@ -1031,16 +1033,18 @@ pl__get_3d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASample
     pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
 
     const plVertexBufferLayout tLineVertexLayout = {
-        .uByteStride = sizeof(float) * 10,
+        .uByteStride = sizeof(dcDrawVertex3DLine),
         .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 6, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 9, .tFormat = PL_VERTEX_FORMAT_UINT},
+            {.uByteOffset = 0,                  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 6,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 9,  .tFormat = PL_VERTEX_FORMAT_UINT},
+            {.uByteOffset = sizeof(float) * 10, .tFormat = PL_VERTEX_FORMAT_FLOAT},
+            {.uByteOffset = sizeof(float) * 11, .tFormat = PL_VERTEX_FORMAT_UINT},
         }
     };
     const plShaderDesc tLineDesc = {
-        .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_line.frag", "main", NULL, NULL),
         .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
         .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
         .atVertexBufferLayouts = {tLineVertexLayout},
@@ -1520,8 +1524,6 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
     const uint32_t uSubpassIndex = gptGfx->get_render_encoder_subpass(ptEncoder);
     const dcPipelineEntry* ptEntry = pl__get_3d_pipeline(tRenderPass, tSubmitInfo.uMSAASampleCount, tFlags, uSubpassIndex);
 
-    const float fAspectRatio = tSubmitInfo.tLogicalDimensions.x / tSubmitInfo.tLogicalDimensions.y;
-
     const plScissor tScissor = {
         .uWidth = tSubmitInfo.uFramebufferWidth,
         .uHeight = tSubmitInfo.uFramebufferHeight
@@ -1614,8 +1616,47 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "draw vtx buffer", uFrameIdx);
         }
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
-        memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
-            ptDrawlist->sbtLineVertexBuffer, uVtxBufSzNeeded);
+        dcDrawVertex3DLine* atVertices = (dcDrawVertex3DLine*)&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset];
+        memcpy(atVertices, ptDrawlist->sbtLineVertexBuffer, uVtxBufSzNeeded);
+
+        float fDistance = 0.0f;
+        const uint32_t uSegmentCount = pl_sb_size(ptDrawlist->sbtLineVertexBuffer) / 4;
+        for(uint32_t i = 0; i < uSegmentCount; i++)
+        {
+            dcDrawVertex3DLine* atSegment = &atVertices[i * 4];
+            const uint32_t uPattern = atSegment[0].uLineData & DC_DRAW_3D_LINE_DATA_PATTERN_MASK;
+            if(uPattern == 0 || uPattern == 0xFF)
+                continue;
+            if(atSegment[0].uLineData & DC_DRAW_3D_LINE_DATA_PATH_START)
+                fDistance = 0.0f;
+
+            const plVec4 tClip0 = pl_mul_mat4_vec4(ptMVP, (plVec4){
+                .x = atSegment[0].afPos[0],
+                .y = atSegment[0].afPos[1],
+                .z = atSegment[0].afPos[2],
+                .w = 1.0f
+            });
+            const plVec4 tClip1 = pl_mul_mat4_vec4(ptMVP, (plVec4){
+                .x = atSegment[1].afPos[0],
+                .y = atSegment[1].afPos[1],
+                .z = atSegment[1].afPos[2],
+                .w = 1.0f
+            });
+
+            float fSegmentLength = 0.0f;
+            if(tClip0.w > FLT_EPSILON && tClip1.w > FLT_EPSILON)
+            {
+                const float fDeltaX = (tClip1.x / tClip1.w - tClip0.x / tClip0.w) * tSubmitInfo.tLogicalDimensions.x * 0.5f;
+                const float fDeltaY = (tClip1.y / tClip1.w - tClip0.y / tClip0.w) * tSubmitInfo.tLogicalDimensions.y * 0.5f;
+                fSegmentLength = sqrtf(fDeltaX * fDeltaX + fDeltaY * fDeltaY);
+            }
+
+            atSegment[0].fDashDistance = fDistance;
+            atSegment[3].fDashDistance = fDistance;
+            atSegment[1].fDashDistance = fDistance + fSegmentLength;
+            atSegment[2].fDashDistance = fDistance + fSegmentLength;
+            fDistance = fmodf(fDistance + fSegmentLength, 20.0f);
+        }
 
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
@@ -1671,18 +1712,18 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
     plMat4* ptMvpDynamicData = (plMat4*)tMvpDynamicData.pcData;
     *ptMvpDynamicData = *ptMVP;
 
-    // line dynamic data (MVP + aspect)
+    // line dynamic data (MVP + logical display dimensions)
     typedef struct _dcLineDynamiceData
     {
         plMat4 tMVP;
-        float fAspect;
-        int   padding[3];
+        plVec2 tLogicalDimensions;
+        int    padding[2];
     } dcLineDynamiceData;
 
     plDynamicBinding tLineDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
     dcLineDynamiceData* ptLineDynamicData = (dcLineDynamiceData*)tLineDynamicData.pcData;
     ptLineDynamicData->tMVP = *ptMVP;
-    ptLineDynamicData->fAspect = fAspectRatio;
+    ptLineDynamicData->tLogicalDimensions = tSubmitInfo.tLogicalDimensions;
 
     const uint32_t uCmdCount = pl_sb_size(ptDrawlist->sbtDrawCommands3D);
     if(uCmdCount > 0)
@@ -1929,6 +1970,21 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     {
         gptDrawBackendCtx = ptDataRegistry->get_data("dcDrawBackendContext");
         uLogChannelDrawBackend = gptLog->get_channel_id("Draw Backend");
+        if(gptDrawBackendCtx->ptDevice)
+        {
+            for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries); i++)
+            {
+                gptGfx->queue_shader_for_deletion(gptDrawBackendCtx->ptDevice, gptDrawBackendCtx->sbt3dPipelineEntries[i].tRegularPipeline);
+                gptGfx->queue_shader_for_deletion(gptDrawBackendCtx->ptDevice, gptDrawBackendCtx->sbt3dPipelineEntries[i].tSecondaryPipeline);
+            }
+            for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries); i++)
+            {
+                gptGfx->queue_shader_for_deletion(gptDrawBackendCtx->ptDevice, gptDrawBackendCtx->sbt3dStencilPipelineEntries[i].tRegularPipeline);
+                gptGfx->queue_shader_for_deletion(gptDrawBackendCtx->ptDevice, gptDrawBackendCtx->sbt3dStencilPipelineEntries[i].tSecondaryPipeline);
+            }
+            pl_sb_reset(gptDrawBackendCtx->sbt3dPipelineEntries);
+            pl_sb_reset(gptDrawBackendCtx->sbt3dStencilPipelineEntries);
+        }
     }
     else  // first load
     {
