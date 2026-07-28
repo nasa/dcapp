@@ -22,7 +22,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define dcDrawBackendI_version {1, 4, 0}
+#define dcDrawBackendI_version {2, 0, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -48,6 +48,14 @@ typedef struct _plBindGroupPool plBindGroupPool;   // pl_graphics_ext.h
 typedef union plBindGroupHandle plBindGroupHandle; // pl_graphics_ext.h
 typedef union plTextureHandle   plTextureHandle;   // pl_graphics_ext.h
 typedef union plShaderHandle    plShaderHandle;    // pl_graphics_ext.h
+
+typedef struct _dcDrawSubmitInfo
+{
+    plVec2   tLogicalDimensions; // logical display dimensions
+    uint32_t uFramebufferWidth;
+    uint32_t uFramebufferHeight;
+    uint32_t uMSAASampleCount;
+} dcDrawSubmitInfo;
 
 // shader override data (passed via callback userData)
 typedef struct _dcShaderOverride
@@ -81,10 +89,10 @@ typedef struct _dcDrawBackendI
     plBindGroupHandle (*create_bind_group_for_texture)(plTextureHandle);
     plBindGroupPool*  (*get_bind_group_pool)(void);
 
-    void (*submit_2d_drawlist)(dcDrawList2D*, plRenderEncoder*, float fWidth, float fHeight, uint32_t sampleCount);
-    void (*submit_3d_drawlist)(dcDrawList3D*, plRenderEncoder*, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags, uint32_t sampleCount);
-    void (*submit_2d_drawlist_ex)(dcDrawList2D*, plRenderEncoder*, float fWidth, float fHeight, uint32_t sampleCount, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
-    void (*submit_3d_drawlist_ex)(dcDrawList3D*, plRenderEncoder*, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags, uint32_t sampleCount, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
+    void (*submit_2d_drawlist)(dcDrawList2D*, plRenderEncoder*, dcDrawSubmitInfo);
+    void (*submit_3d_drawlist)(dcDrawList3D*, plRenderEncoder*, dcDrawSubmitInfo, const plMat4* ptMVP, dcDrawFlags);
+    void (*submit_2d_drawlist_ex)(dcDrawList2D*, plRenderEncoder*, dcDrawSubmitInfo, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
+    void (*submit_3d_drawlist_ex)(dcDrawList3D*, plRenderEncoder*, dcDrawSubmitInfo, const plMat4* ptMVP, dcDrawFlags, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
 
     // misc.
     void (*use_nearest_sampler)(dcDrawLayer2D*);

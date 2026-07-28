@@ -1,7 +1,8 @@
 BREAKING CHANGES
 ================
 
-Source and ABI changes that may require edits outside XML display files.
+User-facing XML and Logic API changes that display authors may need to account
+for.
 
 
 [Unreleased]
@@ -125,8 +126,6 @@ Source and ABI changes that may require edits outside XML display files.
 #### Affected Code
 - Logic code that calls `planet_polygon_local`, `planet_polygon_geodetic`, or
   `planet_polygon_cartesian`.
-- Plugins or tools that fetch `plPlanetI` by version or call
-  `draw_polygon_filled`.
 
 #### Changed
 - Planet polygon outline and fill rendering now use separate calls.
@@ -134,16 +133,11 @@ Source and ABI changes that may require edits outside XML display files.
   `planet_convex_polygon_filled_*` draws only the convex fill.
 - A call always submits its requested pass; color alpha no longer selects
   which pass a combined call performs.
-- `plPlanetI.draw_polygon_filled` was renamed to
-  `draw_convex_polygon_filled`, and `plPlanetI_version` changed from
-  `{0, 8, 0}` to `{0, 9, 0}`.
 
 #### Migration
 - Regenerate `logic/dcapp.h` and rebuild logic modules.
 - Replace each combined polygon call with a convex-fill call followed by an
   outline call when both passes are wanted.
-- Rebuild `plPlanetI` consumers, request version `{0, 9, 0}`, and rename calls
-  to `draw_convex_polygon_filled`.
 
 ### 2026-07-24 - Current Generated Logic ABI
 
@@ -188,45 +182,18 @@ Source and ABI changes that may require edits outside XML display files.
 - Define `DCAPP_LOGIC_EXTERN` before including `dcapp.h` in additional logic
   translation units.
 
-### 2026-07-20 - Planet Extension API 0.7.0
+### 2026-07-20 - Logic Planet Texture Slots
 
 #### Affected Code
-- Plugins or tools that fetch `plPlanetI` by version.
-- Custom planet fragment shaders that want to render texture slots 1 through 4.
 - Logic modules that want to configure texture slots 1 through 4.
 
 #### Changed
-- `plPlanetI_version` changed from `{0, 6, 0}` to `{0, 7, 0}`.
-- The existing `plPlanetI.set_texture(..., index)` parameter now selects one
-  of five independent slots instead of being ignored.
-- `plGpuDynPlanetData` adds four texture indices and four UV transforms.
 - `DcPlanetApi` adds slot-aware geodetic/cartesian texture setters and a
   per-slot clear function, grouped with the existing texture controls.
 
 #### Migration
-- Rebuild consumers and request `plPlanetI` version `{0, 7, 0}`.
-- Existing custom shaders continue to render slot 0. To render every overlay,
-  sample `uTextureIndex1` through `uTextureIndex4` with their matching
-  `tUVInfo1` through `tUVInfo4` values.
 - Regenerate `logic/dcapp.h` and rebuild logic modules. The original setters
   remain source-compatible and continue to target slot 0.
-
-### 2026-06-12 - Planet Extension API 0.6.0
-
-#### Affected Code
-- Plugins or tools that fetch `plPlanetI` by version or compile against the
-  `plPlanetI` function table.
-
-#### Changed
-- `plPlanetI_version` changed from `{0, 5, 0}` to `{0, 6, 0}`.
-- `plPlanetStreamStats` was added.
-- `plPlanetI.get_stream_stats(plPlanet*)` was added to expose pending request,
-  resident chunk, and total chunk counts.
-
-#### Migration
-- Rebuild consumers that compile against `plPlanetI`.
-- Consumers using strict API version checks should request `plPlanetI` version
-  `{0, 6, 0}` when they need stream statistics.
 
 ### 2026-06-09 - PlanetView CRS Is Required
 

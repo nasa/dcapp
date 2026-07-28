@@ -4,6 +4,15 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.178.0] - 2026-07-28
+--------------------
+
+### Changed
+- Changed `dcDrawBackendI` to 2.0.0 and made submission targets explicit by
+  supplying logical dimensions, physical framebuffer dimensions, and sample
+  count together.
+
+
 [2.177.0] - 2026-07-27
 --------------------
 

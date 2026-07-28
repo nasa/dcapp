@@ -1238,7 +1238,7 @@ pl_set_3d_shader(dcDrawList3D* ptDrawlist, plShaderHandle* ptSolidShader, plShad
 }
 
 void
-pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount, plShaderHandle* pt2dShaderOverride, plShaderHandle* ptSdfShaderOverride)
+pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, dcDrawSubmitInfo tSubmitInfo, plShaderHandle* pt2dShaderOverride, plShaderHandle* ptSdfShaderOverride)
 {
     gptGfx->set_depth_bias( ptEncoder, 0.0f, 0.0f, 0.0f);
     gptDraw->prepare_2d_drawlist(ptDrawlist);
@@ -1320,19 +1320,17 @@ pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, f
 
     const plRenderPassHandle tRenderPass = gptGfx->get_encoder_render_pass(ptEncoder);
     const uint32_t uSubpassIndex = gptGfx->get_render_encoder_subpass(ptEncoder);
-    const dcPipelineEntry* ptEntry = pl__get_2d_pipeline(tRenderPass, uMSAASampleCount, uSubpassIndex);
+    const dcPipelineEntry* ptEntry = pl__get_2d_pipeline(tRenderPass, tSubmitInfo.uMSAASampleCount, uSubpassIndex);
 
-    const plVec2 tClipScale = gptIOI->get_io()->tMainFramebufferScale;
+    const plVec2 tClipScale = {
+        (float)tSubmitInfo.uFramebufferWidth / tSubmitInfo.tLogicalDimensions.x,
+        (float)tSubmitInfo.uFramebufferHeight / tSubmitInfo.tLogicalDimensions.y
+    };
 
-    const float fScale[] = { 2.0f / fWidth, 2.0f / fHeight};
-
-    fWidth = fWidth * tClipScale.x;
-    fHeight = fHeight * tClipScale.y;
-    
-    // const plVec2 tClipScale = {1.0f, 1.0f};
-    // const plVec2 tClipScale = ptCtx->tFrameBufferScale;
-    
-    const float fTranslate[] = {-1.0f, -1.0f};
+    const float fScale[] = {
+        2.0f / tSubmitInfo.tLogicalDimensions.x,
+        2.0f / tSubmitInfo.tLogicalDimensions.y
+    };
 
     gptDrawBackendCtx->bCustomShaderActive = pt2dShaderOverride != NULL || ptSdfShaderOverride != NULL;
     gptDrawBackendCtx->pt2dShaderOverride = pt2dShaderOverride;
@@ -1360,8 +1358,8 @@ pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, f
     uint32_t tCurrentFlags = DC_DRAW_COMMAND_FLAG_NONE;
 
     plRenderViewport tViewport = {
-        .fWidth  = fWidth,
-        .fHeight = fHeight,
+        .fWidth  = (float)tSubmitInfo.uFramebufferWidth,
+        .fHeight = (float)tSubmitInfo.uFramebufferHeight,
         .fMaxDepth = 1.0f
     };
 
@@ -1428,7 +1426,7 @@ pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, f
                 (DC_DRAW_COMMAND_FLAG_SDF |
                  DC_DRAW_COMMAND_FLAG_SDF_BOLD |
                  DC_DRAW_COMMAND_FLAG_SDF_OUTLINE);
-            const dcPipelineEntry* ptCmdEntry = pl__get_2d_command_pipeline(ptEntry, tRenderPass, uMSAASampleCount, uSubpassIndex, cmd.tState.tStencil);
+            const dcPipelineEntry* ptCmdEntry = pl__get_2d_command_pipeline(ptEntry, tRenderPass, tSubmitInfo.uMSAASampleCount, uSubpassIndex, cmd.tState.tStencil);
 
             // switch shaders based on command state, using overrides if custom shader active
             if(ptCmdEntry != ptCurrentEntry || tCmdFlags != tCurrentFlags)
@@ -1445,8 +1443,8 @@ pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, f
             if(pl_rect_width(&cmd.tClip) == 0)
             {
                 const plScissor tScissor = {
-                    .uWidth = (uint32_t)(fWidth),
-                    .uHeight = (uint32_t)(fHeight),
+                    .uWidth = tSubmitInfo.uFramebufferWidth,
+                    .uHeight = tSubmitInfo.uFramebufferHeight,
                 };
                 gptGfx->set_scissor_region(ptEncoder, &tScissor);
             }
@@ -1461,8 +1459,8 @@ pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, f
                 // clamp to viewport
                 if (cmd.tClip.tMin.x < 0.0f)   { cmd.tClip.tMin.x = 0.0f; }
                 if (cmd.tClip.tMin.y < 0.0f)   { cmd.tClip.tMin.y = 0.0f; }
-                if (cmd.tClip.tMax.x > fWidth)  { cmd.tClip.tMax.x = (float)fWidth; }
-                if (cmd.tClip.tMax.y > fHeight) { cmd.tClip.tMax.y = (float)fHeight; }
+                if (cmd.tClip.tMax.x > (float)tSubmitInfo.uFramebufferWidth) { cmd.tClip.tMax.x = (float)tSubmitInfo.uFramebufferWidth; }
+                if (cmd.tClip.tMax.y > (float)tSubmitInfo.uFramebufferHeight) { cmd.tClip.tMax.y = (float)tSubmitInfo.uFramebufferHeight; }
                 if (cmd.tClip.tMax.x <= cmd.tClip.tMin.x || cmd.tClip.tMax.y <= cmd.tClip.tMin.y)
                     continue;
 
@@ -1505,13 +1503,13 @@ pl_submit_2d_drawlist_ex(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, f
 }
 
 void
-pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount)
+pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, dcDrawSubmitInfo tSubmitInfo)
 {
-    pl_submit_2d_drawlist_ex(ptDrawlist, ptEncoder, fWidth, fHeight, uMSAASampleCount, NULL, NULL);
+    pl_submit_2d_drawlist_ex(ptDrawlist, ptEncoder, tSubmitInfo, NULL, NULL);
 }
 
 void
-pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags tFlags, uint32_t uMSAASampleCount, plShaderHandle* ptSolidShaderOverride, plShaderHandle* ptTexturedShaderOverride)
+pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, dcDrawSubmitInfo tSubmitInfo, const plMat4* ptMVP, dcDrawFlags tFlags, plShaderHandle* ptSolidShaderOverride, plShaderHandle* ptTexturedShaderOverride)
 {
     gptGfx->push_render_debug_group(ptEncoder, "3D Draw", (plVec4){0.33f, 0.02f, 0.10f, 1.0f});
 
@@ -1520,22 +1518,18 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
 
     const plRenderPassHandle tRenderPass = gptGfx->get_encoder_render_pass(ptEncoder);
     const uint32_t uSubpassIndex = gptGfx->get_render_encoder_subpass(ptEncoder);
-    const dcPipelineEntry* ptEntry = pl__get_3d_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex);
+    const dcPipelineEntry* ptEntry = pl__get_3d_pipeline(tRenderPass, tSubmitInfo.uMSAASampleCount, tFlags, uSubpassIndex);
 
-    const float fAspectRatio = fWidth / fHeight;
-
-    const plVec2 tClipScale = gptIOI->get_io()->tMainFramebufferScale;
-    const float fScaledWidth  = fWidth * tClipScale.x;
-    const float fScaledHeight = fHeight * tClipScale.y;
+    const float fAspectRatio = tSubmitInfo.tLogicalDimensions.x / tSubmitInfo.tLogicalDimensions.y;
 
     const plScissor tScissor = {
-        .uWidth = (uint32_t)fScaledWidth,
-        .uHeight = (uint32_t)fScaledHeight
+        .uWidth = tSubmitInfo.uFramebufferWidth,
+        .uHeight = tSubmitInfo.uFramebufferHeight
     };
 
     const plRenderViewport tViewport = {
-        .fWidth = fScaledWidth,
-        .fHeight = fScaledHeight,
+        .fWidth = (float)tSubmitInfo.uFramebufferWidth,
+        .fHeight = (float)tSubmitInfo.uFramebufferHeight,
         .fMaxDepth = 1.0f
     };
 
@@ -1637,7 +1631,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
     const dcPipelineEntry* ptTexturedEntry = NULL;
     if(pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer) > 0u)
     {
-        ptTexturedEntry = pl__get_3d_textured_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex);
+        ptTexturedEntry = pl__get_3d_textured_pipeline(tRenderPass, tSubmitInfo.uMSAASampleCount, tFlags, uSubpassIndex);
 
         const uint32_t uVtxBufSzNeeded = sizeof(dcDrawVertex3DTextured) * pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
         dcBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx];
@@ -1734,7 +1728,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
 
             if(cmd.eType == DC_DRAW_COMMAND_3D_SOLID)
             {
-                const dcPipelineEntry* ptCmdEntry = pl__get_3d_command_pipeline(ptEntry, tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
+                const dcPipelineEntry* ptCmdEntry = pl__get_3d_command_pipeline(ptEntry, tRenderPass, tSubmitInfo.uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
                 plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dSolidShaderOverride
                     ? *gptDrawBackendCtx->pt3dSolidShaderOverride
                     : ptCmdEntry->tRegularPipeline;
@@ -1755,7 +1749,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
             }
             else if(cmd.eType == DC_DRAW_COMMAND_3D_LINE)
             {
-                const dcPipelineEntry* ptCmdEntry = pl__get_3d_command_pipeline(ptEntry, tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
+                const dcPipelineEntry* ptCmdEntry = pl__get_3d_command_pipeline(ptEntry, tRenderPass, tSubmitInfo.uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
                 plShaderHandle tShader = ptCmdEntry->tSecondaryPipeline;
 
                 gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->atLineBufferInfo[uFrameIdx].tVertexBuffer);
@@ -1774,7 +1768,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
             }
             else if(cmd.eType == DC_DRAW_COMMAND_3D_TEXTURED && ptTexturedEntry)
             {
-                const dcPipelineEntry* ptCmdEntry = pl__get_3d_textured_command_pipeline(ptTexturedEntry, tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
+                const dcPipelineEntry* ptCmdEntry = pl__get_3d_textured_command_pipeline(ptTexturedEntry, tRenderPass, tSubmitInfo.uMSAASampleCount, tFlags, uSubpassIndex, cmd.tState.tStencil);
                 plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dTexturedShaderOverride
                     ? *gptDrawBackendCtx->pt3dTexturedShaderOverride
                     : ptCmdEntry->tRegularPipeline;
@@ -1864,8 +1858,8 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
         tPos = pl_div_vec4_scalarf(tPos, tPos.w);
         if(!(tPos.z < 0.0f || tPos.z > 1.0f))
         {
-            tPos.x = fWidth * 0.5f * (1.0f + tPos.x);
-            tPos.y = fHeight * 0.5f * (1.0f + tPos.y);
+            tPos.x = tSubmitInfo.tLogicalDimensions.x * 0.5f * (1.0f + tPos.x);
+            tPos.y = tSubmitInfo.tLogicalDimensions.y * 0.5f * (1.0f + tPos.y);
             gptDraw->add_text(ptDrawlist->ptLayer,
                 (plVec2){roundf(tPos.x + 0.5f), roundf(tPos.y + 0.5f)},
                 ptText->acText,
@@ -1878,14 +1872,14 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, f
     }
 
     gptDraw->submit_2d_layer(ptDrawlist->ptLayer);
-    pl_submit_2d_drawlist(ptDrawlist->pt2dDrawlist, ptEncoder, fWidth, fHeight, uMSAASampleCount);
+    pl_submit_2d_drawlist(ptDrawlist->pt2dDrawlist, ptEncoder, tSubmitInfo);
     gptGfx->pop_render_debug_group(ptEncoder);
 }
 
 void
-pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags tFlags, uint32_t uMSAASampleCount)
+pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, dcDrawSubmitInfo tSubmitInfo, const plMat4* ptMVP, dcDrawFlags tFlags)
 {
-    pl_submit_3d_drawlist_ex(ptDrawlist, ptEncoder, fWidth, fHeight, ptMVP, tFlags, uMSAASampleCount, NULL, NULL);
+    pl_submit_3d_drawlist_ex(ptDrawlist, ptEncoder, tSubmitInfo, ptMVP, tFlags, NULL, NULL);
 }
 
 plBindGroupPool*

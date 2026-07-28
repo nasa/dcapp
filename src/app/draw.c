@@ -397,10 +397,18 @@ void dc_app_draw_context_submit(DcAppDrawContext *ctx, plRenderEncoder *encoder)
     // submit draw lists from batch system in order
     plIO *ptIO = _ext_ioi->get_io();
     {
+        const plSwapchainInfo swapchain_info = _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain());
+        const dcDrawSubmitInfo draw_submit = {
+            .tLogicalDimensions = ptIO->tMainViewportSize,
+            .uFramebufferWidth = swapchain_info.uWidth,
+            .uFramebufferHeight = swapchain_info.uHeight,
+            .uMSAASampleCount = swapchain_info.tSampleCount,
+        };
+
         // orthographic MVP for 3D objects in 2D space
         // Note: dcapp uses bottom-left origin, so Y is NOT flipped here (parent_transform handles it)
-        float  w          = ptIO->tMainViewportSize.x;
-        float  h          = ptIO->tMainViewportSize.y;
+        float  w          = draw_submit.tLogicalDimensions.x;
+        float  h          = draw_submit.tLogicalDimensions.y;
         float  n          = -1000.0f;
         float  f          = 1000.0f;
         plMat4 ortho_proj = {
@@ -418,18 +426,14 @@ void dc_app_draw_context_submit(DcAppDrawContext *ctx, plRenderEncoder *encoder)
                 _ext_dc_draw_backend->submit_2d_drawlist(
                     batch->draw_list_2d.draw_list,
                     encoder,
-                    ptIO->tMainViewportSize.x,
-                    ptIO->tMainViewportSize.y,
-                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
+                    draw_submit);
             } else if (batch->type == DRAW_BATCH_TYPE_3D && batch->draw_list_3d) {
                 _ext_dc_draw_backend->submit_3d_drawlist(
                     batch->draw_list_3d,
                     encoder,
-                    ptIO->tMainViewportSize.x,
-                    ptIO->tMainViewportSize.y,
+                    draw_submit,
                     &ortho_proj,
-                    DC_DRAW_FLAG_DEPTH_TEST | DC_DRAW_FLAG_DEPTH_WRITE,
-                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
+                    DC_DRAW_FLAG_DEPTH_TEST | DC_DRAW_FLAG_DEPTH_WRITE);
             }
         }
     }
