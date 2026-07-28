@@ -8,6 +8,35 @@ for.
 [Unreleased]
 ------------
 
+### 2026-07-28 - Planet Stroke API and Screen-Space Widths
+
+#### Affected Code
+- Logic code that calls `planet_line_local`, `planet_polygon_local`,
+  `planet_line_geodetic`, `planet_line_cartesian`,
+  `planet_polygon_geodetic`, or `planet_polygon_cartesian`.
+- XML and Logic planet overlays that use meter-scale line widths.
+- GeoJSON points that relied on `LineWidth` or simplestyle `stroke-width` to
+  change marker radius.
+
+#### Changed
+- The six Logic planet line and polygon outline functions now take one
+  `DcStroke` instead of separate line-width and color arguments.
+- Planet outline widths use logical display pixels, remain stable while
+  zooming, and are not affected by planet-container scale.
+- XML `PlanetLine` and `PlanetPolygon` elements now accept `LinePattern`.
+- GeoJSON `LineWidth` and simplestyle `stroke-width` now apply only to line and
+  polygon outlines. Point markers retain their 1000-meter radius.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+- Replace trailing `line_width, color` arguments with
+  `(DcStroke){.color = color, .width = line_width}`. Set `.pattern` when a
+  dashed outline is wanted.
+- Replace meter-scale outline widths with intended pixel widths, such as
+  `2.0f`.
+- Use explicit planet sphere overlays when GeoJSON points need a custom
+  world-space radius.
+
 ### 2026-07-27 - Logic Mouse Click Semantics
 
 #### Affected Code

@@ -1728,6 +1728,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
     const uint32_t uCmdCount = pl_sb_size(ptDrawlist->sbtDrawCommands3D);
     if(uCmdCount > 0)
     {
+        // 3D indices are absolute within each draw-list buffer; only apply the GPU upload base.
         gptDrawBackendCtx->bCustom3DShaderActive = ptSolidShaderOverride != NULL || ptTexturedShaderOverride != NULL;
         gptDrawBackendCtx->pt3dSolidShaderOverride = ptSolidShaderOverride;
         gptDrawBackendCtx->pt3dTexturedShaderOverride = ptTexturedShaderOverride;
@@ -1784,7 +1785,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
                     .uIndexStart    = iSolidIndexBase + cmd.uIndexOffset,
                     .uInstance      = 0,
                     .uInstanceCount = 1,
-                    .uVertexStart   = iSolidVertexBase + cmd.uVertexOffset
+                    .uVertexStart   = iSolidVertexBase
                 };
                 gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
             }
@@ -1803,7 +1804,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
                     .uIndexStart    = iLineIndexBase + cmd.uIndexOffset,
                     .uInstance      = 0,
                     .uInstanceCount = 1,
-                    .uVertexStart   = iLineVertexBase + cmd.uVertexOffset
+                    .uVertexStart   = iLineVertexBase
                 };
                 gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
             }
@@ -1830,7 +1831,7 @@ pl_submit_3d_drawlist_ex(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, d
                     .uIndexStart    = iTexturedIndexBase + cmd.uIndexOffset,
                     .uInstance      = 0,
                     .uInstanceCount = 1,
-                    .uVertexStart   = iTexturedVertexBase + cmd.uVertexOffset
+                    .uVertexStart   = iTexturedVertexBase
                 };
                 gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
             }

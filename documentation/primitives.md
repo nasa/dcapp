@@ -765,7 +765,8 @@ Records and draws a live breadcrumb trail from input position variables. The sam
 | `Clear` | integer/var | No | Edge-triggered: changing this value clears the stored trail |
 | `Enabled` | boolean/var | No | Enables sampling and drawing. Defaults to true. |
 | `LineColor` | color | No | Trail color (RGBA). Defaults to semi-transparent red. |
-| `LineWidth` | number/var | No | Line width in meters |
+| `LineWidth` | number/var | No | Line width in logical display pixels |
+| `LinePattern` | integer/var | No | 8-bit dash pattern, such as `0xF0` dashed. Defaults to solid. |
 
 Example:
 
@@ -773,7 +774,7 @@ Example:
 <PlanetBreadcrumbs Latitude="@VehicleLat" Longitude="@VehicleLon"
     HeightAboveTerrain="500" PointSpacing="25" MaxPoints="2000"
     Clear="@ClearTrail" Enabled="@ShowTrail"
-    LineColor="1 0 0 0.5" LineWidth="200"/>
+    LineColor="1 0 0 0.5" LineWidth="2" LinePattern="0xF0"/>
 ```
 
 ---

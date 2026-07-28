@@ -22,7 +22,8 @@ typedef struct DcAppPlanetGeojsonStyle DcAppPlanetGeojsonStyle;
 typedef struct DcAppPlanetCreateInfo DcAppPlanetCreateInfo;
 typedef struct DcAppPlanetApi DcAppPlanetApi;
 
-// Local geometry and line widths start in tangent-plane units before scale and rotation.
+// Local geometry starts in tangent-plane units before scale and rotation.
+// Overlay line widths remain in logical display pixels.
 struct DcAppPlanetLocalTransform {
     float scale;
     float rotation_degrees;

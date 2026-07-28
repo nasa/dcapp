@@ -1512,11 +1512,17 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
             return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
                    _attr_in_list(attr_name, _valid_attrs_planet_breadcrumbs) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
-                   _attr_in_list(attr_name, _valid_attrs_line);
+                   _attr_in_list(attr_name, _valid_attrs_line) ||
+                   strcmp(attr_name, "LinePattern") == 0;
 
-        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
         case DC_APP_ELEM_TYPE_PLANET_LINE:
         case DC_APP_ELEM_TYPE_PLANET_POLYGON:
+            return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
+                   _attr_in_list(attr_name, _valid_attrs_color) ||
+                   _attr_in_list(attr_name, _valid_attrs_line) ||
+                   strcmp(attr_name, "LinePattern") == 0;
+
+        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
         case DC_APP_ELEM_TYPE_PLANET_SPHERE:
         case DC_APP_ELEM_TYPE_PLANET_TEXT:
             return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||

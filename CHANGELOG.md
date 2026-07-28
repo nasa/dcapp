@@ -4,6 +4,25 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.182.0] - 2026-07-28
+--------------------
+
+### Added
+- Added `LinePattern` to XML `PlanetLine`, `PlanetPolygon`, and
+  `PlanetBreadcrumbs` strokes.
+
+### Changed
+- Changed the six Logic planet line and polygon outline functions to accept
+  `DcStroke`, consistent with the other outline drawing APIs.
+- Limited GeoJSON `LineWidth` and simplestyle `stroke-width` to line and
+  polygon outlines; point markers keep their 1000-meter radius.
+
+### Fixed
+- Fixed interleaved 3D draw commands reading later geometry from the wrong
+  vertex offsets.
+- Matched planet camera projection to the transformed on-screen view aspect.
+
+
 [2.181.0] - 2026-07-28
 --------------------
 

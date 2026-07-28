@@ -247,6 +247,7 @@ struct DcAppDrawPlanetView {
     plCamera camera;
     DcAppPlanetViewOptions options;
     DcAppDrawArea area;
+    plVec2 logical_dimensions;
 };
 
 typedef struct _DcAppResolvedGeojsonStyle {
@@ -256,7 +257,6 @@ typedef struct _DcAppResolvedGeojsonStyle {
     DcAppVec4 fill_color;
     bool line_enabled;
     bool fill_enabled;
-    bool line_width_set;
 } _DcAppResolvedGeojsonStyle;
 
 static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx);
@@ -1569,14 +1569,14 @@ void dc_app_draw_planet_convex_polygon_filled(plPlanetView *view, plVec3 *points
     _ext_planet->draw_convex_polygon_filled(view, points, point_count, color);
 }
 
-void dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color) {
+void dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color, uint8_t line_pattern) {
     if (!view || !points || point_count < 3) return;
-    _ext_planet->draw_polygon(view, points, point_count, line_width, color);
+    _ext_planet->draw_polygon(view, points, point_count, line_width, color, line_pattern);
 }
 
-void dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color) {
+void dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color, uint8_t line_pattern) {
     if (!view || !points || point_count < 2) return;
-    _ext_planet->draw_line(view, points, point_count, line_width, color);
+    _ext_planet->draw_line(view, points, point_count, line_width, color, line_pattern);
 }
 
 void dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius, float rotation_degrees, uint32_t segments, float line_width, uint32_t line_color, bool line_enabled, uint32_t fill_color, bool fill_enabled) {
@@ -1612,7 +1612,7 @@ void dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius
     }
 
     if (fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, segments, fill_color);
-    if (line_enabled) dc_app_draw_planet_polygon(view, points, segments, line_width, line_color);
+    if (line_enabled) dc_app_draw_planet_polygon(view, points, segments, line_width, line_color, 0);
 }
 
 void dc_app_draw_planet_sphere(plPlanetView *view, float lon, float lat, float height, float radius, uint32_t color) {
@@ -1635,10 +1635,7 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx
     memset(draw_view, 0, sizeof(*draw_view));
     draw_view->view = view;
     draw_view->options = options;
-    draw_view->camera = _planet_camera_geodetic(planet, lat, lon, elevation, rpy, fov_degrees, orthographic, size);
-    _apply_planet_view_options(draw_view);
-
-    sbpush(ctx->sb_planet_views, draw_view);
+    draw_view->logical_dimensions = (plVec2){size.x, size.y};
 
     plPlanetView *pl_view = dc_app_planet_view_pl(view);
     if (pl_view) {
@@ -1653,7 +1650,19 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx
                        (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
                        _draw_result_area(result ? result : &image_result));
         draw_view->area = result ? result->area : image_result.area;
+        plMat4 transform;
+        memcpy(transform.d, draw_view->area.transform, sizeof(transform.d));
+        draw_view->logical_dimensions = (plVec2){
+            hypotf(transform.x11 * draw_view->area.dimensions[0], transform.x21 * draw_view->area.dimensions[0]),
+            hypotf(transform.x12 * draw_view->area.dimensions[1], transform.x22 * draw_view->area.dimensions[1]),
+        };
     }
+
+    draw_view->camera = _planet_camera_geodetic(
+        planet, lat, lon, elevation, rpy, fov_degrees, orthographic,
+        (DcAppVec2){draw_view->logical_dimensions.x, draw_view->logical_dimensions.y});
+    _apply_planet_view_options(draw_view);
+    sbpush(ctx->sb_planet_views, draw_view);
     return draw_view;
 }
 
@@ -1667,10 +1676,7 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ct
     memset(draw_view, 0, sizeof(*draw_view));
     draw_view->view = view;
     draw_view->options = options;
-    draw_view->camera = _planet_camera_cartesian(planet, camera_position, rpy, fov_degrees, orthographic, size);
-    _apply_planet_view_options(draw_view);
-
-    sbpush(ctx->sb_planet_views, draw_view);
+    draw_view->logical_dimensions = (plVec2){size.x, size.y};
 
     plPlanetView *pl_view = dc_app_planet_view_pl(view);
     if (pl_view) {
@@ -1685,7 +1691,19 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ct
                        (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
                        _draw_result_area(result ? result : &image_result));
         draw_view->area = result ? result->area : image_result.area;
+        plMat4 transform;
+        memcpy(transform.d, draw_view->area.transform, sizeof(transform.d));
+        draw_view->logical_dimensions = (plVec2){
+            hypotf(transform.x11 * draw_view->area.dimensions[0], transform.x21 * draw_view->area.dimensions[0]),
+            hypotf(transform.x12 * draw_view->area.dimensions[1], transform.x22 * draw_view->area.dimensions[1]),
+        };
     }
+
+    draw_view->camera = _planet_camera_cartesian(
+        planet, camera_position, rpy, fov_degrees, orthographic,
+        (DcAppVec2){draw_view->logical_dimensions.x, draw_view->logical_dimensions.y});
+    _apply_planet_view_options(draw_view);
+    sbpush(ctx->sb_planet_views, draw_view);
     return draw_view;
 }
 
@@ -1732,24 +1750,31 @@ void dc_app_draw_planet_container_pop(DcAppDrawContext *ctx) {
     sbpop(ctx->sb_planet_container_stack);
 }
 
-void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke) {
     if (!points || point_count < 2) return;
 
     _DcAppPlanetContainerFrame *frame = _planet_container_frame(ctx);
     plVec3 *cartesian = _planet_container_transform_points(ctx, points, point_count);
     if (!frame || !cartesian) return;
 
-    dc_app_draw_planet_line(dc_app_planet_view_pl(frame->draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    dc_app_draw_planet_line(
+        dc_app_planet_view_pl(frame->draw_view->view),
+        cartesian,
+        point_count,
+        stroke.width,
+        PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        stroke.pattern);
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_polygon_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke) {
     dc_app_draw_planet_polygon_local_enabled(
         ctx,
         points,
         point_count,
-        line_width,
-        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        stroke.width,
+        PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        stroke.pattern,
         true,
         0,
         false);
@@ -1762,6 +1787,7 @@ void dc_app_draw_planet_convex_polygon_filled_local(DcAppDrawContext *ctx, const
         point_count,
         0.0f,
         0,
+        0,
         false,
         PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
         true);
@@ -1773,6 +1799,7 @@ void dc_app_draw_planet_polygon_local_enabled(
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
+    uint8_t line_pattern,
     bool line_enabled,
     uint32_t fill_color,
     bool fill_enabled) {
@@ -1786,7 +1813,7 @@ void dc_app_draw_planet_polygon_local_enabled(
     if (fill_enabled)
         dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
     if (line_enabled)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color);
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color, line_pattern);
     PL_FREE(cartesian);
 }
 
@@ -1810,7 +1837,7 @@ void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetV
     dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), (float)geodetic.y, (float)geodetic.x, (float)geodetic.z, radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
 }
 
-void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppStroke stroke) {
     (void)ctx;
     if (!draw_view || !points || point_count < 2) return;
 
@@ -1829,11 +1856,17 @@ void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetView
         cartesian[i] = (plVec3){(float)converted.x, (float)converted.y, (float)converted.z};
     }
 
-    dc_app_draw_planet_line(dc_app_planet_view_pl(draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    dc_app_draw_planet_line(
+        dc_app_planet_view_pl(draw_view->view),
+        cartesian,
+        point_count,
+        stroke.width,
+        PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        stroke.pattern);
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppStroke stroke) {
     (void)ctx;
     if (!draw_view || !points || point_count < 2) return;
 
@@ -1844,7 +1877,13 @@ void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
         cartesian[i] = (plVec3){(float)points[i].x, (float)points[i].y, (float)points[i].z};
     }
 
-    dc_app_draw_planet_line(dc_app_planet_view_pl(draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    dc_app_draw_planet_line(
+        dc_app_planet_view_pl(draw_view->view),
+        cartesian,
+        point_count,
+        stroke.width,
+        PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        stroke.pattern);
     PL_FREE(cartesian);
 }
 
@@ -1854,6 +1893,7 @@ static void _draw_planet_polygon_geodetic_enabled(
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
+    uint8_t line_pattern,
     bool line_enabled,
     uint32_t fill_color,
     bool fill_enabled) {
@@ -1878,18 +1918,19 @@ static void _draw_planet_polygon_geodetic_enabled(
     if (fill_enabled)
         dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
     if (line_enabled)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color);
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color, line_pattern);
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppStroke stroke) {
     (void)ctx;
     _draw_planet_polygon_geodetic_enabled(
         draw_view,
         points,
         point_count,
-        line_width,
-        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        stroke.width,
+        PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        stroke.pattern,
         true,
         0,
         false);
@@ -1903,19 +1944,21 @@ void dc_app_draw_planet_convex_polygon_filled_geodetic(DcAppDrawContext *ctx, Dc
         point_count,
         0.0f,
         0,
+        0,
         false,
         PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
         true);
 }
 
-void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppStroke stroke) {
     (void)ctx;
     dc_app_draw_planet_polygon_cartesian_enabled(
         draw_view,
         points,
         point_count,
-        line_width,
-        PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+        stroke.width,
+        PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        stroke.pattern,
         true,
         0,
         false);
@@ -1929,6 +1972,7 @@ void dc_app_draw_planet_convex_polygon_filled_cartesian(DcAppDrawContext *ctx, D
         point_count,
         0.0f,
         0,
+        0,
         false,
         PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
         true);
@@ -1940,6 +1984,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
+    uint8_t line_pattern,
     bool line_enabled,
     uint32_t fill_color,
     bool fill_enabled) {
@@ -1956,7 +2001,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
     if (fill_enabled)
         dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
     if (line_enabled)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color);
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color, line_pattern);
     PL_FREE(cartesian);
 }
 
@@ -2125,7 +2170,6 @@ static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *
         .fill_color = fallback.fill_color,
         .line_enabled = line_enabled,
         .fill_enabled = fill_enabled,
-        .line_width_set = line_width_set,
     };
 
     if (feature->style.stroke.has_value) {
@@ -2148,7 +2192,6 @@ static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *
     }
     if (feature->style.has_stroke_width) {
         style.line_width = feature->style.stroke_width;
-        style.line_width_set = true;
     }
     return style;
 }
@@ -2188,20 +2231,18 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
     switch (feature->type) {
         case DC_GEOJSON_FEATURE_POINT: {
             const DcGeojsonPosition *point = &feature->geom.point.position;
-            float radius = style.line_width_set ? style.line_width : 1000.0f;
             dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
                 (float)(point->has_alt ? point->alt : style.height_above_terrain),
-                radius, line_color);
+                1000.0f, line_color);
             break;
         }
 
         case DC_GEOJSON_FEATURE_MULTI_POINT: {
-            float radius = style.line_width_set ? style.line_width : 1000.0f;
             for (uint32_t i = 0; i < feature->geom.multi_point.count; i++) {
                 const DcGeojsonPosition *point = &feature->geom.multi_point.positions[i];
                 dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
                     (float)(point->has_alt ? point->alt : style.height_above_terrain),
-                    radius, line_color);
+                    1000.0f, line_color);
             }
             break;
         }
@@ -2210,7 +2251,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             const DcGeojsonCoordArray *coordinates = &feature->geom.line_string;
             plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
             if (points) {
-                dc_app_draw_planet_line(view, points, coordinates->count, style.line_width, line_color);
+                dc_app_draw_planet_line(view, points, coordinates->count, style.line_width, line_color, 0);
                 PL_FREE(points);
             }
             break;
@@ -2221,7 +2262,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
                 const DcGeojsonCoordArray *coordinates = &feature->geom.multi_line_string.line_strings[i];
                 plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
                 if (points) {
-                    dc_app_draw_planet_line(view, points, coordinates->count, style.line_width, line_color);
+                    dc_app_draw_planet_line(view, points, coordinates->count, style.line_width, line_color, 0);
                     PL_FREE(points);
                 }
             }
@@ -2233,7 +2274,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
             if (points) {
                 if (style.fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, coordinates->count, fill_color);
-                if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, style.line_width, line_color);
+                if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, style.line_width, line_color, 0);
                 PL_FREE(points);
             }
             break;
@@ -2247,7 +2288,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
                 plVec3 *points = _planet_geojson_points(planet, coordinates, style.height_above_terrain);
                 if (points) {
                     if (style.fill_enabled) dc_app_draw_planet_convex_polygon_filled(view, points, coordinates->count, fill_color);
-                    if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, style.line_width, line_color);
+                    if (style.line_enabled) dc_app_draw_planet_polygon(view, points, coordinates->count, style.line_width, line_color, 0);
                     PL_FREE(points);
                 }
             }
@@ -2476,13 +2517,7 @@ static void _flush_planet_views(DcAppDrawContext *ctx, int first_view) {
 
         // renders the queued planet view into the texture drawn at call time.
         plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
-        plMat4 transform;
-        memcpy(transform.d, draw_view->area.transform, sizeof(transform.d));
-        const plVec2 logical_dimensions = {
-            hypotf(transform.x11 * draw_view->area.dimensions[0], transform.x21 * draw_view->area.dimensions[0]),
-            hypotf(transform.x12 * draw_view->area.dimensions[1], transform.x22 * draw_view->area.dimensions[1]),
-        };
-        _ext_planet->render_view(view, &draw_view->camera, cmd_buf, logical_dimensions);
+        _ext_planet->render_view(view, &draw_view->camera, cmd_buf, draw_view->logical_dimensions);
         _ext_starter->submit_command_buffer(cmd_buf);
     }
 

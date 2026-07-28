@@ -496,6 +496,7 @@ typedef struct DcAppNodePlanetLine {
     DcAppValIndex             height_above_terrain;
     DcAppValIndex4            line_color;
     DcAppValIndex             line_width;
+    DcAppValIndex             line_pattern;
     uint8_t               config_flags;
     uint8_t               planet_def_index;
     DcAppPlanetCrs        crs;
@@ -528,6 +529,7 @@ typedef struct DcAppNodePlanetBreadcrumbs {
     DcAppValIndex       enabled;
     DcAppValIndex4      line_color;
     DcAppValIndex       line_width;
+    DcAppValIndex       line_pattern;
     plVec3d        *sb_points;
     uint8_t         config_flags;
     uint8_t         planet_def_index;
@@ -541,6 +543,7 @@ typedef struct DcAppNodePlanetPolygon {
     DcAppValIndex             height_above_terrain;
     DcAppValIndex4            line_color;
     DcAppValIndex             line_width;
+    DcAppValIndex             line_pattern;
     DcAppValIndex4            fill_color;
     uint8_t               config_flags;
     uint8_t               planet_def_index;

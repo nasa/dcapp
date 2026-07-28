@@ -1302,17 +1302,17 @@ pl_draw_sphere(plPlanetView* ptPlanet, float fLongitude, float fLatitude, float 
 }
 
 void
-pl_draw_polygon(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor)
+pl_draw_polygon(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor, uint8_t uLinePattern)
 {
     gptDraw->add_3d_polygon(ptView->pt3dDrawlist, atPoints, uCount,
-        (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+        (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor, .uDashPattern = uLinePattern});
 }
 
 void
-pl_draw_line(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor)
+pl_draw_line(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor, uint8_t uLinePattern)
 {
     gptDraw->add_3d_polyline(ptView->pt3dDrawlist, atPoints, uCount,
-        (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+        (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor, .uDashPattern = uLinePattern});
 }
 
 void

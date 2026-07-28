@@ -3479,6 +3479,12 @@ static DcAppNodeIndex _process_xml_node_planet_breadcrumbs(DcAppXmlContext *xml_
         xmlFree(raw_line_width);
     }
 
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.planet_breadcrumbs.line_pattern = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
     dc_node.planet_breadcrumbs.config_flags = NODE_CONFIG_FLAG_NONE;
     if (_load_color_from_string(xml_ctx, xml_node, "LineColor", &(dc_node.planet_breadcrumbs.line_color)))
         dc_node.planet_breadcrumbs.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
@@ -3692,7 +3698,7 @@ static void _create_geojson_nodes(
             dc_node.planet_sphere.lat                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lat_buf);
             dc_node.planet_sphere.lon                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lon_buf);
             dc_node.planet_sphere.height_above_terrain = point_height;
-            dc_node.planet_sphere.radius               = line_width;
+            dc_node.planet_sphere.radius               = DC_APP_VAL_INDEX_UNDEFINED;
             dc_node.planet_sphere.fill_color           = line_color;
             dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
             dc_node.planet_sphere.planet_def_index     = planet_def_index;
@@ -3721,7 +3727,7 @@ static void _create_geojson_nodes(
                 dc_node.planet_sphere.lat                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lat_buf);
                 dc_node.planet_sphere.lon                  = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, lon_buf);
                 dc_node.planet_sphere.height_above_terrain = point_height;
-                dc_node.planet_sphere.radius               = line_width;
+                dc_node.planet_sphere.radius               = DC_APP_VAL_INDEX_UNDEFINED;
                 dc_node.planet_sphere.fill_color           = line_color;
                 dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
                 dc_node.planet_sphere.planet_def_index     = planet_def_index;
@@ -4112,6 +4118,12 @@ static DcAppNodeIndex _process_xml_node_planet_line(DcAppXmlContext *xml_ctx, xm
         xmlFree(raw_line_width);
     }
 
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.planet_line.line_pattern = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
     dc_node.planet_line.config_flags = NODE_CONFIG_FLAG_NONE;
     if (_load_color_from_string(xml_ctx, xml_node, "LineColor", &(dc_node.planet_line.line_color)))
         dc_node.planet_line.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
@@ -4164,6 +4176,12 @@ static DcAppNodeIndex _process_xml_node_planet_polygon(DcAppXmlContext *xml_ctx,
     if (raw_line_width) {
         dc_node.planet_polygon.line_width = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
+    }
+
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.planet_polygon.line_pattern = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
     }
 
     dc_node.planet_polygon.config_flags = NODE_CONFIG_FLAG_NONE;

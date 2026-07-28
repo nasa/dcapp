@@ -46,13 +46,6 @@ static const DcVec2 logic_doghouse[] = {
     {.x = -40.0f, .y = 10.0f},
 };
 
-static const DcVec2 logic_doghouse_door[] = {
-    {.x = -12.5f, .y = -30.0f},
-    {.x = -12.5f, .y = 0.0f},
-    {.x = 12.5f, .y = 0.0f},
-    {.x = 12.5f, .y = -30.0f},
-};
-
 static float texture_mpp_for_refresh(int refresh) {
     return refresh ? 4000.0f : 2000.0f;
 }
@@ -242,7 +235,7 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
                               DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR |
                               DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH;
         geojson_style.height_above_terrain = 1500.0;
-        geojson_style.line_width = 2200.0f;
+        geojson_style.line_width = 2.2f;
         geojson_style.line_color = (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.90f};
         geojson_style.fill_color = (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.10f};
         dc_draw->planet_geojson(draw_ctx, view, logic_geojson, geojson_style);
@@ -254,13 +247,18 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         (DcVec4){.r = 1.0f, .g = 0.20f, .b = 0.70f, .a = 0.12f});
     dc_draw->planet_ellipse_geodetic(
         draw_ctx, view, -55.0, 335.0, 1500.0,
-        (DcVec2){80000.0f, 40000.0f}, 25.0f, 64, 2500.0f,
+        (DcVec2){80000.0f, 40000.0f}, 25.0f, 64, 2.5f,
         (DcVec4){.r = 1.0f, .g = 0.35f, .b = 0.80f, .a = 0.90f});
 
     DcPlanetBreadcrumbsPoints orbit_trail = dc_planet->get_breadcrumbs_points(logic_orbit_breadcrumbs);
     if (orbit_trail.count >= 2 && orbit_trail.crs == DC_PLANET_CRS_GEODETIC) {
-        dc_draw->planet_line_geodetic(draw_ctx, view, orbit_trail.points, orbit_trail.count, 3500.0f,
-                                      (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 0.85f});
+        dc_draw->planet_line_geodetic(
+            draw_ctx, view, orbit_trail.points, orbit_trail.count,
+            (DcStroke){
+                .color = {.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 0.85f},
+                .width = 3.5f,
+                .pattern = 0xF0,
+            });
     }
     dc_draw->planet_sphere_geodetic(draw_ctx, view, *OrbitLat, *OrbitLon, 50000.0, 18000.0,
                                     (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f});
@@ -278,13 +276,11 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         dc_draw->planet_polygon_local(
             draw_ctx, logic_doghouse,
             (uint32_t)(sizeof(logic_doghouse) / sizeof(logic_doghouse[0])),
-            2.1f,
-            (DcVec4){.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f});
-        dc_draw->planet_line_local(
-            draw_ctx, logic_doghouse_door,
-            (uint32_t)(sizeof(logic_doghouse_door) / sizeof(logic_doghouse_door[0])),
-            2.1f,
-            (DcVec4){.r = 1.0f, .g = 0.90f, .b = 0.55f, .a = 1.0f});
+            (DcStroke){
+                .color = {.r = 1.0f, .g = 0.75f, .b = 0.18f, .a = 1.0f},
+                .width = 2.1f,
+                .pattern = 0xAA,
+            });
         dc_draw->planet_container_pop(draw_ctx);
     }
 

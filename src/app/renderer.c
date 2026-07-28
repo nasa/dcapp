@@ -4867,8 +4867,12 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppRenderer *ren
         draw_view,
         renderer->sb_planet_points,
         (uint32_t)point_count,
-        line_width,
-        (DcAppVec4){lc[0], lc[1], lc[2], lc[3]});
+        (DcAppStroke){
+            .color = {lc[0], lc[1], lc[2], lc[3]},
+            .width = line_width,
+            .pattern = breadcrumbs->line_pattern == DC_APP_VAL_INDEX_UNDEFINED
+                ? 0 : (uint8_t)dc_app_lookup_get_value(renderer->lookup, breadcrumbs->line_pattern)->value_integer,
+        });
 }
 
 static void _render_planet_container(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
@@ -5042,8 +5046,11 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
         draw_view,
         pts3d,
         count,
-        line_width,
-        (DcAppVec4){lc[0], lc[1], lc[2], lc[3]});
+        (DcAppStroke){
+            .color = {lc[0], lc[1], lc[2], lc[3]},
+            .width = line_width,
+            .pattern = node->planet_line.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_pattern)->value_integer,
+        });
     free(pts3d);
 }
 
@@ -5072,7 +5079,15 @@ static void _render_planet_line_local(DcAppDrawContext *ctx, DcAppRenderer *rend
         line_color.a = node->planet_line.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_color.a)->value_double : 1.0f;
     }
 
-    dc_app_draw_planet_line_local(ctx, points, count, line_width, line_color);
+    dc_app_draw_planet_line_local(
+        ctx,
+        points,
+        count,
+        (DcAppStroke){
+            .color = line_color,
+            .width = line_width,
+            .pattern = node->planet_line.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(renderer->lookup, node->planet_line.line_pattern)->value_integer,
+        });
     free(points);
 }
 
@@ -5154,6 +5169,7 @@ static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppRenderer *rendere
         count,
         line_width,
         PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a),
+        node->planet_polygon.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_pattern)->value_integer,
         line_enabled,
         PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a),
         fill_enabled);
@@ -5200,6 +5216,7 @@ static void _render_planet_polygon_local(DcAppDrawContext *ctx, DcAppRenderer *r
         count,
         line_width,
         PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a),
+        node->planet_polygon.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.line_pattern)->value_integer,
         line_enabled,
         PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a),
         fill_enabled);

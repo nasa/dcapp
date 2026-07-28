@@ -23,6 +23,7 @@ void dc_app_draw_planet_polygon_local_enabled(
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
+    uint8_t line_pattern,
     bool line_enabled,
     uint32_t fill_color,
     bool fill_enabled);
@@ -32,6 +33,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
     uint32_t point_count,
     float line_width,
     uint32_t line_color,
+    uint8_t line_pattern,
     bool line_enabled,
     uint32_t fill_color,
     bool fill_enabled);

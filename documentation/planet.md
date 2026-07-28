@@ -451,13 +451,13 @@ local 2D meters. It must be a direct child of `<PlanetView>` and may contain
 | `Longitude` | double/var | Yes | Frame anchor longitude in degrees |
 | `HeightAboveTerrain` | double/var | No | Radial height above the reference sphere in meters. Defaults to 0. |
 | `Rotation` | double/var | No | Rotation in degrees. Defaults to 0. |
-| `Scale` | double/var | No | Uniform scale applied to local coordinates and line widths. Defaults to 1. |
+| `Scale` | double/var | No | Uniform scale applied to local coordinates. Defaults to 1. |
 
 Within the container, vertex `X` and `Y` are local meters: `+X` points east
-and `+Y` points north at the anchor. `LineWidth` is expressed in the same local
-units and scales with the container. Scale is applied before rotation, and
-positive rotation turns east toward north. Container nesting is not supported.
-The container height applies to the entire shape; child `CRS` and
+and `+Y` points north at the anchor. `LineWidth` remains in logical display
+pixels and does not scale with the container. Scale is applied before rotation,
+and positive rotation turns east toward north. Container nesting is not
+supported. The container height applies to the entire shape; child `CRS` and
 `HeightAboveTerrain` attributes and vertex `Latitude`, `Longitude`, `Altitude`,
 and `Z` attributes are invalid in this local scope.
 
@@ -493,7 +493,11 @@ if (dc_draw->planet_container_push_geodetic(
     dc_draw->planet_polygon_local(
         draw_ctx, doghouse,
         (uint32_t)(sizeof(doghouse) / sizeof(doghouse[0])),
-        line_width, line_color);
+        (DcStroke){
+            .color = line_color,
+            .width = line_width,
+            .pattern = 0xAA,
+        });
     dc_draw->planet_container_pop(draw_ctx);
 }
 ```
@@ -508,19 +512,19 @@ bool (*planet_container_push_geodetic)(
 void (*planet_container_pop)(DcDrawContext *draw_ctx);
 void (*planet_line_local)(
     DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
-    float line_width, DcVec4 color);
+    DcStroke stroke);
 void (*planet_polygon_local)(
     DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
-    float line_width, DcVec4 color);
+    DcStroke stroke);
 void (*planet_convex_polygon_filled_local)(
     DcDrawContext *draw_ctx, const DcVec2 *points, uint32_t point_count,
     DcVec4 color);
 ```
 
 Scale must be initialized explicitly; a zero-initialized transform collapses
-every point to the anchor and scales line width to zero. The frame is bound to
-the supplied draw view and lives only for the current draw context. Pop should
-only be called after a successful push.
+every point to the anchor. The frame is bound to the supplied draw view and
+lives only for the current draw context. Pop should only be called after a
+successful push.
 
 Each transformed point is mapped onto the sphere independently:
 
@@ -536,19 +540,19 @@ Local `(0, 0)` maps directly to the anchor. The mapping crosses longitude
 boundaries naturally, but remains a local chart; shapes should stay well below
 antipodal scale.
 
-The initial implementation maps only the authored vertices to the reference
-sphere and then uses the existing line and polygon renderer unchanged. Lines
-and outlines remain straight chords, and convex fills remain triangle fans;
-there is no automatic subdivision or terrain elevation sampling. Filled
-polygons must be convex with vertices in perimeter order. Add authored vertices
-when a smoother large curve is needed.
+Only the authored vertices are mapped to the reference sphere. Lines and
+outlines remain straight chords, and convex fills remain triangle fans; there
+is no automatic subdivision or terrain elevation sampling. Filled polygons
+must be convex with vertices in perimeter order. Add authored vertices when a
+smoother large curve is needed.
 
 ### `<PlanetLine>`
 
 Draws a line strip on the terrain surface.
 
 ```xml
-<PlanetLine HeightAboveTerrain="1000" LineColor="1 0 0 1" LineWidth="2000">
+<PlanetLine HeightAboveTerrain="1000" LineColor="1 0 0 1"
+    LineWidth="2" LinePattern="0xAA">
     <Vertex Latitude="28.6" Longitude="-80.6"/>
     <Vertex Latitude="32.3" Longitude="-64.8"/>
 </PlanetLine>
@@ -559,7 +563,8 @@ Draws a line strip on the terrain surface.
 | `CRS` | enum | No | Coordinate reference system for child vertices. Inherits from `<PlanetView>`. |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `LineColor` | color | No | Line color (RGBA) |
-| `LineWidth` | double/var | No | Line width in meters |
+| `LineWidth` | double/var | No | Line width in logical display pixels. Defaults to 1. |
+| `LinePattern` | integer/var | No | 8-bit dash pattern, such as `0xAA` dashed. Defaults to solid. |
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
@@ -571,7 +576,7 @@ Records and draws a live breadcrumb trail from input position variables. The tra
 <PlanetBreadcrumbs Latitude="@VehicleLat" Longitude="@VehicleLon"
     HeightAboveTerrain="500" PointSpacing="25" MaxPoints="2000"
     Clear="@ClearTrail" Enabled="@ShowTrail"
-    LineColor="1 0 0 0.5" LineWidth="200"/>
+    LineColor="1 0 0 0.5" LineWidth="2" LinePattern="0xF0"/>
 ```
 
 | Attribute | Type | Required | Description |
@@ -587,7 +592,8 @@ Records and draws a live breadcrumb trail from input position variables. The tra
 | `Clear` | integer/var | No | Edge-triggered: changing this value clears the stored trail |
 | `Enabled` | boolean/var | No | Enables sampling and drawing. Defaults to true. |
 | `LineColor` | color | No | Trail color (RGBA). Defaults to semi-transparent red. |
-| `LineWidth` | double/var | No | Line width in meters |
+| `LineWidth` | double/var | No | Line width in logical display pixels |
+| `LinePattern` | integer/var | No | 8-bit dash pattern, such as `0xF0` dashed. Defaults to solid. |
 
 Logic breadcrumb update calls return `true` when the supplied position is
 appended and `false` when it is invalid or rejected by the configured point
@@ -599,7 +605,7 @@ Draws an ellipse on the terrain surface at a geographic location.
 
 ```xml
 <PlanetEllipse Latitude="@Lat" Longitude="@Lon" Radius="5000"
-    HeightAboveTerrain="500" FillColor="1 0 0 0.3" LineColor="1 0 0 1" LineWidth="200"/>
+    HeightAboveTerrain="500" FillColor="1 0 0 0.3" LineColor="1 0 0 1" LineWidth="2"/>
 ```
 
 | Attribute | Type | Required | Description |
@@ -616,7 +622,7 @@ Draws an ellipse on the terrain surface at a geographic location.
 | `Segments` | integer/var | No | Number of segments for the ellipse approximation |
 | `FillColor` | color | No | Fill color (RGBA) |
 | `LineColor` | color | No | Line color (RGBA) |
-| `LineWidth` | double/var | No | Line width in meters |
+| `LineWidth` | double/var | No | Line width in logical display pixels |
 
 After applying `RadiusX` and `RadiusY` overrides, both effective radii must be
 greater than zero; otherwise the ellipse is not drawn. Logic calls likewise
@@ -680,7 +686,8 @@ Draws a filled or outlined polygon on the terrain surface.
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Fill color (RGBA) |
 | `LineColor` | color | No | Line color (RGBA) |
-| `LineWidth` | double/var | No | Line width in meters |
+| `LineWidth` | double/var | No | Line width in logical display pixels. Defaults to 1. |
+| `LinePattern` | integer/var | No | 8-bit dash pattern for the outline, such as `0xAA` dashed. Defaults to solid. |
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
@@ -693,6 +700,13 @@ while `planet_convex_polygon_filled_geodetic()` and
 `planet_convex_polygon_filled_cartesian()` draw convex fills. Call the fill
 first and the outline second to render both like an XML element with
 `FillColor` and `LineColor`.
+
+The six Logic line and polygon outline calls—local, geodetic, and
+cartesian—take a `DcStroke`. Its width uses logical display pixels and its
+8-bit pattern matches `LinePattern`. One pattern cycle spans 20 logical pixels
+independently of line width. Bits are read least-significant first; `0` and
+`0xFF` are solid. Pattern phase remains continuous along each line and around
+each polygon.
 
 ### `<Vertex>`
 
@@ -713,7 +727,7 @@ Loads a GeoJSON file and renders its features (points, lines, polygons) on the t
 
 ```xml
 <PlanetGeoJSON File="assets/features.geojson" HeightAboveTerrain="1000"
-    LineColor="1 1 0 1" LineWidth="2000" FillColor="1 1 0 0.2"/>
+    LineColor="1 1 0 1" LineWidth="2" FillColor="1 1 0 0.2"/>
 ```
 
 | Attribute | Type | Required | Description |
@@ -722,12 +736,14 @@ Loads a GeoJSON file and renders its features (points, lines, polygons) on the t
 | `CRS` | enum | No | Only `#_planet_crs_geodetic_` is currently supported for GeoJSON |
 | `HeightAboveTerrain` | double/var | No | Fallback altitude in meters for positions without a third coordinate |
 | `LineColor` | color | No | Default line color for features without simplestyle properties |
-| `LineWidth` | double/var | No | Default line width in meters |
+| `LineWidth` | double/var | No | Default line and polygon outline width in logical display pixels |
 | `FillColor` | color | No | Default fill color for polygon features |
 
 An optional third coordinate supplies each position's altitude. Positions
 without an altitude use `HeightAboveTerrain`, or
 `DcPlanetGeojsonStyle.height_above_terrain` when drawn through Logic.
+Point markers use a fixed 1000-meter radius; `LineWidth` and simplestyle
+`stroke-width` apply only to line and polygon outlines.
 
 Logic loads the file once as an app-owned resource, then draws it into any
 compatible planet view:
@@ -741,7 +757,7 @@ style.flags = DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR |
               DC_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR |
               DC_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH;
 style.height_above_terrain = 1000.0;
-style.line_width = 2000.0f;
+style.line_width = 2.0f;
 style.line_color = (DcVec4){.r = 1, .g = 1, .a = 1};
 style.fill_color = (DcVec4){.r = 1, .g = 1, .a = 0.2f};
 
@@ -749,14 +765,13 @@ dc_draw->planet_geojson(draw_ctx, view, features, style);
 ```
 
 Simplestyle values in the file override flagged fallback values. With no
-fallback flags, the XML-compatible defaults apply: points are white 1000-meter
-spheres, lines are white at the default width, and unstyled polygons are not
-drawn. GeoJSON resources remain valid until app shutdown.
+fallback flags, the XML-compatible defaults apply: points are white spheres
+with a 1000-meter radius, lines are white at the default width, and unstyled
+polygons are not drawn. GeoJSON resources remain valid until app shutdown.
 
-Planet outlines do not use the 2D line-width compatibility factor. Outside a
-`<PlanetContainer>`, pass the intended world-space-meter `LineWidth` or
-`line_width` directly for XML, Logic, and GeoJSON drawing. Inside a
-`<PlanetContainer>`, line widths remain local units scaled by the container.
+Planet outline widths use logical display pixels. They remain visually stable
+as the camera zooms and are not affected by `<PlanetContainer>` scale. Planet
+outlines also do not use the 2D line-width compatibility factor.
 
 Logic APIs use `DcVec3d` for absolute geodetic or cartesian planet positions
 and point arrays. This includes cartesian cameras, texture centers, overlays,
