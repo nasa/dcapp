@@ -289,6 +289,18 @@ edge and `active()` remains true while that captured press is held.
 left the target. `clicked()` reports a completed activation only when that
 release occurs while the pointer is over the target.
 
+Target registration and ID-based event queries are pipelined by one frame.
+Calls to `rect()`, `circle()`, `ellipse()`, `polygon()`, and their `_ex`
+variants contribute to the current frame's hit test. During that same draw
+callback, `hovered()`, `pressed()`, `released()`, `active()`, and `clicked()`
+still report the target state committed after the preceding frame. The current
+registrations become visible to those queries on the next frame, so register
+interactive targets every frame with stable IDs.
+
+`down()` and `get_state()` are not delayed with the target queries. They expose
+the current frame's mouse input; `get_state()` reports its position in the
+current draw context's local space.
+
 See the DrawFunction samples for concrete API usage.
 
 Planet overlays are drawn through `dc_draw`, including geodetic/cartesian

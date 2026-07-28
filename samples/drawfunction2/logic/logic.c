@@ -437,8 +437,8 @@ static void draw_example_34_mouse_polygon(DcDrawContext *draw_ctx, const DcDrawF
     dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "polygon hit", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
 }
 
-// 35: Event queries are ID based. Registration happens as the frame is drawn;
-// event queries report the last resolved mouse state for that ID.
+// 35: Registration contributes to this frame's hit test. Target event queries
+// report the state committed after the previous frame's hit test.
 static void draw_example_35_mouse_events(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     const char *id = "drawfunction2_mouse_events";

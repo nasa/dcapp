@@ -184,7 +184,7 @@ struct DcAppMouseApi {
     void (*ellipse_ex)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 center, DcAppVec2 radius, DcAppPlacement placement);
     void (*polygon_ex)(DcAppDrawContext *draw_ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
 
-    // Event queries.
+    // Target events resolved after the previous frame's hit registration.
     bool (*hovered)(DcAppDrawContext *draw_ctx, const char *id);
     bool (*pressed)(DcAppDrawContext *draw_ctx, const char *id);
     // Captured press ended, possibly outside the target.
@@ -193,7 +193,7 @@ struct DcAppMouseApi {
     // Captured press ended while the pointer was over the target.
     bool (*clicked)(DcAppDrawContext *draw_ctx, const char *id);
 
-    // Current mouse state in the draw context's local space.
+    // Current-frame mouse input in the draw context's local space.
     bool (*down)(DcAppDrawContext *draw_ctx);
     const DcAppMouse *(*get_state)(DcAppDrawContext *draw_ctx);
 };

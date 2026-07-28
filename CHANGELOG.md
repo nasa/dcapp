@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.177.0] - 2026-07-27
+--------------------
+
+### Changed
+- Documented that ID-based Logic mouse target queries use the previous frame's
+  resolved hit state, while global mouse input reflects the current frame.
+
+
 [2.176.0] - 2026-07-27
 --------------------
 

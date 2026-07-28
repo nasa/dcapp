@@ -556,7 +556,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    void (*ellipse_ex)(DcDrawContext *draw_ctx, const char *id, DcVec2 center, DcVec2 radius, DcPlacement placement);");
     fprintf(file, "%s\n", "    void (*polygon_ex)(DcDrawContext *draw_ctx, const char *id, const DcVec2 *points, uint32_t point_count, DcVec2 position, DcPlacement placement);");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "    // Event queries.");
+    fprintf(file, "%s\n", "    // Target events resolved after the previous frame's hit registration.");
     fprintf(file, "%s\n", "    bool (*hovered)(DcDrawContext *draw_ctx, const char *id);");
     fprintf(file, "%s\n", "    bool (*pressed)(DcDrawContext *draw_ctx, const char *id);");
     fprintf(file, "%s\n", "    // Captured press ended, possibly outside the target.");
@@ -565,7 +565,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    // Captured press ended while the pointer was over the target.");
     fprintf(file, "%s\n", "    bool (*clicked)(DcDrawContext *draw_ctx, const char *id);");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "    // Current mouse state in the draw context's local space.");
+    fprintf(file, "%s\n", "    // Current-frame mouse input in the draw context's local space.");
     fprintf(file, "%s\n", "    bool (*down)(DcDrawContext *draw_ctx);");
     fprintf(file, "%s\n", "    const DcMouse *(*get_state)(DcDrawContext *draw_ctx);");
     fprintf(file, "%s\n", "} DcMouseApi;");
