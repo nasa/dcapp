@@ -7,6 +7,21 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Logic Planet Mesh-Cache Units
+
+#### Affected Code
+- Logic code that initializes `DcPlanetCreateInfo.mesh_cache_size`.
+
+#### Changed
+- Renamed `mesh_cache_size` to `mesh_cache_size_mb`.
+- The value is now the combined vertex/index cache size in MiB, matching the
+  XML `MeshCacheSize` attribute.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+- Replace byte expressions such as `128u * 1024u * 1024u` with the equivalent
+  MiB value, such as `128u`.
+
 ### 2026-07-27 - Breadcrumb Update Results
 
 #### Affected Code

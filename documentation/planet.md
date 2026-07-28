@@ -215,7 +215,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 | `LightDirectionX` | double/var | No | X component of the light direction vector. Default -1. Can be variable-driven. |
 | `LightDirectionY` | double/var | No | Y component of the light direction vector. Default -1. Can be variable-driven. |
 | `LightDirectionZ` | double/var | No | Z component of the light direction vector. Default -1. Can be variable-driven. |
-| `MeshCacheSize` | integer | No | Combined vertex/index cache size in MiB. Logic uses bytes in `DcPlanetCreateInfo.mesh_cache_size`. |
+| `MeshCacheSize` | integer | No | Combined vertex/index cache size in MiB. Logic uses the same unit in `DcPlanetCreateInfo.mesh_cache_size_mb`. |
 
 **Children:** `<PlanetData>`, `<PlanetTexture>`, `<PlanetShader>`
 

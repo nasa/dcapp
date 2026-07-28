@@ -84,8 +84,6 @@ static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx,
 static bool _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
 static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b);
 
-#define DC_APP_PLANET_MIN_MESH_CACHE_SIZE (1024u * 1024u)
-
 void dc_app_planet_init(plApiRegistryI *api_registry) {
     _ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
     _ext_starter = pl_get_api_latest(api_registry, plStarterI);
@@ -195,14 +193,15 @@ DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, Dc
     plPlanetInit planet_init = {0};
     planet_init.dRadius = radius;
 
-    uint32_t mesh_cache_size = info.mesh_cache_size;
-    if (mesh_cache_size > 0 && mesh_cache_size < DC_APP_PLANET_MIN_MESH_CACHE_SIZE) {
-        DC_LOG_WARN("Planet", "mesh_cache_size is %u bytes; using renderer default instead", mesh_cache_size);
-        mesh_cache_size = 0;
+    uint32_t mesh_cache_size_mb = info.mesh_cache_size_mb;
+    if (mesh_cache_size_mb > UINT32_MAX / (1024u * 1024u / 2u)) {
+        DC_LOG_WARN("Planet", "mesh_cache_size_mb is %u MiB; using renderer default instead", mesh_cache_size_mb);
+        mesh_cache_size_mb = 0;
     }
-    if (mesh_cache_size > 0) {
-        planet_init.uVertexBufferSize = mesh_cache_size / 2;
-        planet_init.uIndexBufferSize  = mesh_cache_size / 2;
+    if (mesh_cache_size_mb > 0) {
+        uint32_t buffer_size = mesh_cache_size_mb * (1024u * 1024u / 2u);
+        planet_init.uVertexBufferSize = buffer_size;
+        planet_init.uIndexBufferSize  = buffer_size;
     }
 
     // delegates renderer and streaming allocation to pl_planet_ext.

@@ -131,7 +131,7 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
 
     logic_planet = dc_planet->create_planet_with_id(app_ctx, "LogicMoon", (DcPlanetCreateInfo){
         .data_path = data_path,
-        .mesh_cache_size = 128u * 1024u * 1024u,
+        .mesh_cache_size_mb = 128u,
     });
     logic_geojson = dc_planet->load_geojson(app_ctx, "assets/geojson_test.geojson");
     update_planet_textures(app_ctx, TextureRefresh ? *TextureRefresh : 0);

@@ -411,7 +411,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef struct DcPlanetCreateInfo {");
     fprintf(file, "%s\n", "    const char *data_path;");
-    fprintf(file, "%s\n", "    uint32_t mesh_cache_size; // bytes, 0 uses renderer default.");
+    fprintf(file, "%s\n", "    uint32_t mesh_cache_size_mb; // combined cache size in MiB, 0 uses renderer default.");
     fprintf(file, "%s\n", "} DcPlanetCreateInfo;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef struct DcPlanetBreadcrumbsPoints {");

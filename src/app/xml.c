@@ -3330,10 +3330,10 @@ static DcAppNodeIndex _process_xml_node_planet(DcAppXmlContext *xml_ctx, xmlNode
         xmlFree(raw_ldz);
     }
 
-    // mesh cache size (MB, split evenly between vertex and index buffers)
+    // combined cache size in MiB, split evenly between vertex and index buffers.
     xmlChar *raw_mesh_cache = xmlGetProp(xml_node, BAD_CAST "MeshCacheSize");
     if (raw_mesh_cache) {
-        def.mesh_cache_size = (uint32_t)(atof((const char *)raw_mesh_cache) * 1048576);
+        def.mesh_cache_size_mb = (uint32_t)atof((const char *)raw_mesh_cache);
         xmlFree(raw_mesh_cache);
     }
 

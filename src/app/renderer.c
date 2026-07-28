@@ -270,7 +270,7 @@ void dc_app_renderer_initialize_planets(DcAppRenderer *renderer) {
 
         DcAppPlanetCreateInfo info = {
             .data_path = json_path,
-            .mesh_cache_size = def->mesh_cache_size,
+            .mesh_cache_size_mb = def->mesh_cache_size_mb,
         };
         def->handle = dc_app_planet_create_planet_with_id(renderer->planets, def->name, info);
         if (!def->handle) {

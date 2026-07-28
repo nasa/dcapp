@@ -439,7 +439,7 @@ typedef struct DcAppPlanetDefinition {
     DcAppPlanetCrs crs;
 
     // VRAM
-    uint32_t mesh_cache_size; // bytes, 0 = default (256 MB each)
+    uint32_t mesh_cache_size_mb; // combined cache size in MiB, 0 = renderer default
 
     // runtime
     uint8_t index; // 1-based index into sb_planets

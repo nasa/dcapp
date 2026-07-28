@@ -50,7 +50,7 @@ struct DcAppPlanetGeojsonStyle {
 
 struct DcAppPlanetCreateInfo {
     const char *data_path;
-    uint32_t mesh_cache_size; // bytes, 0 = renderer default
+    uint32_t mesh_cache_size_mb; // combined cache size in MiB, 0 = renderer default
 };
 
 struct DcAppPlanetApi {

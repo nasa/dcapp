@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.173.0] - 2026-07-27
+--------------------
+
+### Changed
+- Changed Logic planet mesh-cache sizes from raw bytes to MiB, matching
+  `MeshCacheSize` in XML.
+
+
 [2.172.0] - 2026-07-27
 --------------------
 
