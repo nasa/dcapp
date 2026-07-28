@@ -10,6 +10,8 @@
 #define PL_MATH_INCLUDE_FUNCTIONS
 #include "pl_math.h"
 
+#include "dc_draw_backend_ext.h"
+#include "dc_draw_ext.h"
 #include "pl_camera_ext.h"
 #include "pl_graphics_ext.h"
 #include "pl_planet_ext.h"
@@ -89,6 +91,7 @@ typedef struct AppData {
     bool planet_initialized;
     bool resource_initialized;
     bool shader_initialized;
+    bool draw_initialized;
 } AppData;
 
 static const plIOI *_ext_ioi = NULL;
@@ -101,6 +104,7 @@ static const plCameraI *_ext_camera = NULL;
 static const plShaderI *_ext_shader = NULL;
 static const plVfsI *_ext_vfs = NULL;
 static const plMemoryI *_ext_memory = NULL;
+static const dcDrawBackendI *_ext_dc_draw_backend = NULL;
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app);
 PL_EXPORT void pl_app_shutdown(AppData *app);
@@ -127,6 +131,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
         _ext_shader = pl_get_api_latest(api_registry, plShaderI);
         _ext_vfs = pl_get_api_latest(api_registry, plVfsI);
         _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
+        _ext_dc_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
         return app;
     }
 
@@ -134,6 +139,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
     const plExtensionRegistryI *registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
     registry->load("pl_unity_ext", NULL, NULL, true);
     registry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
+    registry->load("dc_draw_ext", NULL, NULL, true);
+    registry->load("dc_draw_backend_ext", NULL, NULL, true);
     registry->load("pl_planet_processor_ext", NULL, NULL, true);
     registry->load("pl_planet_ext", NULL, NULL, true);
 
@@ -148,6 +155,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
     _ext_shader = pl_get_api_latest(api_registry, plShaderI);
     _ext_vfs = pl_get_api_latest(api_registry, plVfsI);
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_dc_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
 
     app = (AppData *)PL_ALLOC(sizeof(AppData));
     if (!app)
@@ -197,8 +205,15 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
 
     _ext_starter->finalize();
 
-    // Planet rendering depends on resource and planet extension state.
+    // Planet overlays use dcDraw inside the planet's offscreen render pass.
     plDevice *device = _ext_starter->get_device();
+    const dcDrawI *draw = pl_get_api_latest(api_registry, dcDrawI);
+    dcDrawInit draw_init = {0};
+    draw->initialize(&draw_init);
+    _ext_dc_draw_backend->initialize(device);
+    app->draw_initialized = true;
+
+    // Planet rendering depends on resource and planet extension state.
     plResourceManagerInit resource_init = {.ptDevice = device};
     _ext_resource->initialize(resource_init);
     app->resource_initialized = true;
@@ -268,6 +283,8 @@ PL_EXPORT void pl_app_update(AppData *app) {
 
     if (!_ext_starter->begin_frame())
         return;
+
+    _ext_dc_draw_backend->new_frame();
 
     plCamera camera = {0};
     double radius = app->process_info.tGeodeticModel.sphere.dRadius;
@@ -395,6 +412,8 @@ PL_EXPORT void pl_app_shutdown(AppData *app) {
 
     if (app->planet_initialized && _ext_planet)
         _ext_planet->cleanup();
+    if (app->draw_initialized && _ext_dc_draw_backend)
+        _ext_dc_draw_backend->cleanup();
     if (app->resource_initialized && _ext_resource)
         _ext_resource->cleanup();
     if (app->shader_initialized && _ext_shader)

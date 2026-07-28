@@ -88,6 +88,22 @@ with pl.project("game"):
     # [SECTION] extensions
     #-----------------------------------------------------------------------------
 
+    for extension_name in ["dc_draw_ext", "dc_draw_backend_ext"]:
+        with pl.target(extension_name, pl.TargetType.DYNAMIC_LIBRARY, True):
+            pl.add_source_files(f"../../extensions/{extension_name}.c")
+            pl.set_output_binary(extension_name)
+
+            for config_name in ["debug", "release"]:
+                with pl.configuration(config_name):
+                    for platform_name, compiler_name in [
+                        ("Windows", "msvc"),
+                        ("Linux", "gcc"),
+                        ("Darwin", "clang"),
+                    ]:
+                        with pl.platform(platform_name):
+                            with pl.compiler(compiler_name):
+                                pass
+
     with pl.target("pl_planet_ext", pl.TargetType.DYNAMIC_LIBRARY, True):
 
         pl.add_source_files("../../extensions/pl_planet_ext.c")

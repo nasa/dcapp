@@ -64,9 +64,12 @@ Index:
 #include "pl_starter_ext.h"
 #include "pl_shader_ext.h"
 #include "pl_screen_log_ext.h"
-#include "pl_draw_ext.h"
 #include "pl_vfs_ext.h"
 #include "pl_stats_ext.h"
+
+// dcapp extensions
+#include "dc_draw_ext.h"
+#include "dc_draw_backend_ext.h"
 
 // unstable extensions
 #include "pl_collision_ext.h"
@@ -122,7 +125,8 @@ static const plShaderI*           gptShader           = NULL;
 static const plStarterI*          gptStarter          = NULL;
 static const plCollisionI*        gptCollision        = NULL;
 static const plScreenLogI*        gptScreenLog        = NULL;
-static const plDrawI*             gptDraw             = NULL;
+static const dcDrawI*             gptDraw             = NULL;
+static const dcDrawBackendI*      gptDrawBackend      = NULL;
 static const plPlanetProcessorI*  gptTerrainProcessor = NULL;
 static const plGPUAllocatorsI*    gptGpuAllocators    = NULL;
 static const plImageOpsI*         gptImageOps         = NULL;
@@ -209,7 +213,7 @@ typedef struct _plPlanetView
     plBindGroupHandle  tOutputTextureHandle;
     uint32_t           uOutputWidth;
     uint32_t           uOutputHeight;
-    plDrawList3D*      pt3dDrawlist;
+    dcDrawList3D*      pt3dDrawlist;
 
     // shaders
     plShaderHandle tShader;
@@ -630,7 +634,7 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
         .pcDebugName = "view output"
     };
     ptView->tOutputTexture = pl__planet_create_texture(ptCmdBuffer, &tOutputTextureDesc, "view output");
-    ptView->tOutputTextureHandle = gptDraw->create_bind_group_for_texture(ptView->tOutputTexture);
+    ptView->tOutputTextureHandle = gptDrawBackend->create_bind_group_for_texture(ptView->tOutputTexture);
 
     // depth texture
     const plTextureDesc tDepthTextureDesc = {
@@ -699,6 +703,8 @@ void
 pl_cleanup_planet_view(plPlanetView* ptView)
 {
     plDevice* ptDevice = gptCtx->ptDevice;
+    gptDraw->return_3d_drawlist(ptView->pt3dDrawlist);
+    gptGfx->destroy_bind_group(ptDevice, ptView->tOutputTextureHandle);
     gptGfx->destroy_render_pass(ptDevice, ptView->tRenderPass);
     gptGfx->destroy_texture(ptDevice, ptView->tOutputTexture);
     gptGfx->destroy_texture(ptDevice, ptView->tOutputTextureDepth);
@@ -752,16 +758,24 @@ pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuff
     if(ptView->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
     {
         const plMat4 tOrigin = pl_identity_mat4();
-        gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, (float)ptView->ptPlanet->dRadius * 1.2f, (plDrawLineOptions){0, 100000000.0f});
+        gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, (float)ptView->ptPlanet->dRadius * 1.2f,
+            (dcDrawLineOptions){.fThickness = 100000000.0f});
     }
 
-    gptDraw->submit_3d_drawlist(ptView->pt3dDrawlist,
+    const dcDrawSubmitInfo tSubmitInfo = {
+        .tLogicalDimensions = {
+            (float)ptView->uOutputWidth,
+            (float)ptView->uOutputHeight,
+        },
+        .uFramebufferWidth = ptView->uOutputWidth,
+        .uFramebufferHeight = ptView->uOutputHeight,
+        .uMSAASampleCount = PL_SAMPLE_COUNT_1,
+    };
+    gptDrawBackend->submit_3d_drawlist(ptView->pt3dDrawlist,
         ptEncoder,
-        (float)ptView->uOutputWidth,
-        (float)ptView->uOutputHeight,
+        tSubmitInfo,
         &tMVP,
-        PL_DRAW_FLAG_DEPTH_TEST | PL_DRAW_FLAG_DEPTH_WRITE | PL_DRAW_FLAG_REVERSE_Z_DEPTH,
-        PL_SAMPLE_COUNT_1);
+        DC_DRAW_FLAG_DEPTH_TEST | DC_DRAW_FLAG_DEPTH_WRITE | DC_DRAW_FLAG_REVERSE_Z_DEPTH);
 
     gptGfx->end_render_pass(ptEncoder);
 }
@@ -1282,7 +1296,7 @@ pl_draw_sphere(plPlanetView* ptPlanet, float fLongitude, float fLatitude, float 
         }
     };
 
-    gptDraw->add_3d_sphere_filled(ptPlanet->pt3dDrawlist, tSphere, 0, 0, (plDrawSolidOptions){.uColor = uColor});
+    gptDraw->add_3d_sphere_filled(ptPlanet->pt3dDrawlist, tSphere, 0, 0, (dcDrawSolidOptions){.uColor = uColor});
 }
 
 void
@@ -1290,7 +1304,7 @@ pl_draw_polygon(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float f
 {
     for(uint32_t i = 0; i < uCount; i++)
         gptDraw->add_3d_line(ptView->pt3dDrawlist, atPoints[i], atPoints[(i + 1) % uCount],
-            (plDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+            (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
 }
 
 void
@@ -1298,7 +1312,7 @@ pl_draw_line(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLin
 {
     for(uint32_t i = 0; i + 1 < uCount; i++)
         gptDraw->add_3d_line(ptView->pt3dDrawlist, atPoints[i], atPoints[i + 1],
-            (plDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+            (dcDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
 }
 
 void
@@ -1306,7 +1320,7 @@ pl_draw_convex_polygon_filled(plPlanetView* ptView, plVec3* atPoints, uint32_t u
 {
     for(uint32_t i = 1; i + 1 < uCount; i++)
         gptDraw->add_3d_triangle_filled(ptView->pt3dDrawlist, atPoints[0], atPoints[i], atPoints[i + 1],
-            (plDrawSolidOptions){.uColor = uColor});
+            (dcDrawSolidOptions){.uColor = uColor});
 }
 
 void
@@ -1350,8 +1364,15 @@ pl_draw_text(plPlanetView* ptView, plCamera* ptCamera, plVec3 tPosition, const c
     if(fPixelSize > 500.0f)
         fPixelSize = 500.0f;
 
-    plDrawTextOptions tOptions = {0};
-    tOptions.ptFont = gptStarter->get_default_font();
+    dcFontAtlas* ptFontAtlas = gptDraw->get_current_font_atlas();
+    if(ptFontAtlas == NULL)
+        return;
+    dcFont* ptFont = gptDraw->get_first_font(ptFontAtlas);
+    if(ptFont == NULL)
+        return;
+
+    dcDrawTextOptions tOptions = {0};
+    tOptions.ptFont = ptFont;
     tOptions.fSize  = fPixelSize;
     tOptions.uColor = uColor;
 
@@ -1961,7 +1982,7 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
     if(!pl__sat_visibility_test(ptCamera, &tAABB))
         return;
 
-    // gptDraw->add_3d_aabb(ptPlanetView->pt3dDrawlist, tAABB.tMin, tAABB.tMax, (plDrawLineOptions){.fThickness = 1000.0f, .uColor = gauColors[ptChunk->uLevel % 16]});
+    // gptDraw->add_3d_aabb(ptPlanetView->pt3dDrawlist, tAABB.tMin, tAABB.tMax, (dcDrawLineOptions){.fThickness = 1000.0f, .uColor = gauColors[ptChunk->uLevel % 16]});
 
     plVec3 tClosestPoint = gptCollision->point_closest_point_aabb(ptCamera->tPos, tAABB);
     float fDistance = fabsf(pl_length_vec3(pl_sub_vec3(tClosestPoint, ptCamera->tPos)));
@@ -2560,7 +2581,8 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     gptShader           = pl_get_api_latest(ptApiRegistry, plShaderI);
     gptCollision        = pl_get_api_latest(ptApiRegistry, plCollisionI);
     gptScreenLog        = pl_get_api_latest(ptApiRegistry, plScreenLogI);
-    gptDraw             = pl_get_api_latest(ptApiRegistry, plDrawI);
+    gptDraw             = pl_get_api_latest(ptApiRegistry, dcDrawI);
+    gptDrawBackend      = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
     gptTerrainProcessor = pl_get_api_latest(ptApiRegistry, plPlanetProcessorI);
     gptGpuAllocators    = pl_get_api_latest(ptApiRegistry, plGPUAllocatorsI);
     gptImageOps         = pl_get_api_latest(ptApiRegistry, plImageOpsI);

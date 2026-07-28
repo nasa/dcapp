@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.179.0] - 2026-07-28
+--------------------
+
+### Changed
+- Moved planet overlay primitives from PilotLight drawing to dcDraw while
+  retaining the planet's existing offscreen render pass and depth buffer.
+
+
 [2.178.0] - 2026-07-28
 --------------------
 

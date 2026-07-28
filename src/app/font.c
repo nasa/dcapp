@@ -88,7 +88,7 @@ DcAppFontContext *dc_app_font_context_create(void) {
 
     // NOTE: custom fonts added later in dc_app_font_build, atlas rebuilt there
 
-    // Add dcapp's Vera.ttf SDF font to pilotlight's font atlas (used by planet text rendering)
+    // Add dcapp's Vera.ttf SDF font to PilotLight's font atlas.
     plFontAtlas *pl_atlas = _ext_draw->get_current_font_atlas();
     const plFontRange pl_font_range = {
         .iFirstCodePoint = 0x0020,

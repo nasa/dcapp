@@ -23,7 +23,6 @@
 #include "pl_stats_ext.h"
 #include "pl_graphics_ext.h"
 #include "pl_tools_ext.h"
-#include "pl_draw_ext.h"
 #include "pl_ui_ext.h"
 #include "pl_shader_ext.h"
 #include "pl_string_intern_ext.h"
@@ -44,6 +43,8 @@
 #include "pl_mesh_ext.h"
 
 // our extensions
+#include "dc_draw_ext.h"
+#include "dc_draw_backend_ext.h"
 #include "pl_planet_ext.h"
 #include "pl_planet_processor_ext.h"
 
@@ -60,7 +61,7 @@ const plWindowI*       gptWindows       = nullptr;
 const plStatsI*        gptStats         = nullptr;
 const plGraphicsI*     gptGfx           = nullptr;
 const plToolsI*        gptTools         = nullptr;
-const plDrawI*         gptDraw          = nullptr;
+const dcDrawBackendI*  gptDcDrawBackend = nullptr;
 const plUiI*           gptUI            = nullptr;
 const plIOI*           gptIO            = nullptr;
 const plShaderI*       gptShader        = nullptr;
@@ -181,6 +182,8 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     // load extensions
     // ptExtensionRegistry->add_path("../../pl-terrain/out");
     ptExtensionRegistry->load("pl_unity_ext", NULL, NULL, true);
+    ptExtensionRegistry->load("dc_draw_ext", NULL, NULL, true);
+    ptExtensionRegistry->load("dc_draw_backend_ext", NULL, NULL, true);
     ptExtensionRegistry->load("pl_planet_ext", NULL, NULL, true);
     ptExtensionRegistry->load("pl_planet_processor_ext", NULL, NULL, true);
     ptExtensionRegistry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
@@ -229,6 +232,11 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
 
     // wraps up (i.e. builds font atlas)
     gptStarter->finalize();
+
+    const dcDrawI* ptDcDraw = pl_get_api_latest(ptApiRegistry, dcDrawI);
+    dcDrawInit tDrawInit = {};
+    ptDcDraw->initialize(&tDrawInit);
+    gptDcDrawBackend->initialize(gptStarter->get_device());
 
     // create camera
     ptAppData->tCamera0 = {};
@@ -331,6 +339,7 @@ pl_app_shutdown(plAppData* ptAppData)
 
     gptPlanet->cleanup_planet(ptAppData->ptPlanet0);
     gptPlanet->cleanup();
+    gptDcDrawBackend->cleanup();
     gptResource->cleanup();
     gptDearImGui->cleanup();
     gptShader->cleanup();
@@ -363,6 +372,8 @@ pl_app_update(plAppData* ptAppData)
 
     if(!gptStarter->begin_frame())
         return;
+
+    gptDcDrawBackend->new_frame();
 
     gptDearImGui->new_frame(gptStarter->get_device(), gptStarter->get_render_pass());
 
@@ -608,7 +619,7 @@ pl__load_apis(plApiRegistryI* ptApiRegistry)
     gptStats           = pl_get_api_latest(ptApiRegistry, plStatsI);
     gptGfx             = pl_get_api_latest(ptApiRegistry, plGraphicsI);
     gptTools           = pl_get_api_latest(ptApiRegistry, plToolsI);
-    gptDraw            = pl_get_api_latest(ptApiRegistry, plDrawI);
+    gptDcDrawBackend   = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
     gptUI              = pl_get_api_latest(ptApiRegistry, plUiI);
     gptIO              = pl_get_api_latest(ptApiRegistry, plIOI);
     gptShader          = pl_get_api_latest(ptApiRegistry, plShaderI);

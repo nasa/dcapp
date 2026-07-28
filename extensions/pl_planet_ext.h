@@ -59,7 +59,6 @@ typedef struct _plPlanetProcessInfo plPlanetProcessInfo; // pl_planet_processor.
 typedef struct _plDevice            plDevice;            // pl_graphics_ext.h
 typedef struct _plRenderEncoder     plRenderEncoder;     // pl_graphics_ext.h
 typedef struct _plDynamicDataBlock  plDynamicDataBlock;  // pl_graphics_ext.h
-typedef struct _plDrawLayer2D       plDrawLayer2D;       // pl_draw_ext.h
 typedef struct _plCamera            plCamera;            // pl_camera_ext.h
 typedef struct _plCommandBuffer     plCommandBuffer;     // pl_graphics_ext.h
 typedef union  plBindGroupHandle    plBindGroupHandle;   // pl_graphics_ext.h
