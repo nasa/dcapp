@@ -103,6 +103,7 @@ static DcAppPlanetHandle _planet_create(DcAppContext *app_context, DcAppPlanetCr
 static DcAppPlanetHandle _planet_create_with_id(DcAppContext *app_context, const char *id, DcAppPlanetCreateInfo info);
 static bool _planet_set_texture_geodetic(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
 static bool _planet_set_texture_cartesian(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel);
+static bool _planet_set_texture_projected(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, double origin_x, double origin_y, float meters_per_pixel);
 static bool _planet_set_texture_geodetic_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
 static bool _planet_set_texture_cartesian_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3d position, float meters_per_pixel);
 static bool _planet_set_texture_projected_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);
@@ -126,6 +127,7 @@ static const DcAppPlanetApi _planet_api = {
     .create_planet_with_id        = _planet_create_with_id,
     .set_texture_geodetic         = _planet_set_texture_geodetic,
     .set_texture_cartesian        = _planet_set_texture_cartesian,
+    .set_texture_projected        = _planet_set_texture_projected,
     .set_texture_geodetic_slot    = _planet_set_texture_geodetic_slot,
     .set_texture_cartesian_slot   = _planet_set_texture_cartesian_slot,
     .set_texture_projected_slot   = _planet_set_texture_projected_slot,
@@ -572,6 +574,11 @@ static bool _planet_set_texture_geodetic(DcAppContext *app_context, DcAppPlanetH
 static bool _planet_set_texture_cartesian(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel) {
     _AppData *app_data = (_AppData *)app_context;
     return dc_app_planet_set_texture_cartesian(app_data ? app_data->planets : NULL, planet, path, position, meters_per_pixel);
+}
+
+static bool _planet_set_texture_projected(DcAppContext *app_context, DcAppPlanetHandle planet, const char *path, double origin_x, double origin_y, float meters_per_pixel) {
+    _AppData *app_data = (_AppData *)app_context;
+    return dc_app_planet_set_texture_projected_slot(app_data ? app_data->planets : NULL, planet, 0, path, origin_x, origin_y, meters_per_pixel);
 }
 
 static bool _planet_set_texture_geodetic_slot(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel) {

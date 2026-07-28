@@ -584,6 +584,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    DcPlanetHandle (*create_planet_with_id)(DcAppContext *app_ctx, const char *id, DcPlanetCreateInfo info);");
     fprintf(file, "%s\n", "    bool (*set_texture_geodetic)(DcAppContext *app_ctx, DcPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);");
     fprintf(file, "%s\n", "    bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcPlanetHandle planet, const char *path, DcVec3d position, float meters_per_pixel);");
+    fprintf(file, "%s\n", "    bool (*set_texture_projected)(DcAppContext *app_ctx, DcPlanetHandle planet, const char *path, double origin_x, double origin_y, float meters_per_pixel);");
     fprintf(file, "%s\n", "    bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);");
     fprintf(file, "%s\n", "    bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, DcVec3d position, float meters_per_pixel);");
     fprintf(file, "%s\n", "    bool (*set_texture_projected_slot)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);");

@@ -61,6 +61,7 @@ struct DcAppPlanetApi {
     DcAppPlanetHandle (*create_planet_with_id)(DcAppContext *app_ctx, const char *id, DcAppPlanetCreateInfo info);
     bool (*set_texture_geodetic)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
     bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel);
+    bool (*set_texture_projected)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, double origin_x, double origin_y, float meters_per_pixel);
     bool (*set_texture_geodetic_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double lat, double lon, float meters_per_pixel);
     bool (*set_texture_cartesian_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, DcAppVec3d position, float meters_per_pixel);
     bool (*set_texture_projected_slot)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);

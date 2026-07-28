@@ -7,6 +7,19 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-07-27 - Projected Texture Slot-Zero Setter
+
+#### Affected Code
+- Logic code that declares or copies the `DcPlanetApi` function table.
+
+#### Changed
+- Added `set_texture_projected()` alongside the existing geodetic and
+  cartesian slot-zero texture setters.
+- The new function delegates to `set_texture_projected_slot()` with slot `0`.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic modules.
+
 ### 2026-07-27 - Logic Planet Mesh-Cache Units
 
 #### Affected Code

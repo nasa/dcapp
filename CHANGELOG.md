@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.174.0] - 2026-07-27
+--------------------
+
+### Added
+- Added `set_texture_projected()` as the slot-zero counterpart to
+  `set_texture_projected_slot()` in the Logic planet API.
+
+
 [2.173.0] - 2026-07-27
 --------------------
 

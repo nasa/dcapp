@@ -274,12 +274,12 @@ dc_planet->clear_texture(planet, 3);
 
 `set_texture_cartesian_slot()` provides the cartesian equivalent, while
 `set_texture_projected_slot()` accepts the same projected-meter `OriginX` and
-`OriginY` coordinates as XML. The original `set_texture_geodetic()` and
-`set_texture_cartesian()` functions remain compatible and target slot 0. Valid
-slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`. Texture setters
-clear the selected slot before attempting a replacement, once the planet and
-slot are known to be valid. They return `false` when the replacement cannot be
-resolved, validated, or decoded.
+`OriginY` coordinates as XML. The corresponding `set_texture_geodetic()`,
+`set_texture_cartesian()`, and `set_texture_projected()` functions target slot
+0. Valid slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`.
+Texture setters clear the selected slot before attempting a replacement, once
+the planet and slot are known to be valid. They return `false` when the
+replacement cannot be resolved, validated, or decoded.
 
 ### `<PlanetShader>`
 
