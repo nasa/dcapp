@@ -773,10 +773,9 @@ static bool _load_planet_data(AppData *app) {
             plVec3d geodetic_in = {lat, lon, 0.0};
             plVec2d polar_out;
             if (legacy_projected_origin) {
-                // Compatibility path for old lat/lon tile metadata. New metadata
-                // should provide originX/originY directly in projected CRS meters.
+                // The mirrored-longitude helper already reproduces the original
+                // legacy tile convention; the user-overlay Y flip does not apply here.
                 dc_geo_user_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
-                polar_out.y = -polar_out.y;
             } else {
                 dc_geo_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
             }
