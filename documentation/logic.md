@@ -332,6 +332,58 @@ cl /LD logic\logic.c /Fe:logic\logic.dll
 The generated `dcapp.h` declarations export the lifecycle callbacks and all
 callbacks named by XML `Function` and `DrawFunction` elements.
 
+### Submodule Make Integration
+
+When dcapp is a submodule, its top-level `Makefile` provides stable target names
+on macOS, Linux, and Windows:
+
+```bash
+make build
+make genheader XML=/absolute/path/to/display.xml
+make validate XML=/absolute/path/to/display.xml
+make help
+```
+
+A parent Makefile can depend on dcapp's successful-build stamp. The stamp is
+checked on every parent build, but its timestamp changes only when dcapp
+actually rebuilds:
+
+```make
+DCAPP_DIR := external/dcapp
+DCAPP_CONFIG ?= release
+
+DISPLAY_XML := displays/display.xml
+XML_FILES := $(DISPLAY_XML) displays/includes/common.xml
+LOGIC_SOURCES := logic/logic.c
+DCAPP_HEADER := logic/dcapp.h
+LOGIC_OUTPUT := logic/logic.so
+
+DCAPP_BUILD_STAMP := $(shell \
+	$(MAKE) --no-print-directory -s -C "$(DCAPP_DIR)" \
+	print-build-stamp CONFIG=$(DCAPP_CONFIG))
+
+.PHONY: FORCE
+FORCE:
+
+$(DCAPP_BUILD_STAMP): FORCE
+	+$(MAKE) -C "$(DCAPP_DIR)" build CONFIG=$(DCAPP_CONFIG)
+
+$(DCAPP_HEADER): $(XML_FILES) $(DCAPP_BUILD_STAMP)
+	+$(MAKE) -C "$(DCAPP_DIR)" genheader \
+		CONFIG=$(DCAPP_CONFIG) XML="$(abspath $(DISPLAY_XML))"
+
+$(LOGIC_OUTPUT): $(LOGIC_SOURCES) $(XML_FILES) \
+                 $(DCAPP_HEADER) $(DCAPP_BUILD_STAMP)
+	$(CC) $(LOGIC_CFLAGS) $(LOGIC_SOURCES) \
+		$(LOGIC_LDFLAGS) -o $@
+```
+
+Keep the build stamp as a normal prerequisite, not an order-only prerequisite.
+The direct dependency from the logic library ensures it is relinked after a
+dcapp rebuild even if the regenerated header has identical contents. The
+`print-genheader`, `print-validator`, and `print-dcapp-library` targets report
+the corresponding platform-specific artifact paths when those are needed.
+
 ## Samples
 
 | Sample | Pattern |

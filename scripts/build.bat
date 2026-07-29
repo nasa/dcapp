@@ -46,6 +46,7 @@ set "PILOTLIGHT_OUT=%DCAPP_HOME%\pilotlight\out"
 set "PILOTLIGHT_STAMP=%PILOTLIGHT_OUT%\.dcapp-pilotlight-win32-%PILOTLIGHT_CONFIG%.stamp"
 set "DCAPP_STAMP=%PILOTLIGHT_OUT%\.dcapp-win32-%CONFIG%.stamp"
 set "DCAPP_BUILD_STAMP=%PILOTLIGHT_OUT%\.dcapp-build-win32-%CONFIG%.stamp"
+set "DCAPP_OUTPUT_STAMP=%PILOTLIGHT_OUT%\.dcapp-output-win32-%CONFIG%.stamp"
 set "DCAPP_HEAD="
 set "PILOTLIGHT_HEAD="
 set "DCAPP_DIRTY=0"
@@ -163,6 +164,9 @@ if "%BUILD_DCAPP%"=="1" (
 ) else (
     echo [3/3] Skipping dcapp samples; cached %CONFIG% build is current.
 )
+
+if "%BUILD_DCAPP%"=="1" >"%DCAPP_OUTPUT_STAMP%" echo %DATE% %TIME%
+if not exist "%DCAPP_OUTPUT_STAMP%" >"%DCAPP_OUTPUT_STAMP%" echo %DATE% %TIME%
 
 echo.
 echo ========================================

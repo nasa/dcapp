@@ -49,6 +49,7 @@ PILOTLIGHT_OUT="$DCAPP_HOME/pilotlight/out"
 PILOTLIGHT_STAMP="$PILOTLIGHT_OUT/.dcapp-pilotlight-${PLATFORM}-${PILOTLIGHT_CONFIG}.stamp"
 DCAPP_STAMP="$PILOTLIGHT_OUT/.dcapp-${PLATFORM}-${CONFIG}.stamp"
 DCAPP_BUILD_STAMP="$PILOTLIGHT_OUT/.dcapp-build-${PLATFORM}-${CONFIG}.stamp"
+DCAPP_OUTPUT_STAMP="$PILOTLIGHT_OUT/.dcapp-output-${PLATFORM}-${CONFIG}.stamp"
 DCAPP_HEAD="$(git -C "$DCAPP_HOME" rev-parse HEAD 2>/dev/null || true)"
 PILOTLIGHT_HEAD="$(git -C "$DCAPP_HOME/pilotlight" rev-parse HEAD 2>/dev/null || true)"
 DCAPP_DIRTY=0
@@ -179,6 +180,10 @@ fi
 echo ""
 echo "[4/4] Checking generated logic API..."
 bash "$DCAPP_HOME/scripts/check-logic-api.sh"
+
+if [[ "$BUILD_DCAPP" -eq 1 || ! -f "$DCAPP_OUTPUT_STAMP" ]]; then
+    touch "$DCAPP_OUTPUT_STAMP"
+fi
 
 echo ""
 echo "========================================"
