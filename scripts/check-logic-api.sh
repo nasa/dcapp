@@ -4,6 +4,7 @@ set -euo pipefail
 dcapp_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 generator="$dcapp_root/pilotlight/out/dcapp-genheader"
 fixture="$dcapp_root/tests/generated_logic_api.xml"
+invalid_identifier_fixture="$dcapp_root/tests/generated_logic_invalid_identifier.xml"
 check_source="$dcapp_root/tests/generated_logic_api.c"
 c_compiler="${CC:-cc}"
 cxx_compiler="${CXX:-c++}"
@@ -20,6 +21,12 @@ cp "$fixture" "$check_dir/fixture.xml"
 "$generator" "$check_dir/fixture.xml"
 public_header="$check_dir/logic/dcapp.h"
 
+cp "$invalid_identifier_fixture" "$check_dir/invalid-identifier.xml"
+if "$generator" "$check_dir/invalid-identifier.xml" >"$check_dir/invalid-identifier.log" 2>&1; then
+    echo "Generator accepted C++ keyword 'class' as an identifier." >&2
+    exit 1
+fi
+
 require_line() {
     if ! grep -Fq "$1" "$public_header"; then
         echo "Generated logic header is missing: $1" >&2
@@ -31,6 +38,7 @@ require_line 'char   (*AbiString)[256];'
 require_line 'int    *AbiInteger;'
 require_line 'double *AbiDouble;'
 require_line 'bool   *AbiBoolean;'
+require_line 'double *_AbiLeadingUnderscore;'
 require_line 'DCAPP_LOGIC_EXPORT void abi_function(DcAppContext *app_ctx, void *user_data);'
 require_line 'DCAPP_LOGIC_EXPORT void abi_draw_function(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data);'
 
