@@ -3539,6 +3539,12 @@ static DcAppNodeIndex _process_xml_node_planet_container(DcAppXmlContext *xml_ct
         xmlFree(raw_scale);
     }
 
+    xmlChar *raw_enabled = xmlGetProp(xml_node, BAD_CAST "Enabled");
+    if (raw_enabled) {
+        dc_node.planet_container.enabled = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_BOOLEAN, (const char *)raw_enabled);
+        xmlFree(raw_enabled);
+    }
+
     DcAppNodeIndex node_index = _register_node(xml_ctx, &dc_node);
     DcAppNodeIndex child_index = _process_xml_node_children(xml_ctx, xml_node, node_index, DC_APP_ELEM_TYPE_PLANET_CONTAINER, directory);
     _get_node(xml_ctx, node_index)->planet_container.child = child_index;
@@ -4128,6 +4134,12 @@ static DcAppNodeIndex _process_xml_node_planet_line(DcAppXmlContext *xml_ctx, xm
     if (_load_color_from_string(xml_ctx, xml_node, "LineColor", &(dc_node.planet_line.line_color)))
         dc_node.planet_line.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
+    xmlChar *raw_enabled = xmlGetProp(xml_node, BAD_CAST "Enabled");
+    if (raw_enabled) {
+        dc_node.planet_line.enabled = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_BOOLEAN, (const char *)raw_enabled);
+        xmlFree(raw_enabled);
+    }
+
     DcAppNodeIndex node_index = _register_node(xml_ctx, &dc_node);
 
     // process Vertex children
@@ -4189,6 +4201,12 @@ static DcAppNodeIndex _process_xml_node_planet_polygon(DcAppXmlContext *xml_ctx,
         dc_node.planet_polygon.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
     if (_load_color_from_string(xml_ctx, xml_node, "LineColor", &(dc_node.planet_polygon.line_color)))
         dc_node.planet_polygon.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    xmlChar *raw_enabled = xmlGetProp(xml_node, BAD_CAST "Enabled");
+    if (raw_enabled) {
+        dc_node.planet_polygon.enabled = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_BOOLEAN, (const char *)raw_enabled);
+        xmlFree(raw_enabled);
+    }
 
     DcAppNodeIndex node_index = _register_node(xml_ctx, &dc_node);
 

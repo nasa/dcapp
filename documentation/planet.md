@@ -452,6 +452,7 @@ local 2D meters. It must be a direct child of `<PlanetView>` and may contain
 | `HeightAboveTerrain` | double/var | No | Radial height above the reference sphere in meters. Defaults to 0. |
 | `Rotation` | double/var | No | Rotation in degrees. Defaults to 0. |
 | `Scale` | double/var | No | Uniform scale applied to local coordinates. Defaults to 1. |
+| `Enabled` | boolean/var | No | Enables the container and all of its children. Defaults to true. |
 
 Within the container, vertex `X` and `Y` are local meters: `+X` points east
 and `+Y` points north at the anchor. `LineWidth` remains in logical display
@@ -565,6 +566,7 @@ Draws a line strip on the terrain surface.
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in logical display pixels. Defaults to 1. |
 | `LinePattern` | integer/var | No | 8-bit dash pattern, such as `0xAA` dashed. Defaults to solid. |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
@@ -688,6 +690,7 @@ Draws a filled or outlined polygon on the terrain surface.
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in logical display pixels. Defaults to 1. |
 | `LinePattern` | integer/var | No | 8-bit dash pattern for the outline, such as `0xAA` dashed. Defaults to solid. |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 

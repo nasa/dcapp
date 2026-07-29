@@ -1283,7 +1283,7 @@ static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "
 static const char *_valid_attrs_style[]          = {"Name", NULL};
 static const char *_valid_attrs_planet[]         = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
 static const char *_valid_attrs_planet_view[]    = {"Planet", "CRS", "AttitudeFrame", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
-static const char *_valid_attrs_planet_container[] = {"Latitude", "Longitude", "HeightAboveTerrain", "Rotation", "Scale", NULL};
+static const char *_valid_attrs_planet_container[] = {"Latitude", "Longitude", "HeightAboveTerrain", "Rotation", "Scale", "Enabled", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "Enabled", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
@@ -1520,6 +1520,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
             return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
                    _attr_in_list(attr_name, _valid_attrs_line) ||
+                   strcmp(attr_name, "Enabled") == 0 ||
                    strcmp(attr_name, "LinePattern") == 0;
 
         case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:

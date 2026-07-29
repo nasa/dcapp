@@ -452,6 +452,7 @@ typedef struct DcAppNodePlanetContainer {
     DcAppValIndex  height_above_terrain;
     DcAppValIndex  scale;
     DcAppValIndex  rotation;
+    DcAppValIndex  enabled;
     uint8_t    planet_def_index;
     DcAppNodeIndex child;
 } DcAppNodePlanetContainer;
@@ -497,6 +498,7 @@ typedef struct DcAppNodePlanetLine {
     DcAppValIndex4            line_color;
     DcAppValIndex             line_width;
     DcAppValIndex             line_pattern;
+    DcAppValIndex             enabled;
     uint8_t               config_flags;
     uint8_t               planet_def_index;
     DcAppPlanetCrs        crs;
@@ -545,6 +547,7 @@ typedef struct DcAppNodePlanetPolygon {
     DcAppValIndex             line_width;
     DcAppValIndex             line_pattern;
     DcAppValIndex4            fill_color;
+    DcAppValIndex             enabled;
     uint8_t               config_flags;
     uint8_t               planet_def_index;
     DcAppPlanetCrs        crs;

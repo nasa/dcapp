@@ -4877,6 +4877,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppRenderer *ren
 
 static void _render_planet_container(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
     DcAppNodePlanetContainer *container = &node->planet_container;
+    if (container->enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, container->enabled)->value_boolean) return;
 
     double lat = container->lat != DC_APP_VAL_INDEX_UNDEFINED
         ? dc_app_lookup_get_value(renderer->lookup, container->lat)->value_double : 0.0;
@@ -4985,6 +4987,9 @@ static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *rendere
 }
 
 static void _render_planet_line(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
+    if (node->planet_line.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_line.enabled)->value_boolean) return;
+
     DcAppPlanetDefinition *def = dc_app_scene_get_planet_definition(renderer->scene, node->planet_line.planet_def_index);
 
     // determine point count
@@ -5055,6 +5060,9 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
 }
 
 static void _render_planet_line_local(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node) {
+    if (node->planet_line.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_line.enabled)->value_boolean) return;
+
     uint32_t count = (uint32_t)sbcount(node->planet_line.sb_points_dynamic);
     if (count < 2) return;
 
@@ -5093,6 +5101,9 @@ static void _render_planet_line_local(DcAppDrawContext *ctx, DcAppRenderer *rend
 
 static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
     (void)ctx;
+    if (node->planet_polygon.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.enabled)->value_boolean) return;
+
     DcAppPlanetDefinition *def = dc_app_scene_get_planet_definition(renderer->scene, node->planet_polygon.planet_def_index);
 
     // determine point count
@@ -5177,6 +5188,9 @@ static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppRenderer *rendere
 }
 
 static void _render_planet_polygon_local(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node) {
+    if (node->planet_polygon.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_polygon.enabled)->value_boolean) return;
+
     uint32_t count = (uint32_t)sbcount(node->planet_polygon.sb_points_dynamic);
     if (count < 3) return;
 
