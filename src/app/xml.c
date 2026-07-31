@@ -4584,6 +4584,7 @@ static DcAppNodeIndex _process_xml_node_planet_text(DcAppXmlContext *xml_ctx, xm
 
 static DcAppNodeIndex _process_xml_node_planet_texture(DcAppXmlContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     (void)parent_node_index;
+    (void)directory;
 
     if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
         DC_LOG_ERROR("PlanetTexture", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
@@ -4613,20 +4614,8 @@ static DcAppNodeIndex _process_xml_node_planet_texture(DcAppXmlContext *xml_ctx,
     // file path
     xmlChar *raw_file = xmlGetProp(xml_node, BAD_CAST "File");
     if (raw_file) {
-        char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        strncpy(cleaned, (const char *)raw_file, DC_UTILS_FILEPATH_BUFFER_SIZE - 1);
-        cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
+        entry.file = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_STRING, (const char *)raw_file);
         xmlFree(raw_file);
-
-        char abs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        if (dc_utils_is_relative_path(cleaned)) {
-            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
-        } else {
-            strcpy(abs_path, cleaned);
-        }
-        char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        _planet_abs_path_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
-        entry.source = strdup(vfs_path);
     }
 
     // meters per pixel

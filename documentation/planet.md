@@ -250,7 +250,7 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `File` | string | Yes | Path to the image file (PNG, etc.) to overlay on the terrain |
+| `File` | string/variable | Yes | Path to the image file (PNG, etc.) to overlay on the terrain. The path is passed through unchanged; relative paths use the runtime working directory. |
 | `CRS` | enum | No | Coordinate reference system for the texture center. Inherits from `<Planet>`. |
 | `MetersPerPixel` | double/variable | Yes | Resolution of the texture in meters per pixel. Controls how large the image appears on the surface. |
 | `Latitude` | double/variable | Yes for geodetic CRS | Latitude of the texture center in degrees |
@@ -260,7 +260,7 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 | `Enabled` | boolean/variable | No | Loads or removes this overlay independently. Defaults to `true`. Re-enabling rebuilds and uploads the texture. |
 | `FireRefresh` | integer/variable | No | Edge-triggered texture reload. When this value changes (e.g., incremented by a button), the texture path, scale, and position are re-read. Useful for dynamically updating the overlay image at runtime. |
 
-`MetersPerPixel` must be greater than zero. Disabling an overlay releases its texture resources, so it no longer consumes texture VRAM; turning it back on performs the normal texture build and upload again. `FireRefresh` affects only its own overlay and is ignored while that overlay is disabled. Runtime texture placement uses the same polar stereographic projected-meter convention as the generated `.planet.json` tile origins. XML `Latitude`/`Longitude` use the same user-facing longitude convention as cameras and overlays; dcapp converts that to terrain projection longitude before calling the planet extension. New chunk metadata uses `originX`/`originY`; older metadata with per-tile `lat`/`lon` is still accepted and converted at load time.
+`MetersPerPixel` must be greater than zero. If `File` is variable-backed, change `FireRefresh` after updating the variable to load the new path. Disabling an overlay releases its texture resources, so it no longer consumes texture VRAM; turning it back on performs the normal texture build and upload again. `FireRefresh` affects only its own overlay and is ignored while that overlay is disabled. Runtime texture placement uses the same polar stereographic projected-meter convention as the generated `.planet.json` tile origins. XML `Latitude`/`Longitude` use the same user-facing longitude convention as cameras and overlays; dcapp converts that to terrain projection longitude before calling the planet extension. New chunk metadata uses `originX`/`originY`; older metadata with per-tile `lat`/`lon` is still accepted and converted at load time.
 
 Logic modules can address the same five slots through the generated `dc_planet` API:
 
@@ -277,9 +277,9 @@ dc_planet->clear_texture(planet, 3);
 `OriginY` coordinates as XML. The corresponding `set_texture_geodetic()`,
 `set_texture_cartesian()`, and `set_texture_projected()` functions target slot
 0. Valid slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`.
-Texture setters clear the selected slot before attempting a replacement, once
-the planet and slot are known to be valid. They return `false` when the
-replacement cannot be resolved, validated, or decoded.
+Texture setters pass `path` through unchanged and clear the selected slot before
+attempting a replacement, once the planet and slot are known to be valid. They
+return `false` when the replacement cannot be validated or decoded.
 
 ### `<PlanetShader>`
 

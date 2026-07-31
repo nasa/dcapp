@@ -803,18 +803,18 @@ Registers a custom shader for the planet, selectable at runtime via the parent `
 
 ### `<PlanetTexture>`
 
-Configures a texture overlay on the planet surface. A planet accepts up to five of these elements. Internal slots are assigned by declaration order, and overlapping overlays combine additively. The `File` attribute is a static file path; all other attributes are dynamic (can be bound to variables). Changing `FireRefresh` re-reads only this texture from disk. Child of `<Planet>`.
+Configures a texture overlay on the planet surface. A planet accepts up to five of these elements. Internal slots are assigned by declaration order, and overlapping overlays combine additively. The `File` attribute and the other runtime attributes can be bound to variables. Changing `FireRefresh` re-reads only this texture from disk. Child of `<Planet>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `File` | string | No | Path to texture image file |
+| `File` | string/var | No | Path to the texture image file. Passed through unchanged; relative paths are resolved by the runtime working directory. |
 | `MetersPerPixel` | number/var | No | Scale of the texture in meters per pixel; must be greater than zero |
 | `Latitude` | number/var | No | Latitude of texture center for geodetic CRS |
 | `Longitude` | number/var | No | Longitude of texture center for geodetic CRS |
 | `X`, `Y`, `Z` | number/var | No | Texture center for cartesian CRS |
 | `OriginX`, `OriginY` | number/var | No | Projected terrain-meter center override; both must be specified together |
 | `Enabled` | boolean/var | No | Loads or removes this overlay independently. Defaults to true. Re-enabling rebuilds the texture. |
-| `FireRefresh` | integer/var | No | Edge-triggered: changing this value re-reads the texture file, scale, and position |
+| `FireRefresh` | integer/var | No | Edge-triggered: changing this value re-reads the current texture path, scale, and position |
 
 Disabled overlays release their texture resources and therefore their texture VRAM. A `FireRefresh` change while disabled is recorded but does not load the overlay; the current values are used when it is enabled again.
 

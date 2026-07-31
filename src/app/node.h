@@ -397,7 +397,7 @@ typedef struct DcAppPlanetShaderEntry {
 } DcAppPlanetShaderEntry;
 
 typedef struct DcAppPlanetTextureEntry {
-    char     *source;                  // heap-allocated absolute file path
+    DcAppValIndex  file;                   // string value: texture path, passed through unchanged
     DcAppValIndex2 lle;                    // double vars: geodetic center in degrees
     DcAppValIndex3 xyz;                    // double vars: native Cartesian center
     DcAppValIndex mpp;                     // double var: meters per pixel

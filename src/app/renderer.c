@@ -28,7 +28,6 @@
 #include "pl_graphics_ext.h"
 #include "pl_planet_ext.h"
 #include "pl_starter_ext.h"
-#include "pl_vfs_ext.h"
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
@@ -40,7 +39,6 @@
 static const plMemoryI  *_ext_memory  = NULL;
 static const plPlanetI  *_ext_planet  = NULL;
 static const plStarterI *_ext_starter = NULL;
-static const plVfsI     *_ext_vfs     = NULL;
 
 typedef struct _DcAppDeferredSetOp {
     DcAppVarIndex var_index;
@@ -131,7 +129,6 @@ void dc_app_renderer_init(plApiRegistryI *api_registry) {
     _ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
     _ext_planet  = pl_get_api_latest(api_registry, plPlanetI);
     _ext_starter = pl_get_api_latest(api_registry, plStarterI);
-    _ext_vfs     = pl_get_api_latest(api_registry, plVfsI);
 }
 
 DcAppRenderer *dc_app_renderer_create(
@@ -173,14 +170,15 @@ static bool _build_planet_texture(
     DcAppPlanetDefinition *def,
     DcAppPlanetTextureEntry *entry,
     plPlanetTexture *out) {
-    if (!entry->source || entry->source[0] == '\0') return false;
-    if (!_ext_vfs->does_file_exist(entry->source)) return false;
+    if (entry->file == DC_APP_VAL_INDEX_UNDEFINED) return false;
+    const char *path = dc_app_lookup_get_value(renderer->lookup, entry->file)->value_string;
+    if (!path || path[0] == '\0') return false;
     memset(out, 0, sizeof(*out));
-    out->pcPath = entry->source;
+    out->pcPath = path;
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(renderer->lookup, entry->mpp)->value_double;
     if (out->fMetersPerPixel <= 0.0f) {
-        DC_LOG_ERROR("PlanetTexture", "MetersPerPixel must be greater than zero for '%s'", entry->source);
+        DC_LOG_ERROR("PlanetTexture", "MetersPerPixel must be greater than zero for '%s'", path);
         return false;
     }
 
@@ -188,7 +186,7 @@ static bool _build_planet_texture(
         out->dOriginX = dc_app_lookup_get_value(renderer->lookup, entry->originX)->value_double;
         out->dOriginY = dc_app_lookup_get_value(renderer->lookup, entry->originY)->value_double;
     } else if (entry->originX != DC_APP_VAL_INDEX_UNDEFINED || entry->originY != DC_APP_VAL_INDEX_UNDEFINED) {
-        DC_LOG_ERROR("PlanetTexture", "OriginX and OriginY must be specified together for '%s'", entry->source);
+        DC_LOG_ERROR("PlanetTexture", "OriginX and OriginY must be specified together for '%s'", path);
         return false;
     } else if (entry->crs == DC_APP_PLANET_CRS_CARTESIAN &&
                entry->xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
@@ -203,7 +201,7 @@ static bool _build_planet_texture(
                         cartesian_in.y * cartesian_in.y +
                         cartesian_in.z * cartesian_in.z);
         if (r <= 0.0) {
-            DC_LOG_WARN("PlanetTexture", "Skipping texture with degenerate cartesian origin for '%s'", entry->source);
+            DC_LOG_WARN("PlanetTexture", "Skipping texture with degenerate cartesian origin for '%s'", path);
             return false;
         }
         plVec3d geodetic_out;
@@ -238,7 +236,7 @@ static bool _build_planet_texture(
         out->dOriginX = polar_out.x;
         out->dOriginY = polar_out.y;
     } else {
-        DC_LOG_ERROR("PlanetTexture", "Texture center must be OriginX/OriginY, Latitude/Longitude, or complete X/Y/Z for '%s'", entry->source);
+        DC_LOG_ERROR("PlanetTexture", "Texture center must be OriginX/OriginY, Latitude/Longitude, or complete X/Y/Z for '%s'", path);
         return false;
     }
 

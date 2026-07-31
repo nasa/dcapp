@@ -124,9 +124,6 @@ void dc_app_scene_destroy(DcAppSceneContext *scene) {
             if (def->sb_shaders[j].fragment_path) free(def->sb_shaders[j].fragment_path);
         }
         sbfree(def->sb_shaders);
-        for (int j = 0; j < sbcount(def->sb_textures); j++) {
-            if (def->sb_textures[j].source) free(def->sb_textures[j].source);
-        }
         sbfree(def->sb_textures);
         PL_FREE(def);
     }

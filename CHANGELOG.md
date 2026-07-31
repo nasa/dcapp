@@ -4,6 +4,15 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.183.0] - 2026-07-31
+--------------------
+
+### Changed
+- Allowed XML planet texture `File` paths to use string variables and made
+  `FireRefresh` load the variable's current path.
+- Passed planet texture paths through unchanged instead of resolving and
+  mounting them through the VFS.
+
 [2.182.0] - 2026-07-28
 --------------------
 
