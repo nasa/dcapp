@@ -4907,6 +4907,9 @@ static void _render_planet_container(DcAppDrawContext *ctx, DcAppRenderer *rende
 }
 
 static void _render_planet_ellipse(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
+    if (node->planet_ellipse.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_ellipse.enabled)->value_boolean) return;
+
     (void)ctx;
     DcAppPlanetDefinition *def = dc_app_scene_get_planet_definition(renderer->scene, node->planet_ellipse.planet_def_index);
 
@@ -5236,6 +5239,9 @@ static void _render_planet_polygon_local(DcAppDrawContext *ctx, DcAppRenderer *r
 }
 
 static void _render_planet_sphere(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
+    if (node->planet_sphere.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.enabled)->value_boolean) return;
+
     double lat = node->planet_sphere.lat != DC_APP_VAL_INDEX_UNDEFINED
         ? dc_app_lookup_get_value(renderer->lookup, node->planet_sphere.lat)->value_double : 0.0;
     double lon = node->planet_sphere.lon != DC_APP_VAL_INDEX_UNDEFINED
@@ -5267,6 +5273,8 @@ static void _render_planet_sphere(DcAppDrawContext *ctx, DcAppRenderer *renderer
 
 static void _render_planet_image(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
     if (!renderer || !node || !ctx || node->planet_image.texture_index == TEXTURE_INDEX_UNDEFINED) return;
+    if (node->planet_image.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_image.enabled)->value_boolean) return;
 
     double lat = node->planet_image.lat != DC_APP_VAL_INDEX_UNDEFINED
         ? dc_app_lookup_get_value(renderer->lookup, node->planet_image.lat)->value_double : 0.0;
@@ -5299,6 +5307,9 @@ static void _render_planet_image(DcAppDrawContext *ctx, DcAppRenderer *renderer,
 }
 
 static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
+    if (node->planet_text.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
+        !dc_app_lookup_get_value(renderer->lookup, node->planet_text.enabled)->value_boolean) return;
+
     // resolve position
     double lat = node->planet_text.lat != DC_APP_VAL_INDEX_UNDEFINED
         ? dc_app_lookup_get_value(renderer->lookup, node->planet_text.lat)->value_double : 0.0;

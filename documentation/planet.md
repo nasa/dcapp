@@ -627,6 +627,7 @@ Draws an ellipse on the terrain surface at a geographic location.
 | `FillColor` | color | No | Fill color (RGBA) |
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in logical display pixels |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 After applying `RadiusX` and `RadiusY` overrides, both effective radii must be
 greater than zero; otherwise the ellipse is not drawn. Logic calls likewise
@@ -658,6 +659,32 @@ Draws a sphere at a geographic location on the terrain surface.
 | `Radius` | double/var | No | Sphere radius in meters |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Sphere color (RGBA) |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
+
+### `<PlanetImage>`
+
+Displays an image at a geographic location on the terrain surface.
+
+```xml
+<PlanetImage File="assets/marker.png" Latitude="@Lat" Longitude="@Lon"
+    Width="5000" Height="5000" HeightAboveTerrain="1000"/>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `File` | string | No | Path to the image file. Resolved relative to the XML file's directory. The element's text content may be used instead. |
+| `CRS` | enum | No | Coordinate reference system for the image position. Inherits from `<PlanetView>`. |
+| `Latitude` | double/var | Yes for geodetic CRS | Latitude in degrees |
+| `Longitude` | double/var | Yes for geodetic CRS | Longitude in degrees |
+| `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Image position in native body-centered Cartesian meters |
+| `Width` | double/var | No | Image width in meters. `DimensionX` and `Size` are aliases. |
+| `Height` | double/var | No | Image height in meters. `DimensionY` is an alias. |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `TintColor` | color | No | Image tint color (RGBA). `Color` and `FillColor` are aliases. |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
+
+An image path and at least one dimension are required. If only width or height
+is supplied, the other dimension is inferred from the image's aspect ratio.
 
 ### `<PlanetText>`
 
@@ -677,6 +704,7 @@ Displays text at a geographic location on the terrain surface.
 | `Size` | double/var | No | Text size in meters |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Text color (RGBA) |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 **Content:** Text string with variable interpolation (same syntax as `<Text>`).
 
@@ -743,6 +771,7 @@ Loads a GeoJSON file and renders its features (points, lines, polygons) on the t
 | `LineColor` | color | No | Default line color for features without simplestyle properties |
 | `LineWidth` | double/var | No | Default line and polygon outline width in logical display pixels |
 | `FillColor` | color | No | Default fill color for polygon features |
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 An optional third coordinate supplies each position's altitude. Positions
 without an altitude use `HeightAboveTerrain`, or

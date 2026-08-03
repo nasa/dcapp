@@ -742,7 +742,19 @@ Renders a view of a named planet. Supports geodetic camera positions with local-
 | `CameraYaw` | — | number/var | No | Camera yaw angle in the selected attitude frame |
 | `CameraOrthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 
-**Children:** `<PlanetBreadcrumbs>`, `<PlanetEllipse>`, `<PlanetGeoJSON>`, `<PlanetText>`, and other planet overlay elements
+**Children:** `<PlanetBreadcrumbs>`, `<PlanetContainer>`, `<PlanetEllipse>`,
+`<PlanetGeoJSON>`, `<PlanetImage>`, `<PlanetLine>`, `<PlanetPolygon>`,
+`<PlanetSphere>`, and `<PlanetText>`
+
+The following drawable planet overlays support `Enabled`:
+`<PlanetBreadcrumbs>`, `<PlanetContainer>`, `<PlanetEllipse>`,
+`<PlanetGeoJSON>`, `<PlanetImage>`, `<PlanetLine>`, `<PlanetPolygon>`,
+`<PlanetSphere>`, and `<PlanetText>`. `<PlanetTexture>` supports it separately
+on the planet definition.
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 ---
 

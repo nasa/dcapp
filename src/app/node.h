@@ -469,6 +469,7 @@ typedef struct DcAppNodePlanetEllipse {
     DcAppValIndex  line_width;
     DcAppValIndex4 fill_color;
     DcAppValIndex  segments;
+    DcAppValIndex  enabled;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
     DcAppPlanetCrs crs;
@@ -511,6 +512,7 @@ typedef struct DcAppNodePlanetImage {
     DcAppValIndex  height_above_terrain;
     DcAppValIndex2 dimension;
     DcAppValIndex4 tint_color;
+    DcAppValIndex  enabled;
     DcAppTextureIndex texture_index;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
@@ -560,6 +562,7 @@ typedef struct DcAppNodePlanetSphere {
     DcAppValIndex  height_above_terrain;
     DcAppValIndex  radius;
     DcAppValIndex4 fill_color;
+    DcAppValIndex  enabled;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
     DcAppPlanetCrs crs;
@@ -572,6 +575,7 @@ typedef struct DcAppNodePlanetText {
     DcAppValIndex  height_above_terrain;
     DcAppValIndex  size;
     DcAppValIndex4 fill_color;
+    DcAppValIndex  enabled;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
     DcAppPlanetCrs crs;

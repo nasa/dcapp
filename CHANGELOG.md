@@ -10,6 +10,8 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 ### Added
 - Added `DCAPP_HOME` and `DCAPP_DISPLAY_HOME` environment variables while
   retaining `dcappHome` and `dcappDisplayHome` as legacy aliases.
+- Added variable-driven `Enabled` visibility controls to `<PlanetEllipse>`,
+  `<PlanetSphere>`, `<PlanetText>`, `<PlanetImage>`, and `<PlanetGeoJSON>`.
 
 ### Fixed
 - Fixed high-resolution planet textures being incorrectly rejected by the
