@@ -55,10 +55,15 @@ Use braces when constants are adjacent to other text or nested:
 Use `$` to reference environment variables:
 
 ```xml
-<Include>$dcappDisplayHome/includes/header.xml</Include>
+<Include>$DCAPP_DISPLAY_HOME/includes/header.xml</Include>
 ```
 
-The `dcappDisplayHome` environment variable is automatically set to the directory containing your main XML file.
+dcapp exports two path variables before preprocessing a display:
+
+- `DCAPP_HOME` is the dcapp installation directory.
+- `DCAPP_DISPLAY_HOME` is the directory containing the main XML file.
+
+The legacy `dcappHome` and `dcappDisplayHome` names remain available as aliases.
 
 ### Escaping
 
@@ -517,4 +522,4 @@ dcapp display.xml serverHost="192.168.1.50" serverPort="8000"
 
 6. **Leverage command-line overrides for deployment** — Same XML can work in different environments.
 
-7. **Use environment variables for paths** — `$dcappDisplayHome` makes includes portable.
+7. **Use environment variables for paths** — `$DCAPP_DISPLAY_HOME` makes display-local includes portable, while `$DCAPP_HOME` addresses shared dcapp assets.

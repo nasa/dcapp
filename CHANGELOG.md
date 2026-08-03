@@ -7,6 +7,10 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 [2.184.0] - 2026-08-02
 --------------------
 
+### Added
+- Added `DCAPP_HOME` and `DCAPP_DISPLAY_HOME` environment variables while
+  retaining `dcappHome` and `dcappDisplayHome` as legacy aliases.
+
 ### Fixed
 - Fixed high-resolution planet textures being incorrectly rejected by the
   texture memory safety check.

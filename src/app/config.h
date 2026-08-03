@@ -19,6 +19,7 @@ void         dc_app_config_destroy(DcAppConfig *config);
 // Expands the configuration in place while retaining ownership of the XML tree.
 void         dc_app_config_preprocess(DcAppConfig *config);
 void         dc_app_config_save_preprocessed(DcAppConfig *config, const char *output_path);
+void         dc_app_config_export_environment(const DcAppConfig *config);
 
 const char *dc_app_config_directory(const DcAppConfig *config);
 const char *dc_app_config_root_directory(const DcAppConfig *config);

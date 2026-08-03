@@ -20,6 +20,7 @@
 #define SHACKLETON_LAT -89.67
 #define SHACKLETON_LON 129.78
 #define SHACKLETON_RADIUS 10460.0f
+#define LOGIC_PATH_CAPACITY 4096
 
 static DcPlanetHandle logic_planet;
 static DcPlanetViewHandle logic_planet_view;
@@ -29,13 +30,14 @@ static int logic_texture_refresh = -1;
 static int logic_texture_enabled[DC_PLANET_TEXTURE_SLOT_COUNT] = {-1, -1, -1, -1, -1};
 static int logic_active_shader = -1;
 
-static const char *logic_texture_paths[DC_PLANET_TEXTURE_SLOT_COUNT] = {
+static const char *logic_texture_files[DC_PLANET_TEXTURE_SLOT_COUNT] = {
     "assets/circle.png",
     "assets/square.png",
     "assets/triangle.png",
     "assets/ring.png",
     "assets/cross.png",
 };
+static char logic_texture_paths[DC_PLANET_TEXTURE_SLOT_COUNT][LOGIC_PATH_CAPACITY];
 
 // Authored once in a small local grid; the pushed frame supplies scale, rotation, and position.
 static const DcVec2 logic_doghouse[] = {
@@ -48,6 +50,11 @@ static const DcVec2 logic_doghouse[] = {
 
 static float texture_mpp_for_refresh(int refresh) {
     return refresh ? 4000.0f : 2000.0f;
+}
+
+static bool build_dcapp_path(char *path, size_t path_capacity, const char *dcapp_home, const char *relative_path) {
+    int length = snprintf(path, path_capacity, "%s/%s", dcapp_home, relative_path);
+    return length >= 0 && (size_t)length < path_capacity;
 }
 
 static int *texture_enabled_variable(uint32_t slot) {
@@ -116,11 +123,16 @@ static void update_logic_shader(void) {
 
 void display_init(DcAppContext *app_ctx, void **user_data) {
     (void)user_data;
-    const char *display_home = getenv("dcappDisplayHome");
-    if (!display_home || display_home[0] == '\0') return;
+    const char *dcapp_home = getenv("DCAPP_HOME");
+    if (!dcapp_home || dcapp_home[0] == '\0') return;
 
-    char data_path[4096] = {0};
-    snprintf(data_path, sizeof(data_path), "%s/../../data/LDEM_45S_400M.planet.json", display_home);
+    char data_path[LOGIC_PATH_CAPACITY] = {0};
+    if (!build_dcapp_path(data_path, sizeof(data_path), dcapp_home,
+                          "data/LDEM_45S_400M.planet.json")) return;
+    for (uint32_t slot = 0; slot < DC_PLANET_TEXTURE_SLOT_COUNT; slot++) {
+        if (!build_dcapp_path(logic_texture_paths[slot], sizeof(logic_texture_paths[slot]),
+                              dcapp_home, logic_texture_files[slot])) return;
+    }
 
     logic_planet = dc_planet->create_planet_with_id(app_ctx, "LogicMoon", (DcPlanetCreateInfo){
         .data_path = data_path,

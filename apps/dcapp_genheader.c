@@ -4,7 +4,6 @@
 #include "../src/app/lookup.h"
 #include "../src/app/planet_types.h"
 #include "../src/app/value.h"
-#include "../src/utils/env.h"
 #include "../src/utils/file.h"
 #include "../src/utils/log.h"
 #include "../src/utils/string.h"
@@ -80,9 +79,8 @@ int main(int argc, char **argv) {
     DcAppLookup *lookup = dc_app_lookup_create();
     DcLogicCallbacks callbacks = {};
 
-    // set environment (used for dcapp XMLs)
-    dc_utils_set_env("dcappDisplayHome", dc_app_config_directory(config), 1);
-    dc_utils_set_env("dcappHome", dc_app_config_root_directory(config), 1);
+    // Export the same roots available to the runtime before preprocessing.
+    dc_app_config_export_environment(config);
 
     // preprocess XML file
     dc_app_config_preprocess(config);

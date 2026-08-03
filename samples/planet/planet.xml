@@ -53,21 +53,21 @@
 
     <!-- Top-level planet definition used by the XML view. -->
     <Planet Name="Moon" CRS="#_planet_crs_geodetic_" MeshCacheSize="128" LightDirectionX="-1" LightDirectionY="@LightY" LightDirectionZ="-1">
-        <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
+        <PlanetData File="$DCAPP_HOME/data/LDEM_45S_400M.planet.json"/>
         <!-- Hazard-map slots are assigned by declaration order. -->
-        <PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+        <PlanetTexture File="$DCAPP_HOME/assets/circle.png" MetersPerPixel="@TexMpp"
             Latitude="-58.62" Longitude="345.27"
             Enabled="@HazardMap0Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="assets/square.png" MetersPerPixel="@TexMpp"
+        <PlanetTexture File="$DCAPP_HOME/assets/square.png" MetersPerPixel="@TexMpp"
             Latitude="-58.62" Longitude="345.27"
             Enabled="@HazardMap1Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="assets/triangle.png" MetersPerPixel="@TexMpp"
+        <PlanetTexture File="$DCAPP_HOME/assets/triangle.png" MetersPerPixel="@TexMpp"
             Latitude="-58.62" Longitude="345.27"
             Enabled="@HazardMap2Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="assets/ring.png" MetersPerPixel="@TexMpp"
+        <PlanetTexture File="$DCAPP_HOME/assets/ring.png" MetersPerPixel="@TexMpp"
             Latitude="-58.62" Longitude="345.27"
             Enabled="@HazardMap3Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="assets/cross.png" MetersPerPixel="@TexMpp"
+        <PlanetTexture File="$DCAPP_HOME/assets/cross.png" MetersPerPixel="@TexMpp"
             Latitude="-58.62" Longitude="345.27"
             Enabled="@HazardMap4Enabled" FireRefresh="@TextureRefresh"/>
         <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>

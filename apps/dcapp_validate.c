@@ -1,7 +1,6 @@
 #include "../src/app/config.h"
 #include "../src/app/elem.h"
 #include "../src/app/planet_types.h"
-#include "../src/utils/env.h"
 #include "../src/utils/log.h"
 #include "../src/utils/string.h"
 
@@ -68,9 +67,8 @@ int main(int argc, char **argv) {
     }
     free(const_args);
 
-    // set environment
-    dc_utils_set_env("dcappDisplayHome", dc_app_config_directory(config), 1);
-    dc_utils_set_env("dcappHome", dc_app_config_root_directory(config), 1);
+    // Export the same roots available to the runtime before preprocessing.
+    dc_app_config_export_environment(config);
 
     // preprocess XML file (expands includes, constants, staticifs)
     dc_app_config_preprocess(config);

@@ -194,11 +194,11 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
-    <PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+    <PlanetData File="$DCAPP_HOME/data/LDEM_45S_400M.planet.json"/>
+    <PlanetTexture File="$DCAPP_HOME/assets/circle.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" Enabled="@ShowHazard0"
         FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="assets/square.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="$DCAPP_HOME/assets/square.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" Enabled="@ShowHazard1"
         FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -241,7 +241,7 @@ Specifies the preprocessed terrain data for a planet. Must be a child of `<Plane
 Overlays an image onto the planet surface at a specific geographic location. Must be a child of `<Planet>`. A planet may contain up to five texture overlays. Their internal slots are assigned by declaration order; there is no XML slot/index attribute. Overlapping textures are combined additively.
 
 ```xml
-<PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+<PlanetTexture File="$DCAPP_HOME/assets/circle.png" MetersPerPixel="@TexMpp"
     Latitude="-90" Longitude="180" Enabled="@ShowHazard0"
     FireRefresh="@TextureRefresh"/>
 ```
@@ -250,7 +250,7 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `File` | string/variable | Yes | Path to the image file (PNG, etc.) to overlay on the terrain. The path is passed through unchanged; relative paths use the runtime working directory. |
+| `File` | string/variable | Yes | Path to the image file (PNG, etc.) to overlay on the terrain. The path is passed through unchanged; use `$DCAPP_HOME` or `$DCAPP_DISPLAY_HOME` in XML to supply an absolute path. |
 | `CRS` | enum | No | Coordinate reference system for the texture center. Inherits from `<Planet>`. |
 | `MetersPerPixel` | double/variable | Yes | Resolution of the texture in meters per pixel. Controls how large the image appears on the surface. |
 | `Latitude` | double/variable | Yes for geodetic CRS | Latitude of the texture center in degrees |
@@ -265,8 +265,9 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 Logic modules can address the same five slots through the generated `dc_planet` API:
 
 ```c
+// hazard_path is absolute.
 dc_planet->set_texture_geodetic_slot(
-    app_ctx, planet, 3, "hazard-ring.png", lat, lon, meters_per_pixel);
+    app_ctx, planet, 3, hazard_path, lat, lon, meters_per_pixel);
 
 // Releases slot 3's texture resources.
 dc_planet->clear_texture(planet, 3);
@@ -278,8 +279,9 @@ dc_planet->clear_texture(planet, 3);
 `set_texture_cartesian()`, and `set_texture_projected()` functions target slot
 0. Valid slot values are `0` through `DC_PLANET_TEXTURE_SLOT_COUNT - 1`.
 Texture setters pass `path` through unchanged and clear the selected slot before
-attempting a replacement, once the planet and slot are known to be valid. They
-return `false` when the replacement cannot be validated or decoded.
+attempting a replacement, once the planet and slot are known to be valid. Callers
+should supply an absolute path. Setters return `false` when the replacement
+cannot be validated or decoded.
 
 ### `<PlanetShader>`
 
@@ -925,20 +927,20 @@ The XML planet defines one data source, five same-center texture overlays, and t
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
-    <PlanetTexture File="assets/circle.png" MetersPerPixel="@TexMpp"
+    <PlanetData File="$DCAPP_HOME/data/LDEM_45S_400M.planet.json"/>
+    <PlanetTexture File="$DCAPP_HOME/assets/circle.png" MetersPerPixel="@TexMpp"
         Latitude="-58.62" Longitude="345.27"
         Enabled="@HazardMap0Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="assets/square.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="$DCAPP_HOME/assets/square.png" MetersPerPixel="@TexMpp"
         Latitude="-58.62" Longitude="345.27"
         Enabled="@HazardMap1Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="assets/triangle.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="$DCAPP_HOME/assets/triangle.png" MetersPerPixel="@TexMpp"
         Latitude="-58.62" Longitude="345.27"
         Enabled="@HazardMap2Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="assets/ring.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="$DCAPP_HOME/assets/ring.png" MetersPerPixel="@TexMpp"
         Latitude="-58.62" Longitude="345.27"
         Enabled="@HazardMap3Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="assets/cross.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="$DCAPP_HOME/assets/cross.png" MetersPerPixel="@TexMpp"
         Latitude="-58.62" Longitude="345.27"
         Enabled="@HazardMap4Enabled" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>

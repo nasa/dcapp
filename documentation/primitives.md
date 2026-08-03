@@ -807,7 +807,7 @@ Configures a texture overlay on the planet surface. A planet accepts up to five 
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `File` | string/var | No | Path to the texture image file. Passed through unchanged; relative paths are resolved by the runtime working directory. |
+| `File` | string/var | No | Path to the texture image file. Passed through unchanged; use `$DCAPP_HOME` or `$DCAPP_DISPLAY_HOME` in XML to supply an absolute path. |
 | `MetersPerPixel` | number/var | No | Scale of the texture in meters per pixel; must be greater than zero |
 | `Latitude` | number/var | No | Latitude of texture center for geodetic CRS |
 | `Longitude` | number/var | No | Longitude of texture center for geodetic CRS |

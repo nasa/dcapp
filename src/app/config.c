@@ -486,6 +486,20 @@ void dc_app_config_preprocess(DcAppConfig *config) {
     config->xml_doc_is_cleaned = true;
 }
 
+void dc_app_config_export_environment(const DcAppConfig *config) {
+    if (!config) return;
+
+    const char *dcapp_home = dc_app_config_root_directory(config);
+    const char *display_home = dc_app_config_directory(config);
+
+    dc_utils_set_env("DCAPP_HOME", dcapp_home, 1);
+    dc_utils_set_env("DCAPP_DISPLAY_HOME", display_home, 1);
+
+    // Legacy aliases retained for existing displays and logic modules.
+    dc_utils_set_env("dcappHome", dcapp_home, 1);
+    dc_utils_set_env("dcappDisplayHome", display_home, 1);
+}
+
 const char *dc_app_config_directory(const DcAppConfig *config) {
     return config->config_dir_path;
 }

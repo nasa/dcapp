@@ -37,7 +37,6 @@
 #define PL_JSON_IMPLEMENTATION
 #include "pl_json.h"
 
-#include "utils/env.h"
 #include "utils/log.h"
 
 #include <libxml/parser.h>
@@ -230,9 +229,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     app_data->logic     = dc_app_logic_context_create();
     app_data->data_link = dc_app_data_link_context_create();
 
-    // set environment (used for dcapp XMLs)
-    dc_utils_set_env("dcappDisplayHome", dc_app_config_directory(app_data->config), 1);
-    dc_utils_set_env("dcappHome", dc_app_config_root_directory(app_data->config), 1);
+    // Export application and display roots before preprocessing XML paths.
+    dc_app_config_export_environment(app_data->config);
 
     // create lookup
     DcAppLookup *lookup = dc_app_scene_lookup(app_data->scene);
