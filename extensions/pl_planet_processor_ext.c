@@ -283,6 +283,7 @@ static plVec3d pl__get_cartesian_unmod(plPlanetHeightMap*, plPlanetMapElement*);
 static plVec2 pl__get_normal(plPlanetHeightMap*, plPlanetMapElement*);
 
 static void pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDataFile, uint32_t* puCurrentChunk);
+static void pl__normalize_chunk_coordinates(plPlanetChunk* ptChunk, float fX, float fY, float fExtent);
 
 static void
 pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
@@ -440,8 +441,29 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
     ptFile->atChunks[0].uFileID = uFileID;
     pl__chlod_read_chunk(ptFile, ptFile->iTreeDepth - 1, ptDataFile, &uCurrentChunk);
 
+    // Chunk coordinates describe a dyadic quadtree over the tile's physical
+    // intervals. Reconstruct them from that topology so legacy chunk files
+    // written with a vertex-count denominator share exact LOD boundaries too.
+    pl__normalize_chunk_coordinates(&ptFile->atChunks[0], 0.0f, 0.0f, 1.0f);
+
     fclose(ptDataFile);
     return true;
+}
+
+static void
+pl__normalize_chunk_coordinates(plPlanetChunk* ptChunk, float fX, float fY, float fExtent)
+{
+    ptChunk->fX = fX;
+    ptChunk->fY = fY;
+
+    if (ptChunk->aptChildren[0] == NULL)
+        return;
+
+    const float fHalfExtent = fExtent * 0.5f;
+    pl__normalize_chunk_coordinates(ptChunk->aptChildren[0], fX,               fY,               fHalfExtent);
+    pl__normalize_chunk_coordinates(ptChunk->aptChildren[1], fX + fHalfExtent, fY,               fHalfExtent);
+    pl__normalize_chunk_coordinates(ptChunk->aptChildren[2], fX,               fY + fHalfExtent, fHalfExtent);
+    pl__normalize_chunk_coordinates(ptChunk->aptChildren[3], fX + fHalfExtent, fY + fHalfExtent, fHalfExtent);
 }
 
 static void
@@ -998,8 +1020,11 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     const int iCx = iStartIndexX + iHalfSize;
     const int iCz = iStartIndexY + iHalfSize;
 
-    float fXWrite = (float)iStartIndexX / ptHeightMap->iSize;
-    float fYWrite = (float)iStartIndexY / ptHeightMap->iSize;
+    // The height-map size is the vertex count. Chunk positions are normalized
+    // over the intervals between those vertices.
+    const float fIntervalCount = (float)(ptHeightMap->iSize - 1);
+    float fXWrite = (float)iStartIndexX / fIntervalCount;
+    float fYWrite = (float)iStartIndexY / fIntervalCount;
 
     int iChunkLabel = pl__node_index(ptHeightMap, iCx, iCz);
     fwrite(&iChunkLabel, 1, sizeof(int), ptFile);

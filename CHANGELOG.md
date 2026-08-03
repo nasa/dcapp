@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.184.0] - 2026-08-02
+--------------------
+
+### Fixed
+- Fixed high-resolution planet textures being incorrectly rejected by the
+  texture memory safety check.
+
+
 [2.183.0] - 2026-07-31
 --------------------
 

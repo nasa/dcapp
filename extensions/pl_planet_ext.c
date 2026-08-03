@@ -43,6 +43,7 @@ Index:
 
 #include <stdio.h>
 #include <float.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "pl.h"
@@ -90,6 +91,8 @@ _Static_assert(sizeof(plGpuDynPlanetData) <= 256, "planet dynamic data exceeds t
 
 #define PL_REQUEST_QUEUE_SIZE 100
 #define PL_PLANET_TEXTURE_MAX_TILE_BYTES (256ull * 1024ull * 1024ull)
+// Matches PilotLight's default resource-manager downsample limit.
+#define PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION 1024u
 
 //-----------------------------------------------------------------------------
 // [SECTION] forward declarations
@@ -175,13 +178,21 @@ typedef struct _plChunkFileData
     plVec4*           atTextureUVInfo;
 } plChunkFileData;
 
+typedef struct _plPlanetTextureSlice {
+    uint32_t uX;
+    uint32_t uY;
+    uint32_t uWidth;
+    uint32_t uHeight;
+    uint64_t uBytes;
+} plPlanetTextureSlice;
+
 typedef struct _plPlanet
 {
     plPlanetRuntimeOptions tRuntimeOptions;
     plChunkFileData* sbtChunkFiles;
     double           dRadius;
     plPlanetProcessInfo tInfo;
-    plVec2           tTopLeftGlobal;
+    plVec2d          tTopLeftGlobal;
     uint32_t                 uTileCount;
     plPlanetProcessTileInfo* atTiles;
     size_t szVertexSize;
@@ -302,6 +313,88 @@ pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
 {
     *ptHighOut = (float)dValue;
     *ptLowOut = (float)(dValue - *ptHighOut);
+}
+
+// Intersect a terrain tile and image in projected meters, convert that overlap
+// to a half-open source-pixel range, and return the integer extraction that
+// contains it. The extra source texel on each available edge is a filtering
+// gutter, so adjacent tiles sample the same texels at their shared boundary.
+// Very thin crops are widened within the source image so aspect-preserving
+// resource downsampling cannot collapse a dimension.
+static bool
+pl__planet_texture_slice(double dTileMinX, double dTileMinY, double dTileMaxX, double dTileMaxY,
+                         double dImageMinX, double dImageMinY, double dImageMaxX, double dImageMaxY,
+                         double dMetersPerPixel,
+                         uint32_t uSourceWidth, uint32_t uSourceHeight, uint32_t uStride,
+                         plPlanetTextureSlice* ptSliceOut)
+{
+    const double dIntersectionMinX = fmax(dTileMinX, dImageMinX);
+    const double dIntersectionMinY = fmax(dTileMinY, dImageMinY);
+    const double dIntersectionMaxX = fmin(dTileMaxX, dImageMaxX);
+    const double dIntersectionMaxY = fmin(dTileMaxY, dImageMaxY);
+    if (dIntersectionMinX >= dIntersectionMaxX || dIntersectionMinY >= dIntersectionMaxY)
+        return false;
+
+    const double dSourceX0 = (dIntersectionMinX - dImageMinX) / dMetersPerPixel;
+    const double dSourceX1 = (dIntersectionMaxX - dImageMinX) / dMetersPerPixel;
+    const double dSourceY0 = (dImageMaxY - dIntersectionMaxY) / dMetersPerPixel;
+    const double dSourceY1 = (dImageMaxY - dIntersectionMinY) / dMetersPerPixel;
+    const double dX0 = fmax(0.0, dSourceX0);
+    const double dY0 = fmax(0.0, dSourceY0);
+    const double dX1 = fmin((double)uSourceWidth, dSourceX1);
+    const double dY1 = fmin((double)uSourceHeight, dSourceY1);
+    if (!isfinite(dX0) || !isfinite(dY0) || !isfinite(dX1) || !isfinite(dY1) ||
+        dX0 >= dX1 || dY0 >= dY1)
+        return false;
+
+    uint32_t uX0 = (uint32_t)floor(dX0);
+    uint32_t uY0 = (uint32_t)floor(dY0);
+    uint32_t uX1 = (uint32_t)ceil(dX1);
+    uint32_t uY1 = (uint32_t)ceil(dY1);
+
+    // Preserve the neighboring samples needed by linear filtering at a crop
+    // edge. Clamp-to-border supplies the corresponding gutter at image edges.
+    if (uX0 > 0) uX0--;
+    if (uY0 > 0) uY0--;
+    if (uX1 < uSourceWidth) uX1++;
+    if (uY1 < uSourceHeight) uY1++;
+
+    plPlanetTextureSlice tSlice = {
+        .uX = uX0,
+        .uY = uY0,
+        .uWidth = uX1 - uX0,
+        .uHeight = uY1 - uY0,
+    };
+
+    // PilotLight downsamples the longest texture edge to 1024 by default.
+    // Pad very thin intersections just enough to keep the other edge from
+    // truncating to zero during that resize.
+    const uint32_t uMaxDimension = pl_max(tSlice.uWidth, tSlice.uHeight);
+    uint32_t uMinimumOtherDimension = (uint32_t)(((uint64_t)uMaxDimension + PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION - 1u) /
+                                                 PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION);
+    while (uMinimumOtherDimension < uMaxDimension &&
+           ((float)PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION / (float)uMaxDimension) *
+                   (float)uMinimumOtherDimension <
+               1.0f) {
+        uMinimumOtherDimension++;
+    }
+
+    const uint32_t uTargetWidth = pl_min(
+        pl_max(tSlice.uWidth, uMinimumOtherDimension), uSourceWidth);
+    const uint32_t uTargetHeight = pl_min(
+        pl_max(tSlice.uHeight, uMinimumOtherDimension), uSourceHeight);
+    const uint32_t uXPadding = uTargetWidth - tSlice.uWidth;
+    const uint32_t uYPadding = uTargetHeight - tSlice.uHeight;
+    tSlice.uX -= pl_min(uXPadding / 2u, tSlice.uX);
+    tSlice.uY -= pl_min(uYPadding / 2u, tSlice.uY);
+    tSlice.uX = pl_min(tSlice.uX, uSourceWidth - uTargetWidth);
+    tSlice.uY = pl_min(tSlice.uY, uSourceHeight - uTargetHeight);
+    tSlice.uWidth = uTargetWidth;
+    tSlice.uHeight = uTargetHeight;
+    tSlice.uBytes = (uint64_t)uTargetWidth * (uint64_t)uTargetHeight * (uint64_t)uStride;
+
+    *ptSliceOut = tSlice;
+    return true;
 }
 
 static void
@@ -831,14 +924,16 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
 
     if (ptPlanetTexture)
     {
-        if (ptPlanetTexture->pcPath == NULL || ptPlanetTexture->pcPath[0] == '\0' || ptPlanetTexture->fMetersPerPixel <= 0.0f)
+        if (ptPlanetTexture->pcPath == NULL || ptPlanetTexture->pcPath[0] == '\0' ||
+            !isfinite(ptPlanetTexture->fMetersPerPixel) || ptPlanetTexture->fMetersPerPixel <= 0.0f ||
+            !isfinite(ptPlanetTexture->dOriginX) || !isfinite(ptPlanetTexture->dOriginY))
             return false;
         if (uH == 0 || uV == 0 || uTileCount == 0 || ptPlanet->atTiles == NULL)
             return false;
 
-        // Texture center is already in projected meters
-        const float fX = (float)ptPlanetTexture->dOriginX;
-        const float fY = (float)ptPlanetTexture->dOriginY;
+        // Texture center is already in projected meters.
+        const double dX = ptPlanetTexture->dOriginX;
+        const double dY = ptPlanetTexture->dOriginY;
 
         // -----------------------------------------------------------------
         // Compute world-space bounds of the incoming image in meters
@@ -848,27 +943,27 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
             tImageInfo.iWidth <= 0 || tImageInfo.iHeight <= 0)
             return false;
 
-        const float imgWm = (float)tImageInfo.iWidth  * ptPlanetTexture->fMetersPerPixel;
-        const float imgHm = (float)tImageInfo.iHeight * ptPlanetTexture->fMetersPerPixel;
+        const double dImageWidthM = (double)tImageInfo.iWidth * (double)ptPlanetTexture->fMetersPerPixel;
+        const double dImageHeightM = (double)tImageInfo.iHeight * (double)ptPlanetTexture->fMetersPerPixel;
 
-        const plVec2 tTextureMin = {
-            .x = fX - 0.5f * imgWm,
-            .y = fY - 0.5f * imgHm,
+        const plVec2d tTextureMin = {
+            .x = dX - 0.5 * dImageWidthM,
+            .y = dY - 0.5 * dImageHeightM,
         };
-        const plVec2 tTextureMax = {
-            .x = fX + 0.5f * imgWm,
-            .y = fY + 0.5f * imgHm,
+        const plVec2d tTextureMax = {
+            .x = dX + 0.5 * dImageWidthM,
+            .y = dY + 0.5 * dImageHeightM,
         };
 
         // -----------------------------------------------------------------
         // Compute signed tile index range (BR index inclusive)
         // -----------------------------------------------------------------
-        const float tileSizeM = (float)ptPlanet->tInfo.uSize * (float)ptPlanet->tInfo.dMetersPerPixel;
+        const double dTileSizeM = (double)ptPlanet->tInfo.uSize * ptPlanet->tInfo.dMetersPerPixel;
 
-        int tlx = (int)floorf((tTextureMin.x - ptPlanet->tTopLeftGlobal.x) / tileSizeM);
-        int tly = (int)floorf((ptPlanet->tTopLeftGlobal.y - tTextureMax.y) / tileSizeM);
-        int brx = (int)ceilf((tTextureMax.x - ptPlanet->tTopLeftGlobal.x) / tileSizeM) - 1;
-        int bry = (int)ceilf((ptPlanet->tTopLeftGlobal.y - tTextureMin.y) / tileSizeM) - 1;
+        int tlx = (int)floor((tTextureMin.x - ptPlanet->tTopLeftGlobal.x) / dTileSizeM);
+        int tly = (int)floor((ptPlanet->tTopLeftGlobal.y - tTextureMax.y) / dTileSizeM);
+        int brx = (int)ceil((tTextureMax.x - ptPlanet->tTopLeftGlobal.x) / dTileSizeM) - 1;
+        int bry = (int)ceil((ptPlanet->tTopLeftGlobal.y - tTextureMin.y) / dTileSizeM) - 1;
 
         // A valid replacement outside the planet leaves the cleared slot empty.
         if (!(tlx > (int)uH - 1 || tly > (int)uV - 1 || brx < 0 || bry < 0))
@@ -889,36 +984,6 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
 
             if (tlIndex < uTileCount && brIndex < uTileCount)
             {
-
-                // -----------------------------------------------------------------
-                // Get local world coords of the clamped tile rectangle
-                //     (Use tile centers +/− half a tile to form inclusive bounds)
-                // -----------------------------------------------------------------
-                plVec2 tCanvasMin = {0};
-                plVec2 tCanvasMax = {0};
-
-                // --- Top-left tile local origin ---
-                {
-                    const float Xc = (float)ptPlanet->atTiles[tlIndex].dOriginX;
-                    const float Yc = (float)ptPlanet->atTiles[tlIndex].dOriginY;
-
-                    tCanvasMin.x = Xc - 0.5f * tileSizeM;
-                    tCanvasMax.y = Yc + 0.5f * tileSizeM;
-                }
-
-                // --- Bottom-right tile local corner ---
-                {
-                    const float Xc = (float)ptPlanet->atTiles[brIndex].dOriginX;
-                    const float Yc = (float)ptPlanet->atTiles[brIndex].dOriginY;
-
-                    tCanvasMax.x = Xc + 0.5f * tileSizeM;
-                    tCanvasMin.y = Yc - 0.5f * tileSizeM;
-                }
-
-
-                // -----------------------------------------------------------------
-                // Build a full canvas covering [tl..br] tiles, and place image
-                // -----------------------------------------------------------------
                 int iImageWidth  = 0;
                 int iImageHeight = 0;
                 int iChannels    = 0;
@@ -931,120 +996,89 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                     return false;
                 }
 
-                plImageOpInit tFullInfo = {
-                    .uVirtualWidth    = (uint32_t)fmaxf(1.0f, (tCanvasMax.x - tCanvasMin.x) / ptPlanetTexture->fMetersPerPixel),
-                    .uVirtualHeight   = (uint32_t)fmaxf(1.0f, (tCanvasMax.y - tCanvasMin.y) / ptPlanetTexture->fMetersPerPixel),
+                // Source pixels are the only raster storage. Projected-meter
+                // placement stays continuous in the UV transform below; no
+                // terrain-sized image or integer placement canvas is needed.
+                plImageOpInit tSourceInfo = {
+                    .uVirtualWidth = (uint32_t)iImageWidth,
+                    .uVirtualHeight = (uint32_t)iImageHeight,
                     .uChannels = 4,
-                    .uStride   = 4
-                };
-
-                plImageOpData tFullData = (plImageOpData){0};
-                gptImageOps->initialize(&tFullInfo, &tFullData);
-                // gptImageOps->add_region(&tFullData, 0, 0, tFullInfo.uVirtualWidth, tFullInfo.uVirtualHeight, PL_IMAGE_OP_COLOR_WHITE);
-
-                // If square() changes dims, we must use tFullData.uWidth/Height afterward
-                gptImageOps->square(&tFullData);
-
-                // Pixel offsets for where the image should land on the full canvas
-                const float fDistanceX = tTextureMin.x - tCanvasMin.x;
-                const float fDistanceY = tCanvasMax.y - tTextureMax.y;
-
-                uint32_t fullW = tFullData.uVirtualWidth;
-                uint32_t fullH = tFullData.uVirtualHeight;
-
-                const float fEffectiveMetersPerPixelX =
-                    (tCanvasMax.x - tCanvasMin.x) / (float)fullW;
-                const float fEffectiveMetersPerPixelY =
-                    (tCanvasMax.y - tCanvasMin.y) / (float)fullH;
-
-                const float fEffectiveMetersPerPixel = pl_max(fEffectiveMetersPerPixelX, fEffectiveMetersPerPixelY);
-
-                const uint32_t uXOffsetIndex =
-                    (uint32_t)fmaxf(0.0f, floorf(fDistanceX / fEffectiveMetersPerPixel));
-                const uint32_t uYOffsetIndex =
-                    (uint32_t)fmaxf(0.0f, floorf(fDistanceY / fEffectiveMetersPerPixel));
-
-                gptImageOps->add(&tFullData, uXOffsetIndex, uYOffsetIndex, (uint32_t)iImageWidth, (uint32_t)iImageHeight, pucImageData);
-                gptImageOps->square(&tFullData);
-                fullW = tFullData.uVirtualWidth;
-                fullH = tFullData.uVirtualHeight;
+                    .uStride = 4};
+                plImageOpData tSourceData = {0};
+                gptImageOps->initialize(&tSourceInfo, &tSourceData);
+                gptImageOps->add(&tSourceData, 0, 0, (uint32_t)iImageWidth, (uint32_t)iImageHeight, pucImageData);
                 gptImage->free(pucImageData);
 
-                // -----------------------------------------------------------------
-                // Slice canvas into per-tile images
-                // -----------------------------------------------------------------
-                const uint32_t uHorizontalExtent = (uint32_t)(brx - tlx + 1);
-                const uint32_t uVerticalExtent   = (uint32_t)(bry - tly + 1);
-
-                // Avoid zero increments if canvas is very small
-                uint32_t uXInc = (uHorizontalExtent > 0) ? (fullW / uHorizontalExtent) : 0;
-                uint32_t uYInc = (uVerticalExtent   > 0) ? (fullH / uVerticalExtent)   : 0;
-                if (uXInc == 0) uXInc = 1;
-                if (uYInc == 0) uYInc = 1;
-
-                uint32_t uInc = pl_min(uXInc, uYInc);
-                uint64_t uTileBytes = (uint64_t)uInc * (uint64_t)uInc * (uint64_t)tFullData._uStride;
-                if (uTileBytes > PL_PLANET_TEXTURE_MAX_TILE_BYTES)
-                {
-                    fprintf(stderr,
-                            "[WARN] (PlanetTexture) skipping '%s': generated tile texture would be %ux%u (%.1f MiB). Increase MetersPerPixel.\n",
-                            ptPlanetTexture->pcPath,
-                            uInc,
-                            uInc,
-                            (double)uTileBytes / (1024.0 * 1024.0));
-                    gptImageOps->cleanup(&tFullData);
-                    return false;
-                }
-
-                const uint32_t uActiveX0 = tFullData.uActiveXOffset;
-                const uint32_t uActiveY0 = tFullData.uActiveYOffset;
-                const uint32_t uActiveX1 = tFullData.uActiveXOffset + tFullData.uActiveWidth;
-                const uint32_t uActiveY1 = tFullData.uActiveYOffset + tFullData.uActiveHeight;
-
-                for (uint32_t ix = 0; ix < uHorizontalExtent; ix++)
-                {
-                    const uint32_t uTileX0 = ix * uInc;
-                    const uint32_t uTileX1 = pl_min(uTileX0 + uInc, tFullData.uVirtualWidth);
-
-                    if(uTileX0 >= uTileX1)
-                        break;
-
-                    if(uTileX0 >= uActiveX1 || uTileX1 <= uActiveX0)
-                        continue;
-
-                    for (uint32_t iy = 0; iy < uVerticalExtent; iy++)
-                    {
-                        const uint32_t uTileY0 = iy * uInc;
-                        const uint32_t uTileY1 = pl_min(uTileY0 + uInc, tFullData.uVirtualHeight);
-
-                        if(uTileY0 >= uTileY1)
-                            break;
-
-                        if(uTileY0 >= uActiveY1 || uTileY1 <= uActiveY0)
-                            continue;
-
-
-                        const uint32_t tileX = (uint32_t)(tlx + (int)ix);
-                        const uint32_t tileY = (uint32_t)(tly + (int)iy);
-
-                        char acNameBuffer[128] = {0};
-                        snprintf(acNameBuffer, sizeof(acNameBuffer), "hazard_prep_%llx_%u_%u_%u.png",
-                                 (unsigned long long)(uintptr_t)ptPlanet, uSlot, tileX, tileY);
-
+                // Enforce the memory limit against the source-pixel crops that
+                // are actually uploaded.
+                plPlanetTextureSlice tLargestSlice = {0};
+                for (int tileY = tly; tileY <= bry; tileY++) {
+                    for (int tileX = tlx; tileX <= brx; tileX++) {
                         const size_t flat = (size_t)tileX + (size_t)tileY * (size_t)uH;
                         if (flat >= (size_t)uTileCount)
                             continue;
 
+                        const double dTileCenterX = ptPlanet->atTiles[flat].dOriginX;
+                        const double dTileCenterY = ptPlanet->atTiles[flat].dOriginY;
+                        plPlanetTextureSlice tSlice = {0};
+                        if (pl__planet_texture_slice(
+                            dTileCenterX - 0.5 * dTileSizeM, dTileCenterY - 0.5 * dTileSizeM,
+                            dTileCenterX + 0.5 * dTileSizeM, dTileCenterY + 0.5 * dTileSizeM,
+                            tTextureMin.x, tTextureMin.y, tTextureMax.x, tTextureMax.y,
+                            (double)ptPlanetTexture->fMetersPerPixel,
+                            (uint32_t)iImageWidth, (uint32_t)iImageHeight,
+                            tSourceData._uStride, &tSlice)) {
+                            if (tSlice.uBytes > tLargestSlice.uBytes)
+                                tLargestSlice = tSlice;
+                        }
+                    }
+                }
 
+                if (tLargestSlice.uBytes > PL_PLANET_TEXTURE_MAX_TILE_BYTES) {
+                    fprintf(stderr, "[WARN] (PlanetTexture) skipping '%s': cropped tile texture would be %ux%u (%.1f MiB). Increase MetersPerPixel or split the overlay.\n",
+                        ptPlanetTexture->pcPath,
+                        tLargestSlice.uWidth,
+                        tLargestSlice.uHeight,
+                        (double)tLargestSlice.uBytes / (1024.0 * 1024.0));
+                    gptImageOps->cleanup(&tSourceData);
+                    return false;
+                }
 
-                        int iSubXOffset = (int)uTileX0;
-                        int iSubXEnd = (int)uTileX1;
-                        int iSubYOffset = (int)uTileY0;
-                        int iSubYEnd = (int)uTileY1;
-                        int iFinalWidth = iSubXEnd - iSubXOffset;
-                        int iFinalHeight= iSubYEnd - iSubYOffset;
+                const double dTileSizeInSourcePixels =
+                    dTileSizeM / (double)ptPlanetTexture->fMetersPerPixel;
+                for (int tileY = tly; tileY <= bry; tileY++)
+                {
+                    for (int tileX = tlx; tileX <= brx; tileX++)
+                    {
+                        const size_t flat = (size_t)tileX + (size_t)tileY * (size_t)uH;
+                        if (flat >= (size_t)uTileCount)
+                            continue;
 
-                        uint8_t* puImageData = gptImageOps->extract(&tFullData, iSubXOffset, iSubYOffset, iFinalWidth, iFinalHeight, NULL);
+                        const double dTileCenterX = ptPlanet->atTiles[flat].dOriginX;
+                        const double dTileCenterY = ptPlanet->atTiles[flat].dOriginY;
+                        const double dTileMinX = dTileCenterX - 0.5 * dTileSizeM;
+                        const double dTileMaxY = dTileCenterY + 0.5 * dTileSizeM;
+                        plPlanetTextureSlice tSlice = {0};
+                        if (!pl__planet_texture_slice(
+                            dTileMinX, dTileCenterY - 0.5 * dTileSizeM,
+                            dTileCenterX + 0.5 * dTileSizeM, dTileMaxY,
+                            tTextureMin.x, tTextureMin.y, tTextureMax.x, tTextureMax.y,
+                            (double)ptPlanetTexture->fMetersPerPixel,
+                            (uint32_t)iImageWidth, (uint32_t)iImageHeight,
+                            tSourceData._uStride, &tSlice))
+                            continue;
+
+                        char acNameBuffer[128] = {0};
+                        snprintf(acNameBuffer, sizeof(acNameBuffer), "hazard_prep_%llx_%u_%u_%u.png",
+                                 (unsigned long long)(uintptr_t)ptPlanet, uSlot,
+                                 (uint32_t)tileX, (uint32_t)tileY);
+
+                        const int iSubXOffset = (int)tSlice.uX;
+                        const int iSubYOffset = (int)tSlice.uY;
+                        const int iFinalWidth = (int)tSlice.uWidth;
+                        const int iFinalHeight = (int)tSlice.uHeight;
+
+                        uint8_t* puImageData = gptImageOps->extract(&tSourceData, iSubXOffset, iSubYOffset, iFinalWidth, iFinalHeight, NULL);
 
                         plImageWriteInfo tWriteInfo = {
                             .iWidth       = (int)iFinalWidth,
@@ -1068,40 +1102,29 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                         ptPlanet->sbtChunkFiles[flat].atTextureResources[uSlot] = tTextureResource;
                         ptPlanet->sbtChunkFiles[flat].auTextureIndices[uSlot] = pl__planet_get_bindless_texture_index(tTexture);
 
+                        const double dTileSourceX =
+                            (dTileMinX - tTextureMin.x) / (double)ptPlanetTexture->fMetersPerPixel;
+                        const double dTileSourceY =
+                            (tTextureMax.y - dTileMaxY) / (double)ptPlanetTexture->fMetersPerPixel;
                         for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[flat].tFile.uChunkCount; i++)
                         {
                             plVec4* ptUVInfo = &ptPlanet->sbtChunkFiles[flat].atTextureUVInfo[uSlot * ptPlanet->sbtChunkFiles[flat].tFile.uChunkCount + i];
                             uint32_t uTopDownLevel = ptPlanet->sbtChunkFiles[flat].tFile.iTreeDepth - ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].uLevel - 1;
+                            const plPlanetChunk* ptChunk = &ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i];
+                            const double dChunkFraction = ldexp(1.0, -(int)uTopDownLevel);
 
-                            // chunk width
-                            uint32_t uWidth = (uint32_t)pl_max(1.0f, floorf((float)uInc / powf(2.0f, (float)uTopDownLevel)));
-                            uint32_t uHeight = (uint32_t)pl_max(1.0f, floorf((float)uInc / powf(2.0f, (float)uTopDownLevel)));
-
-                            // final scaling factor
-                            float fXScale = (float)uWidth / (float)iFinalWidth;
-                            float fYScale = (float)uHeight / (float)iFinalHeight;
-
-                            ptUVInfo->x = fXScale;
-                            ptUVInfo->y = fYScale;
-
-                            // UV on parent chunk
-                            float fU = (float)ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].fX; // UV on original heightmap
-                            float fV = (float)ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].fY; // UV on original heightmap
-
-                            // convert to UV in final texture space
-                            fU = fU * (float)uInc / (float)iFinalWidth;
-                            fU = fU - (float)(iSubXOffset - ix * uInc) / (float)iFinalWidth;
-
-                            fV = fV * (float)uInc / (float)iFinalHeight;
-                            fV = fV - (float)(iSubYOffset - iy * uInc) / (float)iFinalHeight;
-
-                            // works for root level but does too much at child levels
-                            ptUVInfo->z = fU;
-                            ptUVInfo->w = fV;
+                            // Map this chunk's local [0, 1] UVs into the
+                            // cropped per-terrain-tile texture.
+                            ptUVInfo->x = (float)(dTileSizeInSourcePixels * dChunkFraction / (double)iFinalWidth);
+                            ptUVInfo->y = (float)(dTileSizeInSourcePixels * dChunkFraction / (double)iFinalHeight);
+                            ptUVInfo->z = (float)((dTileSourceX + (double)ptChunk->fX * dTileSizeInSourcePixels -
+                                                  (double)iSubXOffset) / (double)iFinalWidth);
+                            ptUVInfo->w = (float)((dTileSourceY + (double)ptChunk->fY * dTileSizeInSourcePixels -
+                                                  (double)iSubYOffset) / (double)iFinalHeight);
                         }
                     }
                 }
-                gptImageOps->cleanup(&tFullData);
+                gptImageOps->cleanup(&tSourceData);
                 return true;
             }
             return false;
@@ -2364,11 +2387,11 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFla
         // float fR    = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
 
         // Easting / Northing (northing-positive-up; minus for south polar)
-        float fX = (float)ptInfo->atTiles[0].dOriginX; // * sinf(theta);
-        float fY = (float)ptInfo->atTiles[0].dOriginY; // * cosf(theta);
+        double dX = ptInfo->atTiles[0].dOriginX;
+        double dY = ptInfo->atTiles[0].dOriginY;
 
-        ptPlanet->tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * (float)ptInfo->dMetersPerPixel;
-        ptPlanet->tTopLeftGlobal.y = fY + 0.5f * (float)ptInfo->uSize * (float)ptInfo->dMetersPerPixel;
+        ptPlanet->tTopLeftGlobal.x = dX - 0.5 * (double)ptInfo->uSize * ptInfo->dMetersPerPixel;
+        ptPlanet->tTopLeftGlobal.y = dY + 0.5 * (double)ptInfo->uSize * ptInfo->dMetersPerPixel;
     }
 
     for(uint32_t k = 0; k < ptInfo->uTileCount; k++)
