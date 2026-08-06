@@ -433,7 +433,7 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppXmlContext *xml_c
 
     if (window_node->window.fullscreen) {
         plFullScreenDesc fullscreen_desc = {};
-        fullscreen_desc.tMode = PL_FULLSCREEN_MODE_EXCLUSIVE;
+        fullscreen_desc.tMode = PL_FULLSCREEN_MODE_BORDERLESS;
         fullscreen_desc.iMonitor = -1;
         _ext_windows->set_fullscreen(app_data->pl_window, &fullscreen_desc);
     }
