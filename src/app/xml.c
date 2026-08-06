@@ -5828,6 +5828,18 @@ static DcAppNodeIndex _process_xml_node_window(DcAppXmlContext *xml_ctx, xmlNode
         dc_node.window.init_position.y = 0.0f;
     }
 
+    // Fullscreen is independent of ActiveDisplay. ActiveDisplay only selects
+    // logical panels; the platform backend selects the physical monitor.
+    xmlChar *raw_fullscreen = xmlGetProp(xml_node, BAD_CAST "Fullscreen");
+    if (raw_fullscreen) {
+        if (dc_utils_string_is_boolean((const char *)raw_fullscreen)) {
+            dc_node.window.fullscreen = dc_utils_string_to_boolean((const char *)raw_fullscreen);
+        } else {
+            DC_LOG_ERROR("Window", "Invalid 'Fullscreen' boolean '%s'", raw_fullscreen);
+        }
+        xmlFree(raw_fullscreen);
+    }
+
     // x dimension
     xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
     if (!raw_x_dimension) {
@@ -5836,7 +5848,7 @@ static DcAppNodeIndex _process_xml_node_window(DcAppXmlContext *xml_ctx, xmlNode
     if (raw_x_dimension) {
         dc_node.window.init_dimension.x = (float)dc_utils_string_to_double((const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-    } else {
+    } else if (!dc_node.window.fullscreen) {
         DC_LOG_ERROR("Window", "Missing 'Width' attribute");
     }
 
@@ -5848,7 +5860,7 @@ static DcAppNodeIndex _process_xml_node_window(DcAppXmlContext *xml_ctx, xmlNode
     if (raw_y_dimension) {
         dc_node.window.init_dimension.y = (float)dc_utils_string_to_double((const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-    } else {
+    } else if (!dc_node.window.fullscreen) {
         DC_LOG_ERROR("Window", "Missing 'Height' attribute");
     }
 
@@ -5884,14 +5896,6 @@ static DcAppNodeIndex _process_xml_node_window(DcAppXmlContext *xml_ctx, xmlNode
     if (raw_active_display) {
         dc_node.window.active_display = dc_app_lookup_register_value_from_string(_lookup(xml_ctx), DC_VALUE_TYPE_INTEGER, (const char *)raw_active_display);
         xmlFree(raw_active_display);
-    }
-
-    // fullscreen mode
-    xmlChar *raw_fullscreen = xmlGetProp(xml_node, BAD_CAST "Fullscreen");
-    if (raw_fullscreen) {
-
-        dc_node.window.fullscreen = xmlStrcmp(raw_fullscreen, BAD_CAST "true") == 0;
-        xmlFree(raw_fullscreen);
     }
 
     // register node

@@ -84,7 +84,7 @@ static const dcDrawBackendI   *_ext_dc_draw_backend  = NULL;
 // declarations
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
-PL_EXPORT void  pl_app_resize(_AppData *app_data);
+PL_EXPORT void  pl_app_resize(plWindow *window, _AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
 
 static void     _load_apis(plApiRegistryI *api_registry);
@@ -333,7 +333,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     PL_FREE(app_data);
 }
 
-PL_EXPORT void pl_app_resize(_AppData *app_data) {
+PL_EXPORT void pl_app_resize(plWindow *window, _AppData *app_data) {
+    (void)window;
+    (void)app_data;
     _ext_starter->resize();
 }
 
@@ -419,8 +421,12 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppXmlContext *xml_c
     // set initial window params
     plWindowDesc window_desc = {};
     window_desc.pcTitle      = window_node->window.title;
-    window_desc.uWidth       = (uint32_t)window_node->window.init_dimension.x;
-    window_desc.uHeight      = (uint32_t)window_node->window.init_dimension.y;
+    window_desc.uWidth       = window_node->window.fullscreen && window_node->window.init_dimension.x < 1.0f
+                                   ? 1280u
+                                   : (uint32_t)window_node->window.init_dimension.x;
+    window_desc.uHeight      = window_node->window.fullscreen && window_node->window.init_dimension.y < 1.0f
+                                   ? 720u
+                                   : (uint32_t)window_node->window.init_dimension.y;
     window_desc.iXPos        = (int)window_node->window.init_position.x;
     window_desc.iYPos        = (int)window_node->window.init_position.y;
     _ext_windows->create(window_desc, &(app_data->pl_window));
@@ -428,14 +434,7 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppXmlContext *xml_c
     if (window_node->window.fullscreen) {
         plFullScreenDesc fullscreen_desc = {};
         fullscreen_desc.tMode = PL_FULLSCREEN_MODE_EXCLUSIVE;
-
-        const DcValue* active_display_val = dc_app_lookup_get_value(
-            dc_app_scene_lookup(app_data->scene),
-            window_node->window.active_display);
-        if (active_display_val) {
-            fullscreen_desc.iMonitor = active_display_val->value_integer;
-        }
-
+        fullscreen_desc.iMonitor = -1;
         _ext_windows->set_fullscreen(app_data->pl_window, &fullscreen_desc);
     }
 

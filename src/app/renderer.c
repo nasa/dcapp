@@ -6254,8 +6254,10 @@ static void _render_window(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcApp
     // all transform parameters
     float dimension[2]         = {area->dimensions[0], area->dimensions[1]};
     float virtual_dimension[2] = {
-        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(renderer->lookup, node->window.virtual_dimension.x)->value_double : node->window.init_dimension.x,
-        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(renderer->lookup, node->window.virtual_dimension.y)->value_double : node->window.init_dimension.y};
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(renderer->lookup, node->window.virtual_dimension.x)->value_double
+                                 : (node->window.init_dimension.x > 0.0f ? node->window.init_dimension.x : dimension[0]),
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(renderer->lookup, node->window.virtual_dimension.y)->value_double
+                                 : (node->window.init_dimension.y > 0.0f ? node->window.init_dimension.y : dimension[1])};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
