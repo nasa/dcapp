@@ -4406,8 +4406,9 @@ static DcAppNodeIndex _process_xml_node_planet_sphere(DcAppXmlContext *xml_ctx, 
 static DcAppNodeIndex _process_xml_node_planet_text(DcAppXmlContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     (void)directory;
 
-    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
-        DC_LOG_ERROR("PlanetText", "PlanetText must be a child of PlanetView");
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW &&
+        parent_elem_type != DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        DC_LOG_ERROR("PlanetText", "PlanetText must be a child of PlanetView or PlanetContainer");
         return NODE_INDEX_UNDEFINED;
     }
 
@@ -4415,10 +4416,14 @@ static DcAppNodeIndex _process_xml_node_planet_text(DcAppXmlContext *xml_ctx, xm
     dc_node.type   = NODE_TYPE_PLANET_TEXT;
     dc_node.parent = parent_node_index;
 
-    // inherit planet_def_index from parent PlanetView
     DcAppNode *parent = _get_node(xml_ctx, parent_node_index);
-    dc_node.planet_text.planet_def_index = parent->planet_view.planet_def_index;
-    dc_node.planet_text.crs              = parent->planet_view.crs;
+    if (parent_elem_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        dc_node.planet_text.planet_def_index = parent->planet_container.planet_def_index;
+        dc_node.planet_text.crs              = DC_APP_PLANET_CRS_CARTESIAN;
+    } else {
+        dc_node.planet_text.planet_def_index = parent->planet_view.planet_def_index;
+        dc_node.planet_text.crs              = parent->planet_view.crs;
+    }
 
     xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
     if (raw_crs) {

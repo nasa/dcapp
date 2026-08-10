@@ -117,6 +117,7 @@ void dc_app_draw_planet_container_pop(DcAppDrawContext *draw_ctx);
 void dc_app_draw_planet_line_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke);
 void dc_app_draw_planet_polygon_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke);
 void dc_app_draw_planet_convex_polygon_filled_local(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec4 color);
+void dc_app_draw_planet_text_local(DcAppDrawContext *draw_ctx, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
 void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcAppVec4 color);
 void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3d position, float radius, DcAppVec4 color);
 void dc_app_draw_planet_line_geodetic(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3d *points, uint32_t point_count, DcAppStroke stroke);

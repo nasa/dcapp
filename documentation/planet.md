@@ -429,9 +429,9 @@ When `CameraOrthographic` is set to 1, the view uses orthographic (parallel) pro
 
 ### `<PlanetContainer>`
 
-Establishes a movable geodetic frame for lines and polygons authored once in
-local 2D meters. It must be a direct child of `<PlanetView>` and may contain
-`<PlanetLine>` and `<PlanetPolygon>` children.
+Establishes a movable geodetic frame for lines, polygons, and text authored
+once in local 2D meters. It must be a direct child of `<PlanetView>` and may
+contain `<PlanetLine>`, `<PlanetPolygon>`, and `<PlanetText>` children.
 
 ```xml
 <PlanetContainer Latitude="@LandingLat" Longitude="@LandingLon"
@@ -444,6 +444,8 @@ local 2D meters. It must be a direct child of `<PlanetView>` and may contain
         <Vertex X="0" Y="50"/>
         <Vertex X="-40" Y="10"/>
     </PlanetPolygon>
+    <PlanetText X="0" Y="65" Size="12"
+        FillColor="1 0.8 0 1">Landing Site</PlanetText>
 </PlanetContainer>
 ```
 
@@ -456,17 +458,19 @@ local 2D meters. It must be a direct child of `<PlanetView>` and may contain
 | `Scale` | double/var | No | Uniform scale applied to local coordinates. Defaults to 1. |
 | `Enabled` | boolean/var | No | Enables the container and all of its children. Defaults to true. |
 
-Within the container, vertex `X` and `Y` are local meters: `+X` points east
-and `+Y` points north at the anchor. `LineWidth` remains in logical display
-pixels and does not scale with the container. Scale is applied before rotation,
-and positive rotation turns east toward north. Container nesting is not
-supported. The container height applies to the entire shape; child `CRS` and
-`HeightAboveTerrain` attributes and vertex `Latitude`, `Longitude`, `Altitude`,
-and `Z` attributes are invalid in this local scope.
+Within the container, vertex and `<PlanetText>` `X` and `Y` values are local
+meters: `+X` points east and `+Y` points north at the anchor. `LineWidth`
+remains in logical display pixels and does not scale with the container;
+`PlanetText` `Size` is in meters and does scale. Scale is applied before
+rotation, and positive rotation turns east toward north. Text remains
+screen-facing, so rotation moves its anchor without rotating its glyphs.
+Container nesting is not supported. The container height applies to every
+child; child `CRS` and `HeightAboveTerrain` attributes and local `Latitude`,
+`Longitude`, `Altitude`, and `Z` attributes are invalid.
 
-The C equivalent is a draw-context scope. A successful push establishes the
-frame used by subsequent local line and polygon calls; pop restores the
-previous frame:
+For line and polygon drawing, the C equivalent is a draw-context scope. A
+successful push establishes the frame used by subsequent local calls; pop
+restores the previous frame:
 
 ```c
 typedef struct _DcPlanetLocalTransform {
@@ -701,12 +705,18 @@ Displays text at a geographic location on the terrain surface.
 | `Latitude` | double/var | Yes for geodetic CRS | Latitude in degrees |
 | `Longitude` | double/var | Yes for geodetic CRS | Longitude in degrees |
 | `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Text position in native body-centered Cartesian meters |
-| `Size` | double/var | No | Text size in meters |
+| `Size` | double/var | No | Text size in meters. Defaults to 14. |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Text color (RGBA) |
 | `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 **Content:** Text string with variable interpolation (same syntax as `<Text>`).
+
+As a direct child of `<PlanetContainer>`, `X` and `Y` are required local
+east/north coordinates. The container supplies the geographic frame and
+height, and its scale applies to both the position and `Size`. `CRS`,
+`Latitude`, `Longitude`, `Z`, and `HeightAboveTerrain` are invalid in this
+local form.
 
 ### `<PlanetPolygon>`
 

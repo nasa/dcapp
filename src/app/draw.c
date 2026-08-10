@@ -1793,6 +1793,23 @@ void dc_app_draw_planet_convex_polygon_filled_local(DcAppDrawContext *ctx, const
         true);
 }
 
+void dc_app_draw_planet_text_local(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, float size, DcAppVec4 color) {
+    if (!text) return;
+
+    _DcAppPlanetContainerFrame *frame = _planet_container_frame(ctx);
+    plVec3 *cartesian = _planet_container_transform_points(ctx, &position, 1);
+    if (!frame || !cartesian) return;
+
+    dc_app_draw_planet_text_cartesian(
+        ctx,
+        frame->draw_view,
+        (DcAppVec3d){cartesian[0].x, cartesian[0].y, cartesian[0].z},
+        text,
+        size * (float)fabs(frame->scale),
+        color);
+    PL_FREE(cartesian);
+}
+
 void dc_app_draw_planet_polygon_local_enabled(
     DcAppDrawContext *ctx,
     const DcAppVec2 *points,

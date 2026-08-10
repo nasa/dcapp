@@ -119,7 +119,7 @@ static void _render_planet_image(DcAppDrawContext *ctx, DcAppRenderer *renderer,
 static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view);
 static void _render_planet_polygon_local(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node);
 static void _render_planet_sphere(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view);
-static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view);
+static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view, bool local);
 static void _render_planet_view(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_window(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNodeIndex node_index, DcAppNode *node);
@@ -4900,6 +4900,8 @@ static void _render_planet_container(DcAppDrawContext *ctx, DcAppRenderer *rende
             _render_planet_line_local(ctx, renderer, child);
         else if (child->type == NODE_TYPE_PLANET_POLYGON)
             _render_planet_polygon_local(ctx, renderer, child);
+        else if (child->type == NODE_TYPE_PLANET_TEXT)
+            _render_planet_text(ctx, renderer, child, draw_view, true);
         child_index = child->next;
     }
 
@@ -5306,7 +5308,7 @@ static void _render_planet_image(DcAppDrawContext *ctx, DcAppRenderer *renderer,
     }
 }
 
-static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
+static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view, bool local) {
     if (node->planet_text.enabled != DC_APP_VAL_INDEX_UNDEFINED &&
         !dc_app_lookup_get_value(renderer->lookup, node->planet_text.enabled)->value_boolean) return;
 
@@ -5380,7 +5382,12 @@ static void _render_planet_text(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
         fc[3] = node->planet_text.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_text.fill_color.a)->value_double : 1.0f;
     }
 
-    if (node->planet_text.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+    if (local) {
+        DcAppVec2 position = {
+            node->planet_text.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.x)->value_double : 0.0f,
+            node->planet_text.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(renderer->lookup, node->planet_text.xyz.y)->value_double : 0.0f};
+        dc_app_draw_planet_text_local(ctx, position, *sb_text, size, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
+    } else if (node->planet_text.crs == DC_APP_PLANET_CRS_CARTESIAN) {
         dc_app_draw_planet_text_cartesian(ctx, draw_view, pos, *sb_text, size, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
     } else {
         dc_app_draw_planet_text_geodetic(ctx, draw_view, lat, lon, height, *sb_text, size, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
@@ -5765,7 +5772,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppRenderer *renderer, 
             else if (child->type == NODE_TYPE_PLANET_SPHERE)
                 _render_planet_sphere(ctx, renderer, child, draw_view);
             else if (child->type == NODE_TYPE_PLANET_TEXT)
-                _render_planet_text(ctx, renderer, child, draw_view);
+                _render_planet_text(ctx, renderer, child, draw_view, false);
             child_index = child->next;
         }
     }

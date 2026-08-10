@@ -132,17 +132,39 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
 }
 
 static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type, DcAppElemType parent_type) {
-    if (parent_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER &&
-        (elem_type == DC_APP_ELEM_TYPE_PLANET_LINE || elem_type == DC_APP_ELEM_TYPE_PLANET_POLYGON)) {
-        const char *invalid_attrs[] = {"CRS", "HeightAboveTerrain"};
-        for (size_t i = 0; i < sizeof(invalid_attrs) / sizeof(invalid_attrs[0]); i++) {
-            if (xmlHasProp(node, BAD_CAST invalid_attrs[i])) {
-                DC_LOG_ERROR("Validate", "<%s> inside <PlanetContainer> cannot use '%s' (line %ld)",
-                             node->name, invalid_attrs[i], xmlGetLineNo(node));
+    if (parent_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
+        if (elem_type == DC_APP_ELEM_TYPE_PLANET_LINE || elem_type == DC_APP_ELEM_TYPE_PLANET_POLYGON) {
+            const char *invalid_attrs[] = {"CRS", "HeightAboveTerrain"};
+            for (size_t i = 0; i < sizeof(invalid_attrs) / sizeof(invalid_attrs[0]); i++) {
+                if (xmlHasProp(node, BAD_CAST invalid_attrs[i])) {
+                    DC_LOG_ERROR("Validate", "<%s> inside <PlanetContainer> cannot use '%s' (line %ld)",
+                                 node->name, invalid_attrs[i], xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+            }
+            return;
+        }
+
+        if (elem_type == DC_APP_ELEM_TYPE_PLANET_TEXT) {
+            if (!xmlHasProp(node, BAD_CAST "X")) {
+                DC_LOG_ERROR("Validate", "<PlanetText> inside <PlanetContainer> requires 'X' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             }
+            if (!xmlHasProp(node, BAD_CAST "Y")) {
+                DC_LOG_ERROR("Validate", "<PlanetText> inside <PlanetContainer> requires 'Y' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+
+            const char *invalid_attrs[] = {"CRS", "HeightAboveTerrain", "Latitude", "Longitude", "Z"};
+            for (size_t i = 0; i < sizeof(invalid_attrs) / sizeof(invalid_attrs[0]); i++) {
+                if (xmlHasProp(node, BAD_CAST invalid_attrs[i])) {
+                    DC_LOG_ERROR("Validate", "<PlanetText> inside <PlanetContainer> cannot use '%s' (line %ld)",
+                                 invalid_attrs[i], xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+            }
+            return;
         }
-        return;
     }
 
     if (elem_type != DC_APP_ELEM_TYPE_VERTEX ||
@@ -653,10 +675,11 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // PlanetContainer holds local-space line and polygon primitives.
+    // PlanetContainer holds local-space line, polygon, and text primitives.
     if (parent_type == DC_APP_ELEM_TYPE_PLANET_CONTAINER) {
         return child_type == DC_APP_ELEM_TYPE_PLANET_LINE ||
-               child_type == DC_APP_ELEM_TYPE_PLANET_POLYGON;
+               child_type == DC_APP_ELEM_TYPE_PLANET_POLYGON ||
+               child_type == DC_APP_ELEM_TYPE_PLANET_TEXT;
     }
 
     // Planet line and polygon primitives contain vertices.

@@ -273,6 +273,8 @@
                         <Vertex X="0" Y="50"/>
                         <Vertex X="-40" Y="10"/>
                     </PlanetPolygon>
+                    <PlanetText X="0" Y="0" Size="12"
+                        FillColor="0.1 0.9 1.0 1.0">LOCAL</PlanetText>
                 </PlanetContainer>
                 <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
                     LineColor="0.25 0.70 1.0 0.90" LineWidth="2.2" FillColor="0.25 0.70 1.0 0.10"/>
