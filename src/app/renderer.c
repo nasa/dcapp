@@ -938,6 +938,7 @@ static void _render_button(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcApp
     bool is_released = dc_app_draw_mouse_target_released(ctx, (DcAppDrawTargetId)node_index);
 
     // process mouse events per button type (only if target variable is defined)
+    bool target_was_written = false;
     if (target_var_value) {
         DcValue *target_on_value  = dc_app_lookup_get_value(renderer->lookup, node->button.val_target_on);
         DcValue *target_off_value = dc_app_lookup_get_value(renderer->lookup, node->button.val_target_off);
@@ -951,6 +952,7 @@ static void _render_button(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcApp
                     } else {
                         *target_var_value = *target_on_value;
                     }
+                    target_was_written = true;
                 }
                 break;
 
@@ -958,8 +960,10 @@ static void _render_button(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcApp
             case DC_APP_BUTTON_TYPE_MOMENTARY:
                 if (is_pressed) {
                     *target_var_value = *target_on_value;
+                    target_was_written = true;
                 } else if (is_released) {
                     *target_var_value = *target_off_value;
+                    target_was_written = true;
                 }
                 break;
 
@@ -967,12 +971,16 @@ static void _render_button(DcAppDrawContext *ctx, DcAppRenderer *renderer, DcApp
             case DC_APP_BUTTON_TYPE_STANDARD:
                 if (is_pressed) {
                     *target_var_value = *target_on_value;
+                    target_was_written = true;
                 }
                 break;
 
             default:
                 break;
         }
+    }
+    if (target_was_written) {
+        dc_app_lookup_mark_var_written(renderer->lookup, node->button.var_target);
     }
 
     // mouse interaction
@@ -4376,6 +4384,8 @@ static bool _apply_set_operation(DcAppRenderer *renderer, DcAppVarIndex var_inde
             return false;
     }
 
+    // Legacy Set operations forced an outbound write even when the value was unchanged.
+    dc_app_lookup_mark_var_written(renderer->lookup, var_index);
     return true; // refresh needed
 }
 

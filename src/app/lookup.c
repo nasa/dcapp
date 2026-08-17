@@ -12,6 +12,7 @@
 typedef struct _DcAppLookupVar {
     DcAppValIndex value_index;
     DcValue      *sb_value_stack; // per-variable stack for push/pop
+    uint64_t      write_sequence;
 } _DcAppLookupVar;
 
 struct DcAppLookup {
@@ -155,6 +156,20 @@ const char *dc_app_lookup_get_var_name(DcAppLookup *lookup, DcAppVarIndex index)
         return NULL;
     }
     return &(lookup->sb_var_names[lookup->sb_var_name_offsets[index]]);
+}
+
+uint64_t dc_app_lookup_get_var_write_sequence(DcAppLookup *lookup, DcAppVarIndex index) {
+    if (!lookup || index == DC_APP_LOOKUP_INDEX_UNDEFINED || index >= (DcAppVarIndex)sbcount(lookup->sb_vars)) {
+        return 0;
+    }
+    return lookup->sb_vars[index].write_sequence;
+}
+
+void dc_app_lookup_mark_var_written(DcAppLookup *lookup, DcAppVarIndex index) {
+    if (!lookup || index == DC_APP_LOOKUP_INDEX_UNDEFINED || index >= (DcAppVarIndex)sbcount(lookup->sb_vars)) {
+        return;
+    }
+    lookup->sb_vars[index].write_sequence++;
 }
 
 void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_index, const char *new_string) {

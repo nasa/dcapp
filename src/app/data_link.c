@@ -15,6 +15,8 @@ typedef struct _DcAppTrickTxBinding {
     DcAppVarIndex   dcapp_var_index;
     DcTrickVarIndex trick_var_index;
     DcValue         prev_value;
+    uint64_t        last_write_sequence;
+    bool            force_send;
 } DcAppTrickTxBinding;
 
 typedef struct _DcAppTrickRxBinding {
@@ -34,6 +36,8 @@ typedef struct _DcAppEdgeTxBinding {
     DcAppVarIndex  dcapp_var_index;
     DcEdgeVarIndex edge_var_index;
     DcValue        prev_value;
+    uint64_t       last_write_sequence;
+    bool           force_send;
 } DcAppEdgeTxBinding;
 
 typedef struct _DcAppEdgeRxBinding {
@@ -120,6 +124,7 @@ void dc_app_data_link_add_edge_tx(DcAppDataLinkContext *data_link, const char *c
     DcAppEdgeTxBinding var = {};
     var.dcapp_var_index    = dcapp_var_index;
     var.edge_var_index     = dc_edge_add_tx_var(connection->edge, command);
+    var.force_send         = false;
     if (initial_value) var.prev_value = *initial_value;
     sbpush(connection->sb_tx_var_contexts, var);
 }
@@ -153,6 +158,7 @@ void dc_app_data_link_add_trick_tx(DcAppDataLinkContext *data_link, const char *
         path,
         units,
         initial_value && initial_value->type == DC_VALUE_TYPE_STRING);
+    var.force_send         = false;
     if (initial_value) var.prev_value = *initial_value;
     sbpush(connection->sb_tx_var_contexts, var);
 }
@@ -165,11 +171,11 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppLookup *looku
         DcAppTrickConnection *trick_context = &data_link->sb_tricks[ii];
         DcTrick              *trick         = trick_context->trick;
 
-        // on (re)connect, zero out prev_values so all tx vars get sent to initialize the sim
+        // On (re)connect, force every tx var to initialize the sim, including zero values.
         bool is_trick_connected = dc_trick_is_connected(trick);
         if (is_trick_connected && !trick_context->was_connected) {
             for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
-                memset(&trick_context->sb_tx_var_contexts[jj].prev_value, 0, sizeof(DcValue));
+                trick_context->sb_tx_var_contexts[jj].force_send = false;
             }
         }
         trick_context->was_connected = is_trick_connected;
@@ -182,11 +188,17 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppLookup *looku
                 DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, tx_var_context->dcapp_var_index);
                 DcValue      *curr_value  = dc_app_lookup_get_value(lookup, value_index);
                 DcValue      *prev_value  = &tx_var_context->prev_value;
+                uint64_t      write_sequence = dc_app_lookup_get_var_write_sequence(lookup, tx_var_context->dcapp_var_index);
 
-                // send if new value is different
-                if (!dc_value_is_equal(curr_value, prev_value)) {
+                // Explicit Sets are commands: preserve legacy force-write behavior even
+                // when this client's cached value is already the requested value.
+                if (tx_var_context->force_send ||
+                    write_sequence != tx_var_context->last_write_sequence ||
+                    !dc_value_is_equal(curr_value, prev_value)) {
                     dc_trick_set_tx_var(trick, tx_var_context->trick_var_index, curr_value->value_string);
-                    *prev_value = *curr_value;
+                    *prev_value                        = *curr_value;
+                    tx_var_context->last_write_sequence = write_sequence;
+                    tx_var_context->force_send          = false;
                 }
             }
         }
@@ -234,11 +246,11 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppLookup *looku
         DcAppEdgeConnection *edge_context = &data_link->sb_edges[ii];
         DcEdge              *edge         = edge_context->edge;
 
-        // on (re)connect, zero out prev_values so all tx vars get sent to initialize the scene
+        // On (re)connect, force every tx var to initialize the scene, including zero values.
         bool is_connected = dc_edge_is_connected(edge);
         if (is_connected && !edge_context->was_connected) {
             for (int jj = 0; jj < sbcount(edge_context->sb_tx_var_contexts); jj++) {
-                memset(&edge_context->sb_tx_var_contexts[jj].prev_value, 0, sizeof(DcValue));
+                edge_context->sb_tx_var_contexts[jj].force_send = false;
             }
         }
         edge_context->was_connected = is_connected;
@@ -251,11 +263,15 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppLookup *looku
                 DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, tx_var_context->dcapp_var_index);
                 DcValue      *curr_value  = dc_app_lookup_get_value(lookup, value_index);
                 DcValue      *prev_value  = &tx_var_context->prev_value;
+                uint64_t      write_sequence = dc_app_lookup_get_var_write_sequence(lookup, tx_var_context->dcapp_var_index);
 
-                // send if new value is different
-                if (!dc_value_is_equal(curr_value, prev_value)) {
+                if (tx_var_context->force_send ||
+                    write_sequence != tx_var_context->last_write_sequence ||
+                    !dc_value_is_equal(curr_value, prev_value)) {
                     dc_edge_set_tx_var(edge, tx_var_context->edge_var_index, curr_value->value_string);
-                    *prev_value = *curr_value;
+                    *prev_value                        = *curr_value;
+                    tx_var_context->last_write_sequence = write_sequence;
+                    tx_var_context->force_send          = false;
                 }
             }
         }
