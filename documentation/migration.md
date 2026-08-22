@@ -624,7 +624,10 @@ Changes:
 | `FnStartBlink="@varname"` | `FireBlink="@varname"` |
 | `Duration="-1"` | `Duration="0"` (0 means indefinite, same behavior) |
 
-Note: `FireBlink` uses the `Fire*` prefix convention for edge-triggered attributes. All `Fire*` attributes use `DcAppValIndex` and fire on value change via `dc_value_is_equal()`. See also: `FireRefresh` on `<PlanetTexture>`, `FireCall` on `<Function>`.
+Note: `FireBlink` uses the `Fire*` prefix convention for edge-triggered
+attributes. All `Fire*` attributes use `DcAppVariableRegistryValueIndex` and
+fire on value change via `dc_app_value_is_equal()`. See also: `FireRefresh` on
+`<PlanetTexture>`, `FireCall` on `<Function>`.
 
 ## Section 13: Panel BackgroundColor
 
@@ -884,7 +887,11 @@ To support legacy conversion, `<Set>` elements accept an optional `Defer` attrib
 <Set Variable="myVar" Operator="#_set_equal_" Defer="true">newValue</Set>
 ```
 
-When `Defer` is `"true"`, the Set operation is collected during the draw pass and applied atomically AFTER the entire draw pass completes. This matches the legacy engine's deferred execution behavior. `Defer` is a standard `DcAppValIndex` boolean, parsed via `dc_app_lookup_register_value_from_string`.
+When `Defer` is `"true"`, the Set operation is collected during the draw pass
+and applied atomically AFTER the entire draw pass completes. This matches the
+legacy engine's deferred execution behavior. `Defer` is a standard
+`DcAppVariableRegistryValueIndex` boolean, parsed via
+`dc_app_variable_registry_register_value_from_string`.
 
 Without `Defer`, Sets execute immediately as before. Modern XML should NOT use `Defer` -- it exists solely for legacy conversion compatibility.
 

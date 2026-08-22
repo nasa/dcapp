@@ -315,9 +315,9 @@ with pl.project("apps"):
 
         pl.add_source_files(
             *relative_sources(
-                source("src/app/config.c"),
-                source("src/app/elem.c"),
-                source("src/app/lookup.c"),
+                source("src/app/xml_preprocessor.c"),
+                source("src/app/xml_element.c"),
+                source("src/app/variable_registry.c"),
                 source("src/app/value.c"),
                 config_utility_sources,
                 source("apps/dcapp_genheader.c"),
@@ -376,8 +376,8 @@ with pl.project("apps"):
 
         pl.add_source_files(
             *relative_sources(
-                source("src/app/config.c"),
-                source("src/app/elem.c"),
+                source("src/app/xml_preprocessor.c"),
+                source("src/app/xml_element.c"),
                 config_utility_sources,
                 source("apps/dcapp_validate.c"),
             )

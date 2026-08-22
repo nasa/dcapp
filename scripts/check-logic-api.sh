@@ -86,14 +86,14 @@ check_table DcAppDrawApi DcDrawApi "$dcapp_root/src/app/draw_api.h"
 check_table DcAppMouseApi DcMouseApi "$dcapp_root/src/app/draw_api.h"
 check_table DcAppTextureApi DcTextureApi "$dcapp_root/src/app/texture_api.h"
 check_table DcAppPlanetApi DcPlanetApi "$dcapp_root/src/app/planet_api.h"
-check_table DcAppApi DcAppApi "$dcapp_root/src/app/logic_api.h"
+check_table DcAppDisplayLogicApi DcAppApi "$dcapp_root/src/app/display_logic_api.h"
 
 internal_init="$(
-    sed -n '/struct DcAppInit {/,/^};/p' "$dcapp_root/src/app/logic_api.h" |
+    sed -n '/struct DcAppDisplayLogicInit {/,/^};/p' "$dcapp_root/src/app/display_logic_api.h" |
         sed '1d;$d' |
         sed \
             -e 's/DcAppContext/__DC_APP_CONTEXT__/g' \
-            -e 's/DcAppApi/__DC_APP_API__/g' \
+            -e 's/DcAppDisplayLogicApi/__DC_APP_API__/g' \
             -e 's/DcApp/Dc/g' \
             -e 's/__DC_APP_CONTEXT__/DcAppContext/g' \
             -e 's/__DC_APP_API__/DcAppApi/g' |
@@ -106,7 +106,7 @@ public_init="$(
 )"
 
 if [[ "$internal_init" != "$public_init" ]]; then
-    echo "DcInit does not match DcAppInit:" >&2
+    echo "DcInit does not match DcAppDisplayLogicInit:" >&2
     diff <(printf '%s\n' "$internal_init") <(printf '%s\n' "$public_init") || true
     exit 1
 fi

@@ -16,6 +16,29 @@ matter for this codebase.
   ownership, coordinate assumptions, or non-obvious behavior.
 - Keep files ASCII unless the existing file already needs another encoding.
 
+## Public Naming And Ownership
+
+Cross-file names in `src/app` are deliberately verbose. C has no native
+namespace, so a public name should identify the subsystem that owns its
+contract without requiring the reader to find its declaration first.
+
+- Derive the owner prefix from the module name: `display_model` uses
+  `DcAppDisplayModel...`, `dc_app_display_model_...`, and
+  `DC_APP_DISPLAY_MODEL_...`; `variable_registry` follows the same pattern.
+- End opaque subsystem-state types in `Context`, such as
+  `DcAppDisplayRuntimeContext` and `DcAppVariableRegistryContext`.
+- Qualify module-owned scalar and index types too. For example, use
+  `DcAppDrawAlignmentType`, `DcAppVariableRegistryVariableIndex`, and
+  `DcAppVariableRegistryValueIndex`.
+- Spell out ownership-bearing words such as `Variable`, `Value`, `Element`,
+  and `Alignment`. Retain established technical initialisms such as `API`,
+  `ID`, `XML`, and `CRS` where the surrounding API already uses them.
+- Keep file-local types, static helpers, parameters, and local variables
+  concise; the full owner prefix is for cross-file interfaces.
+- Do not rename the generated logic API mechanically. Its curated `Dc...`
+  names are a separate public contract even when the internal `DcApp...`
+  counterpart is more explicit.
+
 ## Header Boundaries
 
 - Use a focused `*_types.h` only for enums and typedefs of basic scalar,
@@ -65,12 +88,12 @@ handles. Preserve that convention when adding indexed runtime arrays.
 When adding or changing an XML element, update the full surface area in the same
 change:
 
-1. Add or change the element enum in `src/app/elem_types.h` and its name
-   mapping in `src/app/elem.c`.
+1. Add or change the element enum in `src/app/xml_element_types.h` and its name
+   mapping in `src/app/xml_element.c`.
 2. Add or change the runtime node data in `src/app/node.h` if the element
    survives preprocessing.
-3. Parse the element in `src/app/xml.c`.
-4. Resolve it in `src/app/renderer.c` if it affects runtime display.
+3. Parse the element in `src/app/display_builder.c`.
+4. Resolve it in `src/app/display_runtime.c` if it affects runtime display.
 5. Validate allowed attributes/children in `apps/dcapp_validate.c`.
 6. Update documentation in `documentation/`.
 7. Add or update a sample when the behavior is user-facing.
@@ -92,14 +115,14 @@ Use existing file/path helpers from `src/utils/file.*` where possible.
 
 ## Values And Variables
 
-`DcValue` is the central runtime value representation. When adding behavior that
+`DcAppValue` is the central runtime value representation. When adding behavior that
 reads or writes XML values:
 
 - Preserve the value type when possible.
 - Call the existing refresh/update helpers when a string representation needs to
   stay in sync.
-- Use lookup helpers from `src/app/lookup.c` instead of open-coding variable
-  access.
+- Use variable-registry helpers from `src/app/variable_registry.c` instead of
+  open-coding variable access.
 - Keep `Set` behavior and logic variable pointers consistent.
 
 ## Logic API Changes
@@ -108,7 +131,8 @@ Logic API changes touch generated code, runtime code, docs, and samples. Update
 them together:
 
 1. The contract owned by `src/app/draw_api.h`, `src/app/texture_api.h`,
-   `src/app/planet_api.h`, or the small aggregate in `src/app/logic_api.h`.
+   `src/app/planet_api.h`, or the small aggregate in
+   `src/app/display_logic_api.h`.
 2. Implementations in `src/app/draw.c`, `src/app/texture.c`,
    `src/app/planet.c`, or another owning runtime file.
 3. The explicitly curated short-name public contract and display-specific
@@ -130,7 +154,7 @@ stable IDs to other implementation files.
 Use the existing split:
 
 - XML node semantics, layout resolution, and XML-ordered dispatch to the draw
-  API belong in `src/app/renderer.c`.
+  API belong in `src/app/display_runtime.c`.
 - Reusable draw API helpers and draw batching belong in `src/app/draw.c`.
 - Raw draw list storage belongs in `extensions/dc_draw_ext.*`.
 - GPU submission belongs in `extensions/dc_draw_backend_ext.*`.

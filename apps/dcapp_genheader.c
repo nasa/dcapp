@@ -1,7 +1,7 @@
-#include "../src/app/config.h"
+#include "../src/app/xml_preprocessor.h"
 #include "../src/app/draw_types.h"
-#include "../src/app/elem.h"
-#include "../src/app/lookup.h"
+#include "../src/app/xml_element.h"
+#include "../src/app/variable_registry.h"
 #include "../src/app/planet_types.h"
 #include "../src/app/value.h"
 #include "../src/utils/file.h"
@@ -31,8 +31,8 @@ typedef struct DcLogicCallbacks {
     bool failed;
 } DcLogicCallbacks;
 
-static void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks);
-static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks);
+static void _process_node_children(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, DcLogicCallbacks *callbacks);
+static void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, DcLogicCallbacks *callbacks);
 static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, DcLogicCallbacks *callbacks);
 
 int main(int argc, char **argv) {
@@ -44,8 +44,8 @@ int main(int argc, char **argv) {
 
     // parse --preprocessed flag (before constants)
     const char *preprocessed_output = NULL;
-    int         const_count         = 0;
-    char      **const_args          = NULL;
+    int const_count = 0;
+    char **const_args = NULL;
 
     for (int ii = 2; ii < argc; ii++) {
         if (strcmp(argv[ii], "--preprocessed") == 0 && ii + 1 < argc) {
@@ -66,40 +66,40 @@ int main(int argc, char **argv) {
     }
 
     // create config
-    DcAppConfig *config;
-    const char  *config_filepath = argv[1];
+    DcAppXmlPreprocessorContext *config;
+    const char *config_filepath = argv[1];
     if (const_count > 0) {
-        config = dc_app_config_create(config_filepath, const_args, const_count);
+        config = dc_app_xml_preprocessor_context_create(config_filepath, const_args, const_count);
     } else {
-        config = dc_app_config_create(config_filepath, NULL, 0);
+        config = dc_app_xml_preprocessor_context_create(config_filepath, NULL, 0);
     }
     free(const_args);
 
     // create lookup
-    DcAppLookup *lookup = dc_app_lookup_create();
+    DcAppVariableRegistryContext *lookup = dc_app_variable_registry_context_create();
     DcLogicCallbacks callbacks = {};
 
     // Export the same roots available to the runtime before preprocessing.
-    dc_app_config_export_environment(config);
+    dc_app_xml_preprocessor_export_environment(config);
 
     // preprocess XML file
-    dc_app_config_preprocess(config);
-    dc_app_lookup_set_suppress_missing_variable(
+    dc_app_xml_preprocessor_preprocess(config);
+    dc_app_variable_registry_set_suppress_missing_variable(
         lookup,
-        dc_app_config_suppresses_missing_variable(config));
+        dc_app_xml_preprocessor_suppresses_missing_variable(config));
 
     // dump preprocessed XML for debugging
-    dc_app_config_save_preprocessed(config, preprocessed_output);
+    dc_app_xml_preprocessor_save_preprocessed(config, preprocessed_output);
 
     // process XML
-    _process_node(dc_app_config_root(config), lookup, &callbacks);
+    _process_node(dc_app_xml_preprocessor_root(config), lookup, &callbacks);
     if (callbacks.failed) {
         return 1;
     }
 
     // create directory
     char logic_dir[DC_UTILS_FILEPATH_BUFFER_SIZE];
-    dc_utils_join_paths(dc_app_config_directory(config), "logic", logic_dir, sizeof(logic_dir));
+    dc_utils_join_paths(dc_app_xml_preprocessor_directory(config), "logic", logic_dir, sizeof(logic_dir));
     dc_utils_create_directory(logic_dir);
 
     // open/create file
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int var_count           = dc_app_lookup_get_var_count(lookup);
+    int var_count = dc_app_variable_registry_get_variable_count(lookup);
 
     // file header
     fprintf(file, "%s\n", "// ********************************************* //");
@@ -130,23 +130,23 @@ int main(int argc, char **argv) {
 
     fprintf(file, "%s\n", "// Alignment values used by DcPlacement.");
     fprintf(file, "%s\n", "typedef enum DcAlign {");
-    fprintf(file, "    DC_ALIGN_UNDEFINED = %d,\n", DC_APP_ALIGN_TYPE_UNDEFINED);
-    fprintf(file, "    DC_ALIGN_LEFT = %d,\n", DC_APP_ALIGN_TYPE_LEFT);
-    fprintf(file, "    DC_ALIGN_CENTER = %d,\n", DC_APP_ALIGN_TYPE_CENTER);
-    fprintf(file, "    DC_ALIGN_RIGHT = %d,\n", DC_APP_ALIGN_TYPE_RIGHT);
-    fprintf(file, "    DC_ALIGN_BOTTOM = %d,\n", DC_APP_ALIGN_TYPE_BOTTOM);
-    fprintf(file, "    DC_ALIGN_MIDDLE = %d,\n", DC_APP_ALIGN_TYPE_MIDDLE);
-    fprintf(file, "    DC_ALIGN_TOP = %d,\n", DC_APP_ALIGN_TYPE_TOP);
+    fprintf(file, "    DC_ALIGN_UNDEFINED = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED);
+    fprintf(file, "    DC_ALIGN_LEFT = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_LEFT);
+    fprintf(file, "    DC_ALIGN_CENTER = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_CENTER);
+    fprintf(file, "    DC_ALIGN_RIGHT = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT);
+    fprintf(file, "    DC_ALIGN_BOTTOM = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM);
+    fprintf(file, "    DC_ALIGN_MIDDLE = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE);
+    fprintf(file, "    DC_ALIGN_TOP = %d,\n", DC_APP_DRAW_ALIGNMENT_TYPE_TOP);
     fprintf(file, "%s\n", "} DcAlign;");
     fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// Type values used by XML <Arg> entries.");
     fprintf(file, "%s\n", "typedef enum DcValueType {");
-    fprintf(file, "    DC_VALUE_TYPE_UNDEFINED = %d,\n", DC_VALUE_TYPE_UNDEFINED);
-    fprintf(file, "    DC_VALUE_TYPE_STRING = %d,\n", DC_VALUE_TYPE_STRING);
-    fprintf(file, "    DC_VALUE_TYPE_INTEGER = %d,\n", DC_VALUE_TYPE_INTEGER);
-    fprintf(file, "    DC_VALUE_TYPE_DOUBLE = %d,\n", DC_VALUE_TYPE_DOUBLE);
-    fprintf(file, "    DC_VALUE_TYPE_BOOLEAN = %d,\n", DC_VALUE_TYPE_BOOLEAN);
+    fprintf(file, "    DC_VALUE_TYPE_UNDEFINED = %d,\n", DC_APP_VALUE_TYPE_UNDEFINED);
+    fprintf(file, "    DC_VALUE_TYPE_STRING = %d,\n", DC_APP_VALUE_TYPE_STRING);
+    fprintf(file, "    DC_VALUE_TYPE_INTEGER = %d,\n", DC_APP_VALUE_TYPE_INTEGER);
+    fprintf(file, "    DC_VALUE_TYPE_DOUBLE = %d,\n", DC_APP_VALUE_TYPE_DOUBLE);
+    fprintf(file, "    DC_VALUE_TYPE_BOOLEAN = %d,\n", DC_APP_VALUE_TYPE_BOOLEAN);
     fprintf(file, "%s\n", "} DcValueType;");
     fprintf(file, "%s\n", "");
 
@@ -684,24 +684,24 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "");
 
     // file variable definitions
-    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) {
+    if (var_count > DC_APP_VARIABLE_REGISTRY_FIRST_INDEX) {
         fprintf(file, "%s\n", "// XML variable pointers resolved during display_pre_init().");
     }
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        const char   *var_name    = dc_app_lookup_get_var_name(lookup, var_index);
-        DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, var_index);
-        DcValue      *value       = dc_app_lookup_get_value(lookup, value_index);
+    for (DcAppVariableRegistryVariableIndex var_index = DC_APP_VARIABLE_REGISTRY_FIRST_INDEX; var_index < var_count; var_index++) {
+        const char *var_name = dc_app_variable_registry_get_variable_name(lookup, var_index);
+        DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index(lookup, var_index);
+        DcAppValue *value = dc_app_variable_registry_get_value(lookup, value_index);
         switch (value->type) {
-            case DC_VALUE_TYPE_STRING:
-                fprintf(file, "char   (*%s)[%d];\n", var_name, DC_VALUE_STRING_BUFFER_SIZE);
+            case DC_APP_VALUE_TYPE_STRING:
+                fprintf(file, "char   (*%s)[%d];\n", var_name, DC_APP_VALUE_STRING_BUFFER_SIZE);
                 break;
-            case DC_VALUE_TYPE_DOUBLE:
+            case DC_APP_VALUE_TYPE_DOUBLE:
                 fprintf(file, "double *%s;\n", var_name);
                 break;
-            case DC_VALUE_TYPE_INTEGER:
+            case DC_APP_VALUE_TYPE_INTEGER:
                 fprintf(file, "int    *%s;\n", var_name);
                 break;
-            case DC_VALUE_TYPE_BOOLEAN:
+            case DC_APP_VALUE_TYPE_BOOLEAN:
                 fprintf(file, "bool   *%s;\n", var_name);
                 break;
             default:
@@ -709,7 +709,7 @@ int main(int argc, char **argv) {
                 break;
         }
     }
-    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) fprintf(file, "%s\n", "");
+    if (var_count > DC_APP_VARIABLE_REGISTRY_FIRST_INDEX) fprintf(file, "%s\n", "");
 
     // define dc_get_variable() and display_pre_init()
     fprintf(file, "%s\n", "// Legacy lookup helper for variables declared in XML.");
@@ -728,26 +728,26 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    dc_texture = init->texture;");
     fprintf(file, "%s\n", "    dc_planet = init->planet;");
 
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        const char   *var_name    = dc_app_lookup_get_var_name(lookup, var_index);
-        DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, var_index);
-        DcValue      *value       = dc_app_lookup_get_value(lookup, value_index);
+    for (DcAppVariableRegistryVariableIndex var_index = DC_APP_VARIABLE_REGISTRY_FIRST_INDEX; var_index < var_count; var_index++) {
+        const char *var_name = dc_app_variable_registry_get_variable_name(lookup, var_index);
+        DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index(lookup, var_index);
+        DcAppValue *value = dc_app_variable_registry_get_value(lookup, value_index);
         switch (value->type) {
-            case DC_VALUE_TYPE_STRING:
+            case DC_APP_VALUE_TYPE_STRING:
                 fprintf(
                     file,
                     "    %s = (char (*)[%d])dc_get_variable(\"%s\");\n",
                     var_name,
-                    DC_VALUE_STRING_BUFFER_SIZE,
+                    DC_APP_VALUE_STRING_BUFFER_SIZE,
                     var_name);
                 break;
-            case DC_VALUE_TYPE_DOUBLE:
+            case DC_APP_VALUE_TYPE_DOUBLE:
                 fprintf(file, "    %s = (double *)dc_get_variable(\"%s\");\n", var_name, var_name);
                 break;
-            case DC_VALUE_TYPE_INTEGER:
+            case DC_APP_VALUE_TYPE_INTEGER:
                 fprintf(file, "    %s = (int *)dc_get_variable(\"%s\");\n", var_name, var_name);
                 break;
-            case DC_VALUE_TYPE_BOOLEAN:
+            case DC_APP_VALUE_TYPE_BOOLEAN:
                 fprintf(file, "    %s = (bool *)dc_get_variable(\"%s\");\n", var_name, var_name);
                 break;
             default:
@@ -784,24 +784,24 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "extern const DcPlanetApi *dc_planet;");
     fprintf(file, "%s\n", "");
 
-    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) {
+    if (var_count > DC_APP_VARIABLE_REGISTRY_FIRST_INDEX) {
         fprintf(file, "%s\n", "// XML variable pointers shared from the main logic translation unit.");
     }
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        const char   *var_name    = dc_app_lookup_get_var_name(lookup, var_index);
-        DcAppValIndex value_index = dc_app_lookup_get_var_value_index(lookup, var_index);
-        DcValue      *value       = dc_app_lookup_get_value(lookup, value_index);
+    for (DcAppVariableRegistryVariableIndex var_index = DC_APP_VARIABLE_REGISTRY_FIRST_INDEX; var_index < var_count; var_index++) {
+        const char *var_name = dc_app_variable_registry_get_variable_name(lookup, var_index);
+        DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index(lookup, var_index);
+        DcAppValue *value = dc_app_variable_registry_get_value(lookup, value_index);
         switch (value->type) {
-            case DC_VALUE_TYPE_STRING:
-                fprintf(file, "extern char   (*%s)[%d];\n", var_name, DC_VALUE_STRING_BUFFER_SIZE);
+            case DC_APP_VALUE_TYPE_STRING:
+                fprintf(file, "extern char   (*%s)[%d];\n", var_name, DC_APP_VALUE_STRING_BUFFER_SIZE);
                 break;
-            case DC_VALUE_TYPE_DOUBLE:
+            case DC_APP_VALUE_TYPE_DOUBLE:
                 fprintf(file, "extern double *%s;\n", var_name);
                 break;
-            case DC_VALUE_TYPE_INTEGER:
+            case DC_APP_VALUE_TYPE_INTEGER:
                 fprintf(file, "extern int    *%s;\n", var_name);
                 break;
-            case DC_VALUE_TYPE_BOOLEAN:
+            case DC_APP_VALUE_TYPE_BOOLEAN:
                 fprintf(file, "extern bool   *%s;\n", var_name);
                 break;
             default:
@@ -809,7 +809,7 @@ int main(int argc, char **argv) {
                 break;
         }
     }
-    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) fprintf(file, "%s\n", "");
+    if (var_count > DC_APP_VARIABLE_REGISTRY_FIRST_INDEX) fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "#ifdef __cplusplus");
     fprintf(file, "%s\n", "}");
@@ -892,7 +892,7 @@ static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, Dc
     xmlFree(raw_name);
 }
 
-void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks) {
+void _process_node_children(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, DcLogicCallbacks *callbacks) {
     xmlNodePtr xml_child_node = xml_node->children;
     while (xml_child_node) {
         _process_node(xml_child_node, lookup, callbacks);
@@ -900,24 +900,24 @@ void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCal
     }
 }
 
-void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *callbacks) {
+void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, DcLogicCallbacks *callbacks) {
 
-    switch (dc_app_elem_type_from_xml_node(xml_node)) {
+    switch (dc_app_xml_element_type_from_xml_node(xml_node)) {
 
         // ignore non-element nodes
-        case DC_APP_ELEM_TYPE_NONELEM: {
+        case DC_APP_XML_ELEMENT_TYPE_NONELEM: {
             return;
         }
 
-        case DC_APP_ELEM_TYPE_VARIABLE: {
+        case DC_APP_XML_ELEMENT_TYPE_VARIABLE: {
 
             // name
             xmlChar *raw_name = xmlNodeGetContent(xml_node);
-            char     clean_name[DC_VALUE_STRING_BUFFER_SIZE];
-            bool     valid_name = false;
+            char clean_name[DC_APP_VALUE_STRING_BUFFER_SIZE];
+            bool valid_name = false;
             if (raw_name) {
-                strncpy(clean_name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                clean_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+                strncpy(clean_name, (const char *)raw_name, DC_APP_VALUE_STRING_BUFFER_SIZE - 1);
+                clean_name[DC_APP_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_name);
                 dc_utils_trim_whitespace_inplace(clean_name);
                 if (clean_name[0] == '\0') {
@@ -939,14 +939,14 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
             }
 
             // type
-            xmlChar    *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
-            DcValueType type     = DC_VALUE_TYPE_STRING;
+            xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
+            DcAppValueType type = DC_APP_VALUE_TYPE_STRING;
             if (raw_type) {
-                char clean_type[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(clean_type, (const char *)raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                clean_type[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+                char clean_type[DC_APP_VALUE_STRING_BUFFER_SIZE];
+                strncpy(clean_type, (const char *)raw_type, DC_APP_VALUE_STRING_BUFFER_SIZE - 1);
+                clean_type[DC_APP_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_type);
-                type = (DcValueType)dc_utils_string_to_integer(clean_type);
+                type = (DcAppValueType)dc_utils_string_to_integer(clean_type);
             }
 
             // don't care about initial value here
@@ -957,20 +957,20 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup, DcLogicCallbacks *c
             }
 
             // register variable
-            DcValue value = {};
-            value.type    = type;
-            DcAppValIndex value_index = dc_app_lookup_register_value(lookup, &value);
-            dc_app_lookup_register_var(lookup, clean_name, value_index);
+            DcAppValue value = {};
+            value.type = type;
+            DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_register_value(lookup, &value);
+            dc_app_variable_registry_register_variable(lookup, clean_name, value_index);
             break;
         }
 
-        case DC_APP_ELEM_TYPE_FUNCTION: {
+        case DC_APP_XML_ELEMENT_TYPE_FUNCTION: {
             _register_callback(xml_node, DC_LOGIC_CALLBACK_TYPE_FUNCTION, callbacks);
             _process_node_children(xml_node, lookup, callbacks);
             break;
         }
 
-        case DC_APP_ELEM_TYPE_DRAW_FUNCTION: {
+        case DC_APP_XML_ELEMENT_TYPE_DRAW_FUNCTION: {
             _register_callback(xml_node, DC_LOGIC_CALLBACK_TYPE_DRAW_FUNCTION, callbacks);
             _process_node_children(xml_node, lookup, callbacks);
             break;

@@ -38,12 +38,12 @@ struct DcAppTextStyle {
 
 struct DcAppPlacement {
     float rotation;
-    DcAppAlignType parent_align_x;
-    DcAppAlignType parent_align_y;
-    DcAppAlignType local_align_x;
-    DcAppAlignType local_align_y;
-    DcAppAlignType pivot_align_x;
-    DcAppAlignType pivot_align_y;
+    DcAppDrawAlignmentType parent_align_x;
+    DcAppDrawAlignmentType parent_align_y;
+    DcAppDrawAlignmentType local_align_x;
+    DcAppDrawAlignmentType local_align_y;
+    DcAppDrawAlignmentType pivot_align_x;
+    DcAppDrawAlignmentType pivot_align_y;
     float pivot_x;
     float pivot_y;
 };
@@ -69,7 +69,7 @@ struct DcAppDrawResult {
 };
 
 struct DcAppDrawFuncArg {
-    DcValueType type;
+    DcAppValueType type;
     const char *value_string;
     int value_integer;
     double value_double;

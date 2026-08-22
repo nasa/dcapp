@@ -4,6 +4,14 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.185.0] - 2026-08-22
+----------------------
+
+### Changed
+- Renamed the `src/app` preprocessing, element, display, logic, variable,
+  value, and drawing-alignment internals to use explicit owner-qualified names.
+  The generated Logic API remains source- and ABI-compatible.
+
 [2.184.0] - 2026-08-02
 --------------------
 

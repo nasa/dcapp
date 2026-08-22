@@ -1,42 +1,42 @@
-#include "scene.h"
+#include "display_model.h"
 
 #include "pl.h"
 
-#include "app/lookup.h"
+#include "app/variable_registry.h"
 #include "node.h"
 #include "utils/stb_sb.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-struct DcAppSceneContext {
-    DcAppLookup *lookup;
+struct DcAppDisplayModelContext {
+    DcAppVariableRegistryContext *lookup;
 
     // nodes
-    DcAppNode      *sb_nodes;
-    DcAppNodeIndex  window;
+    DcAppNode *sb_nodes;
+    DcAppNodeIndex window;
 
     // planet instances
     // Definitions are allocated separately so their addresses survive registry growth.
     DcAppPlanetDefinition **sb_planet_definitions;
-    DcAppNodeIndex         *sb_planet_view_nodes;
+    DcAppNodeIndex *sb_planet_view_nodes;
 };
 
 static const plMemoryI *_ext_memory = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_FREE(x)  _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-void dc_app_scene_init(plApiRegistryI *api_registry) {
+void dc_app_display_model_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
 }
 
-DcAppSceneContext *dc_app_scene_create(void) {
-    DcAppSceneContext *scene = PL_ALLOC(sizeof(*scene));
+DcAppDisplayModelContext *dc_app_display_model_context_create(void) {
+    DcAppDisplayModelContext *scene = PL_ALLOC(sizeof(*scene));
     if (!scene) return NULL;
 
     memset(scene, 0, sizeof(*scene));
-    scene->lookup = dc_app_lookup_create();
+    scene->lookup = dc_app_variable_registry_context_create();
     if (!scene->lookup) {
         PL_FREE(scene);
         return NULL;
@@ -46,7 +46,7 @@ DcAppSceneContext *dc_app_scene_create(void) {
     return scene;
 }
 
-void dc_app_scene_destroy(DcAppSceneContext *scene) {
+void dc_app_display_model_context_destroy(DcAppDisplayModelContext *scene) {
     if (!scene) return;
 
     // cleanup per-node resources (stretchy buffers and malloc'd memory)
@@ -129,31 +129,31 @@ void dc_app_scene_destroy(DcAppSceneContext *scene) {
     }
     sbfree(scene->sb_planet_definitions);
     sbfree(scene->sb_planet_view_nodes);
-    dc_app_lookup_destroy(scene->lookup);
+    dc_app_variable_registry_context_destroy(scene->lookup);
     PL_FREE(scene);
 }
 
-DcAppLookup *dc_app_scene_lookup(DcAppSceneContext *scene) {
+DcAppVariableRegistryContext *dc_app_display_model_get_variable_registry(DcAppDisplayModelContext *scene) {
     return scene ? scene->lookup : NULL;
 }
 
-DcAppNodeIndex dc_app_scene_add_node(DcAppSceneContext *scene, const DcAppNode *node) {
+DcAppNodeIndex dc_app_display_model_add_node(DcAppDisplayModelContext *scene, const DcAppNode *node) {
     if (!scene || !node) return NODE_INDEX_UNDEFINED;
     sbpush(scene->sb_nodes, *node);
     return sbcount(scene->sb_nodes) - 1;
 }
 
-DcAppNode *dc_app_scene_get_node(DcAppSceneContext *scene, DcAppNodeIndex index) {
+DcAppNode *dc_app_display_model_get_node(DcAppDisplayModelContext *scene, DcAppNodeIndex index) {
     if (!scene || index <= NODE_INDEX_UNDEFINED || index >= sbcount(scene->sb_nodes)) return NULL;
     return &scene->sb_nodes[index];
 }
 
-int dc_app_scene_get_node_count(const DcAppSceneContext *scene) {
+int dc_app_display_model_get_node_count(const DcAppDisplayModelContext *scene) {
     return scene ? sbcount(scene->sb_nodes) : 0;
 }
 
-DcAppPlanetDefinition *dc_app_scene_add_planet_definition(
-    DcAppSceneContext *scene,
+DcAppPlanetDefinition *dc_app_display_model_add_planet_definition(
+    DcAppDisplayModelContext *scene,
     const DcAppPlanetDefinition *definition) {
     if (!scene || !definition) return NULL;
 
@@ -166,30 +166,30 @@ DcAppPlanetDefinition *dc_app_scene_add_planet_definition(
     return stored;
 }
 
-uint32_t dc_app_scene_get_planet_definition_count(const DcAppSceneContext *scene) {
+uint32_t dc_app_display_model_get_planet_definition_count(const DcAppDisplayModelContext *scene) {
     return scene ? (uint32_t)sbcount(scene->sb_planet_definitions) : 0;
 }
 
-DcAppPlanetDefinition *dc_app_scene_get_planet_definition(
-    DcAppSceneContext *scene,
+DcAppPlanetDefinition *dc_app_display_model_get_planet_definition(
+    DcAppDisplayModelContext *scene,
     uint32_t index) {
     if (!scene || index >= (uint32_t)sbcount(scene->sb_planet_definitions)) return NULL;
     return scene->sb_planet_definitions[index];
 }
 
-void dc_app_scene_add_planet_view_node(
-    DcAppSceneContext *scene,
+void dc_app_display_model_add_planet_view_node(
+    DcAppDisplayModelContext *scene,
     DcAppNodeIndex node_index) {
     if (!scene || node_index == NODE_INDEX_UNDEFINED) return;
     sbpush(scene->sb_planet_view_nodes, node_index);
 }
 
-uint32_t dc_app_scene_get_planet_view_node_count(const DcAppSceneContext *scene) {
+uint32_t dc_app_display_model_get_planet_view_node_count(const DcAppDisplayModelContext *scene) {
     return scene ? (uint32_t)sbcount(scene->sb_planet_view_nodes) : 0;
 }
 
-DcAppNodeIndex dc_app_scene_get_planet_view_node(
-    const DcAppSceneContext *scene,
+DcAppNodeIndex dc_app_display_model_get_planet_view_node(
+    const DcAppDisplayModelContext *scene,
     uint32_t index) {
     if (!scene || index >= (uint32_t)sbcount(scene->sb_planet_view_nodes)) {
         return NODE_INDEX_UNDEFINED;
@@ -197,10 +197,10 @@ DcAppNodeIndex dc_app_scene_get_planet_view_node(
     return scene->sb_planet_view_nodes[index];
 }
 
-void dc_app_scene_set_window(DcAppSceneContext *scene, DcAppNodeIndex index) {
+void dc_app_display_model_set_window(DcAppDisplayModelContext *scene, DcAppNodeIndex index) {
     if (scene) scene->window = index;
 }
 
-DcAppNodeIndex dc_app_scene_get_window(const DcAppSceneContext *scene) {
+DcAppNodeIndex dc_app_display_model_get_window(const DcAppDisplayModelContext *scene) {
     return scene ? scene->window : NODE_INDEX_UNDEFINED;
 }

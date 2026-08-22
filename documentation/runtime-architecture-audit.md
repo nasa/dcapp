@@ -17,25 +17,30 @@ architecture pass. The actionable ownership and correctness findings described
 below have now been resolved:
 
 - Draw/mouse, texture, and planet own the internal runtime contracts;
-  `logic_api.h` only aggregates them.
+  `display_logic_api.h` only aggregates them.
 - The generated logic header emits a deliberately curated short-name public
   contract plus typed, exported XML callback prototypes.
-- The scene owns planet definitions and PlanetView-node registration; the
-  renderer owns their binding policy; the planet context owns runtime
+- The display model owns planet definitions and PlanetView-node registration;
+  the display runtime owns their binding policy; the planet context owns runtime
   resources only.
 - Draw interaction uses a draw-owned target token rather than scene-node types.
-- Lookup registration is sealed before generated variable pointers are
+- Variable-registry registration is sealed before generated variable pointers are
   published.
 - Retained low-level IO state is heap-owned across app reload, logic capability
   tables are rebound, and libcurl callbacks are refreshed.
 - PlanetText teardown, retained shader-path lifetime, and the MJPEG source cap
   are fixed.
 
-The optional one-symbol `dc_logic_get_module` design, mechanical module
-renames, and a two-stage replacement for the existing explicit XML bootstrap
-are not required by these fixes and remain possible future changes. App hot
-reload supports unchanged retained context layouts; struct-layout migration
-still requires a full restart.
+The mechanical module and owner-qualified symbol renames described in the
+naming section have since been applied. The optional one-symbol
+`dc_logic_get_module` design and a two-stage replacement for the existing
+explicit XML bootstrap remain possible future changes. App hot reload supports
+unchanged retained context layouts; struct-layout migration still requires a
+full restart.
+
+The body below preserves the former filenames and symbols when describing the
+audited snapshot. See [Naming Recommendations](#naming-recommendations) for the
+former-to-adopted mapping used by the current tree.
 
 ## Executive Verdict
 
@@ -759,22 +764,25 @@ texture, the display model, and the display builder should not include it.
 
 ## Naming Recommendations
 
-Names should follow responsibility after ownership is corrected:
+The audit's recommendations were adopted as the following behavior-free
+module renames after the ownership work settled:
 
-| Current | Recommended | Strength |
+| Former | Adopted | Rationale |
 |---|---|---|
-| `xml.c/.h` | `display_builder.c/.h` | Strong; it is not generic XML |
-| `scene.c/.h` | `display_model.c/.h` | Strong if it takes planet-definition ownership |
-| `renderer.c/.h` | `display_runtime.c/.h` | Strong; it executes callbacks and state mutations, not just rendering |
-| `data_link.c/.h` | Keep | It accurately describes the Trick/Edge data-link boundary |
-| `logic_runtime.c/.h` | `logic_host.c/.h` | Optional; current name is understandable |
-| `logic_api.h` | `logic_host_api.h` or keep the name after shrinking it | Optional; ownership matters more than the rename |
+| `config.c/.h` | `xml_preprocessor.c/.h` | It preprocesses the XML authoring language rather than storing general configuration |
+| `elem.c/.h`, `elem_types.h` | `xml_element.c/.h`, `xml_element_types.h` | The vocabulary is specifically the source XML element vocabulary |
+| `xml.c/.h` | `display_builder.c/.h` | It builds the retained display model rather than providing generic XML utilities |
+| `scene.c/.h` | `display_model.c/.h` | It owns the retained model, variable registry, and parsed planet definitions |
+| `renderer.c/.h` | `display_runtime.c/.h` | It interprets callbacks, interaction, state mutation, and drawing rather than merely rendering |
+| `logic_runtime.c/.h` | `display_logic.c/.h` | It owns the loaded display-logic library and lifecycle |
+| `logic_api.h`, `logic_callbacks.h` | `display_logic_api.h`, `display_logic_callbacks.h` | The contracts belong to loaded display logic |
+| `lookup.c/.h`, `lookup_types.h` | `variable_registry.c/.h`, `variable_registry_types.h` | It owns named variables, value slots, stacks, and write tracking rather than merely performing lookups |
+| `data_link.c/.h` | Unchanged | It already names the Trick/Edge data-link boundary accurately |
 
-`draw`, `font`, `texture`, `pixelstream`, `planet`, `lookup`, `config`, and
-`elem` are reasonable names.
-
-Do not perform the renames first. Moving ownership while names remain stable
-makes behavior review easier; rename mechanically after the boundaries settle.
+The adopted public C names also carry their owner explicitly, for example
+`DcAppDisplayModelContext`, `dc_app_display_model_*`,
+`DcAppVariableRegistryValueIndex`, and `DcAppDrawAlignmentType`. The generated
+logic header retains its deliberately shorter `Dc...` public contract.
 
 ## Minimal, Behavior-Preserving Work Plan
 

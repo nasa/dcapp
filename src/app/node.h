@@ -2,8 +2,8 @@
 #define DC_APP_NODE_H
 
 #include "app/draw_types.h"
-#include "app/logic_callbacks.h"
-#include "app/lookup_types.h"
+#include "app/display_logic_callbacks.h"
+#include "app/variable_registry_types.h"
 #include "app/node_types.h"
 #include "app/pixelstream_types.h"
 #include "app/planet_types.h"
@@ -19,79 +19,79 @@ struct DcAppPlanet;
 struct DcAppPlanetView;
 
 // value index types
-typedef struct DcAppValIndex2 {
+typedef struct DcAppNodeValueIndex2 {
     union {
-        DcAppValIndex x, r, lat, roll;
+        DcAppVariableRegistryValueIndex x, r, lat, roll;
     };
     union {
-        DcAppValIndex y, g, lon, pitch;
+        DcAppVariableRegistryValueIndex y, g, lon, pitch;
     };
-} DcAppValIndex2;
+} DcAppNodeValueIndex2;
 
-typedef struct DcAppValIndex3 {
+typedef struct DcAppNodeValueIndex3 {
     union {
-        DcAppValIndex x, r, lat, roll;
+        DcAppVariableRegistryValueIndex x, r, lat, roll;
     };
     union {
-        DcAppValIndex y, g, lon, pitch;
+        DcAppVariableRegistryValueIndex y, g, lon, pitch;
     };
     union {
-        DcAppValIndex z, b, ele, yaw;
+        DcAppVariableRegistryValueIndex z, b, ele, yaw;
     };
-} DcAppValIndex3;
+} DcAppNodeValueIndex3;
 
-typedef struct DcAppValIndex4 {
+typedef struct DcAppNodeValueIndex4 {
     union {
-        DcAppValIndex x, r;
+        DcAppVariableRegistryValueIndex x, r;
     };
     union {
-        DcAppValIndex y, g;
+        DcAppVariableRegistryValueIndex y, g;
     };
     union {
-        DcAppValIndex z, b;
+        DcAppVariableRegistryValueIndex z, b;
     };
     union {
-        DcAppValIndex w, a;
+        DcAppVariableRegistryValueIndex w, a;
     };
-} DcAppValIndex4;
+} DcAppNodeValueIndex4;
 
 // Vertex data for Line and Polygon elements
 typedef struct DcAppVertexData {
-    DcAppValIndex2 position;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 } DcAppVertexData;
 
 typedef struct DcAppNodeArc {
-    DcAppValIndex2 position;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation; // where the arc starts (0 = right, 90 = top)
-    DcAppValIndex  radius;
-    DcAppValIndex  angle; // span of the arc in degrees
-    DcAppValIndex  num_segments;
-    DcAppValIndex4 line_color;
-    DcAppValIndex  line_width;
-    DcAppValIndex  line_pattern;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation; // where the arc starts (0 = right, 90 = top)
+    DcAppVariableRegistryValueIndex radius;
+    DcAppVariableRegistryValueIndex angle; // span of the arc in degrees
+    DcAppVariableRegistryValueIndex num_segments;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 } DcAppNodeArc;
 
 typedef struct DcAppNodeBlink {
-    DcAppValIndex  frequency;
-    DcAppValIndex  duty_cycle;
-    DcAppValIndex  duration;
-    DcAppValIndex  fire_blink;
+    DcAppVariableRegistryValueIndex frequency;
+    DcAppVariableRegistryValueIndex duty_cycle;
+    DcAppVariableRegistryValueIndex duration;
+    DcAppVariableRegistryValueIndex fire_blink;
     DcAppNodeIndex child;
 
     // runtime state
-    double  remaining_duration;
-    double  last_frame_time;
-    DcValue last_fire_blink_value;
+    double remaining_duration;
+    double last_frame_time;
+    DcAppValue last_fire_blink_value;
 } DcAppNodeBlink;
 
 // State event node (children drawn when parent state matches)
@@ -102,17 +102,17 @@ typedef struct DcAppNodeStateEvent {
 typedef struct DcAppNodeButton {
 
     // standard transforms
-    DcAppValIndex2 position;
-    DcAppValIndex2 dimension;
-    DcAppValIndex2 virtual_dimension;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex2 virtual_dimension;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 
     // children (regular child nodes, including state-conditional nodes)
     DcAppNodeIndex child;
@@ -121,15 +121,15 @@ typedef struct DcAppNodeButton {
     uint32_t state_flags;
 
     // comparison values for each state
-    DcAppValIndex val_enabled_on;
-    DcAppValIndex val_target_on;
-    DcAppValIndex val_target_off;
-    DcAppValIndex val_indicator_on;
+    DcAppVariableRegistryValueIndex val_enabled_on;
+    DcAppVariableRegistryValueIndex val_target_on;
+    DcAppVariableRegistryValueIndex val_target_off;
+    DcAppVariableRegistryValueIndex val_indicator_on;
 
     // variable indices to be set for each state
-    DcAppVarIndex var_enabled;
-    DcAppVarIndex var_target;
-    DcAppVarIndex var_indicator;
+    DcAppVariableRegistryVariableIndex var_enabled;
+    DcAppVariableRegistryVariableIndex var_target;
+    DcAppVariableRegistryVariableIndex var_indicator;
 
     // type for button
     DcAppButtonType type;
@@ -137,217 +137,217 @@ typedef struct DcAppNodeButton {
 
 #define DC_APP_NODE_ELLIPSE_MAX_SEGMENTS 1000
 typedef struct DcAppNodeEllipse {
-    DcAppValIndex2 position;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation; // where the wedge starts (0 = right, 90 = top)
-    DcAppValIndex  angle;    // span of the wedge in degrees (360 = full ellipse)
-    DcAppValIndex  radius_x;
-    DcAppValIndex  radius_y;
-    DcAppValIndex  num_segments;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex4 line_color;
-    DcAppValIndex  line_width;
-    DcAppValIndex  line_pattern;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation; // where the wedge starts (0 = right, 90 = top)
+    DcAppVariableRegistryValueIndex angle;    // span of the wedge in degrees (360 = full ellipse)
+    DcAppVariableRegistryValueIndex radius_x;
+    DcAppVariableRegistryValueIndex radius_y;
+    DcAppVariableRegistryValueIndex num_segments;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
 
     DcAppNodeIndex child;
-    uint32_t   state_flags;
-    uint8_t    config_flags;
+    uint32_t state_flags;
+    uint8_t config_flags;
 
-    DcAppValIndex negate_x;
-    DcAppValIndex negate_y;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 } DcAppNodeEllipse;
 
 typedef struct DcAppNodeConditional {
-    DcAppValIndex  type;
-    DcAppValIndex  value1;
-    DcAppValIndex  value2;
+    DcAppVariableRegistryValueIndex type;
+    DcAppVariableRegistryValueIndex value1;
+    DcAppVariableRegistryValueIndex value2;
     DcAppNodeIndex child;
-    uint32_t   state_flags;
+    uint32_t state_flags;
 } DcAppNodeConditional;
 
 typedef struct DcAppNodeContainer {
-    DcAppValIndex2 position;
-    DcAppValIndex2 dimension;
-    DcAppValIndex2 virtual_dimension;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex2 virtual_dimension;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
     DcAppNodeIndex child;
-    uint32_t   state_flags;
-    uint8_t    config_flags;
+    uint32_t state_flags;
+    uint8_t config_flags;
 } DcAppNodeContainer;
 
 typedef struct DcAppNodeImage {
-    DcAppValIndex2 position;
-    DcAppValIndex2 dimension;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 
     DcAppTextureIndex texture_index;
 
     DcAppNodeIndex child;
-    uint32_t   state_flags;
-    uint8_t    config_flags;
+    uint32_t state_flags;
+    uint8_t config_flags;
 } DcAppNodeImage;
 
 #define DC_APP_NODE_LINE_MAX_POINTS 1000
 typedef struct DcAppNodeLine {
-    DcAppValIndex2 position;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
-    DcAppValIndex4 line_color;
-    DcAppValIndex  line_width;
-    DcAppValIndex  line_pattern;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
 
     DcAppVertexData *sb_vertices;
-    uint8_t      config_flags;
+    uint8_t config_flags;
 } DcAppNodeLine;
 
 typedef struct DcAppNodeMouseMotion {
-    DcAppVarIndex var_x;
-    DcAppVarIndex var_y;
+    DcAppVariableRegistryVariableIndex var_x;
+    DcAppVariableRegistryVariableIndex var_y;
 } DcAppNodeMouseMotion;
 
 typedef struct DcAppNodePanel {
-    DcAppValIndex2 parent_dimension;
-    DcAppValIndex2 virtual_dimension;
-    DcAppValIndex4 background_color;
-    DcAppValIndex  index;
-    uint8_t    config_flags;
+    DcAppNodeValueIndex2 parent_dimension;
+    DcAppNodeValueIndex2 virtual_dimension;
+    DcAppNodeValueIndex4 background_color;
+    DcAppVariableRegistryValueIndex index;
+    uint8_t config_flags;
     DcAppNodeIndex child;
 } DcAppNodePanel;
 
 typedef struct DcAppNodePixelstream {
-    DcAppValIndex2 position;
-    DcAppValIndex2 dimension;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 
     DcAppTextureIndex test_pattern_texture_index;
 
     DcAppNodeIndex child;
-    uint32_t   state_flags;
-    uint8_t    config_flags;
+    uint32_t state_flags;
+    uint8_t config_flags;
 
     DcAppPixelstreamSourceIndex source_index;
 } DcAppNodePixelstream;
 
 #define DC_APP_NODE_POLYGON_MAX_POINTS 1000
 typedef struct DcAppNodePolygon {
-    DcAppValIndex2 position;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex4 line_color;
-    DcAppValIndex  line_width;
-    DcAppValIndex  line_pattern;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
 
     DcAppNodeIndex child;
-    uint32_t   state_flags;
-    uint8_t    config_flags;
+    uint32_t state_flags;
+    uint8_t config_flags;
 
     DcAppVertexData *sb_vertices;
-    DcAppValIndex    rounded;
+    DcAppVariableRegistryValueIndex rounded;
 } DcAppNodePolygon;
 
 typedef struct DcAppNodeRectangle {
-    DcAppValIndex2 position;
-    DcAppValIndex2 dimension;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex4 line_color;
-    DcAppValIndex  line_width;
-    DcAppValIndex  line_pattern;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
 
     DcAppNodeIndex child;
-    uint32_t   state_flags;
-    uint8_t    config_flags;
-    DcAppValIndex  rounded;
+    uint32_t state_flags;
+    uint8_t config_flags;
+    DcAppVariableRegistryValueIndex rounded;
 } DcAppNodeRectangle;
 
 typedef struct DcAppNodeSet {
-    DcAppVarIndex var_index;
-    DcAppValIndex     operation; // because operator was taken :(
-    DcAppValIndex     operand;
-    DcAppValIndex     deferred; // defer to end of draw pass
+    DcAppVariableRegistryVariableIndex var_index;
+    DcAppVariableRegistryValueIndex operation; // because operator was taken :(
+    DcAppVariableRegistryValueIndex operand;
+    DcAppVariableRegistryValueIndex deferred; // defer to end of draw pass
 } DcAppNodeSet;
 
 typedef struct DcAppNodeFunction {
-    DcAppLogicFunctionFn callback;
-    DcAppValIndex fire_call;
-    DcValue   last_fire_call_value;
+    DcAppDisplayLogicFunctionFn callback;
+    DcAppVariableRegistryValueIndex fire_call;
+    DcAppValue last_fire_call_value;
 } DcAppNodeFunction;
 
 typedef struct DcAppDrawFunctionArg {
-    DcValueType type;
-    DcAppValIndex   value;
+    DcAppValueType type;
+    DcAppVariableRegistryValueIndex value;
 } DcAppDrawFunctionArg;
 
 typedef struct DcAppNodeDrawFunction {
-    DcAppLogicDrawFunctionFn callback;
+    DcAppDisplayLogicDrawFunctionFn callback;
     DcAppDrawFunctionArg *sb_args;
 } DcAppNodeDrawFunction;
 
 typedef struct DcAppNodeSphere {
     // 2D positioning (where to draw in the orthographic view)
-    DcAppValIndex2 position;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex  rotation; // external 2D rotation in orthographic view
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppVariableRegistryValueIndex rotation; // external 2D rotation in orthographic view
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 
     // sphere properties
-    DcAppValIndex  radius;
-    DcAppValIndex4 fill_color;
+    DcAppVariableRegistryValueIndex radius;
+    DcAppNodeValueIndex4 fill_color;
 
     // internal rotation (roll, pitch, yaw of the sphere itself)
-    DcAppValIndex3 rpy;
+    DcAppNodeValueIndex3 rpy;
 
     // optional texture
     DcAppTextureIndex texture_index;
 } DcAppNodeSphere;
 
 typedef struct DcAppStencilChild {
-    DcAppNodeIndex        child;
+    DcAppNodeIndex child;
     DcAppStencilChildType type;
 } DcAppStencilChild;
 
@@ -357,59 +357,59 @@ typedef struct DcAppNodeStencil {
 
 #define DC_APP_NODE_TEXT_MAX_LINES 256
 typedef struct DcAppNodeText {
-    DcAppValIndex2 position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
-    DcAppValIndex  size;
-    DcAppValIndex  log;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex4 line_color;
-    DcAppValIndex4 background_color;
-    DcAppValIndex  bold;
-    DcAppValIndex  italic;
-    uint8_t    config_flags;
-    DcAppValIndex  shadow_offset;
-    DcAppValIndex  update_rate;
-    double     last_update_time;
-    int        font_index; // 1-based index into sb_fonts (0 = default)
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
+    DcAppVariableRegistryValueIndex size;
+    DcAppVariableRegistryValueIndex log;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppNodeValueIndex4 line_color;
+    DcAppNodeValueIndex4 background_color;
+    DcAppVariableRegistryValueIndex bold;
+    DcAppVariableRegistryValueIndex italic;
+    uint8_t config_flags;
+    DcAppVariableRegistryValueIndex shadow_offset;
+    DcAppVariableRegistryValueIndex update_rate;
+    double last_update_time;
+    int font_index; // 1-based index into sb_fonts (0 = default)
 
     // stretchy buffers contains values and formats
     // TODO move this to a context
-    DcAppValIndex   *sb_vals;
-    char        *sb_fillers;
-    uint8_t     *sb_filler_indices;
-    char        *sb_formats;
-    uint8_t     *sb_format_indices;
-    DcValueType *sb_format_types;
-    char        *sb_cached_text;
+    DcAppVariableRegistryValueIndex *sb_vals;
+    char *sb_fillers;
+    uint8_t *sb_filler_indices;
+    char *sb_formats;
+    uint8_t *sb_format_indices;
+    DcAppValueType *sb_format_types;
+    char *sb_cached_text;
 } DcAppNodeText;
 
 typedef struct DcAppPlanetShaderEntry {
     char *vertex_path;   // heap-allocated (NULL = keep default "planet.vert")
     char *fragment_path; // heap-allocated (NULL = keep default "planet.frag")
-    int   index;
+    int index;
 } DcAppPlanetShaderEntry;
 
 typedef struct DcAppPlanetTextureEntry {
-    DcAppValIndex  file;                   // string value: texture path, passed through unchanged
-    DcAppValIndex2 lle;                    // double vars: geodetic center in degrees
-    DcAppValIndex3 xyz;                    // double vars: native Cartesian center
-    DcAppValIndex mpp;                     // double var: meters per pixel
-    DcAppValIndex originX;                 // double var: meters in projected CRS
-    DcAppValIndex originY;                 // double var: meters in projected CRS
-    DcAppValIndex enabled;                 // boolean var: load/remove this texture slot
-    DcAppValIndex fire_refresh;            // var: change triggers texture reload
-    DcValue   last_fire_refresh_value; // edge detection (fire on change)
+    DcAppVariableRegistryValueIndex file;         // string value: texture path, passed through unchanged
+    DcAppNodeValueIndex2 lle;                     // double vars: geodetic center in degrees
+    DcAppNodeValueIndex3 xyz;                     // double vars: native Cartesian center
+    DcAppVariableRegistryValueIndex mpp;          // double var: meters per pixel
+    DcAppVariableRegistryValueIndex originX;      // double var: meters in projected CRS
+    DcAppVariableRegistryValueIndex originY;      // double var: meters in projected CRS
+    DcAppVariableRegistryValueIndex enabled;      // boolean var: load/remove this texture slot
+    DcAppVariableRegistryValueIndex fire_refresh; // var: change triggers texture reload
+    DcAppValue last_fire_refresh_value;           // edge detection (fire on change)
     DcAppPlanetCrs crs;
-    uint8_t slot;                      // assigned by XML declaration order
-    bool    last_enabled;
-    bool    enabled_initialized;
+    uint8_t slot; // assigned by XML declaration order
+    bool last_enabled;
+    bool enabled_initialized;
 } DcAppPlanetTextureEntry;
 
 #define PLANET_INDEX_UNDEFINED 0
@@ -433,7 +433,7 @@ typedef struct DcAppPlanetDefinition {
     DcAppPlanetShaderEntry *sb_shaders; // stretchy buffer
 
     // light direction
-    DcAppValIndex3 light_direction;
+    DcAppNodeValueIndex3 light_direction;
 
     // coordinate reference system inherited by PlanetTexture
     DcAppPlanetCrs crs;
@@ -442,36 +442,36 @@ typedef struct DcAppPlanetDefinition {
     uint32_t mesh_cache_size_mb; // combined cache size in MiB, 0 = renderer default
 
     // runtime
-    uint8_t index; // 1-based index into sb_planets
+    uint8_t index;              // 1-based index into sb_planets
     struct DcAppPlanet *handle; // dcapp handle for xml and logic interop
 } DcAppPlanetDefinition;
 
 typedef struct DcAppNodePlanetContainer {
-    DcAppValIndex  lat;
-    DcAppValIndex  lon;
-    DcAppValIndex  height_above_terrain;
-    DcAppValIndex  scale;
-    DcAppValIndex  rotation;
-    DcAppValIndex  enabled;
-    uint8_t    planet_def_index;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppVariableRegistryValueIndex scale;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex enabled;
+    uint8_t planet_def_index;
     DcAppNodeIndex child;
 } DcAppNodePlanetContainer;
 
 typedef struct DcAppNodePlanetEllipse {
-    DcAppValIndex  lat;
-    DcAppValIndex  lon;
-    DcAppValIndex3 xyz;
-    DcAppValIndex  radius_x;
-    DcAppValIndex  radius_y;
-    DcAppValIndex  rotation;
-    DcAppValIndex  height_above_terrain;
-    DcAppValIndex4 line_color;
-    DcAppValIndex  line_width;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex  segments;
-    DcAppValIndex  enabled;
-    uint8_t    config_flags;
-    uint8_t    planet_def_index;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppNodeValueIndex3 xyz;
+    DcAppVariableRegistryValueIndex radius_x;
+    DcAppVariableRegistryValueIndex radius_y;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppVariableRegistryValueIndex segments;
+    DcAppVariableRegistryValueIndex enabled;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
     DcAppPlanetCrs crs;
 } DcAppNodePlanetEllipse;
 
@@ -480,151 +480,151 @@ typedef struct DcAppPlanetVertexStatic {
     double lon;
     double lat;
     double alt; // meters above surface
-    bool   has_alt;
+    bool has_alt;
 } DcAppPlanetVertexStatic;
 
 // variable-bound point (XML, resolved at draw time)
 typedef struct DcAppPlanetVertexDynamic {
-    DcAppValIndex lat;
-    DcAppValIndex lon;
-    DcAppValIndex alt;
-    DcAppValIndex3 xyz;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppVariableRegistryValueIndex alt;
+    DcAppNodeValueIndex3 xyz;
 } DcAppPlanetVertexDynamic;
 
 typedef struct DcAppNodePlanetLine {
-    DcAppPlanetVertexStatic  *sb_points_static;  // fixed points (GeoJSON)
+    DcAppPlanetVertexStatic *sb_points_static;   // fixed points (GeoJSON)
     DcAppPlanetVertexDynamic *sb_points_dynamic; // variable-bound points (XML)
-    bool                  is_dynamic;
-    DcAppValIndex             height_above_terrain;
-    DcAppValIndex4            line_color;
-    DcAppValIndex             line_width;
-    DcAppValIndex             line_pattern;
-    DcAppValIndex             enabled;
-    uint8_t               config_flags;
-    uint8_t               planet_def_index;
-    DcAppPlanetCrs        crs;
+    bool is_dynamic;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
+    DcAppVariableRegistryValueIndex enabled;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
+    DcAppPlanetCrs crs;
 } DcAppNodePlanetLine;
 
 typedef struct DcAppNodePlanetImage {
-    DcAppValIndex  lat;
-    DcAppValIndex  lon;
-    DcAppValIndex3 xyz;
-    DcAppValIndex  height_above_terrain;
-    DcAppValIndex2 dimension;
-    DcAppValIndex4 tint_color;
-    DcAppValIndex  enabled;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppNodeValueIndex3 xyz;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex4 tint_color;
+    DcAppVariableRegistryValueIndex enabled;
     DcAppTextureIndex texture_index;
-    uint8_t    config_flags;
-    uint8_t    planet_def_index;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
     DcAppPlanetCrs crs;
 } DcAppNodePlanetImage;
 
 typedef struct DcAppNodePlanetBreadcrumbs {
-    DcAppValIndex       lat;
-    DcAppValIndex       lon;
-    DcAppValIndex       alt;
-    DcAppValIndex3      xyz;
-    DcAppValIndex       height_above_terrain;
-    DcAppValIndex       point_spacing;
-    DcAppValIndex       max_points;
-    DcAppValIndex       clear;
-    DcValue         last_clear_value;
-    bool            clear_value_initialized;
-    DcAppValIndex       enabled;
-    DcAppValIndex4      line_color;
-    DcAppValIndex       line_width;
-    DcAppValIndex       line_pattern;
-    plVec3d        *sb_points;
-    uint8_t         config_flags;
-    uint8_t         planet_def_index;
-    DcAppPlanetCrs  crs;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppVariableRegistryValueIndex alt;
+    DcAppNodeValueIndex3 xyz;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppVariableRegistryValueIndex point_spacing;
+    DcAppVariableRegistryValueIndex max_points;
+    DcAppVariableRegistryValueIndex clear;
+    DcAppValue last_clear_value;
+    bool clear_value_initialized;
+    DcAppVariableRegistryValueIndex enabled;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
+    plVec3d *sb_points;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
+    DcAppPlanetCrs crs;
 } DcAppNodePlanetBreadcrumbs;
 
 typedef struct DcAppNodePlanetPolygon {
-    DcAppPlanetVertexStatic  *sb_points_static;  // fixed points (GeoJSON)
+    DcAppPlanetVertexStatic *sb_points_static;   // fixed points (GeoJSON)
     DcAppPlanetVertexDynamic *sb_points_dynamic; // variable-bound points (XML)
-    bool                  is_dynamic;
-    DcAppValIndex             height_above_terrain;
-    DcAppValIndex4            line_color;
-    DcAppValIndex             line_width;
-    DcAppValIndex             line_pattern;
-    DcAppValIndex4            fill_color;
-    DcAppValIndex             enabled;
-    uint8_t               config_flags;
-    uint8_t               planet_def_index;
-    DcAppPlanetCrs        crs;
+    bool is_dynamic;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppNodeValueIndex4 line_color;
+    DcAppVariableRegistryValueIndex line_width;
+    DcAppVariableRegistryValueIndex line_pattern;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppVariableRegistryValueIndex enabled;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
+    DcAppPlanetCrs crs;
 } DcAppNodePlanetPolygon;
 
 typedef struct DcAppNodePlanetSphere {
-    DcAppValIndex  lat;
-    DcAppValIndex  lon;
-    DcAppValIndex3 xyz;
-    DcAppValIndex  height_above_terrain;
-    DcAppValIndex  radius;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex  enabled;
-    uint8_t    config_flags;
-    uint8_t    planet_def_index;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppNodeValueIndex3 xyz;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppVariableRegistryValueIndex radius;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppVariableRegistryValueIndex enabled;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
     DcAppPlanetCrs crs;
 } DcAppNodePlanetSphere;
 
 typedef struct DcAppNodePlanetText {
-    DcAppValIndex  lat;
-    DcAppValIndex  lon;
-    DcAppValIndex3 xyz;
-    DcAppValIndex  height_above_terrain;
-    DcAppValIndex  size;
-    DcAppValIndex4 fill_color;
-    DcAppValIndex  enabled;
-    uint8_t    config_flags;
-    uint8_t    planet_def_index;
+    DcAppVariableRegistryValueIndex lat;
+    DcAppVariableRegistryValueIndex lon;
+    DcAppNodeValueIndex3 xyz;
+    DcAppVariableRegistryValueIndex height_above_terrain;
+    DcAppVariableRegistryValueIndex size;
+    DcAppNodeValueIndex4 fill_color;
+    DcAppVariableRegistryValueIndex enabled;
+    uint8_t config_flags;
+    uint8_t planet_def_index;
     DcAppPlanetCrs crs;
 
     // text content (same pattern as DcAppNodeText)
-    DcAppValIndex   *sb_vals;
-    char        *sb_fillers;
-    uint8_t     *sb_filler_indices;
-    char        *sb_formats;
-    uint8_t     *sb_format_indices;
-    DcValueType *sb_format_types;
+    DcAppVariableRegistryValueIndex *sb_vals;
+    char *sb_fillers;
+    uint8_t *sb_filler_indices;
+    char *sb_formats;
+    uint8_t *sb_format_indices;
+    DcAppValueType *sb_format_types;
 } DcAppNodePlanetText;
 
 typedef struct DcAppNodePlanetView {
 
     // general positioning of display
-    DcAppValIndex2 dimension;
-    DcAppValIndex2 position;
-    DcAppValIndex2 local_align;
-    DcAppValIndex2 parent_align;
-    DcAppValIndex2 pivot_position;
-    DcAppValIndex2 pivot_parent_align;
-    DcAppValIndex2 pivot_local_align;
-    DcAppValIndex  rotation;
-    DcAppValIndex  negate_x;
-    DcAppValIndex  negate_y;
+    DcAppNodeValueIndex2 dimension;
+    DcAppNodeValueIndex2 position;
+    DcAppNodeValueIndex2 local_align;
+    DcAppNodeValueIndex2 parent_align;
+    DcAppNodeValueIndex2 pivot_position;
+    DcAppNodeValueIndex2 pivot_parent_align;
+    DcAppNodeValueIndex2 pivot_local_align;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex negate_x;
+    DcAppVariableRegistryValueIndex negate_y;
 
     // camera
-    DcAppValIndex3 lle;
-    DcAppValIndex3 xyz;
-    DcAppValIndex3 rpy;
-    DcAppValIndex  fov;
-    DcAppValIndex  orthographic;
+    DcAppNodeValueIndex3 lle;
+    DcAppNodeValueIndex3 xyz;
+    DcAppNodeValueIndex3 rpy;
+    DcAppVariableRegistryValueIndex fov;
+    DcAppVariableRegistryValueIndex orthographic;
     DcAppPlanetCrs crs;
     DcAppPlanetAttitudeFrame attitude_frame;
 
     // shader selection (per-view; indexes into parent PlanetDef's sb_shaders)
-    DcAppValIndex shader_index;        // variable holding active shader index
-    int       active_shader_index; // last-applied index (for change detection)
+    DcAppVariableRegistryValueIndex shader_index; // variable holding active shader index
+    int active_shader_index;                      // last-applied index (for change detection)
 
     // LOD
-    DcAppValIndex tau; // LOD error threshold (default 0.3, lower = more aggressive)
+    DcAppVariableRegistryValueIndex tau; // LOD error threshold (default 0.3, lower = more aggressive)
 
     // flattening
-    DcAppValIndex flatten;
+    DcAppVariableRegistryValueIndex flatten;
 
     // references
-    uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)
-    uint8_t planet_view_index; // 1-based index into sb_planet_views
+    uint8_t planet_def_index;       // index into sb_planet_defs (resolved at parse time)
+    uint8_t planet_view_index;      // 1-based index into sb_planet_views
     struct DcAppPlanetView *handle; // dcapp handle for xml and logic interop
 
     // children (PlanetEllipse, etc.)
@@ -633,52 +633,52 @@ typedef struct DcAppNodePlanetView {
 } DcAppNodePlanetView;
 
 typedef struct DcAppNodeWindow {
-    plVec2     init_position;
-    plVec2     init_dimension;
-    DcAppValIndex2 virtual_dimension;
+    plVec2 init_position;
+    plVec2 init_dimension;
+    DcAppNodeValueIndex2 virtual_dimension;
     DcAppNodeIndex child;
-    char      *title;
-    DcAppValIndex  active_display;
-    DcAppValIndex  update_rate;
-    bool       fullscreen;
+    char *title;
+    DcAppVariableRegistryValueIndex active_display;
+    DcAppVariableRegistryValueIndex update_rate;
+    bool fullscreen;
 } DcAppNodeWindow;
 
 // Nodes use index-linked child and sibling lists because scene storage may move.
 typedef struct DcAppNode {
-    DcAppNodeType  type;
+    DcAppNodeType type;
     DcAppNodeIndex parent;
     DcAppNodeIndex next;
     union {
-        DcAppNodeArc           arc;
-        DcAppNodeBlink         blink;
-        DcAppNodeButton        button;
-        DcAppNodeConditional   conditional;
-        DcAppNodeDrawFunction  draw_function;
-        DcAppNodeEllipse       ellipse;
-        DcAppNodeContainer     container;
-        DcAppNodeFunction      function;
-        DcAppNodeImage         image;
-        DcAppNodeLine          line;
-        DcAppNodeMouseMotion   mouse_motion;
-        DcAppNodePanel         panel;
-        DcAppNodePixelstream   pixelstream;
-        DcAppNodePolygon       polygon;
-        DcAppNodeRectangle     rectangle;
-        DcAppNodeSet           set;
-        DcAppNodeSphere        sphere;
-        DcAppNodeStateEvent    state_event;
-        DcAppNodeStencil       stencil;
+        DcAppNodeArc arc;
+        DcAppNodeBlink blink;
+        DcAppNodeButton button;
+        DcAppNodeConditional conditional;
+        DcAppNodeDrawFunction draw_function;
+        DcAppNodeEllipse ellipse;
+        DcAppNodeContainer container;
+        DcAppNodeFunction function;
+        DcAppNodeImage image;
+        DcAppNodeLine line;
+        DcAppNodeMouseMotion mouse_motion;
+        DcAppNodePanel panel;
+        DcAppNodePixelstream pixelstream;
+        DcAppNodePolygon polygon;
+        DcAppNodeRectangle rectangle;
+        DcAppNodeSet set;
+        DcAppNodeSphere sphere;
+        DcAppNodeStateEvent state_event;
+        DcAppNodeStencil stencil;
         DcAppNodePlanetBreadcrumbs planet_breadcrumbs;
         DcAppNodePlanetContainer planet_container;
         DcAppNodePlanetEllipse planet_ellipse;
-        DcAppNodePlanetImage   planet_image;
-        DcAppNodePlanetLine    planet_line;
+        DcAppNodePlanetImage planet_image;
+        DcAppNodePlanetLine planet_line;
         DcAppNodePlanetPolygon planet_polygon;
-        DcAppNodePlanetSphere  planet_sphere;
-        DcAppNodePlanetText    planet_text;
-        DcAppNodePlanetView    planet_view;
-        DcAppNodeText          text;
-        DcAppNodeWindow        window;
+        DcAppNodePlanetSphere planet_sphere;
+        DcAppNodePlanetText planet_text;
+        DcAppNodePlanetView planet_view;
+        DcAppNodeText text;
+        DcAppNodeWindow window;
     };
 } DcAppNode;
 

@@ -45,14 +45,14 @@ typedef enum __DrawBatchType {
 } _DrawBatchType;
 
 typedef struct __DrawList2D {
-    dcDrawList2D  *draw_list;
+    dcDrawList2D *draw_list;
     dcDrawLayer2D *layer;
 } _DrawList2D;
 
 typedef struct __DrawBatch {
     _DrawBatchType type;
     union {
-        _DrawList2D   draw_list_2d;
+        _DrawList2D draw_list_2d;
         dcDrawList3D *draw_list_3d;
     };
 } _DrawBatch;
@@ -107,131 +107,131 @@ struct DcAppDrawContext {
     DcAppDrawPlanetViewHandle *sb_planet_views;
     _DcAppPlanetContainerFrame *sb_planet_container_stack;
 
-    _DrawBatch    *sb_draw_batches;
-    _DrawList2D   *sb_draw_list_2d_pool;
+    _DrawBatch *sb_draw_batches;
+    _DrawList2D *sb_draw_list_2d_pool;
     dcDrawList3D **sb_draw_list_3d_pool;
     int draw_list_2d_index;
     int draw_list_3d_index;
 };
 
-static const plMemoryI        *_ext_memory          = NULL;
-static const plCameraI        *_ext_camera          = NULL;
-static const dcDrawI          *_ext_dc_draw          = NULL;
-static const dcDrawBackendI   *_ext_dc_draw_backend  = NULL;
-static const plGraphicsI      *_ext_gfx             = NULL;
-static const plIOI            *_ext_ioi             = NULL;
-static const plPlanetI        *_ext_planet          = NULL;
-static const plStarterI       *_ext_starter         = NULL;
+static const plMemoryI *_ext_memory = NULL;
+static const plCameraI *_ext_camera = NULL;
+static const dcDrawI *_ext_dc_draw = NULL;
+static const dcDrawBackendI *_ext_dc_draw_backend = NULL;
+static const plGraphicsI *_ext_gfx = NULL;
+static const plIOI *_ext_ioi = NULL;
+static const plPlanetI *_ext_planet = NULL;
+static const plStarterI *_ext_starter = NULL;
 
-#define PL_ALLOC(x)      _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
+#define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) _ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
-#define PL_FREE(x)       _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 void dc_app_draw_init(plApiRegistryI *api_registry) {
-    _ext_memory          = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_camera          = pl_get_api_latest(api_registry, plCameraI);
-    _ext_dc_draw          = pl_get_api_latest(api_registry, dcDrawI);
-    _ext_dc_draw_backend  = pl_get_api_latest(api_registry, dcDrawBackendI);
-    _ext_gfx             = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_ioi             = pl_get_api_latest(api_registry, plIOI);
-    _ext_planet          = pl_get_api_latest(api_registry, plPlanetI);
-    _ext_starter         = pl_get_api_latest(api_registry, plStarterI);
+    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_camera = pl_get_api_latest(api_registry, plCameraI);
+    _ext_dc_draw = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_dc_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_gfx = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_ioi = pl_get_api_latest(api_registry, plIOI);
+    _ext_planet = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_starter = pl_get_api_latest(api_registry, plStarterI);
 }
 
 static const DcAppDrawApi dc_app_draw_interface = {
-    .get_area                       = dc_app_draw_get_area,
-    .line                           = dc_app_draw_line,
-    .polyline                       = dc_app_draw_polyline,
-    .polygon                        = dc_app_draw_polygon,
-    .convex_polygon_filled          = dc_app_draw_convex_polygon_filled,
-    .rounded_polygon                = dc_app_draw_rounded_polygon,
-    .rounded_convex_polygon_filled  = dc_app_draw_rounded_convex_polygon_filled,
-    .quad                           = dc_app_draw_quad,
-    .quad_filled                    = dc_app_draw_quad_filled,
-    .rounded_quad                   = dc_app_draw_rounded_quad,
-    .rounded_quad_filled            = dc_app_draw_rounded_quad_filled,
-    .image                          = dc_app_draw_image,
-    .rect                           = dc_app_draw_rect,
-    .rect_filled                    = dc_app_draw_rect_filled,
-    .rounded_rect                   = dc_app_draw_rounded_rect,
-    .rounded_rect_filled            = dc_app_draw_rounded_rect_filled,
-    .circle                         = dc_app_draw_circle,
-    .circle_filled                  = dc_app_draw_circle_filled,
-    .ellipse                        = dc_app_draw_ellipse,
-    .ellipse_filled                 = dc_app_draw_ellipse_filled,
-    .text_size                      = dc_app_draw_text_size,
-    .text                           = dc_app_draw_text,
-    .line_ex                        = dc_app_draw_line_ex,
-    .polyline_ex                    = dc_app_draw_polyline_ex,
-    .polygon_ex                     = dc_app_draw_polygon_ex,
-    .convex_polygon_filled_ex       = dc_app_draw_convex_polygon_filled_ex,
-    .rounded_polygon_ex             = dc_app_draw_rounded_polygon_ex,
+    .get_area = dc_app_draw_get_area,
+    .line = dc_app_draw_line,
+    .polyline = dc_app_draw_polyline,
+    .polygon = dc_app_draw_polygon,
+    .convex_polygon_filled = dc_app_draw_convex_polygon_filled,
+    .rounded_polygon = dc_app_draw_rounded_polygon,
+    .rounded_convex_polygon_filled = dc_app_draw_rounded_convex_polygon_filled,
+    .quad = dc_app_draw_quad,
+    .quad_filled = dc_app_draw_quad_filled,
+    .rounded_quad = dc_app_draw_rounded_quad,
+    .rounded_quad_filled = dc_app_draw_rounded_quad_filled,
+    .image = dc_app_draw_image,
+    .rect = dc_app_draw_rect,
+    .rect_filled = dc_app_draw_rect_filled,
+    .rounded_rect = dc_app_draw_rounded_rect,
+    .rounded_rect_filled = dc_app_draw_rounded_rect_filled,
+    .circle = dc_app_draw_circle,
+    .circle_filled = dc_app_draw_circle_filled,
+    .ellipse = dc_app_draw_ellipse,
+    .ellipse_filled = dc_app_draw_ellipse_filled,
+    .text_size = dc_app_draw_text_size,
+    .text = dc_app_draw_text,
+    .line_ex = dc_app_draw_line_ex,
+    .polyline_ex = dc_app_draw_polyline_ex,
+    .polygon_ex = dc_app_draw_polygon_ex,
+    .convex_polygon_filled_ex = dc_app_draw_convex_polygon_filled_ex,
+    .rounded_polygon_ex = dc_app_draw_rounded_polygon_ex,
     .rounded_convex_polygon_filled_ex = dc_app_draw_rounded_convex_polygon_filled_ex,
-    .quad_ex                        = dc_app_draw_quad_ex,
-    .quad_filled_ex                 = dc_app_draw_quad_filled_ex,
-    .rounded_quad_ex                = dc_app_draw_rounded_quad_ex,
-    .rounded_quad_filled_ex         = dc_app_draw_rounded_quad_filled_ex,
-    .image_ex                       = dc_app_draw_image_ex,
-    .rect_ex                        = dc_app_draw_rect_ex,
-    .rect_filled_ex                 = dc_app_draw_rect_filled_ex,
-    .rounded_rect_ex                = dc_app_draw_rounded_rect_ex,
-    .rounded_rect_filled_ex         = dc_app_draw_rounded_rect_filled_ex,
-    .circle_ex                      = dc_app_draw_circle_ex,
-    .circle_filled_ex               = dc_app_draw_circle_filled_ex,
-    .ellipse_ex                     = dc_app_draw_ellipse_ex,
-    .ellipse_filled_ex              = dc_app_draw_ellipse_filled_ex,
-    .text_ex                        = dc_app_draw_text_ex,
-    .container_push                 = dc_app_draw_container_push,
-    .container_push_ex              = dc_app_draw_container_push_ex,
-    .container_push_area            = dc_app_draw_container_push_area,
-    .container_pop                  = dc_app_draw_container_pop,
-    .stencil_begin                  = dc_app_draw_stencil_begin,
-    .stencil_add                    = dc_app_draw_stencil_add,
-    .stencil_remove                 = dc_app_draw_stencil_remove,
-    .stencil_draw                   = dc_app_draw_stencil_draw,
-    .stencil_end                    = dc_app_draw_stencil_end,
-    .planet_view_geodetic           = dc_app_draw_planet_view_geodetic,
-    .planet_view_cartesian          = dc_app_draw_planet_view_cartesian,
+    .quad_ex = dc_app_draw_quad_ex,
+    .quad_filled_ex = dc_app_draw_quad_filled_ex,
+    .rounded_quad_ex = dc_app_draw_rounded_quad_ex,
+    .rounded_quad_filled_ex = dc_app_draw_rounded_quad_filled_ex,
+    .image_ex = dc_app_draw_image_ex,
+    .rect_ex = dc_app_draw_rect_ex,
+    .rect_filled_ex = dc_app_draw_rect_filled_ex,
+    .rounded_rect_ex = dc_app_draw_rounded_rect_ex,
+    .rounded_rect_filled_ex = dc_app_draw_rounded_rect_filled_ex,
+    .circle_ex = dc_app_draw_circle_ex,
+    .circle_filled_ex = dc_app_draw_circle_filled_ex,
+    .ellipse_ex = dc_app_draw_ellipse_ex,
+    .ellipse_filled_ex = dc_app_draw_ellipse_filled_ex,
+    .text_ex = dc_app_draw_text_ex,
+    .container_push = dc_app_draw_container_push,
+    .container_push_ex = dc_app_draw_container_push_ex,
+    .container_push_area = dc_app_draw_container_push_area,
+    .container_pop = dc_app_draw_container_pop,
+    .stencil_begin = dc_app_draw_stencil_begin,
+    .stencil_add = dc_app_draw_stencil_add,
+    .stencil_remove = dc_app_draw_stencil_remove,
+    .stencil_draw = dc_app_draw_stencil_draw,
+    .stencil_end = dc_app_draw_stencil_end,
+    .planet_view_geodetic = dc_app_draw_planet_view_geodetic,
+    .planet_view_cartesian = dc_app_draw_planet_view_cartesian,
     .planet_container_push_geodetic = dc_app_draw_planet_container_push_geodetic,
-    .planet_container_pop           = dc_app_draw_planet_container_pop,
-    .planet_line_local              = dc_app_draw_planet_line_local,
-    .planet_polygon_local           = dc_app_draw_planet_polygon_local,
+    .planet_container_pop = dc_app_draw_planet_container_pop,
+    .planet_line_local = dc_app_draw_planet_line_local,
+    .planet_polygon_local = dc_app_draw_planet_polygon_local,
     .planet_convex_polygon_filled_local = dc_app_draw_planet_convex_polygon_filled_local,
-    .planet_sphere_geodetic         = dc_app_draw_planet_sphere_geodetic,
-    .planet_sphere_cartesian        = dc_app_draw_planet_sphere_cartesian,
-    .planet_line_geodetic           = dc_app_draw_planet_line_geodetic,
-    .planet_line_cartesian          = dc_app_draw_planet_line_cartesian,
-    .planet_polygon_geodetic        = dc_app_draw_planet_polygon_geodetic,
-    .planet_polygon_cartesian       = dc_app_draw_planet_polygon_cartesian,
+    .planet_sphere_geodetic = dc_app_draw_planet_sphere_geodetic,
+    .planet_sphere_cartesian = dc_app_draw_planet_sphere_cartesian,
+    .planet_line_geodetic = dc_app_draw_planet_line_geodetic,
+    .planet_line_cartesian = dc_app_draw_planet_line_cartesian,
+    .planet_polygon_geodetic = dc_app_draw_planet_polygon_geodetic,
+    .planet_polygon_cartesian = dc_app_draw_planet_polygon_cartesian,
     .planet_convex_polygon_filled_geodetic = dc_app_draw_planet_convex_polygon_filled_geodetic,
     .planet_convex_polygon_filled_cartesian = dc_app_draw_planet_convex_polygon_filled_cartesian,
-    .planet_ellipse_geodetic        = dc_app_draw_planet_ellipse_geodetic,
-    .planet_ellipse_cartesian       = dc_app_draw_planet_ellipse_cartesian,
+    .planet_ellipse_geodetic = dc_app_draw_planet_ellipse_geodetic,
+    .planet_ellipse_cartesian = dc_app_draw_planet_ellipse_cartesian,
     .planet_ellipse_filled_geodetic = dc_app_draw_planet_ellipse_filled_geodetic,
     .planet_ellipse_filled_cartesian = dc_app_draw_planet_ellipse_filled_cartesian,
-    .planet_image_geodetic          = dc_app_draw_planet_image_geodetic,
-    .planet_image_cartesian         = dc_app_draw_planet_image_cartesian,
-    .planet_text_geodetic           = dc_app_draw_planet_text_geodetic,
-    .planet_text_cartesian          = dc_app_draw_planet_text_cartesian,
-    .planet_geojson                 = dc_app_draw_planet_geojson,
+    .planet_image_geodetic = dc_app_draw_planet_image_geodetic,
+    .planet_image_cartesian = dc_app_draw_planet_image_cartesian,
+    .planet_text_geodetic = dc_app_draw_planet_text_geodetic,
+    .planet_text_cartesian = dc_app_draw_planet_text_cartesian,
+    .planet_geojson = dc_app_draw_planet_geojson,
 };
 
 static const DcAppMouseApi dc_app_mouse_interface = {
-    .rect       = dc_app_mouse_rect,
-    .circle     = dc_app_mouse_circle,
-    .ellipse    = dc_app_mouse_ellipse,
-    .polygon    = dc_app_mouse_polygon,
-    .rect_ex    = dc_app_mouse_rect_ex,
-    .circle_ex  = dc_app_mouse_circle_ex,
+    .rect = dc_app_mouse_rect,
+    .circle = dc_app_mouse_circle,
+    .ellipse = dc_app_mouse_ellipse,
+    .polygon = dc_app_mouse_polygon,
+    .rect_ex = dc_app_mouse_rect_ex,
+    .circle_ex = dc_app_mouse_circle_ex,
     .ellipse_ex = dc_app_mouse_ellipse_ex,
     .polygon_ex = dc_app_mouse_polygon_ex,
-    .hovered    = dc_app_mouse_hovered,
-    .pressed    = dc_app_mouse_pressed,
-    .released   = dc_app_mouse_released,
-    .active     = dc_app_mouse_active,
-    .clicked    = dc_app_mouse_clicked,
-    .down       = dc_app_mouse_down,
-    .get_state  = dc_app_mouse_get_state,
+    .hovered = dc_app_mouse_hovered,
+    .pressed = dc_app_mouse_pressed,
+    .released = dc_app_mouse_released,
+    .active = dc_app_mouse_active,
+    .clicked = dc_app_mouse_clicked,
+    .down = dc_app_mouse_down,
+    .get_state = dc_app_mouse_get_state,
 };
 
 const DcAppDrawApi *dc_app_draw_api(void) {
@@ -260,7 +260,7 @@ typedef struct _DcAppResolvedGeojsonStyle {
 } _DcAppResolvedGeojsonStyle;
 
 static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx);
-static dcDrawList3D  *_draw_batch_get_3d(DcAppDrawContext *ctx);
+static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx);
 static void _set_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase);
 static void _restore_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase);
 static dcDrawStencilState _stencil_state(_DcAppStencilPhase phase, int depth);
@@ -287,14 +287,14 @@ static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const D
 static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
-static void     _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
-static bool     _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size);
+static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
+static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size);
 static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
-static void     _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
-static void     _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
+static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
+static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
 static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback);
-static plVec3  *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain);
-static void     _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style);
+static plVec3 *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain);
+static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style);
 
 //-----------------------------------------------------------------------------
 // [SECTION] DrawFunction context helpers
@@ -308,7 +308,7 @@ DcAppDrawContext *dc_app_draw_context_create(dcFont *default_font, DcAppTextureC
 
     memset(ctx, 0, sizeof(*ctx));
     ctx->default_font = default_font;
-    ctx->texture_ctx  = texture_ctx;
+    ctx->texture_ctx = texture_ctx;
     dc_app_draw_context_begin(ctx, (DcAppDrawFrameInput){0});
     return ctx;
 }
@@ -343,13 +343,13 @@ void dc_app_draw_context_destroy(DcAppDrawContext *ctx) {
 void dc_app_draw_context_begin(DcAppDrawContext *ctx, DcAppDrawFrameInput input) {
     if (!ctx) return;
 
-    bool was_mouse_down              = ctx->screen_mouse.down;
-    ctx->screen_mouse.x              = input.mouse_position.x;
-    ctx->screen_mouse.y              = input.mouse_position.y;
+    bool was_mouse_down = ctx->screen_mouse.down;
+    ctx->screen_mouse.x = input.mouse_position.x;
+    ctx->screen_mouse.y = input.mouse_position.y;
     ctx->screen_mouse.position_valid = input.mouse_position_valid;
-    ctx->screen_mouse.pressed        = input.mouse_down && !was_mouse_down;
-    ctx->screen_mouse.released       = !input.mouse_down && was_mouse_down;
-    ctx->screen_mouse.down           = input.mouse_down;
+    ctx->screen_mouse.pressed = input.mouse_down && !was_mouse_down;
+    ctx->screen_mouse.released = !input.mouse_down && was_mouse_down;
+    ctx->screen_mouse.down = input.mouse_down;
 
     for (int ii = 0; ii < sbcount(ctx->sb_planet_views); ii++) {
         PL_FREE(ctx->sb_planet_views[ii]);
@@ -366,7 +366,7 @@ void dc_app_draw_context_begin(DcAppDrawContext *ctx, DcAppDrawFrameInput input)
     // reset pool indices
     ctx->draw_list_2d_index = 0;
     ctx->draw_list_3d_index = 0;
-    ctx->stencil.phase      = _DC_APP_STENCIL_PHASE_NONE;
+    ctx->stencil.phase = _DC_APP_STENCIL_PHASE_NONE;
 
     ctx->area = (DcAppDrawArea){0};
     const plIO *io = _ext_ioi->get_io();
@@ -407,10 +407,10 @@ void dc_app_draw_context_submit(DcAppDrawContext *ctx, plRenderEncoder *encoder)
 
         // orthographic MVP for 3D objects in 2D space
         // Note: dcapp uses bottom-left origin, so Y is NOT flipped here (parent_transform handles it)
-        float  w          = draw_submit.tLogicalDimensions.x;
-        float  h          = draw_submit.tLogicalDimensions.y;
-        float  n          = -1000.0f;
-        float  f          = 1000.0f;
+        float w = draw_submit.tLogicalDimensions.x;
+        float h = draw_submit.tLogicalDimensions.y;
+        float n = -1000.0f;
+        float f = 1000.0f;
         plMat4 ortho_proj = {
             .col = {
                 {2.0f / w, 0.0f, 0.0f, 0.0f},
@@ -449,7 +449,7 @@ void dc_app_draw_context_commit(DcAppDrawContext *ctx) {
     }
     if (ctx->screen_mouse.released) {
         ctx->released_target = ctx->active_target;
-        ctx->active_target   = (_DcAppDrawMouseTarget){0};
+        ctx->active_target = (_DcAppDrawMouseTarget){0};
     } else {
         ctx->released_target = (_DcAppDrawMouseTarget){0};
     }
@@ -461,8 +461,8 @@ void dc_app_draw_context_push(DcAppDrawContext *ctx, plVec2 position, plVec2 dim
     if (!ctx) return;
 
     sbpush(ctx->sb_container_stack, ctx->area);
-    ctx->area.position[0]   = position.x;
-    ctx->area.position[1]   = position.y;
+    ctx->area.position[0] = position.x;
+    ctx->area.position[1] = position.y;
     ctx->area.dimensions[0] = dimensions.x;
     ctx->area.dimensions[1] = dimensions.y;
 
@@ -487,10 +487,10 @@ DcAppDrawScope dc_app_draw_scope_begin(DcAppDrawContext *ctx) {
     if (!ctx) return (DcAppDrawScope){0};
 
     DcAppDrawScope scope = {
-        .area                   = ctx->area,
-        .container_count        = sbcount(ctx->sb_container_stack),
-        .stencil_count          = sbcount(ctx->stencil.sb_frames),
-        .planet_view_count      = sbcount(ctx->sb_planet_views),
+        .area = ctx->area,
+        .container_count = sbcount(ctx->sb_container_stack),
+        .stencil_count = sbcount(ctx->stencil.sb_frames),
+        .planet_view_count = sbcount(ctx->sb_planet_views),
         .planet_container_count = sbcount(ctx->sb_planet_container_stack),
     };
     sbpush(ctx->sb_scope_stack, scope);
@@ -569,55 +569,85 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
         return;
     }
 
-    float width  = max_x - min_x;
+    float width = max_x - min_x;
     float height = max_y - min_y;
-    float x      = position.x;
-    float y      = position.y;
+    float x = position.x;
+    float y = position.y;
 
     switch (placement.parent_align_x) {
-        case DC_APP_ALIGN_TYPE_CENTER: x += base_area->dimensions[0] * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_RIGHT:  x += base_area->dimensions[0]; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_LEFT:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+            x += base_area->dimensions[0] * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+            x += base_area->dimensions[0];
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+        default:
+            break;
     }
     switch (placement.parent_align_y) {
-        case DC_APP_ALIGN_TYPE_MIDDLE: y += base_area->dimensions[1] * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_TOP:    y += base_area->dimensions[1]; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_BOTTOM:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+            y += base_area->dimensions[1] * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+            y += base_area->dimensions[1];
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+        default:
+            break;
     }
 
     switch (placement.local_align_x) {
-        case DC_APP_ALIGN_TYPE_CENTER: x -= width * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_RIGHT:  x -= width; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_LEFT:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+            x -= width * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+            x -= width;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+        default:
+            break;
     }
     switch (placement.local_align_y) {
-        case DC_APP_ALIGN_TYPE_MIDDLE: y -= height * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_TOP:    y -= height; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_BOTTOM:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+            y -= height * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+            y -= height;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+        default:
+            break;
     }
 
     plVec2 pivot = {x, y};
     switch (placement.pivot_align_x) {
-        case DC_APP_ALIGN_TYPE_CENTER: pivot.x += width * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_RIGHT:  pivot.x += width; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_LEFT:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+            pivot.x += width * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+            pivot.x += width;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+        default:
+            break;
     }
     switch (placement.pivot_align_y) {
-        case DC_APP_ALIGN_TYPE_MIDDLE: pivot.y += height * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_TOP:    pivot.y += height; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_BOTTOM:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+            pivot.y += height * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+            pivot.y += height;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+        default:
+            break;
     }
     pivot.x += placement.pivot_x;
     pivot.y += placement.pivot_y;
@@ -678,12 +708,12 @@ static void _resolve_rect_points(DcAppDrawContext *ctx, DcAppVec2 dimensions, Dc
 
 static bool _placement_is_default(DcAppPlacement placement) {
     return placement.rotation == 0.0f &&
-           placement.parent_align_x == DC_APP_ALIGN_TYPE_UNDEFINED &&
-           placement.parent_align_y == DC_APP_ALIGN_TYPE_UNDEFINED &&
-           placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED &&
-           placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED &&
-           placement.pivot_align_x == DC_APP_ALIGN_TYPE_UNDEFINED &&
-           placement.pivot_align_y == DC_APP_ALIGN_TYPE_UNDEFINED &&
+           placement.parent_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.parent_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.local_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.local_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.pivot_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.pivot_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
            placement.pivot_x == 0.0f &&
            placement.pivot_y == 0.0f;
 }
@@ -701,7 +731,7 @@ static void _draw_context_update_mouse(DcAppDrawContext *ctx) {
     memcpy(transform.d, ctx->area.transform, sizeof(transform.d));
 
     plMat4 inv_transform = pl_mat4t_invert(&transform);
-    plVec4 mouse_screen  = {
+    plVec4 mouse_screen = {
         ctx->screen_mouse.x,
         ctx->screen_mouse.y,
         0.0f,
@@ -717,8 +747,8 @@ static void _draw_area_from_rect_points(float width, float height, plVec2 p0, pl
     if (!out_area) return;
 
     *out_area = (DcAppDrawArea){0};
-    out_area->position[0]   = p0.x;
-    out_area->position[1]   = p0.y;
+    out_area->position[0] = p0.x;
+    out_area->position[1] = p0.y;
     out_area->dimensions[0] = width;
     out_area->dimensions[1] = height;
 
@@ -749,7 +779,7 @@ static uint64_t _mouse_id(const char *id) {
 
 static _DcAppDrawMouseTarget _draw_mouse_target_internal(DcAppDrawTargetId target_id) {
     return (_DcAppDrawMouseTarget){
-        .type   = _DC_APP_DRAW_MOUSE_TARGET_INTERNAL,
+        .type = _DC_APP_DRAW_MOUSE_TARGET_INTERNAL,
         .target = target_id,
     };
 }
@@ -757,7 +787,7 @@ static _DcAppDrawMouseTarget _draw_mouse_target_internal(DcAppDrawTargetId targe
 static _DcAppDrawMouseTarget _draw_mouse_target_id(uint64_t id) {
     return (_DcAppDrawMouseTarget){
         .type = _DC_APP_DRAW_MOUSE_TARGET_ID,
-        .id   = id,
+        .id = id,
     };
 }
 
@@ -821,8 +851,8 @@ static dcDrawTextOptions _text_options(DcAppDrawContext *ctx, DcAppTextStyle sty
     dcDrawTextOptions options = {0};
 
     options.ptFont = ctx ? ctx->default_font : NULL;
-    options.fSize  = style.size;
-    options.fWrap  = style.wrap;
+    options.fSize = style.size;
+    options.fWrap = style.wrap;
 
     options.uColor = PL_COLOR_32_RGBA(style.color.r, style.color.g, style.color.b, style.color.a);
 
@@ -836,19 +866,29 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
 
     float align_x = 0.0f;
     switch (placement.local_align_x) {
-        case DC_APP_ALIGN_TYPE_CENTER: align_x = -dimensions.x * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_RIGHT:  align_x = -dimensions.x; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_LEFT:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+            align_x = -dimensions.x * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+            align_x = -dimensions.x;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+        default:
+            break;
     }
     float align_y = 0.0f;
     switch (placement.local_align_y) {
-        case DC_APP_ALIGN_TYPE_MIDDLE: align_y = -dimensions.y * 0.5f; break;
-        case DC_APP_ALIGN_TYPE_TOP:    align_y = -dimensions.y; break;
-        case DC_APP_ALIGN_TYPE_UNDEFINED:
-        case DC_APP_ALIGN_TYPE_BOTTOM:
-        default: break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+            align_y = -dimensions.y * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+            align_y = -dimensions.y;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+        default:
+            break;
     }
     plMat4 trans_local_align_xform = pl_mat4_translate_xyz(align_x, align_y, 0.0f);
     transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
@@ -857,18 +897,28 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
     float anchor_y = 0.0f;
     if (base_area) {
         switch (placement.parent_align_x) {
-            case DC_APP_ALIGN_TYPE_CENTER: anchor_x = base_area->dimensions[0] * 0.5f; break;
-            case DC_APP_ALIGN_TYPE_RIGHT:  anchor_x = base_area->dimensions[0]; break;
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_LEFT:
-            default: break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+                anchor_x = base_area->dimensions[0] * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+                anchor_x = base_area->dimensions[0];
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+            default:
+                break;
         }
         switch (placement.parent_align_y) {
-            case DC_APP_ALIGN_TYPE_MIDDLE: anchor_y = base_area->dimensions[1] * 0.5f; break;
-            case DC_APP_ALIGN_TYPE_TOP:    anchor_y = base_area->dimensions[1]; break;
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_BOTTOM:
-            default: break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+                anchor_y = base_area->dimensions[1] * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+                anchor_y = base_area->dimensions[1];
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+            default:
+                break;
         }
     }
     plMat4 trans_position_xform = pl_mat4_translate_xyz(anchor_x + position.x, anchor_y + position.y, 0.0f);
@@ -878,25 +928,35 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
         float pivot_x = 0.0f;
         float pivot_y = 0.0f;
         switch (placement.pivot_align_x) {
-            case DC_APP_ALIGN_TYPE_CENTER: pivot_x = dimensions.x * 0.5f; break;
-            case DC_APP_ALIGN_TYPE_RIGHT:  pivot_x = dimensions.x; break;
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_LEFT:
-            default: break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+                pivot_x = dimensions.x * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+                pivot_x = dimensions.x;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+            default:
+                break;
         }
         switch (placement.pivot_align_y) {
-            case DC_APP_ALIGN_TYPE_MIDDLE: pivot_y = dimensions.y * 0.5f; break;
-            case DC_APP_ALIGN_TYPE_TOP:    pivot_y = dimensions.y; break;
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_BOTTOM:
-            default: break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+                pivot_y = dimensions.y * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+                pivot_y = dimensions.y;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+            default:
+                break;
         }
         pivot_x += placement.pivot_x;
         pivot_y += placement.pivot_y;
 
         plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_x, pivot_y, 0.0f);
-        plMat4 rotate_xform            = pl_mat4_rotate_vec3(pl_radiansf(placement.rotation), (plVec3){0.0f, 0.0f, 1.0f});
-        plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-pivot_x, -pivot_y, 0.0f);
+        plMat4 rotate_xform = pl_mat4_rotate_vec3(pl_radiansf(placement.rotation), (plVec3){0.0f, 0.0f, 1.0f});
+        plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-pivot_x, -pivot_y, 0.0f);
 
         transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
         transform = pl_mul_mat4t(&transform, &rotate_xform);
@@ -904,7 +964,7 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
     }
 
     plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0.0f, dimensions.y, 0.0f);
-    plMat4 scale_invert_y_xform  = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+    plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
     transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
     transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
 
@@ -915,15 +975,15 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
     }
 
     plMat3 transform3 = {0};
-    transform3.x11    = transform.x11;
-    transform3.x12    = transform.x12;
-    transform3.x13    = transform.x14;
-    transform3.x21    = transform.x21;
-    transform3.x22    = transform.x22;
-    transform3.x23    = transform.x24;
-    transform3.x31    = transform.x31;
-    transform3.x32    = transform.x32;
-    transform3.x33    = transform.x33;
+    transform3.x11 = transform.x11;
+    transform3.x12 = transform.x12;
+    transform3.x13 = transform.x14;
+    transform3.x21 = transform.x21;
+    transform3.x22 = transform.x22;
+    transform3.x23 = transform.x24;
+    transform3.x31 = transform.x31;
+    transform3.x32 = transform.x32;
+    transform3.x33 = transform.x33;
     return transform3;
 }
 
@@ -961,8 +1021,8 @@ bool dc_app_draw_container_push_ex(DcAppDrawContext *ctx, DcAppVec2 position, Dc
     transform.x14 = p0.x;
     transform.x24 = p0.y;
 
-    ctx->area.position[0]   = 0.0f;
-    ctx->area.position[1]   = 0.0f;
+    ctx->area.position[0] = 0.0f;
+    ctx->area.position[1] = 0.0f;
     ctx->area.dimensions[0] = virtual_size.x;
     ctx->area.dimensions[1] = virtual_size.y;
     memcpy(ctx->area.transform, transform.d, sizeof(ctx->area.transform));
@@ -993,8 +1053,8 @@ bool dc_app_draw_stencil_begin(DcAppDrawContext *ctx) {
     int depth = sbcount(ctx->stencil.sb_frames) + 1;
     if (depth > DC_DRAW_STENCIL_MAX_DEPTH) {
         DC_LOG_WARN("Stencil", "Stencil nesting depth %d exceeds the %d available stencil bits; skipping stencil scope",
-            depth,
-            DC_DRAW_STENCIL_MAX_DEPTH);
+                    depth,
+                    DC_DRAW_STENCIL_MAX_DEPTH);
         return false;
     }
 
@@ -1104,8 +1164,8 @@ void dc_app_mouse_ellipse_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 ce
     uint64_t mouse_id = _mouse_id(id);
     if (mouse_id == 0 || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
-    if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
-    if (placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_y = DC_APP_ALIGN_TYPE_MIDDLE;
+    if (placement.local_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED) placement.local_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER;
+    if (placement.local_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED) placement.local_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE;
 
     DcAppVec2 diameter = {radius.x * 2.0f, radius.y * 2.0f};
     plVec2 mouse_local;
@@ -1274,10 +1334,10 @@ void dc_app_draw_polyline_ex(DcAppDrawContext *ctx, const DcAppVec2 *points, uin
     plVec2 *draw_points = _alloc_resolved_points(ctx, points, point_count, position, placement, out_area);
     if (!draw_points) return;
     _ext_dc_draw->add_lines(_draw_batch_get_2d(ctx), draw_points, point_count, (dcDrawLineOptions){
-        .uColor       = PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
-        .fThickness   = stroke.width * DCAPP_LINE_WIDTH_FACTOR,
-        .uDashPattern = stroke.pattern,
-    });
+                                                                                   .uColor = PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+                                                                                   .fThickness = stroke.width * DCAPP_LINE_WIDTH_FACTOR,
+                                                                                   .uDashPattern = stroke.pattern,
+                                                                               });
     PL_FREE(draw_points);
 }
 
@@ -1290,8 +1350,8 @@ void dc_app_draw_triangles_filled_ex(DcAppDrawContext *ctx, const DcAppVec2 *poi
     plVec2 *draw_points = _alloc_resolved_points(ctx, points, point_count, position, placement, out_area);
     if (!draw_points) return;
     _ext_dc_draw->add_triangles_filled(_draw_batch_get_2d(ctx), draw_points, point_count / 3, (dcDrawSolidOptions){
-        .uColor = PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
-    });
+                                                                                                  .uColor = PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+                                                                                              });
     PL_FREE(draw_points);
 }
 
@@ -1312,8 +1372,8 @@ void dc_app_draw_rounded_polygon_ex(DcAppDrawContext *ctx, const DcAppVec2 *poin
     if (!draw_points) return;
     dcDrawLayer2D *layer = _draw_batch_get_2d(ctx);
     dcDrawLineOptions line_opts = {
-        .uColor       = PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
-        .fThickness   = stroke.width * DCAPP_LINE_WIDTH_FACTOR,
+        .uColor = PL_COLOR_32_RGBA(stroke.color.r, stroke.color.g, stroke.color.b, stroke.color.a),
+        .fThickness = stroke.width * DCAPP_LINE_WIDTH_FACTOR,
         .uDashPattern = stroke.pattern,
     };
     if (corner_radius > 0.0f) {
@@ -1334,12 +1394,12 @@ void dc_app_draw_rounded_convex_polygon_filled_ex(DcAppDrawContext *ctx, const D
     dcDrawLayer2D *layer = _draw_batch_get_2d(ctx);
     if (corner_radius > 0.0f) {
         _ext_dc_draw->add_convex_polygon_rounded_filled(layer, draw_points, point_count, corner_radius, 8, (dcDrawSolidOptions){
-            .uColor = PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
-        });
+                                                                                                               .uColor = PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+                                                                                                           });
     } else {
         _ext_dc_draw->add_convex_polygon_filled(layer, draw_points, point_count, (dcDrawSolidOptions){
-            .uColor = PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
-        });
+                                                                                     .uColor = PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a),
+                                                                                 });
     }
     PL_FREE(draw_points);
 }
@@ -1481,10 +1541,12 @@ void dc_app_draw_ellipse_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 r
     if (result) *result = (DcAppDrawResult){0};
     if (!ctx || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
-    if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
-    if (placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_y = DC_APP_ALIGN_TYPE_MIDDLE;
+    if (placement.local_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED) placement.local_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER;
+    if (placement.local_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED) placement.local_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE;
 
-    enum { SEGMENTS = 64 };
+    enum {
+        SEGMENTS = 64
+    };
     DcAppVec2 points[SEGMENTS];
 
     for (int i = 0; i < SEGMENTS; i++) {
@@ -1499,10 +1561,12 @@ void dc_app_draw_ellipse_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAp
     if (result) *result = (DcAppDrawResult){0};
     if (!ctx || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
-    if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
-    if (placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_y = DC_APP_ALIGN_TYPE_MIDDLE;
+    if (placement.local_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED) placement.local_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER;
+    if (placement.local_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED) placement.local_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE;
 
-    enum { SEGMENTS = 64 };
+    enum {
+        SEGMENTS = 64
+    };
     DcAppVec2 points[SEGMENTS];
 
     for (int i = 0; i < SEGMENTS; i++) {
@@ -2249,8 +2313,8 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
         case DC_GEOJSON_FEATURE_POINT: {
             const DcGeojsonPosition *point = &feature->geom.point.position;
             dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
-                (float)(point->has_alt ? point->alt : style.height_above_terrain),
-                1000.0f, line_color);
+                                      (float)(point->has_alt ? point->alt : style.height_above_terrain),
+                                      1000.0f, line_color);
             break;
         }
 
@@ -2258,8 +2322,8 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
             for (uint32_t i = 0; i < feature->geom.multi_point.count; i++) {
                 const DcGeojsonPosition *point = &feature->geom.multi_point.positions[i];
                 dc_app_draw_planet_sphere(view, (float)point->lon, (float)point->lat,
-                    (float)(point->has_alt ? point->alt : style.height_above_terrain),
-                    1000.0f, line_color);
+                                          (float)(point->has_alt ? point->alt : style.height_above_terrain),
+                                          1000.0f, line_color);
             }
             break;
         }
@@ -2339,9 +2403,9 @@ static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx) {
     // grow pool if needed - request from extension
     int pool_size = sbcount(ctx->sb_draw_list_2d_pool);
     if (ctx->draw_list_2d_index >= pool_size) {
-        dcDrawList2D  *new_draw_list = _ext_dc_draw->request_2d_drawlist();
-        dcDrawLayer2D *new_layer     = _ext_dc_draw->request_2d_layer(new_draw_list);
-        _DrawList2D    new_entry     = {.draw_list = new_draw_list, .layer = new_layer};
+        dcDrawList2D *new_draw_list = _ext_dc_draw->request_2d_drawlist();
+        dcDrawLayer2D *new_layer = _ext_dc_draw->request_2d_layer(new_draw_list);
+        _DrawList2D new_entry = {.draw_list = new_draw_list, .layer = new_layer};
         sbpush(ctx->sb_draw_list_2d_pool, new_entry);
     }
 
@@ -2351,7 +2415,7 @@ static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx) {
 
     // add batch entry
     _DrawBatch batch = {
-        .type         = DRAW_BATCH_TYPE_2D,
+        .type = DRAW_BATCH_TYPE_2D,
         .draw_list_2d = *draw_list_2d};
     sbpush(ctx->sb_draw_batches, batch);
 
@@ -2383,7 +2447,7 @@ static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx) {
 
     // add batch entry
     _DrawBatch batch = {
-        .type         = DRAW_BATCH_TYPE_3D,
+        .type = DRAW_BATCH_TYPE_3D,
         .draw_list_3d = draw_list};
     sbpush(ctx->sb_draw_batches, batch);
 
@@ -2449,16 +2513,16 @@ static void _clear_stencil_bit(DcAppDrawContext *ctx) {
     const float h = io->tMainViewportSize.y;
     plVec2 points[6] = {
         {0.0f, 0.0f},
-        {w,    0.0f},
-        {w,    h},
+        {w, 0.0f},
+        {w, h},
         {0.0f, 0.0f},
-        {w,    h},
+        {w, h},
         {0.0f, h},
     };
 
     _ext_dc_draw->add_triangles_filled(_draw_batch_get_2d(ctx), points, 2, (dcDrawSolidOptions){
-        .uColor = PL_COLOR_32_RGBA(0.0f, 0.0f, 0.0f, 1.0f),
-    });
+                                                                               .uColor = PL_COLOR_32_RGBA(0.0f, 0.0f, 0.0f, 1.0f),
+                                                                           });
 }
 
 static _DcAppPlanetContainerFrame *_planet_container_frame(DcAppDrawContext *ctx) {
@@ -2546,13 +2610,13 @@ static void _flush_planet_views(DcAppDrawContext *ctx, int first_view) {
 
 static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size) {
     plCamera camera = {0};
-    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
+    camera.tType = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
     camera.fFieldOfView = (fov_degrees > 0.0f && fov_degrees < 180.0f) ? pl_radiansf(fov_degrees) : PL_PI_3;
     camera.fAspectRatio = (size.y > 0.0f) ? size.x / size.y : 1.0f;
-    camera.fNearZ       = 1.0f;
-    camera.fFarZ        = 100000000.0f;
-    camera.fWidth       = size.x;
-    camera.fHeight      = size.y;
+    camera.fNearZ = 1.0f;
+    camera.fFarZ = 100000000.0f;
+    camera.fWidth = size.x;
+    camera.fHeight = size.y;
     if (orthographic) camera.tType = PL_CAMERA_TYPE_ORTHOGRAPHIC_REVERSE_Z;
     return camera;
 }
@@ -2654,8 +2718,8 @@ static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewH
     if (!dc_app_draw_container_push_area(ctx, &draw_view->area)) return;
 
     DcAppPlacement centered = {
-        .local_align_x = DC_APP_ALIGN_TYPE_CENTER,
-        .local_align_y = DC_APP_ALIGN_TYPE_MIDDLE,
+        .local_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER,
+        .local_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE,
     };
 
     if (!dc_app_draw_stencil_begin(ctx)) {
@@ -2687,8 +2751,8 @@ static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHa
     if (!dc_app_draw_container_push_area(ctx, &draw_view->area)) return;
 
     DcAppPlacement centered = {
-        .local_align_x = DC_APP_ALIGN_TYPE_CENTER,
-        .local_align_y = DC_APP_ALIGN_TYPE_MIDDLE,
+        .local_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER,
+        .local_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE,
     };
 
     if (!dc_app_draw_stencil_begin(ctx)) {
@@ -2744,8 +2808,7 @@ static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, do
     plVec3d target = {
         eye.x + (double)forward.x,
         eye.y + (double)forward.y,
-        eye.z + (double)forward.z
-    };
+        eye.z + (double)forward.z};
     _ext_camera->look_at(&camera, eye, target);
     camera.fRoll = 0.0f;
     _ext_camera->update(&camera);
