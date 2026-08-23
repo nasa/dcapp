@@ -22,29 +22,7 @@ struct _DcLibrary {
 
 static char _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE];
 
-static void _dc_utils_library_capture_error(const char *fallback) {
-#ifdef _WIN32
-    DWORD err = GetLastError();
-    if (err == 0) {
-        strncpy(_dc_utils_library_last_error_buffer,
-                fallback ? fallback : "unknown error",
-                _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1);
-        _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1] = '\0';
-        return;
-    }
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                   NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   _dc_utils_library_last_error_buffer,
-                   _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1, NULL);
-    _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1] = '\0';
-#else
-    const char *err = dlerror();
-    strncpy(_dc_utils_library_last_error_buffer,
-            err ? err : (fallback ? fallback : "unknown error"),
-            _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1);
-    _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1] = '\0';
-#endif
-}
+static void _dc_utils_library_capture_error(const char *fallback);
 
 DcLibrary *dc_utils_library_load(const char *path) {
     if (!path || !path[0]) {
@@ -110,4 +88,28 @@ void dc_utils_library_close(DcLibrary *lib) {
 
 const char *dc_utils_library_last_error(void) {
     return _dc_utils_library_last_error_buffer;
+}
+
+static void _dc_utils_library_capture_error(const char *fallback) {
+#ifdef _WIN32
+    DWORD err = GetLastError();
+    if (err == 0) {
+        strncpy(_dc_utils_library_last_error_buffer,
+                fallback ? fallback : "unknown error",
+                _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1);
+        _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1] = '\0';
+        return;
+    }
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                   NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                   _dc_utils_library_last_error_buffer,
+                   _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1, NULL);
+    _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1] = '\0';
+#else
+    const char *err = dlerror();
+    strncpy(_dc_utils_library_last_error_buffer,
+            err ? err : (fallback ? fallback : "unknown error"),
+            _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1);
+    _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE - 1] = '\0';
+#endif
 }

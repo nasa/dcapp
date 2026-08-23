@@ -52,65 +52,15 @@ static const plVfsI *_ext_vfs = NULL;
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-void dc_app_display_builder_init(plApiRegistryI *api_registry) {
-    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_vfs = pl_get_api_latest(api_registry, plVfsI);
-}
-
-DcAppDisplayBuilderContext *dc_app_display_builder_context_create(
-    DcAppContext *app_context,
-    DcAppDisplayModelContext *scene,
-    DcAppDisplayLogicContext *logic,
-    DcAppDataLinkContext *data_link,
-    const char *dcapp_root,
-    DcAppDisplayBuilderBootstrapFn bootstrap) {
-    if (!scene) return NULL;
-
-    DcAppDisplayBuilderContext *xml_ctx = (DcAppDisplayBuilderContext *)PL_ALLOC(sizeof(*xml_ctx));
-    if (!xml_ctx) return NULL;
-    memset(xml_ctx, 0, sizeof(*xml_ctx));
-
-    xml_ctx->app_context = app_context;
-    xml_ctx->scene = scene;
-    xml_ctx->logic = logic;
-    xml_ctx->data_link = data_link;
-    xml_ctx->bootstrap = bootstrap;
-
-    if (dcapp_root && dcapp_root[0] != '\0') {
-        size_t length = strlen(dcapp_root) + 1;
-        xml_ctx->dcapp_root = (char *)PL_ALLOC(length);
-        memcpy(xml_ctx->dcapp_root, dcapp_root, length);
-    }
-    return xml_ctx;
-}
-
-void dc_app_display_builder_context_destroy(DcAppDisplayBuilderContext *xml_ctx) {
-    if (!xml_ctx) return;
-    sbfree(xml_ctx->sb_text_filler);
-    if (xml_ctx->dcapp_root) PL_FREE(xml_ctx->dcapp_root);
-    PL_FREE(xml_ctx);
-}
-
-void dc_app_display_builder_set_fonts(DcAppDisplayBuilderContext *xml_ctx, DcAppFontContext *fonts) {
-    if (xml_ctx) xml_ctx->fonts = fonts;
-}
-
-void dc_app_display_builder_set_textures(DcAppDisplayBuilderContext *xml_ctx, DcAppTextureContext *textures) {
-    if (xml_ctx) xml_ctx->textures = textures;
-}
-
-void dc_app_display_builder_set_pixelstreams(DcAppDisplayBuilderContext *xml_ctx, DcAppPixelstreamContext *pixelstreams) {
-    if (xml_ctx) xml_ctx->pixelstreams = pixelstreams;
-}
-
-static DcAppVariableRegistryContext *_lookup(DcAppDisplayBuilderContext *xml_ctx) {
-    return dc_app_display_model_get_variable_registry(xml_ctx->scene);
-}
-
 // Forward declarations
+static DcAppVariableRegistryContext *_lookup(DcAppDisplayBuilderContext *xml_ctx);
+static int _register_font(DcAppDisplayBuilderContext *xml_ctx, const char *path);
 static DcAppVariableRegistryVariableIndex _register_anonymous_variable(DcAppDisplayBuilderContext *xml_ctx, DcAppValueType type, const char *initial_value_str);
+static DcAppVariableRegistryVariableIndex _create_anonymous_variable(DcAppDisplayBuilderContext *xml_ctx, DcAppValueType type, const char *initial_value_str);
+static DcAppNodeIndex _create_state_event_node(DcAppDisplayBuilderContext *xml_ctx, DcAppNodeType node_type, DcAppNodeIndex parent_node_index, DcAppNodeIndex child_index);
+static void _set_parent_has_mouse_handlers(DcAppDisplayBuilderContext *xml_ctx, DcAppNodeIndex parent_node_index);
+static DcAppNodeIndex _process_xml_node_children(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppXmlElementType elem_type, const char *directory);
 static bool _load_color_from_string(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, const char *attr_name, DcAppNodeValueIndex4 *color_out);
-DcAppNodeIndex dc_app_display_builder_process_xml_node(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
 static DcAppNodeIndex _process_xml_node_arc(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
 static DcAppNodeIndex _process_xml_node_blink(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
 static DcAppNodeIndex _process_xml_node_button(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
@@ -179,75 +129,67 @@ static DcAppNodeIndex _process_xml_node_true(DcAppDisplayBuilderContext *xml_ctx
 static DcAppNodeIndex _process_xml_node_variable(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
 static DcAppNodeIndex _process_xml_node_vertex(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
 static DcAppNodeIndex _process_xml_node_window(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory);
-
-// utils (definitions at bottom of file)
+static void _create_geojson_nodes(
+    DcAppDisplayBuilderContext *xml_ctx, const DcGeojsonFeature *feat,
+    DcAppNodeIndex parent, uint8_t planet_def_index,
+    DcAppVariableRegistryValueIndex height, DcAppVariableRegistryValueIndex line_width, DcAppVariableRegistryValueIndex enabled,
+    DcAppNodeValueIndex4 line_color, DcAppNodeValueIndex4 fill_color, uint8_t flags,
+    DcAppNodeIndex *first_index, DcAppNodeIndex *prev_index);
 static const char *_node_type_to_string(DcAppNodeType type);
 static DcAppNodeIndex _register_node(DcAppDisplayBuilderContext *xml_ctx, DcAppNode *node);
 static DcAppNode *_get_node(DcAppDisplayBuilderContext *xml_ctx, DcAppNodeIndex index);
 
-static int _register_font(DcAppDisplayBuilderContext *xml_ctx, const char *path) {
-    return dc_app_font_register(xml_ctx->fonts, path);
+void dc_app_display_builder_init(plApiRegistryI *api_registry) {
+    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_vfs = pl_get_api_latest(api_registry, plVfsI);
 }
 
-static DcAppVariableRegistryVariableIndex _register_anonymous_variable(DcAppDisplayBuilderContext *xml_ctx, DcAppValueType type, const char *initial_value_str) {
-    // create anon name
-    char anon_name[32];
-    snprintf(anon_name, sizeof(anon_name), "__anon_%u__", xml_ctx->registered_anonymous_variable_count++);
+DcAppDisplayBuilderContext *dc_app_display_builder_context_create(
+    DcAppContext *app_context,
+    DcAppDisplayModelContext *scene,
+    DcAppDisplayLogicContext *logic,
+    DcAppDataLinkContext *data_link,
+    const char *dcapp_root,
+    DcAppDisplayBuilderBootstrapFn bootstrap) {
+    if (!scene) return NULL;
 
-    // register variable
-    DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_register_value_from_string(_lookup(xml_ctx), type, initial_value_str);
-    return dc_app_variable_registry_register_variable(_lookup(xml_ctx), anon_name, value_index);
-}
+    DcAppDisplayBuilderContext *xml_ctx = (DcAppDisplayBuilderContext *)PL_ALLOC(sizeof(*xml_ctx));
+    if (!xml_ctx) return NULL;
+    memset(xml_ctx, 0, sizeof(*xml_ctx));
 
-static DcAppNodeIndex _process_xml_node_children(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppXmlElementType elem_type, const char *directory) {
-    xmlNodePtr xml_child_node = xml_node->children;
+    xml_ctx->app_context = app_context;
+    xml_ctx->scene = scene;
+    xml_ctx->logic = logic;
+    xml_ctx->data_link = data_link;
+    xml_ctx->bootstrap = bootstrap;
 
-    DcAppNodeIndex first_child_index = NODE_INDEX_UNDEFINED;
-    DcAppNodeIndex previous_child_node_index = NODE_INDEX_UNDEFINED;
-    while (xml_child_node) {
-
-        DcAppNodeIndex child_node_index = dc_app_display_builder_process_xml_node(xml_ctx, xml_child_node, node_index, elem_type, directory);
-
-        if (child_node_index != NODE_INDEX_UNDEFINED) {
-
-            // get node addresses here since the address could change per node process
-            DcAppNode *node = _get_node(xml_ctx, node_index);
-            DcAppNode *child_node = _get_node(xml_ctx, child_node_index);
-            DcAppNode *previous_child_node = _get_node(xml_ctx, previous_child_node_index);
-
-            // if the current node and child exists
-            if (node && child_node) {
-
-                // set nodes's first child if this is the first child
-                if (previous_child_node_index == NODE_INDEX_UNDEFINED) {
-                    first_child_index = child_node_index;
-                }
-            }
-
-            // if there is a previous node
-            if (previous_child_node) {
-
-                // set the next node of the previous node
-                previous_child_node->next = child_node_index;
-            }
-
-            // set previous child node, accounting for cases where the
-            // child node is actually a node list
-            DcAppNodeIndex last_child_node_index = child_node_index;
-            DcAppNode *last_child_node = _get_node(xml_ctx, last_child_node_index);
-            while (last_child_node->next != NODE_INDEX_UNDEFINED) {
-                last_child_node_index = last_child_node->next;
-                last_child_node = _get_node(xml_ctx, last_child_node_index);
-            }
-            previous_child_node_index = last_child_node_index;
-        }
-
-        // increment pointer
-        xml_child_node = xml_child_node->next;
+    if (dcapp_root && dcapp_root[0] != '\0') {
+        size_t length = strlen(dcapp_root) + 1;
+        xml_ctx->dcapp_root = (char *)PL_ALLOC(length);
+        memcpy(xml_ctx->dcapp_root, dcapp_root, length);
     }
-
-    return first_child_index;
+    return xml_ctx;
 }
+
+void dc_app_display_builder_context_destroy(DcAppDisplayBuilderContext *xml_ctx) {
+    if (!xml_ctx) return;
+    sbfree(xml_ctx->sb_text_filler);
+    if (xml_ctx->dcapp_root) PL_FREE(xml_ctx->dcapp_root);
+    PL_FREE(xml_ctx);
+}
+
+void dc_app_display_builder_set_fonts(DcAppDisplayBuilderContext *xml_ctx, DcAppFontContext *fonts) {
+    if (xml_ctx) xml_ctx->fonts = fonts;
+}
+
+void dc_app_display_builder_set_textures(DcAppDisplayBuilderContext *xml_ctx, DcAppTextureContext *textures) {
+    if (xml_ctx) xml_ctx->textures = textures;
+}
+
+void dc_app_display_builder_set_pixelstreams(DcAppDisplayBuilderContext *xml_ctx, DcAppPixelstreamContext *pixelstreams) {
+    if (xml_ctx) xml_ctx->pixelstreams = pixelstreams;
+}
+
 DcAppNodeIndex dc_app_display_builder_process_xml_node(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory) {
     char directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
     // Included nodes retain their source directory through this private preprocessing attribute.
@@ -462,6 +404,74 @@ DcAppNodeIndex dc_app_display_builder_process_xml_node(DcAppDisplayBuilderContex
         default:
             return NODE_INDEX_UNDEFINED;
     }
+}
+
+static DcAppVariableRegistryContext *_lookup(DcAppDisplayBuilderContext *xml_ctx) {
+    return dc_app_display_model_get_variable_registry(xml_ctx->scene);
+}
+
+static int _register_font(DcAppDisplayBuilderContext *xml_ctx, const char *path) {
+    return dc_app_font_register(xml_ctx->fonts, path);
+}
+
+static DcAppVariableRegistryVariableIndex _register_anonymous_variable(DcAppDisplayBuilderContext *xml_ctx, DcAppValueType type, const char *initial_value_str) {
+    // create anon name
+    char anon_name[32];
+    snprintf(anon_name, sizeof(anon_name), "__anon_%u__", xml_ctx->registered_anonymous_variable_count++);
+
+    // register variable
+    DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_register_value_from_string(_lookup(xml_ctx), type, initial_value_str);
+    return dc_app_variable_registry_register_variable(_lookup(xml_ctx), anon_name, value_index);
+}
+
+static DcAppNodeIndex _process_xml_node_children(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppXmlElementType elem_type, const char *directory) {
+    xmlNodePtr xml_child_node = xml_node->children;
+
+    DcAppNodeIndex first_child_index = NODE_INDEX_UNDEFINED;
+    DcAppNodeIndex previous_child_node_index = NODE_INDEX_UNDEFINED;
+    while (xml_child_node) {
+
+        DcAppNodeIndex child_node_index = dc_app_display_builder_process_xml_node(xml_ctx, xml_child_node, node_index, elem_type, directory);
+
+        if (child_node_index != NODE_INDEX_UNDEFINED) {
+
+            // get node addresses here since the address could change per node process
+            DcAppNode *node = _get_node(xml_ctx, node_index);
+            DcAppNode *child_node = _get_node(xml_ctx, child_node_index);
+            DcAppNode *previous_child_node = _get_node(xml_ctx, previous_child_node_index);
+
+            // if the current node and child exists
+            if (node && child_node) {
+
+                // set nodes's first child if this is the first child
+                if (previous_child_node_index == NODE_INDEX_UNDEFINED) {
+                    first_child_index = child_node_index;
+                }
+            }
+
+            // if there is a previous node
+            if (previous_child_node) {
+
+                // set the next node of the previous node
+                previous_child_node->next = child_node_index;
+            }
+
+            // set previous child node, accounting for cases where the
+            // child node is actually a node list
+            DcAppNodeIndex last_child_node_index = child_node_index;
+            DcAppNode *last_child_node = _get_node(xml_ctx, last_child_node_index);
+            while (last_child_node->next != NODE_INDEX_UNDEFINED) {
+                last_child_node_index = last_child_node->next;
+                last_child_node = _get_node(xml_ctx, last_child_node_index);
+            }
+            previous_child_node_index = last_child_node_index;
+        }
+
+        // increment pointer
+        xml_child_node = xml_child_node->next;
+    }
+
+    return first_child_index;
 }
 
 static DcAppNodeIndex _process_xml_node_nonelem(DcAppDisplayBuilderContext *xml_ctx, xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_elem_type, const char *directory) {
@@ -3670,13 +3680,6 @@ static DcAppNodeIndex _process_xml_node_planet_ellipse(DcAppDisplayBuilderContex
 
     return _register_node(xml_ctx, &dc_node);
 }
-
-static void _create_geojson_nodes(
-    DcAppDisplayBuilderContext *xml_ctx, const DcGeojsonFeature *feat,
-    DcAppNodeIndex parent, uint8_t planet_def_index,
-    DcAppVariableRegistryValueIndex height, DcAppVariableRegistryValueIndex line_width, DcAppVariableRegistryValueIndex enabled,
-    DcAppNodeValueIndex4 line_color, DcAppNodeValueIndex4 fill_color, uint8_t flags,
-    DcAppNodeIndex *first_index, DcAppNodeIndex *prev_index);
 
 static void _create_geojson_nodes(
     DcAppDisplayBuilderContext *xml_ctx, const DcGeojsonFeature *feat,

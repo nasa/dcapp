@@ -9,12 +9,10 @@ Index of this file:
 // [SECTION] forward declarations
 // [SECTION] structs
 // [SECTION] global data
-// [SECTION] internal helpers (preprocessing)
-// [SECTION] internal helpers (rendering)
+// [SECTION] function declarations
 // [SECTION] public api implementation
-// [SECTION] internal helpers implementation (preprocessing)
-// [SECTION] internal helpers implementation (rendering)
 // [SECTION] extension loading
+// [SECTION] internal api implementation
 // [SECTION] unity build
 */
 
@@ -147,103 +145,19 @@ static const plVfsI*   gptVfs   = NULL;
 // context
 
 //-----------------------------------------------------------------------------
-// [SECTION] internal helpers (preprocessing)
+// [SECTION] function declarations
 //-----------------------------------------------------------------------------
 
-static inline plVec3d
-pl__planet_to_double_vec(plVec3 tVec)
-{
-    return (plVec3d){(double)tVec.x, (double)tVec.y, (double)tVec.z};
-}
-
-static inline plVec3
-pl__planet_to_vec(plVec3d tVec)
-{
-    return (plVec3){(float)tVec.x, (float)tVec.y, (float)tVec.z};
-}
-
-static inline int
-pl__lowest_one(int x)
-{
-
-    // Returns the bit position of the lowest 1 bit in the given value.
-    // If x == 0, returns the number of bits in an integer.
-    //
-    // E.g. pl__lowest_one(1) == 0; pl__lowest_one(16) == 4; pl__lowest_one(5) == 0;
-
-	int	intbits = sizeof(x) * 8;
-	int	i;
-	for (i = 0; i < intbits; i++, x = x >> 1)
-    {
-		if (x & 1)
-            break;
-	}
-	return i;
-}
-
-static inline int
-pl__vertex_index(plPlanetHeightMap* ptHeightMap, int x, int z)
-{
-    if (x < 0 || x >= ptHeightMap->iSize || z < 0 || z >= ptHeightMap->iSize)
-        return -1;
-    return ptHeightMap->iSize * z + x;
-}
-
-static inline void
-pl__activate_height_map_element(plPlanetMapElement* ptElement, int iLevel)
-{
-    if(iLevel > ptElement->iActivationLevel)
-        ptElement->iActivationLevel = (int8_t)iLevel;
-}
-
-static inline plPlanetMapElement*
-pl__get_elem(plPlanetHeightMap* ptHeightMap, int x, int z)
-{
-    return &ptHeightMap->atElements[x + z * ptHeightMap->iSize];
-}
-
-static inline int
-pl__node_index(plPlanetHeightMap* ptHeightMap, int x, int z)
-{
-	// Given the coordinates of the center of a quadtree node, this
-	// function returns its node index.  The node index is essentially
-	// the node's rank in a breadth-first quadtree traversal.  Assumes
-	// a [nw, ne, sw, se] traversal order.
-	//
-	// If the coordinates don't specify a valid node (e.g. if the coords
-	// are outside the heightfield) then returns -1.
-
-    if (x < 0 || x >= ptHeightMap->iSize || z < 0 || z >= ptHeightMap->iSize)
-        return -1;
-
-    int	l1 = pl__lowest_one(x | z);
-    int	depth = ptHeightMap->iLogSize - l1 - 1;
-
-    int	base = 0x55555555 & ((1 << depth*2) - 1);	// total node count in all levels above ours.
-    int	shift = l1 + 1;
-
-    // Effective coords within this node's level.
-    int	col = x >> shift;
-    int	row = z >> shift;
-
-    return base + (row << depth) + col;
-}
-
-static inline uint32_t pl_parent(uint32_t id)  { return id >> 1u; }
-static inline uint32_t pl_sibling(uint32_t id) { return id ^ 1u; }
-
-static inline int
-pl__mid_activation(plPlanetHeightMap* ptHeightMap, uint32_t uLeft, uint32_t uRight)
-{
-    plPlanetMapElement* eL = &ptHeightMap->atElements[uLeft];
-    plPlanetMapElement* eR = &ptHeightMap->atElements[uRight];
-
-    int iMidX = ((int)eL->iX + (int)eR->iX) / 2;
-    int iMidZ = ((int)eL->iZ + (int)eR->iZ) / 2;
-
-    plPlanetMapElement* ptElement = pl__get_elem(ptHeightMap, iMidX, iMidZ);
-    return ptElement->iActivationLevel;
-}
+static inline plVec3d              pl__planet_to_double_vec(plVec3);
+static inline plVec3               pl__planet_to_vec(plVec3d);
+static inline int                  pl__lowest_one(int);
+static inline int                  pl__vertex_index(plPlanetHeightMap*, int, int);
+static inline void                 pl__activate_height_map_element(plPlanetMapElement*, int);
+static inline plPlanetMapElement*  pl__get_elem(plPlanetHeightMap*, int, int);
+static inline int                  pl__node_index(plPlanetHeightMap*, int, int);
+static inline uint32_t             pl_parent(uint32_t);
+static inline uint32_t             pl_sibling(uint32_t);
+static inline int                  pl__mid_activation(plPlanetHeightMap*, uint32_t, uint32_t);
 
 // Given the triangle, computes an error value and activation level
 // for its base vertex, and recurses to child triangles.
@@ -254,29 +168,9 @@ static void pl__propagate_activation_level(plPlanetHeightMap*, int cx, int cz, i
 static void pl__initialize_cdlod_heightmap(plPlanetHeightMap*, plPlanetProcessInfo*, uint32_t);
 static void pl__terrain_mesh(FILE*, plPlanetHeightMap*, int iStartIndexX, int iStartIndexY, int iLogSize, int iLevel);
 
-static inline plVec2d
-pl__oct_wrap( plVec2d v )
-{
-    plVec2d w = {
-        .x = 1.0 - fabs( v.y ),
-        .y = 1.0 - fabs( v.x ),
-    };
-    if (v.x < 0.0) w.x = -w.x;
-    if (v.y < 0.0) w.y = -w.y;
-    return w;
-}
-
-static inline plVec2
-pl__encode(plVec3d n)
-{
-    n = pl_div_vec3_scalard(n, ( fabs( n.x ) + fabs( n.y ) + fabs( n.z ) ));
-    n.xy = n.z > 0.0 ? n.xy : pl__oct_wrap( n.xy );
-    // n.xy = n.xy * 0.5 + 0.5;
-    n.xy = pl_mul_vec2_scalard(n.xy, 0.5);
-    n.x += 0.5f;
-    n.y += 0.5f;
-    return (plVec2){(float)n.x, (float)n.y};
-}
+static inline plVec2d pl__oct_wrap(plVec2d);
+static inline plVec2  pl__encode(plVec3d);
+static inline plEdgeKey pl__base_edge_key(uint8_t, uint32_t, uint32_t);
 
 static plVec3d pl__get_cartesian(plPlanetHeightMap*, plPlanetMapElement*);
 static plVec3d pl__get_cartesian_unmod(plPlanetHeightMap*, plPlanetMapElement*);
@@ -285,12 +179,7 @@ static plVec2 pl__get_normal(plPlanetHeightMap*, plPlanetMapElement*);
 static void pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDataFile, uint32_t* puCurrentChunk);
 static void pl__normalize_chunk_coordinates(plPlanetChunk* ptChunk, float fX, float fY, float fExtent);
 
-static void
-pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
-{
-    *ptHighOut = (float)dValue;
-    *ptLowOut = (float)(dValue - *ptHighOut);
-}
+static void pl__planet_split_double(double, float*, float*);
 
 #define PL_TERRAIN_SET_PRESENT(INDEX) atPresent[INDEX >> 3] |= (uint8_t)(1u << (INDEX & 7))
 #define PL_TERRAIN_UNSET_PRESENT(INDEX) atPresent[INDEX >> 3] &= ~(uint8_t)(1u << (INDEX & 7))
@@ -450,6 +339,167 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
     return true;
 }
 
+//-----------------------------------------------------------------------------
+// [SECTION] extension loading
+//-----------------------------------------------------------------------------
+
+PL_EXPORT void
+pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
+{
+    const plPlanetProcessorI tApi = {
+        .process = pl_planet_process,
+        .load_chunk_file = pl_terrain_load_chunk_file,
+    };
+    pl_set_api(ptApiRegistry, plPlanetProcessorI, &tApi);
+
+    gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
+    gptImage  = pl_get_api_latest(ptApiRegistry, plImageI);
+    gptVfs    = pl_get_api_latest(ptApiRegistry, plVfsI);
+
+    const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
+}
+
+PL_EXPORT void
+pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
+{
+
+    if(bReload)
+        return;
+
+    const plPlanetProcessorI* ptApi = pl_get_api_latest(ptApiRegistry, plPlanetProcessorI);
+    ptApiRegistry->remove_api(ptApi);
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] internal api implementation
+//-----------------------------------------------------------------------------
+
+static inline plVec3d
+pl__planet_to_double_vec(plVec3 tVec)
+{
+    return (plVec3d){(double)tVec.x, (double)tVec.y, (double)tVec.z};
+}
+
+static inline plVec3
+pl__planet_to_vec(plVec3d tVec)
+{
+    return (plVec3){(float)tVec.x, (float)tVec.y, (float)tVec.z};
+}
+
+static inline int
+pl__lowest_one(int x)
+{
+
+    // Returns the bit position of the lowest 1 bit in the given value.
+    // If x == 0, returns the number of bits in an integer.
+    //
+    // E.g. pl__lowest_one(1) == 0; pl__lowest_one(16) == 4; pl__lowest_one(5) == 0;
+
+	int	intbits = sizeof(x) * 8;
+	int	i;
+	for (i = 0; i < intbits; i++, x = x >> 1)
+    {
+		if (x & 1)
+            break;
+	}
+	return i;
+}
+
+static inline int
+pl__vertex_index(plPlanetHeightMap* ptHeightMap, int x, int z)
+{
+    if (x < 0 || x >= ptHeightMap->iSize || z < 0 || z >= ptHeightMap->iSize)
+        return -1;
+    return ptHeightMap->iSize * z + x;
+}
+
+static inline void
+pl__activate_height_map_element(plPlanetMapElement* ptElement, int iLevel)
+{
+    if(iLevel > ptElement->iActivationLevel)
+        ptElement->iActivationLevel = (int8_t)iLevel;
+}
+
+static inline plPlanetMapElement*
+pl__get_elem(plPlanetHeightMap* ptHeightMap, int x, int z)
+{
+    return &ptHeightMap->atElements[x + z * ptHeightMap->iSize];
+}
+
+static inline int
+pl__node_index(plPlanetHeightMap* ptHeightMap, int x, int z)
+{
+	// Given the coordinates of the center of a quadtree node, this
+	// function returns its node index.  The node index is essentially
+	// the node's rank in a breadth-first quadtree traversal.  Assumes
+	// a [nw, ne, sw, se] traversal order.
+	//
+	// If the coordinates don't specify a valid node (e.g. if the coords
+	// are outside the heightfield) then returns -1.
+
+    if (x < 0 || x >= ptHeightMap->iSize || z < 0 || z >= ptHeightMap->iSize)
+        return -1;
+
+    int	l1 = pl__lowest_one(x | z);
+    int	depth = ptHeightMap->iLogSize - l1 - 1;
+
+    int	base = 0x55555555 & ((1 << depth*2) - 1);	// total node count in all levels above ours.
+    int	shift = l1 + 1;
+
+    // Effective coords within this node's level.
+    int	col = x >> shift;
+    int	row = z >> shift;
+
+    return base + (row << depth) + col;
+}
+
+static inline uint32_t pl_parent(uint32_t id)  { return id >> 1u; }
+static inline uint32_t pl_sibling(uint32_t id) { return id ^ 1u; }
+
+static inline int
+pl__mid_activation(plPlanetHeightMap* ptHeightMap, uint32_t uLeft, uint32_t uRight)
+{
+    plPlanetMapElement* eL = &ptHeightMap->atElements[uLeft];
+    plPlanetMapElement* eR = &ptHeightMap->atElements[uRight];
+
+    int iMidX = ((int)eL->iX + (int)eR->iX) / 2;
+    int iMidZ = ((int)eL->iZ + (int)eR->iZ) / 2;
+
+    plPlanetMapElement* ptElement = pl__get_elem(ptHeightMap, iMidX, iMidZ);
+    return ptElement->iActivationLevel;
+}
+
+static inline plVec2d
+pl__oct_wrap(plVec2d v)
+{
+    plVec2d w = {
+        .x = 1.0 - fabs(v.y),
+        .y = 1.0 - fabs(v.x),
+    };
+    if(v.x < 0.0) w.x = -w.x;
+    if(v.y < 0.0) w.y = -w.y;
+    return w;
+}
+
+static inline plVec2
+pl__encode(plVec3d n)
+{
+    n = pl_div_vec3_scalard(n, (fabs(n.x) + fabs(n.y) + fabs(n.z)));
+    n.xy = n.z > 0.0 ? n.xy : pl__oct_wrap(n.xy);
+    // n.xy = n.xy * 0.5 + 0.5;
+    n.xy = pl_mul_vec2_scalard(n.xy, 0.5);
+    n.x += 0.5f;
+    n.y += 0.5f;
+    return (plVec2){(float)n.x, (float)n.y};
+}
+
+static void
+pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
+{
+    *ptHighOut = (float)dValue;
+    *ptLowOut = (float)(dValue - *ptHighOut);
+}
+
 static void
 pl__normalize_chunk_coordinates(plPlanetChunk* ptChunk, float fX, float fY, float fExtent)
 {
@@ -537,10 +587,6 @@ pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDa
     }
 }
 
-
-//-----------------------------------------------------------------------------
-// [SECTION] internal api implementation
-//-----------------------------------------------------------------------------
 
 static void
 pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessInfo* ptInfo, uint32_t uCurrentTileIndex)
@@ -1627,37 +1673,6 @@ pl__propagate_activation_level(plPlanetHeightMap* ptHeightMap, int cx, int cz, i
 	pl__activate_height_map_element(c, en->iActivationLevel);
 	pl__activate_height_map_element(c, es->iActivationLevel);
 	pl__activate_height_map_element(c, ew->iActivationLevel);
-}
-
-//-----------------------------------------------------------------------------
-// [SECTION] extension loading
-//-----------------------------------------------------------------------------
-
-PL_EXPORT void
-pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
-{
-    const plPlanetProcessorI tApi = {
-        .process = pl_planet_process,
-        .load_chunk_file = pl_terrain_load_chunk_file,
-    };
-    pl_set_api(ptApiRegistry, plPlanetProcessorI, &tApi);
-
-    gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
-    gptImage  = pl_get_api_latest(ptApiRegistry, plImageI);
-    gptVfs    = pl_get_api_latest(ptApiRegistry, plVfsI);
-
-    const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
-}
-
-PL_EXPORT void
-pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
-{
-
-    if(bReload)
-        return;
-
-    const plPlanetProcessorI* ptApi = pl_get_api_latest(ptApiRegistry, plPlanetProcessorI);
-    ptApiRegistry->remove_api(ptApi);
 }
 
 //-----------------------------------------------------------------------------

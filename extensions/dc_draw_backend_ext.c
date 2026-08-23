@@ -7,10 +7,11 @@
 Index of this file:
 // [SECTION] includes
 // [SECTION] internal structs
-// [SECTION] globals
-// [SECTION] internal api
+// [SECTION] global data
+// [SECTION] function declarations
 // [SECTION] public api implementation
 // [SECTION] extension loading
+// [SECTION] internal api implementation
 // [SECTION] unity build
 */
 
@@ -134,9 +135,13 @@ static dcDrawBackendContext* gptDrawBackendCtx = NULL;
 static uint64_t uLogChannelDrawBackend = UINT64_MAX;
 
 //-----------------------------------------------------------------------------
-// [SECTION] internal api
+// [SECTION] function declarations
 //-----------------------------------------------------------------------------
 
+// registered public API callbacks
+static plBindGroupHandle pl_create_bind_group_for_texture(plTextureHandle);
+
+// private helpers
 static plBufferHandle         pl__create_staging_buffer(const plBufferDesc*, const char* pcName, uint32_t uIdentifier);
 static const dcPipelineEntry* pl__get_3d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex);
 static const dcPipelineEntry* pl__get_3d_textured_pipeline     (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex);
@@ -152,7 +157,7 @@ static bool                   pl__stencil_state_valid          (dcDrawStencilSta
 static plGraphicsState        pl__stencil_graphics_state       (dcDrawStencilState);
 static plGraphicsState        pl__stencil_graphics_state_3d    (dcDrawStencilState, dcDrawFlags);
 static plBlendState           pl__stencil_blend_state          (dcDrawStencilState);
-static plBindGroupHandle      pl_create_bind_group_for_texture(plTextureHandle);
+static void                   pl__use_nearest_sampler          (const dcDrawList2D*, const dcDrawCommand*);
 
 //-----------------------------------------------------------------------------
 // [SECTION] public api implementation
@@ -235,7 +240,7 @@ pl_initialize_draw_backend(plDevice* ptDevice)
     gptDrawBackendCtx->tSamplerBindGroupLayout = gptGfx->create_bind_group_layout(ptDevice, &tSamplerBindGroupLayout);
 
     const plBindGroupLayoutDesc tDrawingBindGroup = {
-        .atTextureBindings = { 
+        .atTextureBindings = {
             {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
         }
     };
@@ -423,749 +428,11 @@ pl_cleanup_font_atlas_backend(dcFontAtlas* ptAtlas)
     gptDraw->cleanup_font_atlas(ptAtlas);
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] internal api implementation
-//-----------------------------------------------------------------------------
-
-static plBufferHandle
-pl__create_staging_buffer(const plBufferDesc* ptDesc, const char* pcName, uint32_t uIdentifier)
-{
-    // for convience
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-
-    // create buffer
-    plBuffer* ptBuffer = NULL;
-    const plBufferHandle tHandle = gptGfx->create_buffer(ptDevice, ptDesc, &ptBuffer);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    // allocate memory
-    const plDeviceMemoryAllocation tAllocation = gptGfx->allocate_memory(ptDevice,
-        ptBuffer->tMemoryRequirements.ulSize,
-        PL_MEMORY_FLAGS_HOST_VISIBLE | PL_MEMORY_FLAGS_HOST_COHERENT,
-        ptBuffer->tMemoryRequirements.uMemoryTypeBits,
-        pl_temp_allocator_sprintf(&gptDrawBackendCtx->tTempAllocator, "%s: %u", pcName, uIdentifier));
-
-    // bind memory
-    gptGfx->bind_buffer_to_memory(ptDevice, tHandle, &tAllocation);
-    return tHandle;
-}
-
-static const dcPipelineEntry*
-pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex)
-{
-    // check if pipeline exists
-    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries); i++)
-    {
-        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[i];
-        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->tFlags == tFlags && ptEntry->uSubpassIndex == uSubpassIndex)
-        {
-            return ptEntry;
-        }
-    }
-
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-
-    pl_sb_add(gptDrawBackendCtx->sbt3dPipelineEntries);
-    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries) - 1];
-    ptEntry->tFlags = tFlags;
-    ptEntry->tRenderPass = tRenderPass;
-    ptEntry->uMSAASampleCount = uMSAASampleCount;
-    ptEntry->uSubpassIndex = uSubpassIndex;
-
-    uint64_t ulCullMode = PL_CULL_MODE_NONE;
-    if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
-        ulCullMode |= PL_CULL_MODE_CULL_FRONT;
-    if(tFlags & DC_DRAW_FLAG_CULL_BACK)
-        ulCullMode |= PL_CULL_MODE_CULL_BACK;
-
-    {
-        const plShaderDesc t3DShaderDesc = {
-            .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
-            .tVertexShader   = gptShader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL),
-            .tGraphicsState = {
-                .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
-                .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
-                .ulCullMode           = ulCullMode,
-                .ulWireframe          = 0,
-                .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-                .ulStencilRef         = 0xff,
-                .ulStencilMask        = 0xff,
-                .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-                .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-                .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-            },
-            .atVertexBufferLayouts = {
-                {
-                    .uByteStride = sizeof(float) * 4,
-                    .atAttributes = {
-                        {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
-                    }
-                }
-            },
-            .atBlendStates = {
-                {
-                    .bBlendEnabled   = true,
-                    .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-                    .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                    .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                    .tColorOp        = PL_BLEND_OP_ADD,
-                    .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                    .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                    .tAlphaOp        = PL_BLEND_OP_ADD
-                }
-            },
-            .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-            .uSubpassIndex = uSubpassIndex,
-            .tMSAASampleCount = uMSAASampleCount
-        };
-        ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &t3DShaderDesc);
-        pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-    }
-
-    {
-        const plShaderDesc t3DLineShaderDesc = {
-            .tFragmentShader = gptShader->load_glsl("dc_draw_3d_line.frag", "main", NULL, NULL),
-            .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
-            .tGraphicsState = {
-                .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE,
-                .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
-                .ulCullMode           = ulCullMode,
-                .ulWireframe          = 0,
-                .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-                .ulStencilRef         = 0xff,
-                .ulStencilMask        = 0xff,
-                .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-                .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-                .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-            },
-            .atVertexBufferLayouts = {
-                {
-                    .uByteStride = sizeof(dcDrawVertex3DLine),
-                    .atAttributes = {
-                        {.uByteOffset = 0,                  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 3,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 6,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                        {.uByteOffset = sizeof(float) * 9,  .tFormat = PL_VERTEX_FORMAT_UINT},
-                        {.uByteOffset = sizeof(float) * 10, .tFormat = PL_VERTEX_FORMAT_FLOAT},
-                        {.uByteOffset = sizeof(float) * 11, .tFormat = PL_VERTEX_FORMAT_UINT},
-                    }
-                }
-            },
-            .atBlendStates = {
-                {
-                    .bBlendEnabled   = true,
-                    .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-                    .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                    .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                    .tColorOp        = PL_BLEND_OP_ADD,
-                    .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                    .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                    .tAlphaOp        = PL_BLEND_OP_ADD
-                }
-            },
-            .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-            .uSubpassIndex = uSubpassIndex,
-            .tMSAASampleCount = uMSAASampleCount
-        };
-        ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &t3DLineShaderDesc);
-        pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-    }
-    return ptEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_3d_textured_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex)
-{
-    // check if pipeline exists
-    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries); i++)
-    {
-        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[i];
-        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->tFlags == tFlags && ptEntry->uSubpassIndex == uSubpassIndex)
-        {
-            return ptEntry;
-        }
-    }
-
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-
-    pl_sb_add(gptDrawBackendCtx->sbt3dTexturedPipelineEntries);
-    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries) - 1];
-    ptEntry->tFlags = tFlags;
-    ptEntry->tRenderPass = tRenderPass;
-    ptEntry->uMSAASampleCount = uMSAASampleCount;
-    ptEntry->uSubpassIndex = uSubpassIndex;
-
-    uint64_t ulCullMode = PL_CULL_MODE_NONE;
-    if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
-        ulCullMode |= PL_CULL_MODE_CULL_FRONT;
-    if(tFlags & DC_DRAW_FLAG_CULL_BACK)
-        ulCullMode |= PL_CULL_MODE_CULL_BACK;
-
-    const plShaderDesc t3DTexturedShaderDesc = {
-        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL),
-        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL),
-        .tGraphicsState = {
-            .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
-            .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
-            .ulCullMode           = ulCullMode,
-            .ulWireframe          = 0,
-            .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-            .ulStencilRef         = 0xff,
-            .ulStencilMask        = 0xff,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        },
-        .atVertexBufferLayouts = {
-            {
-                .uByteStride = sizeof(float) * 6,  // pos3 + uv2 + color (padded)
-                .atAttributes = {
-                    {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-                    {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-                    {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
-                }
-            }
-        },
-        .atBlendStates = {
-            {
-                .bBlendEnabled   = true,
-                .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-                .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .tColorOp        = PL_BLEND_OP_ADD,
-                .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .tAlphaOp        = PL_BLEND_OP_ADD
-            }
-        },
-        .atBindGroupLayouts = {
-            {
-                .atSamplerBindings = {
-                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
-                }
-            },
-            {
-                .atTextureBindings = {
-                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
-                }
-            }
-        },
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &t3DTexturedShaderDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    return ptEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_2d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex)
-{
-    // check if pipeline exists
-    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries); i++)
-    {
-        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[i];
-        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->uSubpassIndex == uSubpassIndex)
-        {
-            return ptEntry;
-        }
-    }
-
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-
-    pl_sb_add(gptDrawBackendCtx->sbt2dPipelineEntries);
-    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries) - 1];
-    ptEntry->tFlags = 0;
-    ptEntry->tRenderPass = tRenderPass;
-    ptEntry->uMSAASampleCount = uMSAASampleCount;
-    ptEntry->uSubpassIndex = uSubpassIndex;
-
-    const plShaderDesc tRegularShaderDesc = {
-        .tFragmentShader  = gptShader->load_glsl("dc_draw_2d.frag", "main", NULL, NULL),
-        .tVertexShader    = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
-        .tGraphicsState = {
-            .ulDepthWriteEnabled  = 0,
-            .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-            .ulCullMode           = PL_CULL_MODE_NONE,
-            .ulWireframe          = 0,
-            .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-            .ulStencilRef         = 0xff,
-            .ulStencilMask        = 0xff,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        },
-        .atVertexBufferLayouts = {
-            {
-                .uByteStride = sizeof(float) * 5,
-                .atAttributes = {
-                    {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-                    {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-                    {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
-                }
-            }
-        },
-        .atBlendStates = {
-            {
-                .bBlendEnabled   = true,
-                .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-                .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .tColorOp        = PL_BLEND_OP_ADD,
-                .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .tAlphaOp        = PL_BLEND_OP_ADD
-            }
-        },
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .atBindGroupLayouts = {
-            {
-                .atSamplerBindings = {
-                    {.uSlot =  0, .tStages = PL_SHADER_STAGE_FRAGMENT}
-                }
-            },
-            {
-                .atTextureBindings = {
-                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
-                }
-            }
-        },
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tRegularShaderDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    const plShaderDesc tSecondaryShaderDesc = {
-        .tFragmentShader  = gptShader->load_glsl("dc_draw_2d_sdf.frag", "main", NULL, NULL),
-        .tVertexShader    = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
-        .tGraphicsState = {
-            .ulDepthWriteEnabled  = 0,
-            .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-            .ulCullMode           = PL_CULL_MODE_NONE,
-            .ulWireframe          = 0,
-            .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-            .ulStencilRef         = 0xff,
-            .ulStencilMask        = 0xff,
-            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        },
-        .atVertexBufferLayouts = {
-            {
-                .uByteStride = sizeof(float) * 5,
-                .atAttributes = {
-                    {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-                    {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-                    {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
-                }
-            }
-        },
-        .atBlendStates = {
-            {
-                .bBlendEnabled   = true,
-                .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-                .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .tColorOp        = PL_BLEND_OP_ADD,
-                .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-                .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .tAlphaOp        = PL_BLEND_OP_ADD
-            }
-        },
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .atBindGroupLayouts = {
-            {
-                .atSamplerBindings = {
-                    {.uSlot =  0, .tStages = PL_SHADER_STAGE_FRAGMENT}
-                }
-            },
-            {
-                .atTextureBindings = {
-                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
-                }
-            }
-        },
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tSecondaryShaderDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    plShaderDesc tBoldSdfDesc = tSecondaryShaderDesc;
-    tBoldSdfDesc.tFragmentShader = gptShader->load_glsl("dc_draw_2d_sdf_bold.frag", "main", NULL, NULL);
-    ptEntry->tBoldSdfPipeline = gptGfx->create_shader(ptDevice, &tBoldSdfDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    plShaderDesc tOutlineSdfDesc = tSecondaryShaderDesc;
-    tOutlineSdfDesc.tFragmentShader = gptShader->load_glsl("dc_draw_2d_sdf_outline.frag", "main", NULL, NULL);
-    ptEntry->tOutlineSdfPipeline = gptGfx->create_shader(ptDevice, &tOutlineSdfDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-    return ptEntry;
-}
-
-static bool
-pl__stencil_state_valid(dcDrawStencilState tStencil)
-{
-    return tStencil.tMode != DC_DRAW_STENCIL_MODE_NONE &&
-        tStencil.uDepth > 0 &&
-        tStencil.uDepth <= DC_DRAW_STENCIL_MAX_DEPTH;
-}
-
-static plGraphicsState
-pl__stencil_graphics_state(dcDrawStencilState tStencil)
-{
-    const uint32_t uBit = 1u << (tStencil.uDepth - 1u);
-    const uint32_t uActiveMask = (uBit << 1u) - 1u;
-
-    plGraphicsState tState = {
-        .ulDepthWriteEnabled  = 0,
-        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
-        .ulCullMode           = PL_CULL_MODE_NONE,
-        .ulWireframe          = 0,
-        .ulStencilTestEnabled = 1,
-        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
-        .ulStencilRef         = uBit,
-        .ulStencilMask        = uBit,
-        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
-        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_REPLACE
-    };
-
-    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_CLEAR)
-    {
-        tState.ulStencilRef = 0;
-    }
-    else if(tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW)
-    {
-        tState.ulStencilMode   = PL_COMPARE_MODE_EQUAL;
-        tState.ulStencilRef    = uActiveMask;
-        tState.ulStencilMask   = uActiveMask;
-        tState.ulStencilOpPass = PL_STENCIL_OP_KEEP;
-    }
-
-    return tState;
-}
-
-static plGraphicsState
-pl__stencil_graphics_state_3d(dcDrawStencilState tStencil, dcDrawFlags tFlags)
-{
-    plGraphicsState tState = pl__stencil_graphics_state(tStencil);
-
-    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW)
-    {
-        uint64_t ulCullMode = PL_CULL_MODE_NONE;
-        if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
-            ulCullMode |= PL_CULL_MODE_CULL_FRONT;
-        if(tFlags & DC_DRAW_FLAG_CULL_BACK)
-            ulCullMode |= PL_CULL_MODE_CULL_BACK;
-
-        tState.ulDepthWriteEnabled = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0;
-        tState.ulDepthMode = tFlags & DC_DRAW_FLAG_DEPTH_TEST ?
-            (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) :
-            PL_COMPARE_MODE_ALWAYS;
-        tState.ulCullMode = ulCullMode;
-    }
-
-    return tState;
-}
-
-static plBlendState
-pl__stencil_blend_state(dcDrawStencilState tStencil)
-{
-    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_CREATE || tStencil.tMode == DC_DRAW_STENCIL_MODE_CLEAR)
-    {
-        return (plBlendState){
-            .bBlendEnabled   = false,
-            .uColorWriteMask = PL_COLOR_WRITE_MASK_NONE
-        };
-    }
-
-    return (plBlendState){
-        .bBlendEnabled   = true,
-        .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
-        .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-        .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .tColorOp        = PL_BLEND_OP_ADD,
-        .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
-        .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .tAlphaOp        = PL_BLEND_OP_ADD
-    };
-}
-
-static const dcPipelineEntry*
-pl__get_2d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
-{
-    if(!pl__stencil_state_valid(tStencil))
-        return NULL;
-
-    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries); i++)
-    {
-        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[i];
-        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
-            ptEntry->uMSAASampleCount == uMSAASampleCount &&
-            ptEntry->uSubpassIndex == uSubpassIndex &&
-            ptEntry->tFlags == ((uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u)))
-        {
-            return ptEntry;
-        }
-    }
-
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-    pl_sb_add(gptDrawBackendCtx->sbt2dStencilPipelineEntries);
-    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries) - 1];
-    ptEntry->tRenderPass = tRenderPass;
-    ptEntry->uMSAASampleCount = uMSAASampleCount;
-    ptEntry->uSubpassIndex = uSubpassIndex;
-    ptEntry->tFlags = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u);
-
-    const plVertexBufferLayout tVertexLayout = {
-        .uByteStride = sizeof(float) * 5,
-        .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-            {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-            {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
-    const plBindGroupLayoutDesc tSamplerLayout = {
-        .atSamplerBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
-        }
-    };
-    const plBindGroupLayoutDesc tTextureLayout = {
-        .atTextureBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
-        }
-    };
-
-    const bool bDraw = tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW;
-    const plGraphicsState tGraphicsState = pl__stencil_graphics_state(tStencil);
-    const plBlendState tBlendState = pl__stencil_blend_state(tStencil);
-
-    const plShaderDesc tRegularDesc = {
-        .tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d.frag" : "dc_draw_2d_stencil.frag", "main", NULL, NULL),
-        .tVertexShader   = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
-        .tGraphicsState  = tGraphicsState,
-        .atVertexBufferLayouts = {tVertexLayout},
-        .atBlendStates = {tBlendState},
-        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tRegularDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    const plShaderDesc tSdfDesc = {
-        .tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL),
-        .tVertexShader   = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
-        .tGraphicsState  = tGraphicsState,
-        .atVertexBufferLayouts = {tVertexLayout},
-        .atBlendStates = {tBlendState},
-        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tSdfDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    plShaderDesc tBoldSdfDesc = tSdfDesc;
-    tBoldSdfDesc.tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf_bold.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
-    ptEntry->tBoldSdfPipeline = gptGfx->create_shader(ptDevice, &tBoldSdfDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    plShaderDesc tOutlineSdfDesc = tSdfDesc;
-    tOutlineSdfDesc.tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf_outline.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
-    ptEntry->tOutlineSdfPipeline = gptGfx->create_shader(ptDevice, &tOutlineSdfDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-    return ptEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_3d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
-{
-    if(!pl__stencil_state_valid(tStencil))
-        return NULL;
-
-    const uint32_t uKey = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u) | ((uint32_t)tFlags << 16u);
-    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries); i++)
-    {
-        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dStencilPipelineEntries[i];
-        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
-            ptEntry->uMSAASampleCount == uMSAASampleCount &&
-            ptEntry->uSubpassIndex == uSubpassIndex &&
-            ptEntry->tFlags == (dcDrawFlags)uKey)
-        {
-            return ptEntry;
-        }
-    }
-
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-    pl_sb_add(gptDrawBackendCtx->sbt3dStencilPipelineEntries);
-    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries) - 1];
-    ptEntry->tRenderPass = tRenderPass;
-    ptEntry->uMSAASampleCount = uMSAASampleCount;
-    ptEntry->uSubpassIndex = uSubpassIndex;
-    ptEntry->tFlags = (dcDrawFlags)uKey;
-
-    const plVertexBufferLayout tVertexLayout = {
-        .uByteStride = sizeof(float) * 4,
-        .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
-    const plShaderDesc tDesc = {
-        .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
-        .tVertexShader   = gptShader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL),
-        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
-        .atVertexBufferLayouts = {tVertexLayout},
-        .atBlendStates = {pl__stencil_blend_state(tStencil)},
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-
-    const plVertexBufferLayout tLineVertexLayout = {
-        .uByteStride = sizeof(dcDrawVertex3DLine),
-        .atAttributes = {
-            {.uByteOffset = 0,                  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 3,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 6,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 9,  .tFormat = PL_VERTEX_FORMAT_UINT},
-            {.uByteOffset = sizeof(float) * 10, .tFormat = PL_VERTEX_FORMAT_FLOAT},
-            {.uByteOffset = sizeof(float) * 11, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
-    const plShaderDesc tLineDesc = {
-        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_line.frag", "main", NULL, NULL),
-        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
-        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
-        .atVertexBufferLayouts = {tLineVertexLayout},
-        .atBlendStates = {pl__stencil_blend_state(tStencil)},
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tLineDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-    return ptEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_3d_textured_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
-{
-    if(!pl__stencil_state_valid(tStencil))
-        return NULL;
-
-    const uint32_t uKey = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u) | ((uint32_t)tFlags << 16u);
-    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries); i++)
-    {
-        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries[i];
-        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
-            ptEntry->uMSAASampleCount == uMSAASampleCount &&
-            ptEntry->uSubpassIndex == uSubpassIndex &&
-            ptEntry->tFlags == (dcDrawFlags)uKey)
-        {
-            return ptEntry;
-        }
-    }
-
-    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
-    pl_sb_add(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries);
-    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries) - 1];
-    ptEntry->tRenderPass = tRenderPass;
-    ptEntry->uMSAASampleCount = uMSAASampleCount;
-    ptEntry->uSubpassIndex = uSubpassIndex;
-    ptEntry->tFlags = (dcDrawFlags)uKey;
-
-    const plVertexBufferLayout tVertexLayout = {
-        .uByteStride = sizeof(float) * 6,
-        .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
-            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
-            {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
-    const plBindGroupLayoutDesc tSamplerLayout = {
-        .atSamplerBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
-        }
-    };
-    const plBindGroupLayoutDesc tTextureLayout = {
-        .atTextureBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
-        }
-    };
-    const plShaderDesc tDesc = {
-        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL),
-        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL),
-        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
-        .atVertexBufferLayouts = {tVertexLayout},
-        .atBlendStates = {pl__stencil_blend_state(tStencil)},
-        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
-        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
-        .uSubpassIndex = uSubpassIndex,
-        .tMSAASampleCount = uMSAASampleCount
-    };
-    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tDesc);
-    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
-    return ptEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_2d_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
-{
-    if(!pl__stencil_state_valid(tStencil))
-        return ptDefaultEntry;
-
-    const dcPipelineEntry* ptStencilEntry = pl__get_2d_stencil_pipeline(tRenderPass, uMSAASampleCount, uSubpassIndex, tStencil);
-    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_3d_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
-{
-    if(!pl__stencil_state_valid(tStencil))
-        return ptDefaultEntry;
-
-    const dcPipelineEntry* ptStencilEntry = pl__get_3d_stencil_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, tStencil);
-    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
-}
-
-static const dcPipelineEntry*
-pl__get_3d_textured_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
-{
-    if(!pl__stencil_state_valid(tStencil))
-        return ptDefaultEntry;
-
-    const dcPipelineEntry* ptStencilEntry = pl__get_3d_textured_stencil_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, tStencil);
-    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
-}
-
-static plShaderHandle
-pl__select_2d_command_shader(const dcPipelineEntry* ptEntry, uint32_t tFlags, plShaderHandle* pt2dShaderOverride, plShaderHandle* ptSdfShaderOverride)
-{
-    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF_OUTLINE)
-        return ptEntry->tOutlineSdfPipeline;
-    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF_BOLD)
-        return ptEntry->tBoldSdfPipeline;
-    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF)
-        return ptSdfShaderOverride ? *ptSdfShaderOverride : ptEntry->tSecondaryPipeline;
-    return pt2dShaderOverride ? *pt2dShaderOverride : ptEntry->tRegularPipeline;
-}
-
 plBindGroupHandle
 pl_create_bind_group_for_texture(plTextureHandle tTexture)
 {
     const plBindGroupLayoutDesc tDrawingBindGroup = {
-        .atTextureBindings = { 
+        .atTextureBindings = {
             {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
         }
     };
@@ -1191,12 +458,6 @@ pl_create_bind_group_for_texture(plTextureHandle tTexture)
     gptGfx->update_bind_group(gptDrawBackendCtx->ptDevice, tBindGroup, &tBGData);
 
     return tBindGroup;
-}
-
-static void
-pl__use_nearest_sampler(const dcDrawList2D* ptDrawlist, const dcDrawCommand* tCmd)
-{
-    gptDrawBackendCtx->tCurrentSamplerBindGroup = gptDrawBackendCtx->tNearSamplerBindGroup;
 }
 
 void
@@ -2006,9 +1267,753 @@ pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
 {
     if(bReload)
         return;
-        
+
     const dcDrawBackendI* ptApi = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
     ptApiRegistry->remove_api(ptApi);
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] internal api implementation
+//-----------------------------------------------------------------------------
+
+static plBufferHandle
+pl__create_staging_buffer(const plBufferDesc* ptDesc, const char* pcName, uint32_t uIdentifier)
+{
+    // for convience
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+
+    // create buffer
+    plBuffer* ptBuffer = NULL;
+    const plBufferHandle tHandle = gptGfx->create_buffer(ptDevice, ptDesc, &ptBuffer);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    // allocate memory
+    const plDeviceMemoryAllocation tAllocation = gptGfx->allocate_memory(ptDevice,
+        ptBuffer->tMemoryRequirements.ulSize,
+        PL_MEMORY_FLAGS_HOST_VISIBLE | PL_MEMORY_FLAGS_HOST_COHERENT,
+        ptBuffer->tMemoryRequirements.uMemoryTypeBits,
+        pl_temp_allocator_sprintf(&gptDrawBackendCtx->tTempAllocator, "%s: %u", pcName, uIdentifier));
+
+    // bind memory
+    gptGfx->bind_buffer_to_memory(ptDevice, tHandle, &tAllocation);
+    return tHandle;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex)
+{
+    // check if pipeline exists
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->tFlags == tFlags && ptEntry->uSubpassIndex == uSubpassIndex)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+
+    pl_sb_add(gptDrawBackendCtx->sbt3dPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries) - 1];
+    ptEntry->tFlags = tFlags;
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+
+    uint64_t ulCullMode = PL_CULL_MODE_NONE;
+    if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
+        ulCullMode |= PL_CULL_MODE_CULL_FRONT;
+    if(tFlags & DC_DRAW_FLAG_CULL_BACK)
+        ulCullMode |= PL_CULL_MODE_CULL_BACK;
+
+    {
+        const plShaderDesc t3DShaderDesc = {
+            .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
+            .tVertexShader   = gptShader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL),
+            .tGraphicsState = {
+                .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
+                .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
+                .ulCullMode           = ulCullMode,
+                .ulWireframe          = 0,
+                .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+                .ulStencilRef         = 0xff,
+                .ulStencilMask        = 0xff,
+                .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+                .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+                .ulStencilOpPass      = PL_STENCIL_OP_KEEP
+            },
+            .atVertexBufferLayouts = {
+                {
+                    .uByteStride = sizeof(float) * 4,
+                    .atAttributes = {
+                        {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
+                    }
+                }
+            },
+            .atBlendStates = {
+                {
+                    .bBlendEnabled   = true,
+                    .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+                    .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                    .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                    .tColorOp        = PL_BLEND_OP_ADD,
+                    .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                    .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                    .tAlphaOp        = PL_BLEND_OP_ADD
+                }
+            },
+            .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+            .uSubpassIndex = uSubpassIndex,
+            .tMSAASampleCount = uMSAASampleCount
+        };
+        ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &t3DShaderDesc);
+        pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    }
+
+    {
+        const plShaderDesc t3DLineShaderDesc = {
+            .tFragmentShader = gptShader->load_glsl("dc_draw_3d_line.frag", "main", NULL, NULL),
+            .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
+            .tGraphicsState = {
+                .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE,
+                .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
+                .ulCullMode           = ulCullMode,
+                .ulWireframe          = 0,
+                .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+                .ulStencilRef         = 0xff,
+                .ulStencilMask        = 0xff,
+                .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+                .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+                .ulStencilOpPass      = PL_STENCIL_OP_KEEP
+            },
+            .atVertexBufferLayouts = {
+                {
+                    .uByteStride = sizeof(dcDrawVertex3DLine),
+                    .atAttributes = {
+                        {.uByteOffset = 0,                  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 3,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 6,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                        {.uByteOffset = sizeof(float) * 9,  .tFormat = PL_VERTEX_FORMAT_UINT},
+                        {.uByteOffset = sizeof(float) * 10, .tFormat = PL_VERTEX_FORMAT_FLOAT},
+                        {.uByteOffset = sizeof(float) * 11, .tFormat = PL_VERTEX_FORMAT_UINT},
+                    }
+                }
+            },
+            .atBlendStates = {
+                {
+                    .bBlendEnabled   = true,
+                    .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+                    .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                    .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                    .tColorOp        = PL_BLEND_OP_ADD,
+                    .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                    .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                    .tAlphaOp        = PL_BLEND_OP_ADD
+                }
+            },
+            .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+            .uSubpassIndex = uSubpassIndex,
+            .tMSAASampleCount = uMSAASampleCount
+        };
+        ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &t3DLineShaderDesc);
+        pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    }
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_textured_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex)
+{
+    // check if pipeline exists
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->tFlags == tFlags && ptEntry->uSubpassIndex == uSubpassIndex)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+
+    pl_sb_add(gptDrawBackendCtx->sbt3dTexturedPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries) - 1];
+    ptEntry->tFlags = tFlags;
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+
+    uint64_t ulCullMode = PL_CULL_MODE_NONE;
+    if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
+        ulCullMode |= PL_CULL_MODE_CULL_FRONT;
+    if(tFlags & DC_DRAW_FLAG_CULL_BACK)
+        ulCullMode |= PL_CULL_MODE_CULL_BACK;
+
+    const plShaderDesc t3DTexturedShaderDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL),
+        .tGraphicsState = {
+            .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
+            .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
+            .ulCullMode           = ulCullMode,
+            .ulWireframe          = 0,
+            .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+            .ulStencilRef         = 0xff,
+            .ulStencilMask        = 0xff,
+            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
+        },
+        .atVertexBufferLayouts = {
+            {
+                .uByteStride = sizeof(float) * 6,  // pos3 + uv2 + color (padded)
+                .atAttributes = {
+                    {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+                    {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+                    {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
+                }
+            }
+        },
+        .atBlendStates = {
+            {
+                .bBlendEnabled   = true,
+                .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+                .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .tColorOp        = PL_BLEND_OP_ADD,
+                .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .tAlphaOp        = PL_BLEND_OP_ADD
+            }
+        },
+        .atBindGroupLayouts = {
+            {
+                .atSamplerBindings = {
+                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+                }
+            },
+            {
+                .atTextureBindings = {
+                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+                }
+            }
+        },
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &t3DTexturedShaderDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_2d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex)
+{
+    // check if pipeline exists
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->uSubpassIndex == uSubpassIndex)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+
+    pl_sb_add(gptDrawBackendCtx->sbt2dPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries) - 1];
+    ptEntry->tFlags = 0;
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+
+    const plShaderDesc tRegularShaderDesc = {
+        .tFragmentShader  = gptShader->load_glsl("dc_draw_2d.frag", "main", NULL, NULL),
+        .tVertexShader    = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
+        .tGraphicsState = {
+            .ulDepthWriteEnabled  = 0,
+            .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
+            .ulCullMode           = PL_CULL_MODE_NONE,
+            .ulWireframe          = 0,
+            .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+            .ulStencilRef         = 0xff,
+            .ulStencilMask        = 0xff,
+            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
+        },
+        .atVertexBufferLayouts = {
+            {
+                .uByteStride = sizeof(float) * 5,
+                .atAttributes = {
+                    {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+                    {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+                    {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
+                }
+            }
+        },
+        .atBlendStates = {
+            {
+                .bBlendEnabled   = true,
+                .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+                .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .tColorOp        = PL_BLEND_OP_ADD,
+                .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .tAlphaOp        = PL_BLEND_OP_ADD
+            }
+        },
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .atBindGroupLayouts = {
+            {
+                .atSamplerBindings = {
+                    {.uSlot =  0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+                }
+            },
+            {
+                .atTextureBindings = {
+                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+                }
+            }
+        },
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tRegularShaderDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    const plShaderDesc tSecondaryShaderDesc = {
+        .tFragmentShader  = gptShader->load_glsl("dc_draw_2d_sdf.frag", "main", NULL, NULL),
+        .tVertexShader    = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
+        .tGraphicsState = {
+            .ulDepthWriteEnabled  = 0,
+            .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
+            .ulCullMode           = PL_CULL_MODE_NONE,
+            .ulWireframe          = 0,
+            .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+            .ulStencilRef         = 0xff,
+            .ulStencilMask        = 0xff,
+            .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+            .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
+        },
+        .atVertexBufferLayouts = {
+            {
+                .uByteStride = sizeof(float) * 5,
+                .atAttributes = {
+                    {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+                    {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+                    {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
+                }
+            }
+        },
+        .atBlendStates = {
+            {
+                .bBlendEnabled   = true,
+                .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+                .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .tColorOp        = PL_BLEND_OP_ADD,
+                .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+                .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .tAlphaOp        = PL_BLEND_OP_ADD
+            }
+        },
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .atBindGroupLayouts = {
+            {
+                .atSamplerBindings = {
+                    {.uSlot =  0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+                }
+            },
+            {
+                .atTextureBindings = {
+                    {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+                }
+            }
+        },
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tSecondaryShaderDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tBoldSdfDesc = tSecondaryShaderDesc;
+    tBoldSdfDesc.tFragmentShader = gptShader->load_glsl("dc_draw_2d_sdf_bold.frag", "main", NULL, NULL);
+    ptEntry->tBoldSdfPipeline = gptGfx->create_shader(ptDevice, &tBoldSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tOutlineSdfDesc = tSecondaryShaderDesc;
+    tOutlineSdfDesc.tFragmentShader = gptShader->load_glsl("dc_draw_2d_sdf_outline.frag", "main", NULL, NULL);
+    ptEntry->tOutlineSdfPipeline = gptGfx->create_shader(ptDevice, &tOutlineSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static bool
+pl__stencil_state_valid(dcDrawStencilState tStencil)
+{
+    return tStencil.tMode != DC_DRAW_STENCIL_MODE_NONE &&
+        tStencil.uDepth > 0 &&
+        tStencil.uDepth <= DC_DRAW_STENCIL_MAX_DEPTH;
+}
+
+static plGraphicsState
+pl__stencil_graphics_state(dcDrawStencilState tStencil)
+{
+    const uint32_t uBit = 1u << (tStencil.uDepth - 1u);
+    const uint32_t uActiveMask = (uBit << 1u) - 1u;
+
+    plGraphicsState tState = {
+        .ulDepthWriteEnabled  = 0,
+        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
+        .ulCullMode           = PL_CULL_MODE_NONE,
+        .ulWireframe          = 0,
+        .ulStencilTestEnabled = 1,
+        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+        .ulStencilRef         = uBit,
+        .ulStencilMask        = uBit,
+        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+        .ulStencilOpPass      = PL_STENCIL_OP_REPLACE
+    };
+
+    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_CLEAR)
+    {
+        tState.ulStencilRef = 0;
+    }
+    else if(tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW)
+    {
+        tState.ulStencilMode   = PL_COMPARE_MODE_EQUAL;
+        tState.ulStencilRef    = uActiveMask;
+        tState.ulStencilMask   = uActiveMask;
+        tState.ulStencilOpPass = PL_STENCIL_OP_KEEP;
+    }
+
+    return tState;
+}
+
+static plGraphicsState
+pl__stencil_graphics_state_3d(dcDrawStencilState tStencil, dcDrawFlags tFlags)
+{
+    plGraphicsState tState = pl__stencil_graphics_state(tStencil);
+
+    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW)
+    {
+        uint64_t ulCullMode = PL_CULL_MODE_NONE;
+        if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
+            ulCullMode |= PL_CULL_MODE_CULL_FRONT;
+        if(tFlags & DC_DRAW_FLAG_CULL_BACK)
+            ulCullMode |= PL_CULL_MODE_CULL_BACK;
+
+        tState.ulDepthWriteEnabled = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0;
+        tState.ulDepthMode = tFlags & DC_DRAW_FLAG_DEPTH_TEST ?
+            (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) :
+            PL_COMPARE_MODE_ALWAYS;
+        tState.ulCullMode = ulCullMode;
+    }
+
+    return tState;
+}
+
+static plBlendState
+pl__stencil_blend_state(dcDrawStencilState tStencil)
+{
+    if(tStencil.tMode == DC_DRAW_STENCIL_MODE_CREATE || tStencil.tMode == DC_DRAW_STENCIL_MODE_CLEAR)
+    {
+        return (plBlendState){
+            .bBlendEnabled   = false,
+            .uColorWriteMask = PL_COLOR_WRITE_MASK_NONE
+        };
+    }
+
+    return (plBlendState){
+        .bBlendEnabled   = true,
+        .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL,
+        .tSrcColorFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+        .tDstColorFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .tColorOp        = PL_BLEND_OP_ADD,
+        .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
+        .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .tAlphaOp        = PL_BLEND_OP_ADD
+    };
+}
+
+static const dcPipelineEntry*
+pl__get_2d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return NULL;
+
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
+            ptEntry->uMSAASampleCount == uMSAASampleCount &&
+            ptEntry->uSubpassIndex == uSubpassIndex &&
+            ptEntry->tFlags == ((uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u)))
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+    pl_sb_add(gptDrawBackendCtx->sbt2dStencilPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries) - 1];
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+    ptEntry->tFlags = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u);
+
+    const plVertexBufferLayout tVertexLayout = {
+        .uByteStride = sizeof(float) * 5,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plBindGroupLayoutDesc tSamplerLayout = {
+        .atSamplerBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+        }
+    };
+    const plBindGroupLayoutDesc tTextureLayout = {
+        .atTextureBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+        }
+    };
+
+    const bool bDraw = tStencil.tMode == DC_DRAW_STENCIL_MODE_DRAW;
+    const plGraphicsState tGraphicsState = pl__stencil_graphics_state(tStencil);
+    const plBlendState tBlendState = pl__stencil_blend_state(tStencil);
+
+    const plShaderDesc tRegularDesc = {
+        .tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d.frag" : "dc_draw_2d_stencil.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
+        .tGraphicsState  = tGraphicsState,
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {tBlendState},
+        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tRegularDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    const plShaderDesc tSdfDesc = {
+        .tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_2d.vert", "main", NULL, NULL),
+        .tGraphicsState  = tGraphicsState,
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {tBlendState},
+        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tBoldSdfDesc = tSdfDesc;
+    tBoldSdfDesc.tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf_bold.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
+    ptEntry->tBoldSdfPipeline = gptGfx->create_shader(ptDevice, &tBoldSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    plShaderDesc tOutlineSdfDesc = tSdfDesc;
+    tOutlineSdfDesc.tFragmentShader = gptShader->load_glsl(bDraw ? "dc_draw_2d_sdf_outline.frag" : "dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
+    ptEntry->tOutlineSdfPipeline = gptGfx->create_shader(ptDevice, &tOutlineSdfDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return NULL;
+
+    const uint32_t uKey = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u) | ((uint32_t)tFlags << 16u);
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dStencilPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
+            ptEntry->uMSAASampleCount == uMSAASampleCount &&
+            ptEntry->uSubpassIndex == uSubpassIndex &&
+            ptEntry->tFlags == (dcDrawFlags)uKey)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+    pl_sb_add(gptDrawBackendCtx->sbt3dStencilPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dStencilPipelineEntries) - 1];
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+    ptEntry->tFlags = (dcDrawFlags)uKey;
+
+    const plVertexBufferLayout tVertexLayout = {
+        .uByteStride = sizeof(float) * 4,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plShaderDesc tDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL),
+        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {pl__stencil_blend_state(tStencil)},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+
+    const plVertexBufferLayout tLineVertexLayout = {
+        .uByteStride = sizeof(dcDrawVertex3DLine),
+        .atAttributes = {
+            {.uByteOffset = 0,                  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 6,  .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 9,  .tFormat = PL_VERTEX_FORMAT_UINT},
+            {.uByteOffset = sizeof(float) * 10, .tFormat = PL_VERTEX_FORMAT_FLOAT},
+            {.uByteOffset = sizeof(float) * 11, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plShaderDesc tLineDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_line.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
+        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
+        .atVertexBufferLayouts = {tLineVertexLayout},
+        .atBlendStates = {pl__stencil_blend_state(tStencil)},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tSecondaryPipeline = gptGfx->create_shader(ptDevice, &tLineDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_textured_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return NULL;
+
+    const uint32_t uKey = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u) | ((uint32_t)tFlags << 16u);
+    for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries); i++)
+    {
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries[i];
+        if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
+            ptEntry->uMSAASampleCount == uMSAASampleCount &&
+            ptEntry->uSubpassIndex == uSubpassIndex &&
+            ptEntry->tFlags == (dcDrawFlags)uKey)
+        {
+            return ptEntry;
+        }
+    }
+
+    plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
+    pl_sb_add(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries);
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedStencilPipelineEntries) - 1];
+    ptEntry->tRenderPass = tRenderPass;
+    ptEntry->uMSAASampleCount = uMSAASampleCount;
+    ptEntry->uSubpassIndex = uSubpassIndex;
+    ptEntry->tFlags = (dcDrawFlags)uKey;
+
+    const plVertexBufferLayout tVertexLayout = {
+        .uByteStride = sizeof(float) * 6,
+        .atAttributes = {
+            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
+        }
+    };
+    const plBindGroupLayoutDesc tSamplerLayout = {
+        .atSamplerBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
+        }
+    };
+    const plBindGroupLayoutDesc tTextureLayout = {
+        .atTextureBindings = {
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
+        }
+    };
+    const plShaderDesc tDesc = {
+        .tFragmentShader = gptShader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL),
+        .tVertexShader   = gptShader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL),
+        .tGraphicsState  = pl__stencil_graphics_state_3d(tStencil, tFlags),
+        .atVertexBufferLayouts = {tVertexLayout},
+        .atBlendStates = {pl__stencil_blend_state(tStencil)},
+        .atBindGroupLayouts = {tSamplerLayout, tTextureLayout},
+        .tRenderPassLayout = gptGfx->get_render_pass(ptDevice, tRenderPass)->tDesc.tLayout,
+        .uSubpassIndex = uSubpassIndex,
+        .tMSAASampleCount = uMSAASampleCount
+    };
+    ptEntry->tRegularPipeline = gptGfx->create_shader(ptDevice, &tDesc);
+    pl_temp_allocator_reset(&gptDrawBackendCtx->tTempAllocator);
+    return ptEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_2d_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return ptDefaultEntry;
+
+    const dcPipelineEntry* ptStencilEntry = pl__get_2d_stencil_pipeline(tRenderPass, uMSAASampleCount, uSubpassIndex, tStencil);
+    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return ptDefaultEntry;
+
+    const dcPipelineEntry* ptStencilEntry = pl__get_3d_stencil_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, tStencil);
+    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
+}
+
+static const dcPipelineEntry*
+pl__get_3d_textured_command_pipeline(const dcPipelineEntry* ptDefaultEntry, plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex, dcDrawStencilState tStencil)
+{
+    if(!pl__stencil_state_valid(tStencil))
+        return ptDefaultEntry;
+
+    const dcPipelineEntry* ptStencilEntry = pl__get_3d_textured_stencil_pipeline(tRenderPass, uMSAASampleCount, tFlags, uSubpassIndex, tStencil);
+    return ptStencilEntry ? ptStencilEntry : ptDefaultEntry;
+}
+
+static plShaderHandle
+pl__select_2d_command_shader(const dcPipelineEntry* ptEntry, uint32_t tFlags, plShaderHandle* pt2dShaderOverride, plShaderHandle* ptSdfShaderOverride)
+{
+    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF_OUTLINE)
+        return ptEntry->tOutlineSdfPipeline;
+    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF_BOLD)
+        return ptEntry->tBoldSdfPipeline;
+    if(tFlags & DC_DRAW_COMMAND_FLAG_SDF)
+        return ptSdfShaderOverride ? *ptSdfShaderOverride : ptEntry->tSecondaryPipeline;
+    return pt2dShaderOverride ? *pt2dShaderOverride : ptEntry->tRegularPipeline;
+}
+
+static void
+pl__use_nearest_sampler(const dcDrawList2D* ptDrawlist, const dcDrawCommand* tCmd)
+{
+    gptDrawBackendCtx->tCurrentSamplerBindGroup = gptDrawBackendCtx->tNearSamplerBindGroup;
 }
 
 //-----------------------------------------------------------------------------

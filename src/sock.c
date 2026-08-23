@@ -35,40 +35,9 @@ struct DcSock {
     DcSockFlags flags;
 };
 
-// internal helpers
-static void _close_fd(DcSock *sock) {
-    if (_DC_SOCK_FD_IS_INVALID(sock->sock_fd)) return;
-#ifdef _WIN32
-    closesocket(sock->sock_fd);
-#else
-    close(sock->sock_fd);
-#endif
-    sock->sock_fd = _DC_SOCK_FD_ALLOCATED;
-}
-
-static DcSockResult _set_non_nagle(DcSock *sock) {
-    int flag   = 1;
-    int result = setsockopt(sock->sock_fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&flag, (socklen_t)sizeof(flag));
-    if (result < 0) {
-        DC_LOG_ERROR("Sock", "set_non_nagle: %s", strerror(errno));
-        return DC_SOCK_RESULT_FAIL;
-    }
-    return DC_SOCK_RESULT_SUCCESS;
-}
-
-static DcSockResult _set_non_blocking(DcSock *sock) {
-#ifdef _WIN32
-    u_long mode = 1;
-    if (ioctlsocket(sock->sock_fd, FIONBIO, &mode) != 0) {
-#else
-    int flags = fcntl(sock->sock_fd, F_GETFL, 0);
-    if (fcntl(sock->sock_fd, F_SETFL, flags | O_NONBLOCK) != 0) {
-#endif
-        DC_LOG_ERROR("Sock", "set_non_blocking: %s", strerror(errno));
-        return DC_SOCK_RESULT_FAIL;
-    }
-    return DC_SOCK_RESULT_SUCCESS;
-}
+static void         _close_fd(DcSock *sock);
+static DcSockResult _set_non_nagle(DcSock *sock);
+static DcSockResult _set_non_blocking(DcSock *sock);
 
 DcSock *dc_sock_create(DcSockFlags flags) {
 
@@ -387,6 +356,40 @@ DcSockResult dc_sock_shutdown_write(DcSock *sock) {
     if (shutdown(sock->sock_fd, SHUT_WR) != 0) {
 #endif
         DC_LOG_ERROR("Sock", "shutdown_write: %s", strerror(errno));
+        return DC_SOCK_RESULT_FAIL;
+    }
+    return DC_SOCK_RESULT_SUCCESS;
+}
+
+static void _close_fd(DcSock *sock) {
+    if (_DC_SOCK_FD_IS_INVALID(sock->sock_fd)) return;
+#ifdef _WIN32
+    closesocket(sock->sock_fd);
+#else
+    close(sock->sock_fd);
+#endif
+    sock->sock_fd = _DC_SOCK_FD_ALLOCATED;
+}
+
+static DcSockResult _set_non_nagle(DcSock *sock) {
+    int flag   = 1;
+    int result = setsockopt(sock->sock_fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&flag, (socklen_t)sizeof(flag));
+    if (result < 0) {
+        DC_LOG_ERROR("Sock", "set_non_nagle: %s", strerror(errno));
+        return DC_SOCK_RESULT_FAIL;
+    }
+    return DC_SOCK_RESULT_SUCCESS;
+}
+
+static DcSockResult _set_non_blocking(DcSock *sock) {
+#ifdef _WIN32
+    u_long mode = 1;
+    if (ioctlsocket(sock->sock_fd, FIONBIO, &mode) != 0) {
+#else
+    int flags = fcntl(sock->sock_fd, F_GETFL, 0);
+    if (fcntl(sock->sock_fd, F_SETFL, flags | O_NONBLOCK) != 0) {
+#endif
+        DC_LOG_ERROR("Sock", "set_non_blocking: %s", strerror(errno));
         return DC_SOCK_RESULT_FAIL;
     }
     return DC_SOCK_RESULT_SUCCESS;

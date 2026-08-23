@@ -143,19 +143,6 @@ static const DcAppPlanetApi _planet_api = {
     .get_breadcrumbs_points = dc_app_planet_get_breadcrumbs_points,
 };
 
-static void _pre_init_logic(_AppData *app_data) {
-    // exposes only dcapp-owned api tables to logic.
-    const DcAppDisplayLogicInit init = {
-        .app_ctx = (DcAppContext *)app_data,
-        .app = &_app_api,
-        .draw = dc_app_draw_api(),
-        .mouse = dc_app_mouse_api(),
-        .texture = &_texture_api,
-        .planet = &_planet_api,
-    };
-    dc_app_display_logic_pre_init(app_data->logic, &init);
-}
-
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     if (app_data) {
@@ -405,6 +392,19 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     // update node states
     dc_app_draw_context_commit(app_data->draw);
+}
+
+static void _pre_init_logic(_AppData *app_data) {
+    // exposes only dcapp-owned api tables to logic.
+    const DcAppDisplayLogicInit init = {
+        .app_ctx = (DcAppContext *)app_data,
+        .app = &_app_api,
+        .draw = dc_app_draw_api(),
+        .mouse = dc_app_mouse_api(),
+        .texture = &_texture_api,
+        .planet = &_planet_api,
+    };
+    dc_app_display_logic_pre_init(app_data->logic, &init);
 }
 
 static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderContext *xml_ctx, DcAppNode *window_node) {

@@ -28,12 +28,11 @@ Index:
 // [SECTION] forward declarations
 // [SECTION] global data
 // [SECTION] structs
-// [SECTION] internal helpers (preprocessing)
-// [SECTION] internal helpers (rendering)
-// [SECTION] public api
+// [SECTION] function declarations
+// [SECTION] public api implementation
 // [SECTION] planet view api
-// [SECTION] internal api implementation
 // [SECTION] extension loading
+// [SECTION] internal api implementation
 // [SECTION] unity build
 */
 
@@ -93,6 +92,7 @@ _Static_assert(sizeof(plGpuDynPlanetData) <= 256, "planet dynamic data exceeds t
 #define PL_PLANET_TEXTURE_MAX_TILE_BYTES (256ull * 1024ull * 1024ull)
 // Matches PilotLight's default resource-manager downsample limit.
 #define PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION 1024u
+#define gfColorStrength 1.0
 
 //-----------------------------------------------------------------------------
 // [SECTION] forward declarations
@@ -142,6 +142,27 @@ static const plStatsI*            gptStats            = NULL;
 
 // context
 static plPlanetContext* gptCtx = NULL;
+
+static const uint32_t gauColors[16] =
+{
+
+    PL_COLOR_32_RGB(gfColorStrength, 0.0, 0.0),
+    PL_COLOR_32_RGB(0.0, gfColorStrength, 0.0),
+    PL_COLOR_32_RGB(0.0, 0.0, gfColorStrength),
+    PL_COLOR_32_RGB(gfColorStrength, gfColorStrength, 0.0),
+    PL_COLOR_32_RGB(gfColorStrength, 0.0, gfColorStrength),
+    PL_COLOR_32_RGB(0.0, gfColorStrength, gfColorStrength),
+    PL_COLOR_32_RGB(gfColorStrength, gfColorStrength, gfColorStrength),
+    PL_COLOR_32_RGB(gfColorStrength * 4, gfColorStrength, gfColorStrength),
+    PL_COLOR_32_RGB(gfColorStrength * 3, 0.0, 0.0),
+    PL_COLOR_32_RGB(0.0, gfColorStrength * 3, 0.0),
+    PL_COLOR_32_RGB(0.0, 0.0, gfColorStrength * 3),
+    PL_COLOR_32_RGB(gfColorStrength * 3, gfColorStrength * 3, 0.0),
+    PL_COLOR_32_RGB(gfColorStrength * 3, 0.0, gfColorStrength * 3),
+    PL_COLOR_32_RGB(0.0, gfColorStrength, gfColorStrength * 3),
+    PL_COLOR_32_RGB(gfColorStrength, gfColorStrength * 3, gfColorStrength * 3),
+    PL_COLOR_32_RGB(gfColorStrength * 7, gfColorStrength, gfColorStrength)
+};
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs
@@ -268,9 +289,13 @@ typedef struct _plPlanetContext
 } plPlanetContext;
 
 //-----------------------------------------------------------------------------
-// [SECTION] internal helpers (rendering)
+// [SECTION] function declarations
 //-----------------------------------------------------------------------------
 
+// registered public API callbacks
+static void pl_planet_set_shaders(plPlanetView*, const char*, const char*);
+
+// private helpers
 void pl_planet_load_shaders(plPlanetView* ptPlanet);
 
 // rendering
@@ -278,6 +303,11 @@ static void pl__handle_residency (plPlanet*, plCommandBuffer*);
 static void pl__request_residency(plPlanet*, plPlanetChunk*);
 static void pl__touch_chunk(plPlanet*, plPlanetChunk*);
 static void pl__make_unresident  (plPlanet*, plPlanetChunk*);
+static void pl__unload_children  (plPlanet*, plPlanetChunk*);
+bool        pl__all_children_resident(plPlanetChunk*);
+void        pl__remove_from_residency_queue(plPlanet*, plPlanetChunk*);
+static inline void pl__lru_unlink    (plPlanet*, plPlanetChunk*);
+static inline void pl__lru_push_front(plPlanet*, plPlanetChunk*);
 static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFlags tFlags);
 void pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk);
 
@@ -293,126 +323,15 @@ static plTextureHandle pl__planet_create_texture_with_data (const plTextureDesc*
 static uint32_t pl__planet_get_bindless_texture_index(plTextureHandle tTexture);
 static void pl__planet_return_bindless_texture_index(plTextureHandle tTexture);
 
-static inline bool pl__is_leaf_resident(const plPlanetChunk* c)
-{
-    if (!c->aptChildren[0]) return true; // no children in tree
-    return !(c->aptChildren[0]->ptIndexHole ||
-             c->aptChildren[1]->ptIndexHole ||
-             c->aptChildren[2]->ptIndexHole ||
-             c->aptChildren[3]->ptIndexHole);
-}
-
-static inline bool
-pl__is_root_chunk(const plPlanetChunk* c)
-{
-    return c && c->ptParent == NULL;
-}
-
-static void
-pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
-{
-    *ptHighOut = (float)dValue;
-    *ptLowOut = (float)(dValue - *ptHighOut);
-}
-
-// Intersect a terrain tile and image in projected meters, convert that overlap
-// to a half-open source-pixel range, and return the integer extraction that
-// contains it. The extra source texel on each available edge is a filtering
-// gutter, so adjacent tiles sample the same texels at their shared boundary.
-// Very thin crops are widened within the source image so aspect-preserving
-// resource downsampling cannot collapse a dimension.
-static bool
-pl__planet_texture_slice(double dTileMinX, double dTileMinY, double dTileMaxX, double dTileMaxY,
-                         double dImageMinX, double dImageMinY, double dImageMaxX, double dImageMaxY,
-                         double dMetersPerPixel,
-                         uint32_t uSourceWidth, uint32_t uSourceHeight, uint32_t uStride,
-                         plPlanetTextureSlice* ptSliceOut)
-{
-    const double dIntersectionMinX = fmax(dTileMinX, dImageMinX);
-    const double dIntersectionMinY = fmax(dTileMinY, dImageMinY);
-    const double dIntersectionMaxX = fmin(dTileMaxX, dImageMaxX);
-    const double dIntersectionMaxY = fmin(dTileMaxY, dImageMaxY);
-    if (dIntersectionMinX >= dIntersectionMaxX || dIntersectionMinY >= dIntersectionMaxY)
-        return false;
-
-    const double dSourceX0 = (dIntersectionMinX - dImageMinX) / dMetersPerPixel;
-    const double dSourceX1 = (dIntersectionMaxX - dImageMinX) / dMetersPerPixel;
-    const double dSourceY0 = (dImageMaxY - dIntersectionMaxY) / dMetersPerPixel;
-    const double dSourceY1 = (dImageMaxY - dIntersectionMinY) / dMetersPerPixel;
-    const double dX0 = fmax(0.0, dSourceX0);
-    const double dY0 = fmax(0.0, dSourceY0);
-    const double dX1 = fmin((double)uSourceWidth, dSourceX1);
-    const double dY1 = fmin((double)uSourceHeight, dSourceY1);
-    if (!isfinite(dX0) || !isfinite(dY0) || !isfinite(dX1) || !isfinite(dY1) ||
-        dX0 >= dX1 || dY0 >= dY1)
-        return false;
-
-    uint32_t uX0 = (uint32_t)floor(dX0);
-    uint32_t uY0 = (uint32_t)floor(dY0);
-    uint32_t uX1 = (uint32_t)ceil(dX1);
-    uint32_t uY1 = (uint32_t)ceil(dY1);
-
-    // Preserve the neighboring samples needed by linear filtering at a crop
-    // edge. Clamp-to-border supplies the corresponding gutter at image edges.
-    if (uX0 > 0) uX0--;
-    if (uY0 > 0) uY0--;
-    if (uX1 < uSourceWidth) uX1++;
-    if (uY1 < uSourceHeight) uY1++;
-
-    plPlanetTextureSlice tSlice = {
-        .uX = uX0,
-        .uY = uY0,
-        .uWidth = uX1 - uX0,
-        .uHeight = uY1 - uY0,
-    };
-
-    // PilotLight downsamples the longest texture edge to 1024 by default.
-    // Pad very thin intersections just enough to keep the other edge from
-    // truncating to zero during that resize.
-    const uint32_t uMaxDimension = pl_max(tSlice.uWidth, tSlice.uHeight);
-    uint32_t uMinimumOtherDimension = (uint32_t)(((uint64_t)uMaxDimension + PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION - 1u) /
-                                                 PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION);
-    while (uMinimumOtherDimension < uMaxDimension &&
-           ((float)PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION / (float)uMaxDimension) *
-                   (float)uMinimumOtherDimension <
-               1.0f) {
-        uMinimumOtherDimension++;
-    }
-
-    const uint32_t uTargetWidth = pl_min(
-        pl_max(tSlice.uWidth, uMinimumOtherDimension), uSourceWidth);
-    const uint32_t uTargetHeight = pl_min(
-        pl_max(tSlice.uHeight, uMinimumOtherDimension), uSourceHeight);
-    const uint32_t uXPadding = uTargetWidth - tSlice.uWidth;
-    const uint32_t uYPadding = uTargetHeight - tSlice.uHeight;
-    tSlice.uX -= pl_min(uXPadding / 2u, tSlice.uX);
-    tSlice.uY -= pl_min(uYPadding / 2u, tSlice.uY);
-    tSlice.uX = pl_min(tSlice.uX, uSourceWidth - uTargetWidth);
-    tSlice.uY = pl_min(tSlice.uY, uSourceHeight - uTargetHeight);
-    tSlice.uWidth = uTargetWidth;
-    tSlice.uHeight = uTargetHeight;
-    tSlice.uBytes = (uint64_t)uTargetWidth * (uint64_t)uTargetHeight * (uint64_t)uStride;
-
-    *ptSliceOut = tSlice;
-    return true;
-}
-
-static void
-pl__planet_release_texture_slot(plChunkFileData* ptChunkFileData, uint32_t uSlot)
-{
-    if(ptChunkFileData->auTextureIndices[uSlot] != gptCtx->uDummyIndex)
-    {
-        if(gptResource->is_valid(ptChunkFileData->atTextureResources[uSlot]))
-        {
-            plTextureHandle tTexture = gptResource->get_texture(ptChunkFileData->atTextureResources[uSlot]);
-            pl__planet_return_bindless_texture_index(tTexture);
-            gptResource->evict(ptChunkFileData->atTextureResources[uSlot]);
-            gptResource->unload(ptChunkFileData->atTextureResources[uSlot]);
-        }
-        ptChunkFileData->atTextureResources[uSlot] = (plResourceHandle){0};
-        ptChunkFileData->auTextureIndices[uSlot]    = gptCtx->uDummyIndex;
-    }
-}
+static inline bool pl__is_leaf_resident(const plPlanetChunk*);
+static inline bool pl__is_root_chunk(const plPlanetChunk*);
+static void        pl__planet_split_double(double, float*, float*);
+static bool        pl__planet_texture_slice(double, double, double, double,
+                                            double, double, double, double,
+                                            double, uint32_t, uint32_t, uint32_t,
+                                            plPlanetTextureSlice*);
+static void        pl__planet_release_texture_slot(plChunkFileData*, uint32_t);
+static inline int  clampi(int, int, int);
 
 //-----------------------------------------------------------------------------
 // [SECTION] public api implementation
@@ -885,12 +804,6 @@ plTextureHandle
 pl_get_planet_view_output_texture(plPlanetView* ptView)
 {
     return ptView->tOutputTexture;
-}
-
-// Helper: clamp integer to a range
-static inline int clampi(int v, int lo, int hi)
-{
-    return v < lo ? lo : (v > hi ? hi : v);
 }
 
 bool
@@ -1470,8 +1383,214 @@ pl_planet_get_view_runtime_options(plPlanetView* ptPlanet)
 }
 
 //-----------------------------------------------------------------------------
+// [SECTION] extension loading
+//-----------------------------------------------------------------------------
+
+PL_EXPORT void
+pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
+{
+    const plPlanetI tApi = {
+        .initialize               = pl_planet_initialize,
+        .cleanup                  = pl_planet_cleanup,
+        .create_planet            = pl_create_planet,
+        .cleanup_planet           = pl_cleanup_planet,
+        .prepare                  = pl_prepare_planet,
+        .get_stream_stats         = pl_planet_get_stream_stats,
+        .reload_shaders           = pl_planet_load_shaders,
+        .set_runtime_options      = pl_planet_set_runtime_options,
+        .get_runtime_options      = pl_planet_get_runtime_options,
+        .set_view_runtime_options = pl_planet_set_view_runtime_options,
+        .get_view_runtime_options = pl_planet_get_view_runtime_options,
+        .set_shaders              = pl_planet_set_shaders,
+        .draw_sphere              = pl_draw_sphere,
+        .draw_polygon             = pl_draw_polygon,
+        .draw_convex_polygon_filled = pl_draw_convex_polygon_filled,
+        .draw_line                = pl_draw_line,
+        .draw_text                = pl_draw_text,
+        .set_texture              = pl_planet_set_texture,
+        .create_view              = pl_create_planet_view,
+        .cleanup_view             = pl_cleanup_planet_view,
+        .render_view              = pl_render_to_planet_view,
+        .get_view_texture         = pl_get_planet_view_texture,
+        .get_view_output_texture  = pl_get_planet_view_output_texture,
+    };
+    pl_set_api(ptApiRegistry, plPlanetI, &tApi);
+
+    gptMemory           = pl_get_api_latest(ptApiRegistry, plMemoryI);
+    gptImage            = pl_get_api_latest(ptApiRegistry, plImageI);
+    gptFile             = pl_get_api_latest(ptApiRegistry, plFileI);
+    gptProfile          = pl_get_api_latest(ptApiRegistry, plProfileI);
+    gptGfx              = pl_get_api_latest(ptApiRegistry, plGraphicsI);
+    gptFreeList         = pl_get_api_latest(ptApiRegistry, plFreeListI);
+    gptIOI              = pl_get_api_latest(ptApiRegistry, plIOI);
+    gptStarter          = pl_get_api_latest(ptApiRegistry, plStarterI);
+    gptShader           = pl_get_api_latest(ptApiRegistry, plShaderI);
+    gptCollision        = pl_get_api_latest(ptApiRegistry, plCollisionI);
+    gptScreenLog        = pl_get_api_latest(ptApiRegistry, plScreenLogI);
+    gptDraw             = pl_get_api_latest(ptApiRegistry, dcDrawI);
+    gptDrawBackend      = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
+    gptTerrainProcessor = pl_get_api_latest(ptApiRegistry, plPlanetProcessorI);
+    gptGpuAllocators    = pl_get_api_latest(ptApiRegistry, plGPUAllocatorsI);
+    gptImageOps         = pl_get_api_latest(ptApiRegistry, plImageOpsI);
+    gptVfs              = pl_get_api_latest(ptApiRegistry, plVfsI);
+    gptResource         = pl_get_api_latest(ptApiRegistry, plResourceI);
+    gptStats            = pl_get_api_latest(ptApiRegistry, plStatsI);
+
+    const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
+
+    if(bReload)
+    {
+        gptCtx = ptDataRegistry->get_data("plPlanetContext");
+    }
+    else
+    {
+        static plPlanetContext tCtx = {0};
+        gptCtx = &tCtx;
+        ptDataRegistry->set_data("plPlanetContext", gptCtx);
+    }
+}
+
+PL_EXPORT void
+pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
+{
+
+    if(bReload)
+        return;
+
+    const plPlanetI* ptApi = pl_get_api_latest(ptApiRegistry, plPlanetI);
+    ptApiRegistry->remove_api(ptApi);
+}
+
+//-----------------------------------------------------------------------------
 // [SECTION] internal api implementation
 //-----------------------------------------------------------------------------
+
+static inline bool pl__is_leaf_resident(const plPlanetChunk* c)
+{
+    if (!c->aptChildren[0]) return true; // no children in tree
+    return !(c->aptChildren[0]->ptIndexHole ||
+             c->aptChildren[1]->ptIndexHole ||
+             c->aptChildren[2]->ptIndexHole ||
+             c->aptChildren[3]->ptIndexHole);
+}
+
+static inline bool
+pl__is_root_chunk(const plPlanetChunk* c)
+{
+    return c && c->ptParent == NULL;
+}
+
+static void
+pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
+{
+    *ptHighOut = (float)dValue;
+    *ptLowOut = (float)(dValue - *ptHighOut);
+}
+
+// Intersect a terrain tile and image in projected meters, convert that overlap
+// to a half-open source-pixel range, and return the integer extraction that
+// contains it. The extra source texel on each available edge is a filtering
+// gutter, so adjacent tiles sample the same texels at their shared boundary.
+// Very thin crops are widened within the source image so aspect-preserving
+// resource downsampling cannot collapse a dimension.
+static bool
+pl__planet_texture_slice(double dTileMinX, double dTileMinY, double dTileMaxX, double dTileMaxY,
+                         double dImageMinX, double dImageMinY, double dImageMaxX, double dImageMaxY,
+                         double dMetersPerPixel,
+                         uint32_t uSourceWidth, uint32_t uSourceHeight, uint32_t uStride,
+                         plPlanetTextureSlice* ptSliceOut)
+{
+    const double dIntersectionMinX = fmax(dTileMinX, dImageMinX);
+    const double dIntersectionMinY = fmax(dTileMinY, dImageMinY);
+    const double dIntersectionMaxX = fmin(dTileMaxX, dImageMaxX);
+    const double dIntersectionMaxY = fmin(dTileMaxY, dImageMaxY);
+    if (dIntersectionMinX >= dIntersectionMaxX || dIntersectionMinY >= dIntersectionMaxY)
+        return false;
+
+    const double dSourceX0 = (dIntersectionMinX - dImageMinX) / dMetersPerPixel;
+    const double dSourceX1 = (dIntersectionMaxX - dImageMinX) / dMetersPerPixel;
+    const double dSourceY0 = (dImageMaxY - dIntersectionMaxY) / dMetersPerPixel;
+    const double dSourceY1 = (dImageMaxY - dIntersectionMinY) / dMetersPerPixel;
+    const double dX0 = fmax(0.0, dSourceX0);
+    const double dY0 = fmax(0.0, dSourceY0);
+    const double dX1 = fmin((double)uSourceWidth, dSourceX1);
+    const double dY1 = fmin((double)uSourceHeight, dSourceY1);
+    if (!isfinite(dX0) || !isfinite(dY0) || !isfinite(dX1) || !isfinite(dY1) ||
+        dX0 >= dX1 || dY0 >= dY1)
+        return false;
+
+    uint32_t uX0 = (uint32_t)floor(dX0);
+    uint32_t uY0 = (uint32_t)floor(dY0);
+    uint32_t uX1 = (uint32_t)ceil(dX1);
+    uint32_t uY1 = (uint32_t)ceil(dY1);
+
+    // Preserve the neighboring samples needed by linear filtering at a crop
+    // edge. Clamp-to-border supplies the corresponding gutter at image edges.
+    if (uX0 > 0) uX0--;
+    if (uY0 > 0) uY0--;
+    if (uX1 < uSourceWidth) uX1++;
+    if (uY1 < uSourceHeight) uY1++;
+
+    plPlanetTextureSlice tSlice = {
+        .uX = uX0,
+        .uY = uY0,
+        .uWidth = uX1 - uX0,
+        .uHeight = uY1 - uY0,
+    };
+
+    // PilotLight downsamples the longest texture edge to 1024 by default.
+    // Pad very thin intersections just enough to keep the other edge from
+    // truncating to zero during that resize.
+    const uint32_t uMaxDimension = pl_max(tSlice.uWidth, tSlice.uHeight);
+    uint32_t uMinimumOtherDimension = (uint32_t)(((uint64_t)uMaxDimension + PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION - 1u) /
+                                                 PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION);
+    while (uMinimumOtherDimension < uMaxDimension &&
+           ((float)PL_PLANET_TEXTURE_DEFAULT_MAX_RESOLUTION / (float)uMaxDimension) *
+                   (float)uMinimumOtherDimension <
+               1.0f) {
+        uMinimumOtherDimension++;
+    }
+
+    const uint32_t uTargetWidth = pl_min(
+        pl_max(tSlice.uWidth, uMinimumOtherDimension), uSourceWidth);
+    const uint32_t uTargetHeight = pl_min(
+        pl_max(tSlice.uHeight, uMinimumOtherDimension), uSourceHeight);
+    const uint32_t uXPadding = uTargetWidth - tSlice.uWidth;
+    const uint32_t uYPadding = uTargetHeight - tSlice.uHeight;
+    tSlice.uX -= pl_min(uXPadding / 2u, tSlice.uX);
+    tSlice.uY -= pl_min(uYPadding / 2u, tSlice.uY);
+    tSlice.uX = pl_min(tSlice.uX, uSourceWidth - uTargetWidth);
+    tSlice.uY = pl_min(tSlice.uY, uSourceHeight - uTargetHeight);
+    tSlice.uWidth = uTargetWidth;
+    tSlice.uHeight = uTargetHeight;
+    tSlice.uBytes = (uint64_t)uTargetWidth * (uint64_t)uTargetHeight * (uint64_t)uStride;
+
+    *ptSliceOut = tSlice;
+    return true;
+}
+
+static void
+pl__planet_release_texture_slot(plChunkFileData* ptChunkFileData, uint32_t uSlot)
+{
+    if(ptChunkFileData->auTextureIndices[uSlot] != gptCtx->uDummyIndex)
+    {
+        if(gptResource->is_valid(ptChunkFileData->atTextureResources[uSlot]))
+        {
+            plTextureHandle tTexture = gptResource->get_texture(ptChunkFileData->atTextureResources[uSlot]);
+            pl__planet_return_bindless_texture_index(tTexture);
+            gptResource->evict(ptChunkFileData->atTextureResources[uSlot]);
+            gptResource->unload(ptChunkFileData->atTextureResources[uSlot]);
+        }
+        ptChunkFileData->atTextureResources[uSlot] = (plResourceHandle){0};
+        ptChunkFileData->auTextureIndices[uSlot]    = gptCtx->uDummyIndex;
+    }
+}
+
+// Helper: clamp integer to a range
+static inline int clampi(int v, int lo, int hi)
+{
+    return v < lo ? lo : (v > hi ? hi : v);
+}
 
 static void
 pl__unload_children(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
@@ -1949,28 +2068,6 @@ pl__request_residency(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
         ptExistingRequest->ptChunk = ptChunk;
     }
 }
-
-#define gfColorStrength 1.0
-static const uint32_t gauColors[16] =
-{
-
-    PL_COLOR_32_RGB(gfColorStrength, 0.0, 0.0),
-    PL_COLOR_32_RGB(0.0, gfColorStrength, 0.0),
-    PL_COLOR_32_RGB(0.0, 0.0, gfColorStrength),
-    PL_COLOR_32_RGB(gfColorStrength, gfColorStrength, 0.0),
-    PL_COLOR_32_RGB(gfColorStrength, 0.0, gfColorStrength),
-    PL_COLOR_32_RGB(0.0, gfColorStrength, gfColorStrength),
-    PL_COLOR_32_RGB(gfColorStrength, gfColorStrength, gfColorStrength),
-    PL_COLOR_32_RGB(gfColorStrength * 4, gfColorStrength, gfColorStrength),
-    PL_COLOR_32_RGB(gfColorStrength * 3, 0.0, 0.0),
-    PL_COLOR_32_RGB(0.0, gfColorStrength * 3, 0.0),
-    PL_COLOR_32_RGB(0.0, 0.0, gfColorStrength * 3),
-    PL_COLOR_32_RGB(gfColorStrength * 3, gfColorStrength * 3, 0.0),
-    PL_COLOR_32_RGB(gfColorStrength * 3, 0.0, gfColorStrength * 3),
-    PL_COLOR_32_RGB(0.0, gfColorStrength, gfColorStrength * 3),
-    PL_COLOR_32_RGB(gfColorStrength, gfColorStrength * 3, gfColorStrength * 3),
-    PL_COLOR_32_RGB(gfColorStrength * 7, gfColorStrength, gfColorStrength)
-};
 
 static void
 pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncoder* ptEncoder, plPlanetChunk* ptChunk, plPlanetChunkFile* ptFile, const plMat4* ptMVP)
@@ -2557,85 +2654,6 @@ pl__planet_get_bindless_texture_index(plTextureHandle tTexture)
         gptGfx->update_bind_group(gptCtx->ptDevice, gptCtx->atBindGroups[i], &tGlobalBindGroupData);
 
     return (uint32_t)ulValue;
-}
-
-//-----------------------------------------------------------------------------
-// [SECTION] extension loading
-//-----------------------------------------------------------------------------
-
-PL_EXPORT void
-pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
-{
-    const plPlanetI tApi = {
-        .initialize               = pl_planet_initialize,
-        .cleanup                  = pl_planet_cleanup,
-        .create_planet            = pl_create_planet,
-        .cleanup_planet           = pl_cleanup_planet,
-        .prepare                  = pl_prepare_planet,
-        .get_stream_stats         = pl_planet_get_stream_stats,
-        .reload_shaders           = pl_planet_load_shaders,
-        .set_runtime_options      = pl_planet_set_runtime_options,
-        .get_runtime_options      = pl_planet_get_runtime_options,
-        .set_view_runtime_options = pl_planet_set_view_runtime_options,
-        .get_view_runtime_options = pl_planet_get_view_runtime_options,
-        .set_shaders              = pl_planet_set_shaders,
-        .draw_sphere              = pl_draw_sphere,
-        .draw_polygon             = pl_draw_polygon,
-        .draw_convex_polygon_filled = pl_draw_convex_polygon_filled,
-        .draw_line                = pl_draw_line,
-        .draw_text                = pl_draw_text,
-        .set_texture              = pl_planet_set_texture,
-        .create_view              = pl_create_planet_view,
-        .cleanup_view             = pl_cleanup_planet_view,
-        .render_view              = pl_render_to_planet_view,
-        .get_view_texture         = pl_get_planet_view_texture,
-        .get_view_output_texture  = pl_get_planet_view_output_texture,
-    };
-    pl_set_api(ptApiRegistry, plPlanetI, &tApi);
-
-    gptMemory           = pl_get_api_latest(ptApiRegistry, plMemoryI);
-    gptImage            = pl_get_api_latest(ptApiRegistry, plImageI);
-    gptFile             = pl_get_api_latest(ptApiRegistry, plFileI);
-    gptProfile          = pl_get_api_latest(ptApiRegistry, plProfileI);
-    gptGfx              = pl_get_api_latest(ptApiRegistry, plGraphicsI);
-    gptFreeList         = pl_get_api_latest(ptApiRegistry, plFreeListI);
-    gptIOI              = pl_get_api_latest(ptApiRegistry, plIOI);
-    gptStarter          = pl_get_api_latest(ptApiRegistry, plStarterI);
-    gptShader           = pl_get_api_latest(ptApiRegistry, plShaderI);
-    gptCollision        = pl_get_api_latest(ptApiRegistry, plCollisionI);
-    gptScreenLog        = pl_get_api_latest(ptApiRegistry, plScreenLogI);
-    gptDraw             = pl_get_api_latest(ptApiRegistry, dcDrawI);
-    gptDrawBackend      = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
-    gptTerrainProcessor = pl_get_api_latest(ptApiRegistry, plPlanetProcessorI);
-    gptGpuAllocators    = pl_get_api_latest(ptApiRegistry, plGPUAllocatorsI);
-    gptImageOps         = pl_get_api_latest(ptApiRegistry, plImageOpsI);
-    gptVfs              = pl_get_api_latest(ptApiRegistry, plVfsI);
-    gptResource         = pl_get_api_latest(ptApiRegistry, plResourceI);
-    gptStats            = pl_get_api_latest(ptApiRegistry, plStatsI);
-
-    const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
-
-    if(bReload)
-    {
-        gptCtx = ptDataRegistry->get_data("plPlanetContext");
-    }
-    else
-    {
-        static plPlanetContext tCtx = {0};
-        gptCtx = &tCtx;
-        ptDataRegistry->set_data("plPlanetContext", gptCtx);
-    }
-}
-
-PL_EXPORT void
-pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
-{
-
-    if(bReload)
-        return;
-
-    const plPlanetI* ptApi = pl_get_api_latest(ptApiRegistry, plPlanetI);
-    ptApiRegistry->remove_api(ptApi);
 }
 
 //-----------------------------------------------------------------------------

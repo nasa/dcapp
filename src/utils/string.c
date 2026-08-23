@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <stdio.h>
 
+static bool _is_format_specifier(const char *value, const char *valid_specifiers);
+
 int dc_utils_str_find(const char *s, const char *pattern) {
     if (!s || !pattern)
         return -1;
@@ -437,28 +439,6 @@ void dc_utils_split_string_copy(const char *text, const char *delimiters, char *
     *out_indices_count = count;
 }
 
-static bool _is_format_specifier(const char *value, const char *valid_specifiers) {
-    if (!value || value[0] != '%')
-        return false;
-    size_t ii = 1;
-    while (value[ii] && strchr("-+0 #", value[ii])) {
-        ii++;
-    }
-    while (value[ii] && isdigit((unsigned char)value[ii])) {
-        ii++;
-    }
-    if (value[ii] == '.') {
-        ii++;
-        while (value[ii] && isdigit((unsigned char)value[ii])) {
-            ii++;
-        }
-    }
-    if (value[ii] && strchr(valid_specifiers, value[ii])) {
-        return true;
-    }
-    return false;
-}
-
 bool dc_utils_is_format_specifier_bool(const char *value) {
     static const char *chars = "dis";
     return _is_format_specifier(value, chars);
@@ -490,3 +470,25 @@ char *strndup(const char *s, size_t n) {
     return new;
 }
 #endif
+
+static bool _is_format_specifier(const char *value, const char *valid_specifiers) {
+    if (!value || value[0] != '%')
+        return false;
+    size_t ii = 1;
+    while (value[ii] && strchr("-+0 #", value[ii])) {
+        ii++;
+    }
+    while (value[ii] && isdigit((unsigned char)value[ii])) {
+        ii++;
+    }
+    if (value[ii] == '.') {
+        ii++;
+        while (value[ii] && isdigit((unsigned char)value[ii])) {
+            ii++;
+        }
+    }
+    if (value[ii] && strchr(valid_specifiers, value[ii])) {
+        return true;
+    }
+    return false;
+}

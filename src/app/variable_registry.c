@@ -29,13 +29,7 @@ struct DcAppVariableRegistryContext {
     DcAppValue *sb_vals;
 };
 
-static _DcAppVariableRegistryVariable *_get_var(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryVariableIndex index) {
-    if (index == DC_APP_VARIABLE_REGISTRY_INDEX_UNDEFINED) {
-        DC_LOG_ERROR("Lookup", "dc_app_variable_registry_get_variable_value_index(): attempting to fetch invalid index %d", index);
-        return NULL;
-    }
-    return &lookup->sb_vars[index];
-}
+static _DcAppVariableRegistryVariable *_get_var(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryVariableIndex index);
 
 // create an app lookup
 DcAppVariableRegistryContext *dc_app_variable_registry_context_create(void) {
@@ -214,4 +208,12 @@ void dc_app_variable_registry_set_suppress_missing_variable(DcAppVariableRegistr
 
 void dc_app_variable_registry_seal(DcAppVariableRegistryContext *lookup) {
     if (lookup) lookup->sealed = true;
+}
+
+static _DcAppVariableRegistryVariable *_get_var(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryVariableIndex index) {
+    if (index == DC_APP_VARIABLE_REGISTRY_INDEX_UNDEFINED) {
+        DC_LOG_ERROR("Lookup", "dc_app_variable_registry_get_variable_value_index(): attempting to fetch invalid index %d", index);
+        return NULL;
+    }
+    return &lookup->sb_vars[index];
 }

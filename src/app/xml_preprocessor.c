@@ -99,6 +99,8 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
 static void _dereference_node_attrs_and_content(_XmlPreprocessorPassContext *context, xmlNodePtr node);
 static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
 static void _save_to_file(DcAppXmlPreprocessorContext *config, const char *filepath);
+static void _write_indent(FILE *f, int depth);
+static void _write_xml_node(FILE *f, xmlNodePtr node, int depth);
 
 // arg utils
 static char *_unquote(const char *str);
@@ -484,6 +486,27 @@ void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
     // clean XML file
     _preprocess_xml_node(context, node, config->config_dir_path);
     config->xml_doc_is_cleaned = true;
+}
+
+void dc_app_xml_preprocessor_save_preprocessed(DcAppXmlPreprocessorContext *config, const char *output_name) {
+    char preprocessed_name[256];
+    if (output_name) {
+        const char *base = strrchr(output_name, '/');
+        base = base ? base + 1 : output_name;
+        snprintf(preprocessed_name, sizeof(preprocessed_name), "%s", base);
+    } else {
+        const char *name = strrchr(config->config_file_path, '/');
+        name = name ? name + 1 : config->config_file_path;
+        const char *dot = strrchr(name, '.');
+        if (dot) {
+            snprintf(preprocessed_name, sizeof(preprocessed_name), "%.*s.preprocessed.xml", (int)(dot - name), name);
+        } else {
+            snprintf(preprocessed_name, sizeof(preprocessed_name), "%s.preprocessed.xml", name);
+        }
+    }
+    char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+    dc_utils_join_paths(config->cache_dir_path, preprocessed_name, filepath, sizeof(filepath));
+    _save_to_file(config, filepath);
 }
 
 void dc_app_xml_preprocessor_export_environment(const DcAppXmlPreprocessorContext *config) {
@@ -1232,27 +1255,6 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
         default:
             break;
     }
-}
-
-void dc_app_xml_preprocessor_save_preprocessed(DcAppXmlPreprocessorContext *config, const char *output_name) {
-    char preprocessed_name[256];
-    if (output_name) {
-        const char *base = strrchr(output_name, '/');
-        base = base ? base + 1 : output_name;
-        snprintf(preprocessed_name, sizeof(preprocessed_name), "%s", base);
-    } else {
-        const char *name = strrchr(config->config_file_path, '/');
-        name = name ? name + 1 : config->config_file_path;
-        const char *dot = strrchr(name, '.');
-        if (dot) {
-            snprintf(preprocessed_name, sizeof(preprocessed_name), "%.*s.preprocessed.xml", (int)(dot - name), name);
-        } else {
-            snprintf(preprocessed_name, sizeof(preprocessed_name), "%s.preprocessed.xml", name);
-        }
-    }
-    char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-    dc_utils_join_paths(config->cache_dir_path, preprocessed_name, filepath, sizeof(filepath));
-    _save_to_file(config, filepath);
 }
 
 static void _save_to_file(DcAppXmlPreprocessorContext *config, const char *filepath) {

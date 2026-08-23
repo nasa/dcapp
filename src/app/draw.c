@@ -127,16 +127,73 @@ static const plStarterI *_ext_starter = NULL;
 #define PL_REALLOC(x, y) _ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-void dc_app_draw_init(plApiRegistryI *api_registry) {
-    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_camera = pl_get_api_latest(api_registry, plCameraI);
-    _ext_dc_draw = pl_get_api_latest(api_registry, dcDrawI);
-    _ext_dc_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
-    _ext_gfx = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_ioi = pl_get_api_latest(api_registry, plIOI);
-    _ext_planet = pl_get_api_latest(api_registry, plPlanetI);
-    _ext_starter = pl_get_api_latest(api_registry, plStarterI);
-}
+struct DcAppDrawPlanetView {
+    DcAppPlanetViewHandle view;
+    plCamera camera;
+    DcAppPlanetViewOptions options;
+    DcAppDrawArea area;
+    plVec2 logical_dimensions;
+};
+
+typedef struct _DcAppResolvedGeojsonStyle {
+    double height_above_terrain;
+    float line_width;
+    DcAppVec4 line_color;
+    DcAppVec4 fill_color;
+    bool line_enabled;
+    bool fill_enabled;
+} _DcAppResolvedGeojsonStyle;
+
+static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx);
+static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx);
+static void _set_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase);
+static void _restore_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase);
+static dcDrawStencilState _stencil_state(_DcAppStencilPhase phase, int depth);
+static dcDrawCommandState _command_state(DcAppDrawContext *ctx);
+static bool _placement_is_default(DcAppPlacement placement);
+static DcAppDrawArea *_draw_result_area(DcAppDrawResult *result);
+static void _draw_context_update_mouse(DcAppDrawContext *ctx);
+static void _draw_area_from_rect_points(float width, float height, plVec2 p0, plVec2 p1, plVec2 p3, DcAppDrawArea *out_area);
+static void _resolve_rect_points(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 out[4], DcAppDrawArea *out_area);
+static plVec2 *_alloc_resolved_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area);
+static uint64_t _mouse_id(const char *id);
+static _DcAppDrawMouseTarget _draw_mouse_target_internal(DcAppDrawTargetId target_id);
+static _DcAppDrawMouseTarget _draw_mouse_target_id(uint64_t id);
+static bool _draw_mouse_target_is_internal(_DcAppDrawMouseTarget target, DcAppDrawTargetId target_id);
+static bool _draw_mouse_target_is_id(_DcAppDrawMouseTarget target, uint64_t id);
+static bool _mouse_rect_local(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 *out);
+static bool _mouse_point_in_polygon(plVec2 mouse, const plVec2 *points, uint32_t point_count);
+static void _mouse_register(DcAppDrawContext *ctx, uint64_t id);
+static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id, uint32_t *out);
+static void _draw_image_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 dimensions, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area);
+static dcDrawTextOptions _text_options(DcAppDrawContext *ctx, DcAppTextStyle style);
+static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement);
+static void _clear_stencil_bit(DcAppDrawContext *ctx);
+static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view);
+static void _flush_planet_views(DcAppDrawContext *ctx, int first_view);
+static _DcAppPlanetContainerFrame *_planet_container_frame(DcAppDrawContext *ctx);
+static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count);
+static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
+static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
+static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
+static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
+static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size);
+static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
+static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
+static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
+static void _draw_planet_polygon_geodetic_enabled(
+    DcAppDrawPlanetViewHandle draw_view,
+    const DcAppVec3d *points,
+    uint32_t point_count,
+    float line_width,
+    uint32_t line_color,
+    uint8_t line_pattern,
+    bool line_enabled,
+    uint32_t fill_color,
+    bool fill_enabled);
+static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback);
+static plVec3 *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain);
+static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style);
 
 static const DcAppDrawApi dc_app_draw_interface = {
     .get_area = dc_app_draw_get_area,
@@ -234,6 +291,17 @@ static const DcAppMouseApi dc_app_mouse_interface = {
     .get_state = dc_app_mouse_get_state,
 };
 
+void dc_app_draw_init(plApiRegistryI *api_registry) {
+    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_camera = pl_get_api_latest(api_registry, plCameraI);
+    _ext_dc_draw = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_dc_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_gfx = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_ioi = pl_get_api_latest(api_registry, plIOI);
+    _ext_planet = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_starter = pl_get_api_latest(api_registry, plStarterI);
+}
+
 const DcAppDrawApi *dc_app_draw_api(void) {
     return &dc_app_draw_interface;
 }
@@ -241,60 +309,6 @@ const DcAppDrawApi *dc_app_draw_api(void) {
 const DcAppMouseApi *dc_app_mouse_api(void) {
     return &dc_app_mouse_interface;
 }
-
-struct DcAppDrawPlanetView {
-    DcAppPlanetViewHandle view;
-    plCamera camera;
-    DcAppPlanetViewOptions options;
-    DcAppDrawArea area;
-    plVec2 logical_dimensions;
-};
-
-typedef struct _DcAppResolvedGeojsonStyle {
-    double height_above_terrain;
-    float line_width;
-    DcAppVec4 line_color;
-    DcAppVec4 fill_color;
-    bool line_enabled;
-    bool fill_enabled;
-} _DcAppResolvedGeojsonStyle;
-
-static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx);
-static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx);
-static void _set_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase);
-static void _restore_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase);
-static dcDrawStencilState _stencil_state(_DcAppStencilPhase phase, int depth);
-static dcDrawCommandState _command_state(DcAppDrawContext *ctx);
-static bool _placement_is_default(DcAppPlacement placement);
-static DcAppDrawArea *_draw_result_area(DcAppDrawResult *result);
-static void _draw_context_update_mouse(DcAppDrawContext *ctx);
-static void _draw_area_from_rect_points(float width, float height, plVec2 p0, plVec2 p1, plVec2 p3, DcAppDrawArea *out_area);
-static void _resolve_rect_points(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 out[4], DcAppDrawArea *out_area);
-static plVec2 *_alloc_resolved_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area);
-static uint64_t _mouse_id(const char *id);
-static bool _mouse_rect_local(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 *out);
-static bool _mouse_point_in_polygon(plVec2 mouse, const plVec2 *points, uint32_t point_count);
-static void _mouse_register(DcAppDrawContext *ctx, uint64_t id);
-static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id, uint32_t *out);
-static void _draw_image_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 dimensions, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area);
-static dcDrawTextOptions _text_options(DcAppDrawContext *ctx, DcAppTextStyle style);
-static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement);
-static void _clear_stencil_bit(DcAppDrawContext *ctx);
-static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view);
-static void _flush_planet_views(DcAppDrawContext *ctx, int first_view);
-static _DcAppPlanetContainerFrame *_planet_container_frame(DcAppDrawContext *ctx);
-static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count);
-static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
-static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
-static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
-static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
-static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size);
-static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
-static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
-static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
-static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback);
-static plVec3 *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain);
-static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style);
 
 //-----------------------------------------------------------------------------
 // [SECTION] DrawFunction context helpers
@@ -681,310 +695,6 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
         dc_app_draw_resolve_points(ctx, area_points, 3, position, placement, resolved_area, NULL);
         _draw_area_from_rect_points(width, height, resolved_area[0], resolved_area[1], resolved_area[2], out_area);
     }
-}
-
-static plVec2 *_alloc_resolved_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area) {
-    if (!ctx || !points || point_count == 0 || point_count > DCAPP_DRAW_POINT_COUNT_MAX) return NULL;
-    if ((size_t)point_count > ((size_t)-1) / sizeof(plVec2)) return NULL;
-
-    plVec2 *draw_points = PL_ALLOC(sizeof(plVec2) * point_count);
-    if (!draw_points) return NULL;
-
-    dc_app_draw_resolve_points(ctx, points, point_count, position, placement, draw_points, out_area);
-    return draw_points;
-}
-
-static void _resolve_rect_points(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 out[4], DcAppDrawArea *out_area) {
-    if (!ctx || !out) return;
-    DcAppVec2 points[4] = {
-        {0.0f, 0.0f},
-        {dimensions.x, 0.0f},
-        {dimensions.x, dimensions.y},
-        {0.0f, dimensions.y},
-    };
-    dc_app_draw_resolve_points(ctx, points, 4, position, placement, out, NULL);
-    _draw_area_from_rect_points(dimensions.x, dimensions.y, out[0], out[1], out[3], out_area);
-}
-
-static bool _placement_is_default(DcAppPlacement placement) {
-    return placement.rotation == 0.0f &&
-           placement.parent_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
-           placement.parent_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
-           placement.local_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
-           placement.local_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
-           placement.pivot_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
-           placement.pivot_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
-           placement.pivot_x == 0.0f &&
-           placement.pivot_y == 0.0f;
-}
-
-static DcAppDrawArea *_draw_result_area(DcAppDrawResult *result) {
-    return result ? &result->area : NULL;
-}
-
-static void _draw_context_update_mouse(DcAppDrawContext *ctx) {
-    if (!ctx) return;
-
-    ctx->mouse = ctx->screen_mouse;
-
-    plMat4 transform = pl_identity_mat4();
-    memcpy(transform.d, ctx->area.transform, sizeof(transform.d));
-
-    plMat4 inv_transform = pl_mat4t_invert(&transform);
-    plVec4 mouse_screen = {
-        ctx->screen_mouse.x,
-        ctx->screen_mouse.y,
-        0.0f,
-        1.0f,
-    };
-    plVec4 mouse_local = pl_mul_mat4_vec4(&inv_transform, mouse_screen);
-
-    ctx->mouse.x = mouse_local.x;
-    ctx->mouse.y = mouse_local.y;
-}
-
-static void _draw_area_from_rect_points(float width, float height, plVec2 p0, plVec2 p1, plVec2 p3, DcAppDrawArea *out_area) {
-    if (!out_area) return;
-
-    *out_area = (DcAppDrawArea){0};
-    out_area->position[0] = p0.x;
-    out_area->position[1] = p0.y;
-    out_area->dimensions[0] = width;
-    out_area->dimensions[1] = height;
-
-    plMat4 transform = pl_identity_mat4();
-    if (width != 0.0f) {
-        transform.x11 = (p1.x - p0.x) / width;
-        transform.x21 = (p1.y - p0.y) / width;
-    }
-    if (height != 0.0f) {
-        transform.x12 = (p3.x - p0.x) / height;
-        transform.x22 = (p3.y - p0.y) / height;
-    }
-    transform.x14 = p0.x;
-    transform.x24 = p0.y;
-
-    memcpy(out_area->transform, transform.d, sizeof(out_area->transform));
-}
-
-static uint64_t _mouse_id(const char *id) {
-    if (!id || id[0] == '\0') return 0;
-
-    uint64_t hash = 0;
-    for (const unsigned char *c = (const unsigned char *)id; *c; c++) {
-        hash = *c + (hash << 6) + (hash << 16) - hash;
-    }
-    return hash ? hash : 1;
-}
-
-static _DcAppDrawMouseTarget _draw_mouse_target_internal(DcAppDrawTargetId target_id) {
-    return (_DcAppDrawMouseTarget){
-        .type = _DC_APP_DRAW_MOUSE_TARGET_INTERNAL,
-        .target = target_id,
-    };
-}
-
-static _DcAppDrawMouseTarget _draw_mouse_target_id(uint64_t id) {
-    return (_DcAppDrawMouseTarget){
-        .type = _DC_APP_DRAW_MOUSE_TARGET_ID,
-        .id = id,
-    };
-}
-
-static bool _draw_mouse_target_is_internal(_DcAppDrawMouseTarget target, DcAppDrawTargetId target_id) {
-    return target.type == _DC_APP_DRAW_MOUSE_TARGET_INTERNAL && target.target == target_id;
-}
-
-static bool _draw_mouse_target_is_id(_DcAppDrawMouseTarget target, uint64_t id) {
-    return target.type == _DC_APP_DRAW_MOUSE_TARGET_ID && target.id == id;
-}
-
-static bool _mouse_rect_local(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 *out) {
-    if (!ctx || !out || dimensions.x == 0.0f || dimensions.y == 0.0f) return false;
-    if (!ctx->screen_mouse.position_valid) return false;
-
-    plVec2 points[4];
-    _resolve_rect_points(ctx, dimensions, position, placement, points, NULL);
-
-    plVec2 p0 = points[0];
-    plVec2 p1 = points[1];
-    plVec2 p3 = points[3];
-    plVec2 vx = {p1.x - p0.x, p1.y - p0.y};
-    plVec2 vy = {p3.x - p0.x, p3.y - p0.y};
-    plVec2 pm = {ctx->screen_mouse.x - p0.x, ctx->screen_mouse.y - p0.y};
-
-    float det = vx.x * vy.y - vx.y * vy.x;
-    if (fabsf(det) <= 1e-8f) return false;
-
-    float u = (pm.x * vy.y - pm.y * vy.x) / det;
-    float v = (vx.x * pm.y - vx.y * pm.x) / det;
-    out->x = u * dimensions.x;
-    out->y = v * dimensions.y;
-    return true;
-}
-
-static bool _mouse_point_in_polygon(plVec2 mouse, const plVec2 *points, uint32_t point_count) {
-    bool inside = false;
-    for (uint32_t ii = 0, jj = point_count - 1; ii < point_count; jj = ii++) {
-        float xi = points[ii].x;
-        float yi = points[ii].y;
-        float xj = points[jj].x;
-        float yj = points[jj].y;
-        bool intersect = ((yi > mouse.y) != (yj > mouse.y)) && (mouse.x < (xj - xi) * (mouse.y - yi) / (yj - yi + 1e-12f) + xi);
-        if (intersect) {
-            inside = !inside;
-        }
-    }
-    return inside;
-}
-
-static void _mouse_register(DcAppDrawContext *ctx, uint64_t id) {
-    if (!ctx || id == 0) return;
-
-    ctx->next_hovered_target = _draw_mouse_target_id(id);
-    if (ctx->screen_mouse.pressed) {
-        ctx->next_pressed_target = _draw_mouse_target_id(id);
-    }
-}
-
-static dcDrawTextOptions _text_options(DcAppDrawContext *ctx, DcAppTextStyle style) {
-    dcDrawTextOptions options = {0};
-
-    options.ptFont = ctx ? ctx->default_font : NULL;
-    options.fSize = style.size;
-    options.fWrap = style.wrap;
-
-    options.uColor = PL_COLOR_32_RGBA(style.color.r, style.color.g, style.color.b, style.color.a);
-
-    return options;
-}
-
-static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement) {
-    const DcAppDrawArea *base_area = ctx ? &ctx->area : NULL;
-
-    plMat4 transform = pl_identity_mat4();
-
-    float align_x = 0.0f;
-    switch (placement.local_align_x) {
-        case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
-            align_x = -dimensions.x * 0.5f;
-            break;
-        case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
-            align_x = -dimensions.x;
-            break;
-        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
-        case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
-        default:
-            break;
-    }
-    float align_y = 0.0f;
-    switch (placement.local_align_y) {
-        case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
-            align_y = -dimensions.y * 0.5f;
-            break;
-        case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
-            align_y = -dimensions.y;
-            break;
-        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
-        case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
-        default:
-            break;
-    }
-    plMat4 trans_local_align_xform = pl_mat4_translate_xyz(align_x, align_y, 0.0f);
-    transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
-
-    float anchor_x = 0.0f;
-    float anchor_y = 0.0f;
-    if (base_area) {
-        switch (placement.parent_align_x) {
-            case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
-                anchor_x = base_area->dimensions[0] * 0.5f;
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
-                anchor_x = base_area->dimensions[0];
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
-            case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
-            default:
-                break;
-        }
-        switch (placement.parent_align_y) {
-            case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
-                anchor_y = base_area->dimensions[1] * 0.5f;
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
-                anchor_y = base_area->dimensions[1];
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
-            case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
-            default:
-                break;
-        }
-    }
-    plMat4 trans_position_xform = pl_mat4_translate_xyz(anchor_x + position.x, anchor_y + position.y, 0.0f);
-    transform = pl_mul_mat4t(&transform, &trans_position_xform);
-
-    if (placement.rotation != 0.0f) {
-        float pivot_x = 0.0f;
-        float pivot_y = 0.0f;
-        switch (placement.pivot_align_x) {
-            case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
-                pivot_x = dimensions.x * 0.5f;
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
-                pivot_x = dimensions.x;
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
-            case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
-            default:
-                break;
-        }
-        switch (placement.pivot_align_y) {
-            case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
-                pivot_y = dimensions.y * 0.5f;
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
-                pivot_y = dimensions.y;
-                break;
-            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
-            case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
-            default:
-                break;
-        }
-        pivot_x += placement.pivot_x;
-        pivot_y += placement.pivot_y;
-
-        plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_x, pivot_y, 0.0f);
-        plMat4 rotate_xform = pl_mat4_rotate_vec3(pl_radiansf(placement.rotation), (plVec3){0.0f, 0.0f, 1.0f});
-        plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-pivot_x, -pivot_y, 0.0f);
-
-        transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
-        transform = pl_mul_mat4t(&transform, &rotate_xform);
-        transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
-    }
-
-    plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0.0f, dimensions.y, 0.0f);
-    plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
-    transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
-    transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
-
-    if (base_area) {
-        plMat4 base_transform = pl_identity_mat4();
-        memcpy(base_transform.d, base_area->transform, sizeof(base_transform.d));
-        transform = pl_mul_mat4t(&base_transform, &transform);
-    }
-
-    plMat3 transform3 = {0};
-    transform3.x11 = transform.x11;
-    transform3.x12 = transform.x12;
-    transform3.x13 = transform.x14;
-    transform3.x21 = transform.x21;
-    transform3.x22 = transform.x22;
-    transform3.x23 = transform.x24;
-    transform3.x31 = transform.x31;
-    transform3.x32 = transform.x32;
-    transform3.x33 = transform.x33;
-    return transform3;
 }
 
 bool dc_app_draw_container_push(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec2 virtual_size) {
@@ -1443,26 +1153,6 @@ void dc_app_draw_image_ex(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAp
                    (DcAppVec2){1.0f, 1.0f},
                    (DcAppVec2){1.0f, 0.0f},
                    position, placement, tint, out_area);
-}
-
-static void _draw_image_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 dimensions, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area) {
-    dc_app_draw_image_quad_uv(ctx, texture_id,
-                              (DcAppVec2){0.0f, dimensions.y},
-                              (DcAppVec2){0.0f, 0.0f},
-                              (DcAppVec2){dimensions.x, 0.0f},
-                              (DcAppVec2){dimensions.x, dimensions.y},
-                              uv0, uv1, uv2, uv3, position, placement, tint, NULL);
-
-    if (out_area) {
-        plVec2 points[4];
-        _resolve_rect_points(ctx, dimensions, position, placement, points, out_area);
-    }
-}
-
-static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id, uint32_t *out) {
-    if (out) *out = 0;
-    if (!ctx || texture_id == 0 || !out) return false;
-    return dc_app_texture_get_bind_group(ctx->texture_ctx, texture_id, out);
 }
 
 void dc_app_draw_image_quad(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area) {
@@ -1968,41 +1658,6 @@ void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     PL_FREE(cartesian);
 }
 
-static void _draw_planet_polygon_geodetic_enabled(
-    DcAppDrawPlanetViewHandle draw_view,
-    const DcAppVec3d *points,
-    uint32_t point_count,
-    float line_width,
-    uint32_t line_color,
-    uint8_t line_pattern,
-    bool line_enabled,
-    uint32_t fill_color,
-    bool fill_enabled) {
-    if (!draw_view || !points || point_count < 3) return;
-
-    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
-    const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
-    const DcGeoCrsCartesian *cartesian_crs = dc_app_planet_cartesian_crs(planet);
-    if (!geodetic_crs || !cartesian_crs) return;
-
-    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
-    if (!cartesian) return;
-
-    for (uint32_t i = 0; i < point_count; i++) {
-        plVec3d geodetic = {points[i].x, points[i].y, points[i].z};
-        plVec3d converted;
-        dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &converted, 1);
-        cartesian[i] = (plVec3){(float)converted.x, (float)converted.y, (float)converted.z};
-    }
-
-    plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
-    if (fill_enabled)
-        dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
-    if (line_enabled)
-        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color, line_pattern);
-    PL_FREE(cartesian);
-}
-
 void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3d *points, uint32_t point_count, DcAppStroke stroke) {
     (void)ctx;
     _draw_planet_polygon_geodetic_enabled(
@@ -2238,6 +1893,365 @@ void dc_app_draw_planet_geojson(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle
         const DcGeojsonFeature *feature = dc_geojson_feature(geojson_data, i);
         if (feature) _planet_draw_geojson_feature(draw_view, feature, _planet_geojson_style(feature, style));
     }
+}
+
+static plVec2 *_alloc_resolved_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area) {
+    if (!ctx || !points || point_count == 0 || point_count > DCAPP_DRAW_POINT_COUNT_MAX) return NULL;
+    if ((size_t)point_count > ((size_t)-1) / sizeof(plVec2)) return NULL;
+
+    plVec2 *draw_points = PL_ALLOC(sizeof(plVec2) * point_count);
+    if (!draw_points) return NULL;
+
+    dc_app_draw_resolve_points(ctx, points, point_count, position, placement, draw_points, out_area);
+    return draw_points;
+}
+
+static void _resolve_rect_points(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 out[4], DcAppDrawArea *out_area) {
+    if (!ctx || !out) return;
+    DcAppVec2 points[4] = {
+        {0.0f, 0.0f},
+        {dimensions.x, 0.0f},
+        {dimensions.x, dimensions.y},
+        {0.0f, dimensions.y},
+    };
+    dc_app_draw_resolve_points(ctx, points, 4, position, placement, out, NULL);
+    _draw_area_from_rect_points(dimensions.x, dimensions.y, out[0], out[1], out[3], out_area);
+}
+
+static bool _placement_is_default(DcAppPlacement placement) {
+    return placement.rotation == 0.0f &&
+           placement.parent_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.parent_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.local_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.local_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.pivot_align_x == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.pivot_align_y == DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED &&
+           placement.pivot_x == 0.0f &&
+           placement.pivot_y == 0.0f;
+}
+
+static DcAppDrawArea *_draw_result_area(DcAppDrawResult *result) {
+    return result ? &result->area : NULL;
+}
+
+static void _draw_context_update_mouse(DcAppDrawContext *ctx) {
+    if (!ctx) return;
+
+    ctx->mouse = ctx->screen_mouse;
+
+    plMat4 transform = pl_identity_mat4();
+    memcpy(transform.d, ctx->area.transform, sizeof(transform.d));
+
+    plMat4 inv_transform = pl_mat4t_invert(&transform);
+    plVec4 mouse_screen = {
+        ctx->screen_mouse.x,
+        ctx->screen_mouse.y,
+        0.0f,
+        1.0f,
+    };
+    plVec4 mouse_local = pl_mul_mat4_vec4(&inv_transform, mouse_screen);
+
+    ctx->mouse.x = mouse_local.x;
+    ctx->mouse.y = mouse_local.y;
+}
+
+static void _draw_area_from_rect_points(float width, float height, plVec2 p0, plVec2 p1, plVec2 p3, DcAppDrawArea *out_area) {
+    if (!out_area) return;
+
+    *out_area = (DcAppDrawArea){0};
+    out_area->position[0] = p0.x;
+    out_area->position[1] = p0.y;
+    out_area->dimensions[0] = width;
+    out_area->dimensions[1] = height;
+
+    plMat4 transform = pl_identity_mat4();
+    if (width != 0.0f) {
+        transform.x11 = (p1.x - p0.x) / width;
+        transform.x21 = (p1.y - p0.y) / width;
+    }
+    if (height != 0.0f) {
+        transform.x12 = (p3.x - p0.x) / height;
+        transform.x22 = (p3.y - p0.y) / height;
+    }
+    transform.x14 = p0.x;
+    transform.x24 = p0.y;
+
+    memcpy(out_area->transform, transform.d, sizeof(out_area->transform));
+}
+
+static uint64_t _mouse_id(const char *id) {
+    if (!id || id[0] == '\0') return 0;
+
+    uint64_t hash = 0;
+    for (const unsigned char *c = (const unsigned char *)id; *c; c++) {
+        hash = *c + (hash << 6) + (hash << 16) - hash;
+    }
+    return hash ? hash : 1;
+}
+
+static _DcAppDrawMouseTarget _draw_mouse_target_internal(DcAppDrawTargetId target_id) {
+    return (_DcAppDrawMouseTarget){
+        .type = _DC_APP_DRAW_MOUSE_TARGET_INTERNAL,
+        .target = target_id,
+    };
+}
+
+static _DcAppDrawMouseTarget _draw_mouse_target_id(uint64_t id) {
+    return (_DcAppDrawMouseTarget){
+        .type = _DC_APP_DRAW_MOUSE_TARGET_ID,
+        .id = id,
+    };
+}
+
+static bool _draw_mouse_target_is_internal(_DcAppDrawMouseTarget target, DcAppDrawTargetId target_id) {
+    return target.type == _DC_APP_DRAW_MOUSE_TARGET_INTERNAL && target.target == target_id;
+}
+
+static bool _draw_mouse_target_is_id(_DcAppDrawMouseTarget target, uint64_t id) {
+    return target.type == _DC_APP_DRAW_MOUSE_TARGET_ID && target.id == id;
+}
+
+static bool _mouse_rect_local(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 *out) {
+    if (!ctx || !out || dimensions.x == 0.0f || dimensions.y == 0.0f) return false;
+    if (!ctx->screen_mouse.position_valid) return false;
+
+    plVec2 points[4];
+    _resolve_rect_points(ctx, dimensions, position, placement, points, NULL);
+
+    plVec2 p0 = points[0];
+    plVec2 p1 = points[1];
+    plVec2 p3 = points[3];
+    plVec2 vx = {p1.x - p0.x, p1.y - p0.y};
+    plVec2 vy = {p3.x - p0.x, p3.y - p0.y};
+    plVec2 pm = {ctx->screen_mouse.x - p0.x, ctx->screen_mouse.y - p0.y};
+
+    float det = vx.x * vy.y - vx.y * vy.x;
+    if (fabsf(det) <= 1e-8f) return false;
+
+    float u = (pm.x * vy.y - pm.y * vy.x) / det;
+    float v = (vx.x * pm.y - vx.y * pm.x) / det;
+    out->x = u * dimensions.x;
+    out->y = v * dimensions.y;
+    return true;
+}
+
+static bool _mouse_point_in_polygon(plVec2 mouse, const plVec2 *points, uint32_t point_count) {
+    bool inside = false;
+    for (uint32_t ii = 0, jj = point_count - 1; ii < point_count; jj = ii++) {
+        float xi = points[ii].x;
+        float yi = points[ii].y;
+        float xj = points[jj].x;
+        float yj = points[jj].y;
+        bool intersect = ((yi > mouse.y) != (yj > mouse.y)) && (mouse.x < (xj - xi) * (mouse.y - yi) / (yj - yi + 1e-12f) + xi);
+        if (intersect) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+static void _mouse_register(DcAppDrawContext *ctx, uint64_t id) {
+    if (!ctx || id == 0) return;
+
+    ctx->next_hovered_target = _draw_mouse_target_id(id);
+    if (ctx->screen_mouse.pressed) {
+        ctx->next_pressed_target = _draw_mouse_target_id(id);
+    }
+}
+
+static dcDrawTextOptions _text_options(DcAppDrawContext *ctx, DcAppTextStyle style) {
+    dcDrawTextOptions options = {0};
+
+    options.ptFont = ctx ? ctx->default_font : NULL;
+    options.fSize = style.size;
+    options.fWrap = style.wrap;
+
+    options.uColor = PL_COLOR_32_RGBA(style.color.r, style.color.g, style.color.b, style.color.a);
+
+    return options;
+}
+
+static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement) {
+    const DcAppDrawArea *base_area = ctx ? &ctx->area : NULL;
+
+    plMat4 transform = pl_identity_mat4();
+
+    float align_x = 0.0f;
+    switch (placement.local_align_x) {
+        case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+            align_x = -dimensions.x * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+            align_x = -dimensions.x;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+        default:
+            break;
+    }
+    float align_y = 0.0f;
+    switch (placement.local_align_y) {
+        case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+            align_y = -dimensions.y * 0.5f;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+            align_y = -dimensions.y;
+            break;
+        case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+        case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+        default:
+            break;
+    }
+    plMat4 trans_local_align_xform = pl_mat4_translate_xyz(align_x, align_y, 0.0f);
+    transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+
+    float anchor_x = 0.0f;
+    float anchor_y = 0.0f;
+    if (base_area) {
+        switch (placement.parent_align_x) {
+            case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+                anchor_x = base_area->dimensions[0] * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+                anchor_x = base_area->dimensions[0];
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+            default:
+                break;
+        }
+        switch (placement.parent_align_y) {
+            case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+                anchor_y = base_area->dimensions[1] * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+                anchor_y = base_area->dimensions[1];
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+            default:
+                break;
+        }
+    }
+    plMat4 trans_position_xform = pl_mat4_translate_xyz(anchor_x + position.x, anchor_y + position.y, 0.0f);
+    transform = pl_mul_mat4t(&transform, &trans_position_xform);
+
+    if (placement.rotation != 0.0f) {
+        float pivot_x = 0.0f;
+        float pivot_y = 0.0f;
+        switch (placement.pivot_align_x) {
+            case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
+                pivot_x = dimensions.x * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT:
+                pivot_x = dimensions.x;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
+            default:
+                break;
+        }
+        switch (placement.pivot_align_y) {
+            case DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE:
+                pivot_y = dimensions.y * 0.5f;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_TOP:
+                pivot_y = dimensions.y;
+                break;
+            case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
+            case DC_APP_DRAW_ALIGNMENT_TYPE_BOTTOM:
+            default:
+                break;
+        }
+        pivot_x += placement.pivot_x;
+        pivot_y += placement.pivot_y;
+
+        plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_x, pivot_y, 0.0f);
+        plMat4 rotate_xform = pl_mat4_rotate_vec3(pl_radiansf(placement.rotation), (plVec3){0.0f, 0.0f, 1.0f});
+        plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-pivot_x, -pivot_y, 0.0f);
+
+        transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+        transform = pl_mul_mat4t(&transform, &rotate_xform);
+        transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+    }
+
+    plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0.0f, dimensions.y, 0.0f);
+    plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+    transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
+    transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
+
+    if (base_area) {
+        plMat4 base_transform = pl_identity_mat4();
+        memcpy(base_transform.d, base_area->transform, sizeof(base_transform.d));
+        transform = pl_mul_mat4t(&base_transform, &transform);
+    }
+
+    plMat3 transform3 = {0};
+    transform3.x11 = transform.x11;
+    transform3.x12 = transform.x12;
+    transform3.x13 = transform.x14;
+    transform3.x21 = transform.x21;
+    transform3.x22 = transform.x22;
+    transform3.x23 = transform.x24;
+    transform3.x31 = transform.x31;
+    transform3.x32 = transform.x32;
+    transform3.x33 = transform.x33;
+    return transform3;
+}
+
+static void _draw_image_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 dimensions, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area) {
+    dc_app_draw_image_quad_uv(ctx, texture_id,
+                              (DcAppVec2){0.0f, dimensions.y},
+                              (DcAppVec2){0.0f, 0.0f},
+                              (DcAppVec2){dimensions.x, 0.0f},
+                              (DcAppVec2){dimensions.x, dimensions.y},
+                              uv0, uv1, uv2, uv3, position, placement, tint, NULL);
+
+    if (out_area) {
+        plVec2 points[4];
+        _resolve_rect_points(ctx, dimensions, position, placement, points, out_area);
+    }
+}
+
+static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id, uint32_t *out) {
+    if (out) *out = 0;
+    if (!ctx || texture_id == 0 || !out) return false;
+    return dc_app_texture_get_bind_group(ctx->texture_ctx, texture_id, out);
+}
+
+static void _draw_planet_polygon_geodetic_enabled(
+    DcAppDrawPlanetViewHandle draw_view,
+    const DcAppVec3d *points,
+    uint32_t point_count,
+    float line_width,
+    uint32_t line_color,
+    uint8_t line_pattern,
+    bool line_enabled,
+    uint32_t fill_color,
+    bool fill_enabled) {
+    if (!draw_view || !points || point_count < 3) return;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
+    const DcGeoCrsCartesian *cartesian_crs = dc_app_planet_cartesian_crs(planet);
+    if (!geodetic_crs || !cartesian_crs) return;
+
+    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
+    if (!cartesian) return;
+
+    for (uint32_t i = 0; i < point_count; i++) {
+        plVec3d geodetic = {points[i].x, points[i].y, points[i].z};
+        plVec3d converted;
+        dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic, &converted, 1);
+        cartesian[i] = (plVec3){(float)converted.x, (float)converted.y, (float)converted.z};
+    }
+
+    plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
+    if (fill_enabled)
+        dc_app_draw_planet_convex_polygon_filled(view, cartesian, point_count, fill_color);
+    if (line_enabled)
+        dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, line_color, line_pattern);
+    PL_FREE(cartesian);
 }
 
 static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback) {

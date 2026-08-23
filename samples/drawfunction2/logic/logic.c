@@ -20,6 +20,155 @@ static DcTextureId g_image_texture;
 static DcVec2      g_image_size;
 static const char *g_image_status = "image not loaded";
 
+static void draw_example_01_line(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_02_line_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_03_polyline(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_04_polyline_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_05_polygon(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_06_convex_polygon_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_07_rounded_polygon(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_08_rounded_convex_polygon_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_09_quad(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_10_quad_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_11_rounded_quad(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_12_rounded_quad_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_13_rect(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_14_rect_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_15_rounded_rect(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_16_rounded_rect_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_17_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_18_circle_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_19_text_size(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_20_text(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_21_text_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_22_image(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_23_placement(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_24_draw_result(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_25_get_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_26_container_push(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_27_container_push_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_28_container_push_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_stripes(DcDrawContext *draw_ctx, DcVec2 position, DcVec2 size, DcVec4 a, DcVec4 b);
+static void draw_example_29_stencil_add(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_30_stencil_remove(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_31_nested_stencil(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_32_mouse_rect(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_33_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_34_mouse_polygon(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_35_mouse_events(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+static void draw_example_36_args_and_state(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
+
+// The table is the source of truth for the rendered reference grid. Adding a
+// new example means adding the draw function below and one row here.
+static const Example examples[] = {
+    {"01 line", draw_example_01_line},
+    {"02 line_ex", draw_example_02_line_ex},
+    {"03 polyline", draw_example_03_polyline},
+    {"04 polyline_ex", draw_example_04_polyline_ex},
+    {"05 polygon", draw_example_05_polygon},
+    {"06 convex_polygon_filled", draw_example_06_convex_polygon_filled},
+    {"07 rounded_polygon", draw_example_07_rounded_polygon},
+    {"08 rounded_convex_polygon_filled", draw_example_08_rounded_convex_polygon_filled},
+    {"09 quad", draw_example_09_quad},
+    {"10 quad_filled", draw_example_10_quad_filled},
+    {"11 rounded_quad", draw_example_11_rounded_quad},
+    {"12 rounded_quad_filled", draw_example_12_rounded_quad_filled},
+    {"13 rect", draw_example_13_rect},
+    {"14 rect_filled", draw_example_14_rect_filled},
+    {"15 rounded_rect", draw_example_15_rounded_rect},
+    {"16 rounded_rect_filled", draw_example_16_rounded_rect_filled},
+    {"17 circle", draw_example_17_circle},
+    {"18 circle_filled", draw_example_18_circle_filled},
+    {"19 text_size", draw_example_19_text_size},
+    {"20 text", draw_example_20_text},
+    {"21 text_ex", draw_example_21_text_ex},
+    {"22 image/image_ex", draw_example_22_image},
+    {"23 placement", draw_example_23_placement},
+    {"24 draw result", draw_example_24_draw_result},
+    {"25 get_area", draw_example_25_get_area},
+    {"26 container_push", draw_example_26_container_push},
+    {"27 container_push_ex", draw_example_27_container_push_ex},
+    {"28 container_push_area", draw_example_28_container_push_area},
+    {"29 stencil_add", draw_example_29_stencil_add},
+    {"30 stencil_remove", draw_example_30_stencil_remove},
+    {"31 nested stencil", draw_example_31_nested_stencil},
+    {"32 mouse rect", draw_example_32_mouse_rect},
+    {"33 mouse circle", draw_example_33_mouse_circle},
+    {"34 mouse polygon", draw_example_34_mouse_polygon},
+    {"35 mouse events", draw_example_35_mouse_events},
+    {"36 args/state", draw_example_36_args_and_state},
+};
+
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
+    if (!dc_texture) {
+        g_image_status = "texture api unavailable";
+        return;
+    }
+
+    g_image_texture = dc_texture->load_image(app_ctx, "../../assets/nasa.png", &g_image_size);
+    if (!g_image_texture) {
+        g_image_status = "dc_texture->load_image failed";
+        return;
+    }
+
+    if (!dc_texture->get_size(app_ctx, g_image_texture, &g_image_size)) {
+        g_image_status = "texture size unavailable";
+    }
+}
+
+// PHASE is an XML variable passed to draw_reference_grid(). Incrementing it in
+// display_draw() gives the C examples a tiny bit of animation without adding a
+// separate timing API to the sample.
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
+    (void)app_ctx;
+    if (!PHASE) return;
+    *PHASE += 1.0;
+}
+
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
+    (void)app_ctx;
+}
+
+// The grid itself is also drawn from C. Each cell is a pushed container with a
+// 220x120 virtual coordinate system, so every draw_example_## can use the same
+// local coordinates no matter where the cell appears on screen.
+void draw_reference_grid(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
+    if (!dc_draw || !dc_mouse) return;
+
+    const int columns = 6;
+    const int count = (int)(sizeof(examples) / sizeof(examples[0]));
+    const float cell_w = 160.0f;
+    const float cell_h = 90.0f;
+    const float step_x = 174.0f;
+    const float step_y = 104.0f;
+    const float start_x = 34.0f;
+    const float start_y = 590.0f;
+
+    for (int i = 0; i < count; i++) {
+        int col = i % columns;
+        int row = i / columns;
+        float x = start_x + (float)col * step_x;
+        float y = start_y - (float)row * step_y;
+
+        if (!dc_draw->container_push(draw_ctx, (DcVec2){x, y}, (DcVec2){cell_w, cell_h}, (DcVec2){220.0f, 120.0f})) {
+            continue;
+        }
+
+        // Draw the card background and label before handing control to the
+        // example. The example only needs to care about its own feature.
+        float band = (float)row / 5.0f;
+        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcVec4){ .r = 0.075f + band * 0.025f, .g = 0.088f, .b = 0.105f + band * 0.020f, .a = 1.0f });
+        dc_draw->rounded_rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcStroke){ .color = (DcVec4){ .r = 0.24f, .g = 0.32f, .b = 0.40f, .a = 1.0f }, .width = 1.0f });
+        dc_draw->text(draw_ctx, (DcVec2){10.0f, 100.0f}, examples[i].label, (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.76f, .g = 0.88f, .b = 0.96f, .a = 1.0f } });
+        examples[i].draw(draw_ctx, args);
+        dc_draw->container_pop(draw_ctx);
+    }
+}
+
 // 01: Basic line drawing. The simple draw functions take coordinates directly
 // in the current draw area; there is no placement/result metadata.
 static void draw_example_01_line(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
@@ -482,115 +631,4 @@ static void draw_example_36_args_and_state(DcDrawContext *draw_ctx, const DcDraw
     dc_draw->circle_filled(draw_ctx, (DcVec2){70.0f, 60.0f}, radius, (DcVec4){ .r = 0.40f, .g = 0.62f, .b = 0.90f, .a = 0.90f });
     dc_draw->text(draw_ctx, (DcVec2){112.0f, 66.0f}, "Arg PHASE", (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.88f, .g = 0.96f, .b = 1.0f, .a = 1.0f } });
     dc_draw->text(draw_ctx, (DcVec2){112.0f, 46.0f}, mouse && mouse->position_valid ? "mouse valid" : "mouse invalid", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.58f, .g = 0.68f, .b = 0.76f, .a = 1.0f } });
-}
-
-// The table is the source of truth for the rendered reference grid. Adding a
-// new example means adding the draw function above and one row here.
-static const Example examples[] = {
-    {"01 line", draw_example_01_line},
-    {"02 line_ex", draw_example_02_line_ex},
-    {"03 polyline", draw_example_03_polyline},
-    {"04 polyline_ex", draw_example_04_polyline_ex},
-    {"05 polygon", draw_example_05_polygon},
-    {"06 convex_polygon_filled", draw_example_06_convex_polygon_filled},
-    {"07 rounded_polygon", draw_example_07_rounded_polygon},
-    {"08 rounded_convex_polygon_filled", draw_example_08_rounded_convex_polygon_filled},
-    {"09 quad", draw_example_09_quad},
-    {"10 quad_filled", draw_example_10_quad_filled},
-    {"11 rounded_quad", draw_example_11_rounded_quad},
-    {"12 rounded_quad_filled", draw_example_12_rounded_quad_filled},
-    {"13 rect", draw_example_13_rect},
-    {"14 rect_filled", draw_example_14_rect_filled},
-    {"15 rounded_rect", draw_example_15_rounded_rect},
-    {"16 rounded_rect_filled", draw_example_16_rounded_rect_filled},
-    {"17 circle", draw_example_17_circle},
-    {"18 circle_filled", draw_example_18_circle_filled},
-    {"19 text_size", draw_example_19_text_size},
-    {"20 text", draw_example_20_text},
-    {"21 text_ex", draw_example_21_text_ex},
-    {"22 image/image_ex", draw_example_22_image},
-    {"23 placement", draw_example_23_placement},
-    {"24 draw result", draw_example_24_draw_result},
-    {"25 get_area", draw_example_25_get_area},
-    {"26 container_push", draw_example_26_container_push},
-    {"27 container_push_ex", draw_example_27_container_push_ex},
-    {"28 container_push_area", draw_example_28_container_push_area},
-    {"29 stencil_add", draw_example_29_stencil_add},
-    {"30 stencil_remove", draw_example_30_stencil_remove},
-    {"31 nested stencil", draw_example_31_nested_stencil},
-    {"32 mouse rect", draw_example_32_mouse_rect},
-    {"33 mouse circle", draw_example_33_mouse_circle},
-    {"34 mouse polygon", draw_example_34_mouse_polygon},
-    {"35 mouse events", draw_example_35_mouse_events},
-    {"36 args/state", draw_example_36_args_and_state},
-};
-
-void display_init(DcAppContext *app_ctx, void **user_data) {
-    (void)user_data;
-    if (!dc_texture) {
-        g_image_status = "texture api unavailable";
-        return;
-    }
-
-    g_image_texture = dc_texture->load_image(app_ctx, "../../assets/nasa.png", &g_image_size);
-    if (!g_image_texture) {
-        g_image_status = "dc_texture->load_image failed";
-        return;
-    }
-
-    if (!dc_texture->get_size(app_ctx, g_image_texture, &g_image_size)) {
-        g_image_status = "texture size unavailable";
-    }
-}
-
-// PHASE is an XML variable passed to draw_reference_grid(). Incrementing it in
-// display_draw() gives the C examples a tiny bit of animation without adding a
-// separate timing API to the sample.
-void display_draw(DcAppContext *app_ctx, void *user_data) {
-    (void)user_data;
-    (void)app_ctx;
-    if (!PHASE) return;
-    *PHASE += 1.0;
-}
-
-void display_close(DcAppContext *app_ctx, void *user_data) {
-    (void)user_data;
-    (void)app_ctx;
-}
-
-// The grid itself is also drawn from C. Each cell is a pushed container with a
-// 220x120 virtual coordinate system, so every draw_example_## can use the same
-// local coordinates no matter where the cell appears on screen.
-void draw_reference_grid(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
-    (void)user_data;
-    if (!dc_draw || !dc_mouse) return;
-
-    const int columns = 6;
-    const int count = (int)(sizeof(examples) / sizeof(examples[0]));
-    const float cell_w = 160.0f;
-    const float cell_h = 90.0f;
-    const float step_x = 174.0f;
-    const float step_y = 104.0f;
-    const float start_x = 34.0f;
-    const float start_y = 590.0f;
-
-    for (int i = 0; i < count; i++) {
-        int col = i % columns;
-        int row = i / columns;
-        float x = start_x + (float)col * step_x;
-        float y = start_y - (float)row * step_y;
-
-        if (!dc_draw->container_push(draw_ctx, (DcVec2){x, y}, (DcVec2){cell_w, cell_h}, (DcVec2){220.0f, 120.0f})) {
-            continue;
-        }
-
-        // Draw the card background and label before handing control to the
-        // example. The example only needs to care about its own feature.
-        float band = (float)row / 5.0f;
-        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcVec4){ .r = 0.075f + band * 0.025f, .g = 0.088f, .b = 0.105f + band * 0.020f, .a = 1.0f });
-        dc_draw->rounded_rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcStroke){ .color = (DcVec4){ .r = 0.24f, .g = 0.32f, .b = 0.40f, .a = 1.0f }, .width = 1.0f });
-        dc_draw->text(draw_ctx, (DcVec2){10.0f, 100.0f}, examples[i].label, (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.76f, .g = 0.88f, .b = 0.96f, .a = 1.0f } });
-        examples[i].draw(draw_ctx, args);
-        dc_draw->container_pop(draw_ctx);
-    }
 }

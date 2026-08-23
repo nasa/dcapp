@@ -16,16 +16,73 @@ typedef struct {
     int warning_count;
 } ValidationContext;
 
+// Valid attributes for each element type
+static const char *_valid_attrs_common[] = {"Style", "_Directory", NULL};
+static const char *_valid_attrs_position[] = {"X", "Y", "PositionX", "PositionY", NULL};
+static const char *_valid_attrs_negate[] = {"NegateX", "NegateY", NULL};
+static const char *_valid_attrs_dimension[] = {"Width", "Height", "DimensionX", "DimensionY", NULL};
+static const char *_valid_attrs_virtual_dimension[] = {"VirtualWidth", "VirtualHeight", "VirtualDimensionX", "VirtualDimensionY", NULL};
+static const char *_valid_attrs_align[] = {"LocalAlignX", "LocalAlignY", "HorizontalAlign", "VerticalAlign", "ParentAlignX", "ParentAlignY", NULL};
+static const char *_valid_attrs_pivot[] = {"PivotX", "PivotY", "PivotPositionX", "PivotPositionY", "PivotLocalAlignX", "PivotLocalAlignY", "PivotParentAlignX", "PivotParentAlignY", NULL};
+static const char *_valid_attrs_rotation[] = {"Rotation", "Rotate", NULL};
+static const char *_valid_attrs_color[] = {"FillColor", "LineColor", "BackgroundColor", NULL};
+static const char *_valid_attrs_line[] = {"LineWidth", NULL};
+
+static const char *_valid_attrs_arc[] = {"Radius", "Angle", "Segments", "LineColor", NULL};
+static const char *_valid_attrs_arg[] = {"Type", "Value", NULL};
+static const char *_valid_attrs_blink[] = {"FireBlink", "Frequency", "DutyCycle", "Duration", NULL};
+static const char *_valid_attrs_button[] = {"Type", "Variable", "EnableVariable", "EnableOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
+static const char *_valid_attrs_ellipse[] = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
+static const char *_valid_attrs_constant[] = {"Name", NULL};
+static const char *_valid_attrs_function[] = {"Name", "FireCall", NULL};
+static const char *_valid_attrs_draw_function[] = {"Name", NULL};
+static const char *_valid_attrs_if[] = {"Value", "Value1", "Value2", "Operator", "Static", NULL};
+static const char *_valid_attrs_image[] = {"File", NULL};
+static const char *_valid_attrs_logic[] = {"File", NULL};
+static const char *_valid_attrs_mouse_motion[] = {"VariableX", "VariableY", NULL};
+static const char *_valid_attrs_panel[] = {"DisplayIndex", NULL};
+static const char *_valid_attrs_pixelstream[] = {"Type", "URL", "Protocol", "Timeout", "TestPattern", NULL};
+static const char *_valid_attrs_set[] = {"Variable", "Operator", "Defer", NULL};
+static const char *_valid_attrs_sphere[] = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
+static const char *_valid_attrs_style[] = {"Name", NULL};
+static const char *_valid_attrs_planet[] = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
+static const char *_valid_attrs_planet_view[] = {"Planet", "CRS", "AttitudeFrame", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
+static const char *_valid_attrs_planet_container[] = {"Latitude", "Longitude", "HeightAboveTerrain", "Rotation", "Scale", "Enabled", NULL};
+static const char *_valid_attrs_planet_data[] = {"File", NULL};
+static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "Enabled", "FireRefresh", NULL};
+static const char *_valid_attrs_planet_shader[] = {"Index", "VertexShader", "FragmentShader", NULL};
+static const char *_valid_attrs_planet_overlay[] = {"Planet", "CRS", "HeightAboveTerrain", "Latitude", "Longitude", "X", "Y", "Z", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", "Enabled", NULL};
+static const char *_valid_attrs_planet_image[] = {"File", "Width", "Height", "DimensionX", "DimensionY", "TintColor", "Color", NULL};
+static const char *_valid_attrs_planet_breadcrumbs[] = {"Altitude", "PointSpacing", "MaxPoints", "Clear", "Enabled", NULL};
+static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "CRS", "HeightAboveTerrain", "Enabled", NULL};
+static const char *_valid_attrs_planet_vertex[] = {"Latitude", "Longitude", "Altitude", "X", "Y", "Z", NULL};
+static const char *_valid_attrs_rounded[] = {"Rounded", NULL};
+static const char *_valid_attrs_text[] = {"Size", "ShadowOffset", "UpdateRate", "Font", "Color", NULL};
+static const char *_valid_attrs_trick_io[] = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
+static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
+static const char *_valid_attrs_edge_io[] = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
+static const char *_valid_attrs_edge_variable[] = {"Command", NULL};
+static const char *_valid_attrs_variable[] = {"Type", "InitialValue", NULL};
+static const char *_valid_attrs_vertex[] = {NULL};
+static const char *_valid_attrs_window[] = {"Title", "ActiveDisplay", "UpdateRate", "Fullscreen", NULL};
+
 // forward declarations
 static void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType parent_type);
 static void _validate_children(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType parent_type);
 static bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_type);
+static bool _is_window_render_parent(DcAppXmlElementType parent_type);
 static void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
 static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type, DcAppXmlElementType parent_type);
+static bool _attr_in_list(const char *attr_name, const char **list);
+static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType elem_type);
 static void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
-static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
-static void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
 static bool _is_variable_ref(const char *value);
+static bool _is_valid_int_in_range(const char *value, int min, int max);
+static void _validate_enum_attr(ValidationContext *ctx, xmlNodePtr node, const char *attr_name,
+                                int min_val, int max_val, const char *valid_values_desc);
+static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
+static void _check_var_attr(ValidationContext *ctx, xmlNodePtr node, const char *attr_name);
+static void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
 
 int main(int argc, char **argv) {
 
@@ -1271,56 +1328,6 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
     }
 }
-
-// Valid attributes for each element type
-static const char *_valid_attrs_common[] = {"Style", "_Directory", NULL};
-static const char *_valid_attrs_position[] = {"X", "Y", "PositionX", "PositionY", NULL};
-static const char *_valid_attrs_negate[] = {"NegateX", "NegateY", NULL};
-static const char *_valid_attrs_dimension[] = {"Width", "Height", "DimensionX", "DimensionY", NULL};
-static const char *_valid_attrs_virtual_dimension[] = {"VirtualWidth", "VirtualHeight", "VirtualDimensionX", "VirtualDimensionY", NULL};
-static const char *_valid_attrs_align[] = {"LocalAlignX", "LocalAlignY", "HorizontalAlign", "VerticalAlign", "ParentAlignX", "ParentAlignY", NULL};
-static const char *_valid_attrs_pivot[] = {"PivotX", "PivotY", "PivotPositionX", "PivotPositionY", "PivotLocalAlignX", "PivotLocalAlignY", "PivotParentAlignX", "PivotParentAlignY", NULL};
-static const char *_valid_attrs_rotation[] = {"Rotation", "Rotate", NULL};
-static const char *_valid_attrs_color[] = {"FillColor", "LineColor", "BackgroundColor", NULL};
-static const char *_valid_attrs_line[] = {"LineWidth", NULL};
-
-static const char *_valid_attrs_arc[] = {"Radius", "Angle", "Segments", "LineColor", NULL};
-static const char *_valid_attrs_arg[] = {"Type", "Value", NULL};
-static const char *_valid_attrs_blink[] = {"FireBlink", "Frequency", "DutyCycle", "Duration", NULL};
-static const char *_valid_attrs_button[] = {"Type", "Variable", "EnableVariable", "EnableOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
-static const char *_valid_attrs_ellipse[] = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
-static const char *_valid_attrs_constant[] = {"Name", NULL};
-static const char *_valid_attrs_function[] = {"Name", "FireCall", NULL};
-static const char *_valid_attrs_draw_function[] = {"Name", NULL};
-static const char *_valid_attrs_if[] = {"Value", "Value1", "Value2", "Operator", "Static", NULL};
-static const char *_valid_attrs_image[] = {"File", NULL};
-static const char *_valid_attrs_logic[] = {"File", NULL};
-static const char *_valid_attrs_mouse_motion[] = {"VariableX", "VariableY", NULL};
-static const char *_valid_attrs_panel[] = {"DisplayIndex", NULL};
-static const char *_valid_attrs_pixelstream[] = {"Type", "URL", "Protocol", "Timeout", "TestPattern", NULL};
-static const char *_valid_attrs_set[] = {"Variable", "Operator", "Defer", NULL};
-static const char *_valid_attrs_sphere[] = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
-static const char *_valid_attrs_style[] = {"Name", NULL};
-static const char *_valid_attrs_planet[] = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
-static const char *_valid_attrs_planet_view[] = {"Planet", "CRS", "AttitudeFrame", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
-static const char *_valid_attrs_planet_container[] = {"Latitude", "Longitude", "HeightAboveTerrain", "Rotation", "Scale", "Enabled", NULL};
-static const char *_valid_attrs_planet_data[] = {"File", NULL};
-static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "Enabled", "FireRefresh", NULL};
-static const char *_valid_attrs_planet_shader[] = {"Index", "VertexShader", "FragmentShader", NULL};
-static const char *_valid_attrs_planet_overlay[] = {"Planet", "CRS", "HeightAboveTerrain", "Latitude", "Longitude", "X", "Y", "Z", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", "Enabled", NULL};
-static const char *_valid_attrs_planet_image[] = {"File", "Width", "Height", "DimensionX", "DimensionY", "TintColor", "Color", NULL};
-static const char *_valid_attrs_planet_breadcrumbs[] = {"Altitude", "PointSpacing", "MaxPoints", "Clear", "Enabled", NULL};
-static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "CRS", "HeightAboveTerrain", "Enabled", NULL};
-static const char *_valid_attrs_planet_vertex[] = {"Latitude", "Longitude", "Altitude", "X", "Y", "Z", NULL};
-static const char *_valid_attrs_rounded[] = {"Rounded", NULL};
-static const char *_valid_attrs_text[] = {"Size", "ShadowOffset", "UpdateRate", "Font", "Color", NULL};
-static const char *_valid_attrs_trick_io[] = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
-static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
-static const char *_valid_attrs_edge_io[] = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
-static const char *_valid_attrs_edge_variable[] = {"Command", NULL};
-static const char *_valid_attrs_variable[] = {"Type", "InitialValue", NULL};
-static const char *_valid_attrs_vertex[] = {NULL};
-static const char *_valid_attrs_window[] = {"Title", "ActiveDisplay", "UpdateRate", "Fullscreen", NULL};
 
 // Check if an attribute name is in a list
 static bool _attr_in_list(const char *attr_name, const char **list) {

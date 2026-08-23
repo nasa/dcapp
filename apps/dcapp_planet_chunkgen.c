@@ -68,6 +68,8 @@ typedef struct _DcPlanetDemInfo {
 static bool  _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info);
 static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
 static bool  _write_height_tile(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, uint32_t tile_size, double min_h, double max_h);
+static bool  _almost_zero(double v);
+static uint16_t _scale_raw_to_u16(double value, double min_h, double max_h);
 static void  _show_help(void);
 static char *_get_stem(const char *path, char *buf, size_t buf_size);
 static void  _pixel_to_projected_meters(const DcPlanetDemInfo *info, double pixel_x, double pixel_y, double *out_x, double *out_y);

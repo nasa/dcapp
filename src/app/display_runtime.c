@@ -36,6 +36,8 @@
 #define DCAPP_DRAW_FUNCTION_ARG_MAX 4096
 #endif
 
+#define _NODE_ARC_MAX_SEGMENTS 200
+
 static const plMemoryI *_ext_memory = NULL;
 static const plPlanetI *_ext_planet = NULL;
 static const plStarterI *_ext_starter = NULL;
@@ -73,6 +75,7 @@ typedef struct _DcAppRenderFrame {
 
 static void _render_node_list(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index);
 static void _render_node(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index);
+static _DcAppRenderFrame _get_current_frame(DcAppDrawContext *ctx);
 static bool _build_planet_texture(
     DcAppDisplayRuntimeContext *renderer,
     DcAppPlanetDefinition *def,
@@ -94,6 +97,7 @@ static void _render_state_mouse_inactive(DcAppDrawContext *ctx, DcAppDisplayRunt
 static void _render_state_mouse_hovered(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_state_if_true(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_state_if_false(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
+static uint32_t _get_parent_state_flags(DcAppDisplayRuntimeContext *renderer, DcAppNode *node);
 static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
@@ -163,82 +167,6 @@ void dc_app_display_runtime_context_destroy(DcAppDisplayRuntimeContext *renderer
     sbfree(renderer->sb_planet_text);
     sbfree(renderer->sb_render_text);
     PL_FREE(renderer);
-}
-
-static bool _build_planet_texture(
-    DcAppDisplayRuntimeContext *renderer,
-    DcAppPlanetDefinition *def,
-    DcAppPlanetTextureEntry *entry,
-    plPlanetTexture *out) {
-    if (entry->file == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) return false;
-    const char *path = dc_app_variable_registry_get_value(renderer->lookup, entry->file)->value_string;
-    if (!path || path[0] == '\0') return false;
-    memset(out, 0, sizeof(*out));
-    out->pcPath = path;
-    if (entry->mpp != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED)
-        out->fMetersPerPixel = (float)dc_app_variable_registry_get_value(renderer->lookup, entry->mpp)->value_double;
-    if (out->fMetersPerPixel <= 0.0f) {
-        DC_LOG_ERROR("PlanetTexture", "MetersPerPixel must be greater than zero for '%s'", path);
-        return false;
-    }
-
-    if (entry->originX != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && entry->originY != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
-        out->dOriginX = dc_app_variable_registry_get_value(renderer->lookup, entry->originX)->value_double;
-        out->dOriginY = dc_app_variable_registry_get_value(renderer->lookup, entry->originY)->value_double;
-    } else if (entry->originX != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || entry->originY != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
-        DC_LOG_ERROR("PlanetTexture", "OriginX and OriginY must be specified together for '%s'", path);
-        return false;
-    } else if (entry->crs == DC_APP_PLANET_CRS_CARTESIAN &&
-               entry->xyz.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
-               entry->xyz.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
-               entry->xyz.z != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
-        plVec3d cartesian_in = {
-            dc_app_variable_registry_get_value(renderer->lookup, entry->xyz.x)->value_double,
-            dc_app_variable_registry_get_value(renderer->lookup, entry->xyz.y)->value_double,
-            dc_app_variable_registry_get_value(renderer->lookup, entry->xyz.z)->value_double};
-        double r = sqrt(cartesian_in.x * cartesian_in.x +
-                        cartesian_in.y * cartesian_in.y +
-                        cartesian_in.z * cartesian_in.z);
-        if (r <= 0.0) {
-            DC_LOG_WARN("PlanetTexture", "Skipping texture with degenerate cartesian origin for '%s'", path);
-            return false;
-        }
-        plVec3d geodetic_out;
-        plVec2d polar_out;
-        dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
-        if (def->legacy_projected_origin) {
-            // Old planet metadata expects the historical user-longitude projection
-            // convention. New metadata uses real projected CRS meters.
-            dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
-            polar_out.y = -polar_out.y;
-        } else {
-            dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
-        }
-        out->dOriginX = polar_out.x;
-        out->dOriginY = polar_out.y;
-    } else if (entry->lle.lat != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
-               entry->lle.lon != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
-        plVec3d geodetic_in = {
-            dc_app_variable_registry_get_value(renderer->lookup, entry->lle.lat)->value_double,
-            dc_app_variable_registry_get_value(renderer->lookup, entry->lle.lon)->value_double,
-            0.0};
-        plVec2d polar_out;
-        if (def->legacy_projected_origin) {
-            // Old planet metadata expects the historical user-longitude projection
-            // convention. New metadata uses real projected CRS meters.
-            dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
-            polar_out.y = -polar_out.y;
-        } else {
-            dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
-        }
-        out->dOriginX = polar_out.x;
-        out->dOriginY = polar_out.y;
-    } else {
-        DC_LOG_ERROR("PlanetTexture", "Texture center must be OriginX/OriginY, Latitude/Longitude, or complete X/Y/Z for '%s'", path);
-        return false;
-    }
-
-    return true;
 }
 
 void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *renderer) {
@@ -420,6 +348,107 @@ void dc_app_display_runtime_update_planets(DcAppDisplayRuntimeContext *renderer)
     }
 }
 
+void dc_app_display_runtime_render(DcAppDisplayRuntimeContext *renderer, DcAppDrawContext *ctx) {
+    if (!ctx || !renderer) return;
+    _render_node(ctx, renderer, dc_app_display_model_get_window(renderer->scene));
+}
+
+void dc_app_display_runtime_flush_deferred_sets(DcAppDisplayRuntimeContext *renderer) {
+    int count = sbcount(renderer->sb_deferred_sets);
+    for (int i = 0; i < count; i++) {
+        _DcAppDeferredSetOp *qop = &renderer->sb_deferred_sets[i];
+        DcAppValue *var_value = dc_app_variable_registry_get_value(
+            renderer->lookup,
+            dc_app_variable_registry_get_variable_value_index(renderer->lookup, qop->var_index));
+        if (_apply_set_operation(renderer, qop->var_index, var_value, &qop->value, qop->operation)) {
+            // re-fetch var_value after POP (value_index may have changed)
+            if (qop->operation == DC_APP_SET_TYPE_POP) {
+                var_value = dc_app_variable_registry_get_value(
+                    renderer->lookup,
+                    dc_app_variable_registry_get_variable_value_index(renderer->lookup, qop->var_index));
+            }
+            dc_app_value_refresh(var_value);
+        }
+    }
+    sbclear(renderer->sb_deferred_sets);
+}
+
+static bool _build_planet_texture(
+    DcAppDisplayRuntimeContext *renderer,
+    DcAppPlanetDefinition *def,
+    DcAppPlanetTextureEntry *entry,
+    plPlanetTexture *out) {
+    if (entry->file == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) return false;
+    const char *path = dc_app_variable_registry_get_value(renderer->lookup, entry->file)->value_string;
+    if (!path || path[0] == '\0') return false;
+    memset(out, 0, sizeof(*out));
+    out->pcPath = path;
+    if (entry->mpp != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED)
+        out->fMetersPerPixel = (float)dc_app_variable_registry_get_value(renderer->lookup, entry->mpp)->value_double;
+    if (out->fMetersPerPixel <= 0.0f) {
+        DC_LOG_ERROR("PlanetTexture", "MetersPerPixel must be greater than zero for '%s'", path);
+        return false;
+    }
+
+    if (entry->originX != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && entry->originY != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
+        out->dOriginX = dc_app_variable_registry_get_value(renderer->lookup, entry->originX)->value_double;
+        out->dOriginY = dc_app_variable_registry_get_value(renderer->lookup, entry->originY)->value_double;
+    } else if (entry->originX != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || entry->originY != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
+        DC_LOG_ERROR("PlanetTexture", "OriginX and OriginY must be specified together for '%s'", path);
+        return false;
+    } else if (entry->crs == DC_APP_PLANET_CRS_CARTESIAN &&
+               entry->xyz.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
+               entry->xyz.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
+               entry->xyz.z != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
+        plVec3d cartesian_in = {
+            dc_app_variable_registry_get_value(renderer->lookup, entry->xyz.x)->value_double,
+            dc_app_variable_registry_get_value(renderer->lookup, entry->xyz.y)->value_double,
+            dc_app_variable_registry_get_value(renderer->lookup, entry->xyz.z)->value_double};
+        double r = sqrt(cartesian_in.x * cartesian_in.x +
+                        cartesian_in.y * cartesian_in.y +
+                        cartesian_in.z * cartesian_in.z);
+        if (r <= 0.0) {
+            DC_LOG_WARN("PlanetTexture", "Skipping texture with degenerate cartesian origin for '%s'", path);
+            return false;
+        }
+        plVec3d geodetic_out;
+        plVec2d polar_out;
+        dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
+        if (def->legacy_projected_origin) {
+            // Old planet metadata expects the historical user-longitude projection
+            // convention. New metadata uses real projected CRS meters.
+            dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
+            polar_out.y = -polar_out.y;
+        } else {
+            dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
+        }
+        out->dOriginX = polar_out.x;
+        out->dOriginY = polar_out.y;
+    } else if (entry->lle.lat != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
+               entry->lle.lon != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
+        plVec3d geodetic_in = {
+            dc_app_variable_registry_get_value(renderer->lookup, entry->lle.lat)->value_double,
+            dc_app_variable_registry_get_value(renderer->lookup, entry->lle.lon)->value_double,
+            0.0};
+        plVec2d polar_out;
+        if (def->legacy_projected_origin) {
+            // Old planet metadata expects the historical user-longitude projection
+            // convention. New metadata uses real projected CRS meters.
+            dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
+            polar_out.y = -polar_out.y;
+        } else {
+            dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
+        }
+        out->dOriginX = polar_out.x;
+        out->dOriginY = polar_out.y;
+    } else {
+        DC_LOG_ERROR("PlanetTexture", "Texture center must be OriginX/OriginY, Latitude/Longitude, or complete X/Y/Z for '%s'", path);
+        return false;
+    }
+
+    return true;
+}
+
 static _DcAppRenderFrame _get_current_frame(DcAppDrawContext *ctx) {
     const DcAppDrawArea *area = dc_app_draw_get_area(ctx);
     _DcAppRenderFrame frame = {
@@ -572,11 +601,6 @@ static void _render_node(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         default:
             break;
     }
-}
-
-void dc_app_display_runtime_render(DcAppDisplayRuntimeContext *renderer, DcAppDrawContext *ctx) {
-    if (!ctx || !renderer) return;
-    _render_node(ctx, renderer, dc_app_display_model_get_window(renderer->scene));
 }
 
 static void _render_blink(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
@@ -1154,7 +1178,6 @@ static void _render_state_if_false(DcAppDrawContext *ctx, DcAppDisplayRuntimeCon
     }
 }
 
-#define _NODE_ARC_MAX_SEGMENTS 200
 static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
@@ -4414,26 +4437,6 @@ static void _execute_set(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         }
         dc_app_value_refresh(var_value);
     }
-}
-
-void dc_app_display_runtime_flush_deferred_sets(DcAppDisplayRuntimeContext *renderer) {
-    int count = sbcount(renderer->sb_deferred_sets);
-    for (int i = 0; i < count; i++) {
-        _DcAppDeferredSetOp *qop = &renderer->sb_deferred_sets[i];
-        DcAppValue *var_value = dc_app_variable_registry_get_value(
-            renderer->lookup,
-            dc_app_variable_registry_get_variable_value_index(renderer->lookup, qop->var_index));
-        if (_apply_set_operation(renderer, qop->var_index, var_value, &qop->value, qop->operation)) {
-            // re-fetch var_value after POP (value_index may have changed)
-            if (qop->operation == DC_APP_SET_TYPE_POP) {
-                var_value = dc_app_variable_registry_get_value(
-                    renderer->lookup,
-                    dc_app_variable_registry_get_variable_value_index(renderer->lookup, qop->var_index));
-            }
-            dc_app_value_refresh(var_value);
-        }
-    }
-    sbclear(renderer->sb_deferred_sets);
 }
 
 static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {

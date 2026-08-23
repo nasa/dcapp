@@ -19,6 +19,121 @@ struct DcGeojson {
     DcGeojsonFeature *sb_features;
 };
 
+static uint32_t          _json_array_count(plJsonObject *array);
+static plJsonObject     *_json_member(plJsonObject *json, const char *name);
+static DcGeojsonFeature *_push_feature(DcGeojson *gj);
+static bool              _parse_hex_color(const char *hex, DcGeojsonColor *color_out);
+static void              _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style);
+static bool              _parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoordArray *out);
+static bool              _parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out);
+static void              _free_feature(DcGeojsonFeature *feat);
+static bool              _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom);
+
+//-----------------------------------------------------------------------------
+// public api
+//-----------------------------------------------------------------------------
+
+DcGeojson *
+dc_geojson_load(const char *filepath)
+{
+    char *json_str = dc_utils_load_text_file(filepath);
+    if (!json_str) {
+        DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to load file: %s", filepath);
+        return NULL;
+    }
+
+    plJsonObject *root = NULL;
+    if (!pl_load_json(json_str, &root)) {
+        DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to parse JSON: %s", filepath);
+        free(json_str);
+        return NULL;
+    }
+
+    DcGeojson *gj = (DcGeojson *)malloc(sizeof(DcGeojson));
+    if (!gj) {
+        DC_LOG_ERROR(DC_GEOJSON_TAG, "allocation failed");
+        pl_unload_json(&root);
+        free(json_str);
+        return NULL;
+    }
+    memset(gj, 0, sizeof(DcGeojson));
+
+    char type_buf[64] = {0};
+    pl_json_string_member(root, "type", type_buf, sizeof(type_buf));
+
+    bool ok = true;
+
+    if (strcmp(type_buf, "FeatureCollection") == 0) {
+        uint32_t fc = 0;
+        plJsonObject *feat_array = pl_json_array_member(root, "features", &fc);
+        if (!feat_array) {
+            ok = false;
+        } else {
+            for (uint32_t i = 0; i < fc; i++) {
+                plJsonObject *feature = pl_json_member_by_index(feat_array, i);
+                plJsonObject *geom = pl_json_member(feature, "geometry");
+                plJsonObject *props = pl_json_member(feature, "properties");
+                if (geom) {
+                    DcGeojsonFeature *feat = _push_feature(gj);
+                    _parse_style_properties(props, &feat->style);
+                    if (!_parse_geometry(feat, geom)) { ok = false; break; }
+                }
+            }
+        }
+    }
+    else if (strcmp(type_buf, "Feature") == 0) {
+        plJsonObject *geom = pl_json_member(root, "geometry");
+        plJsonObject *props = pl_json_member(root, "properties");
+        if (geom) {
+            DcGeojsonFeature *feat = _push_feature(gj);
+            _parse_style_properties(props, &feat->style);
+            ok = _parse_geometry(feat, geom);
+        } else {
+            ok = false;
+        }
+    }
+    else {
+        // bare geometry
+        DcGeojsonFeature *feat = _push_feature(gj);
+        ok = _parse_geometry(feat, root);
+    }
+
+    pl_unload_json(&root);
+    free(json_str);
+
+    if (!ok) {
+        dc_geojson_free(gj);
+        return NULL;
+    }
+
+    DC_LOG_INFO(DC_GEOJSON_TAG, "loaded %s: %d features", filepath, sbcount(gj->sb_features));
+    return gj;
+}
+
+void
+dc_geojson_free(DcGeojson *geojson)
+{
+    if (!geojson) return;
+
+    for (int i = 0; i < sbcount(geojson->sb_features); i++)
+        _free_feature(&geojson->sb_features[i]);
+    sbfree(geojson->sb_features);
+    free(geojson);
+}
+
+uint32_t
+dc_geojson_feature_count(DcGeojson *geojson)
+{
+    return geojson ? (uint32_t)sbcount(geojson->sb_features) : 0;
+}
+
+const DcGeojsonFeature *
+dc_geojson_feature(DcGeojson *geojson, uint32_t index)
+{
+    if (!geojson || index >= (uint32_t)sbcount(geojson->sb_features)) return NULL;
+    return &geojson->sb_features[index];
+}
+
 //-----------------------------------------------------------------------------
 // internal helpers
 //-----------------------------------------------------------------------------
@@ -219,8 +334,6 @@ _free_feature(DcGeojsonFeature *feat)
 // geometry parsing
 //-----------------------------------------------------------------------------
 
-static bool _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom);
-
 static bool
 _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
 {
@@ -345,109 +458,4 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
 
     DC_LOG_WARN(DC_GEOJSON_TAG, "unsupported geometry type: %s", type_buf);
     return true;
-}
-
-//-----------------------------------------------------------------------------
-// public api
-//-----------------------------------------------------------------------------
-
-DcGeojson *
-dc_geojson_load(const char *filepath)
-{
-    char *json_str = dc_utils_load_text_file(filepath);
-    if (!json_str) {
-        DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to load file: %s", filepath);
-        return NULL;
-    }
-
-    plJsonObject *root = NULL;
-    if (!pl_load_json(json_str, &root)) {
-        DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to parse JSON: %s", filepath);
-        free(json_str);
-        return NULL;
-    }
-
-    DcGeojson *gj = (DcGeojson *)malloc(sizeof(DcGeojson));
-    if (!gj) {
-        DC_LOG_ERROR(DC_GEOJSON_TAG, "allocation failed");
-        pl_unload_json(&root);
-        free(json_str);
-        return NULL;
-    }
-    memset(gj, 0, sizeof(DcGeojson));
-
-    char type_buf[64] = {0};
-    pl_json_string_member(root, "type", type_buf, sizeof(type_buf));
-
-    bool ok = true;
-
-    if (strcmp(type_buf, "FeatureCollection") == 0) {
-        uint32_t fc = 0;
-        plJsonObject *feat_array = pl_json_array_member(root, "features", &fc);
-        if (!feat_array) {
-            ok = false;
-        } else {
-            for (uint32_t i = 0; i < fc; i++) {
-                plJsonObject *feature = pl_json_member_by_index(feat_array, i);
-                plJsonObject *geom = pl_json_member(feature, "geometry");
-                plJsonObject *props = pl_json_member(feature, "properties");
-                if (geom) {
-                    DcGeojsonFeature *feat = _push_feature(gj);
-                    _parse_style_properties(props, &feat->style);
-                    if (!_parse_geometry(feat, geom)) { ok = false; break; }
-                }
-            }
-        }
-    }
-    else if (strcmp(type_buf, "Feature") == 0) {
-        plJsonObject *geom = pl_json_member(root, "geometry");
-        plJsonObject *props = pl_json_member(root, "properties");
-        if (geom) {
-            DcGeojsonFeature *feat = _push_feature(gj);
-            _parse_style_properties(props, &feat->style);
-            ok = _parse_geometry(feat, geom);
-        } else {
-            ok = false;
-        }
-    }
-    else {
-        // bare geometry
-        DcGeojsonFeature *feat = _push_feature(gj);
-        ok = _parse_geometry(feat, root);
-    }
-
-    pl_unload_json(&root);
-    free(json_str);
-
-    if (!ok) {
-        dc_geojson_free(gj);
-        return NULL;
-    }
-
-    DC_LOG_INFO(DC_GEOJSON_TAG, "loaded %s: %d features", filepath, sbcount(gj->sb_features));
-    return gj;
-}
-
-void
-dc_geojson_free(DcGeojson *geojson)
-{
-    if (!geojson) return;
-
-    for (int i = 0; i < sbcount(geojson->sb_features); i++)
-        _free_feature(&geojson->sb_features[i]);
-    sbfree(geojson->sb_features);
-    free(geojson);
-}
-
-uint32_t
-dc_geojson_feature_count(DcGeojson *geojson)
-{
-    return geojson ? (uint32_t)sbcount(geojson->sb_features) : 0;
-}
-
-const DcGeojsonFeature *
-dc_geojson_feature(DcGeojson *geojson, uint32_t index)
-{
-    if (!geojson || index >= (uint32_t)sbcount(geojson->sb_features)) return NULL;
-    return &geojson->sb_features[index];
 }
