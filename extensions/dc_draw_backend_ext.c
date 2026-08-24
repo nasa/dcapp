@@ -1751,13 +1751,14 @@ pl__get_2d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASample
     if(!pl__stencil_state_valid(tStencil))
         return NULL;
 
+    const dcDrawFlags tStencilFlags = (dcDrawFlags)((uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u));
     for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dStencilPipelineEntries); i++)
     {
         const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dStencilPipelineEntries[i];
         if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex &&
             ptEntry->uMSAASampleCount == uMSAASampleCount &&
             ptEntry->uSubpassIndex == uSubpassIndex &&
-            ptEntry->tFlags == ((uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u)))
+            ptEntry->tFlags == tStencilFlags)
         {
             return ptEntry;
         }
@@ -1769,7 +1770,7 @@ pl__get_2d_stencil_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASample
     ptEntry->tRenderPass = tRenderPass;
     ptEntry->uMSAASampleCount = uMSAASampleCount;
     ptEntry->uSubpassIndex = uSubpassIndex;
-    ptEntry->tFlags = (uint32_t)tStencil.tMode | ((uint32_t)tStencil.uDepth << 8u);
+    ptEntry->tFlags = tStencilFlags;
 
     const plVertexBufferLayout tVertexLayout = {
         .uByteStride = sizeof(float) * 5,

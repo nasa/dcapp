@@ -15,6 +15,10 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 - Replaced the standalone generated-header fixtures and structural checker with
   the API test sample.
 
+### Fixed
+- Fixed the signed stencil-pipeline key comparison that failed Windows builds
+  when MSVC promoted warning C4389 to an error.
+
 [2.185.0] - 2026-08-22
 ----------------------
 
