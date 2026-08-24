@@ -18,10 +18,10 @@
 #include <string.h>
 
 typedef struct _DcAppTexture {
-    plTextureHandle   texture_handle;
+    plTextureHandle texture_handle;
     plBindGroupHandle bind_group_handle;
-    uint32_t          width;
-    uint32_t          height;
+    uint32_t width;
+    uint32_t height;
 } _DcAppTexture;
 
 struct DcAppTextureContext {
@@ -33,42 +33,42 @@ struct DcAppTextureContext {
 
     // One staging buffer grows to the largest upload seen by this context.
     plBufferHandle staging_buffer_handle;
-    size_t         staging_buffer_size;
-    bool           has_staging_buffer;
+    size_t staging_buffer_size;
+    bool has_staging_buffer;
 
     char *asset_root;
 
     // Name offsets remain valid when the backing string buffer moves.
-    char         *sb_texture_names;
-    int          *sb_texture_name_offsets;
+    char *sb_texture_names;
+    int *sb_texture_name_offsets;
     _DcAppTexture *sb_textures;
 };
 
-static const plMemoryI        *_ext_memory          = NULL;
-static const plStarterI       *_ext_starter         = NULL;
-static const plGraphicsI      *_ext_gfx             = NULL;
-static const plGPUAllocatorsI *_ext_gpu_allocators  = NULL;
-static const dcDrawBackendI   *_ext_dc_draw_backend = NULL;
-static const plImageI         *_ext_image           = NULL;
+static const plMemoryI *_ext_memory = NULL;
+static const plStarterI *_ext_starter = NULL;
+static const plGraphicsI *_ext_gfx = NULL;
+static const plGPUAllocatorsI *_ext_gpu_allocators = NULL;
+static const dcDrawBackendI *_ext_dc_draw_backend = NULL;
+static const plImageI *_ext_image = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_FREE(x)  _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-static bool          _texture_resolve_path(const char *path, const char *base_directory, char *out, size_t out_size);
+static bool _texture_resolve_path(const char *path, const char *base_directory, char *out, size_t out_size);
 static DcAppTextureIndex _texture_find_by_name(DcAppTextureContext *texture_ctx, const char *canon_path);
-static bool          _texture_ensure_staging_buffer(DcAppTextureContext *texture_ctx, size_t required_size);
-static bool          _texture_upload_size_valid(uint32_t width, uint32_t height, size_t *out_size);
-static bool          _texture_index_valid(DcAppTextureContext *texture_ctx, DcAppTextureId texture_id);
+static bool _texture_ensure_staging_buffer(DcAppTextureContext *texture_ctx, size_t required_size);
+static bool _texture_upload_size_valid(uint32_t width, uint32_t height, size_t *out_size);
+static bool _texture_index_valid(DcAppTextureContext *texture_ctx, DcAppTextureId texture_id);
 static _DcAppTexture _texture_create_gpu(DcAppTextureContext *texture_ctx, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator);
 static DcAppTextureIndex _texture_register(DcAppTextureContext *texture_ctx, _DcAppTexture texture, const char *name);
 
 void dc_app_texture_init(plApiRegistryI *api_registry) {
-    _ext_memory          = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_starter         = pl_get_api_latest(api_registry, plStarterI);
-    _ext_gfx             = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_gpu_allocators  = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_starter = pl_get_api_latest(api_registry, plStarterI);
+    _ext_gfx = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
     _ext_dc_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
-    _ext_image           = pl_get_api_latest(api_registry, plImageI);
+    _ext_image = pl_get_api_latest(api_registry, plImageI);
 }
 
 DcAppTextureContext *dc_app_texture_context_create(const char *asset_root) {
@@ -77,14 +77,14 @@ DcAppTextureContext *dc_app_texture_context_create(const char *asset_root) {
     memset(texture_ctx, 0, sizeof(*texture_ctx));
 
     // get device
-    texture_ctx->device                          = _ext_starter->get_device();
-    texture_ctx->gpu_local_dedicated_allocator  = _ext_gpu_allocators->get_local_dedicated_allocator(texture_ctx->device);
-    texture_ctx->gpu_local_buddy_allocator      = _ext_gpu_allocators->get_local_buddy_allocator(texture_ctx->device);
+    texture_ctx->device = _ext_starter->get_device();
+    texture_ctx->gpu_local_dedicated_allocator = _ext_gpu_allocators->get_local_dedicated_allocator(texture_ctx->device);
+    texture_ctx->gpu_local_buddy_allocator = _ext_gpu_allocators->get_local_buddy_allocator(texture_ctx->device);
     texture_ctx->gpu_staging_uncached_allocator = _ext_gpu_allocators->get_staging_uncached_allocator(texture_ctx->device);
 
     if (asset_root) {
         const size_t asset_root_size = strlen(asset_root) + 1;
-        texture_ctx->asset_root      = PL_ALLOC(asset_root_size);
+        texture_ctx->asset_root = PL_ALLOC(asset_root_size);
         memcpy(texture_ctx->asset_root, asset_root, asset_root_size);
     }
 
@@ -92,9 +92,9 @@ DcAppTextureContext *dc_app_texture_context_create(const char *asset_root) {
     sbresize(texture_ctx->sb_textures, 1);
     sbresize(texture_ctx->sb_texture_name_offsets, 1);
     sbresize(texture_ctx->sb_texture_names, 1);
-    texture_ctx->sb_textures[0]            = (_DcAppTexture){0};
+    texture_ctx->sb_textures[0] = (_DcAppTexture){0};
     texture_ctx->sb_texture_name_offsets[0] = 0;
-    texture_ctx->sb_texture_names[0]        = '\0';
+    texture_ctx->sb_texture_names[0] = '\0';
     return texture_ctx;
 }
 
@@ -152,14 +152,14 @@ DcAppTextureIndex dc_app_texture_load_image_index(DcAppTextureContext *texture_c
         return texture_index;
     }
 
-    size_t         file_data_size = 0;
-    unsigned char *file_data      = dc_utils_load_binary_file(canon_path, &file_data_size);
+    size_t file_data_size = 0;
+    unsigned char *file_data = dc_utils_load_binary_file(canon_path, &file_data_size);
     if (!file_data) {
         DC_LOG_ERROR("Image", "Failed to load file: %s", canon_path);
         return TEXTURE_INDEX_UNDEFINED;
     }
 
-    int            image_width, image_height, channels;
+    int image_width, image_height, channels;
     unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
     (void)channels;
     free(file_data);
@@ -211,10 +211,10 @@ bool dc_app_texture_update_rgba(DcAppTextureContext *texture_ctx, DcAppTextureId
 
     plBufferImageCopy buffer_image_copy;
     memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
-    buffer_image_copy.uImageWidth    = width;
-    buffer_image_copy.uImageHeight   = height;
-    buffer_image_copy.uImageDepth    = 1;
-    buffer_image_copy.uLayerCount    = 1;
+    buffer_image_copy.uImageWidth = width;
+    buffer_image_copy.uImageHeight = height;
+    buffer_image_copy.uImageDepth = 1;
+    buffer_image_copy.uLayerCount = 1;
     buffer_image_copy.szBufferOffset = 0;
 
     plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
@@ -315,12 +315,12 @@ static bool _texture_ensure_staging_buffer(DcAppTextureContext *texture_ctx, siz
     }
 
     const plBufferDesc staging_buffer_desc = {
-        .tUsage      = PL_BUFFER_USAGE_STAGING,
-        .szByteSize  = required_size,
+        .tUsage = PL_BUFFER_USAGE_STAGING,
+        .szByteSize = required_size,
         .pcDebugName = "staging buffer"};
     texture_ctx->staging_buffer_handle = _ext_gfx->create_buffer(texture_ctx->device, &staging_buffer_desc, NULL);
-    texture_ctx->staging_buffer_size   = required_size;
-    texture_ctx->has_staging_buffer    = true;
+    texture_ctx->staging_buffer_size = required_size;
+    texture_ctx->has_staging_buffer = true;
 
     plBuffer *staging_buffer = _ext_gfx->get_buffer(texture_ctx->device, texture_ctx->staging_buffer_handle);
     const plDeviceMemoryAllocation staging_buffer_allocation = texture_ctx->gpu_staging_uncached_allocator->allocate(
@@ -354,15 +354,15 @@ static _DcAppTexture _texture_create_gpu(DcAppTextureContext *texture_ctx, uint3
     plTextureDesc pl_texture_desc;
     memset(&pl_texture_desc, 0, sizeof(plTextureDesc));
     pl_texture_desc.tDimensions = (plVec3){(float)texture_width, (float)texture_height, 1.0f};
-    pl_texture_desc.tFormat     = PL_FORMAT_R8G8B8A8_UNORM;
-    pl_texture_desc.uLayers     = 1;
-    pl_texture_desc.uMips       = 1;
-    pl_texture_desc.tType       = PL_TEXTURE_TYPE_2D;
-    pl_texture_desc.tUsage      = PL_TEXTURE_USAGE_SAMPLED;
+    pl_texture_desc.tFormat = PL_FORMAT_R8G8B8A8_UNORM;
+    pl_texture_desc.uLayers = 1;
+    pl_texture_desc.uMips = 1;
+    pl_texture_desc.tType = PL_TEXTURE_TYPE_2D;
+    pl_texture_desc.tUsage = PL_TEXTURE_USAGE_SAMPLED;
     pl_texture_desc.pcDebugName = texture_name;
 
     // create texture
-    plTexture      *pl_texture;
+    plTexture *pl_texture;
     plTextureHandle pl_texture_handle = _ext_gfx->create_texture(texture_ctx->device, &pl_texture_desc, &pl_texture);
 
     // choose allocator based on texture size or caller request

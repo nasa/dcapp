@@ -17,7 +17,7 @@ typedef struct Example {
 } Example;
 
 static DcTextureId g_image_texture;
-static DcVec2      g_image_size;
+static DcVec2 g_image_size;
 static const char *g_image_status = "image not loaded";
 
 static void draw_example_01_line(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args);
@@ -161,9 +161,9 @@ void draw_reference_grid(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, vo
         // Draw the card background and label before handing control to the
         // example. The example only needs to care about its own feature.
         float band = (float)row / 5.0f;
-        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcVec4){ .r = 0.075f + band * 0.025f, .g = 0.088f, .b = 0.105f + band * 0.020f, .a = 1.0f });
-        dc_draw->rounded_rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcStroke){ .color = (DcVec4){ .r = 0.24f, .g = 0.32f, .b = 0.40f, .a = 1.0f }, .width = 1.0f });
-        dc_draw->text(draw_ctx, (DcVec2){10.0f, 100.0f}, examples[i].label, (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.76f, .g = 0.88f, .b = 0.96f, .a = 1.0f } });
+        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcVec4){.r = 0.075f + band * 0.025f, .g = 0.088f, .b = 0.105f + band * 0.020f, .a = 1.0f});
+        dc_draw->rounded_rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){220.0f, 120.0f}, 7.0f, (DcStroke){.color = (DcVec4){.r = 0.24f, .g = 0.32f, .b = 0.40f, .a = 1.0f}, .width = 1.0f});
+        dc_draw->text(draw_ctx, (DcVec2){10.0f, 100.0f}, examples[i].label, (DcTextStyle){.size = 9.0f, .color = (DcVec4){.r = 0.76f, .g = 0.88f, .b = 0.96f, .a = 1.0f}});
         examples[i].draw(draw_ctx, args);
         dc_draw->container_pop(draw_ctx);
     }
@@ -173,20 +173,20 @@ void draw_reference_grid(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, vo
 // in the current draw area; there is no placement/result metadata.
 static void draw_example_01_line(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->line(draw_ctx, (DcVec2){24.0f, 30.0f}, (DcVec2){190.0f, 78.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.62f, .g = 0.86f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
-    dc_draw->line(draw_ctx, (DcVec2){28.0f, 78.0f}, (DcVec2){184.0f, 32.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.30f, .g = 0.52f, .b = 0.74f, .a = 1.0f }, .width = 1.0f });
+    dc_draw->line(draw_ctx, (DcVec2){24.0f, 30.0f}, (DcVec2){190.0f, 78.0f}, (DcStroke){.color = (DcVec4){.r = 0.62f, .g = 0.86f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
+    dc_draw->line(draw_ctx, (DcVec2){28.0f, 78.0f}, (DcVec2){184.0f, 32.0f}, (DcStroke){.color = (DcVec4){.r = 0.30f, .g = 0.52f, .b = 0.74f, .a = 1.0f}, .width = 1.0f});
 }
 
 // 02: _ex functions add placement and optional result output. Here the line is
 // defined around local zero, placed at the cell center, and rotated around its
 // own center using pivot alignment.
 static void draw_example_02_line_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
-    DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
+    DcPlacement placement = (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE};
     placement.pivot_align_x = DC_ALIGN_CENTER;
     placement.pivot_align_y = DC_ALIGN_MIDDLE;
     float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
     placement.rotation = phase * 2.0f;
-    dc_draw->line_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){96.0f, 0.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.74f, .g = 0.92f, .b = 1.0f, .a = 1.0f }, .width = 3.0f }, (DcVec2){110.0f, 58.0f}, placement, NULL);
+    dc_draw->line_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){96.0f, 0.0f}, (DcStroke){.color = (DcVec4){.r = 0.74f, .g = 0.92f, .b = 1.0f, .a = 1.0f}, .width = 3.0f}, (DcVec2){110.0f, 58.0f}, placement, NULL);
 }
 
 // 03: A polyline draws connected line segments through every point.
@@ -200,7 +200,7 @@ static void draw_example_03_polyline(DcDrawContext *draw_ctx, const DcDrawFuncAr
         {166.0f, 38.0f},
         {196.0f, 68.0f},
     };
-    dc_draw->polyline(draw_ctx, points, 6, (DcStroke){ .color = (DcVec4){ .r = 0.54f, .g = 0.95f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->polyline(draw_ctx, points, 6, (DcStroke){.color = (DcVec4){.r = 0.54f, .g = 0.95f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 04: polyline_ex keeps the points local to the shape, then places the whole
@@ -215,7 +215,7 @@ static void draw_example_04_polyline_ex(DcDrawContext *draw_ctx, const DcDrawFun
         {106.0f, 44.0f},
         {144.0f, 4.0f},
     };
-    dc_draw->polyline_ex(draw_ctx, points, 5, (DcStroke){ .color = (DcVec4){ .r = 0.72f, .g = 0.96f, .b = 1.0f, .a = 1.0f }, .width = 2.0f }, (DcVec2){110.0f, 58.0f}, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+    dc_draw->polyline_ex(draw_ctx, points, 5, (DcStroke){.color = (DcVec4){.r = 0.72f, .g = 0.96f, .b = 1.0f, .a = 1.0f}, .width = 2.0f}, (DcVec2){110.0f, 58.0f}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
 }
 
 // 05: polygon outlines close the point list automatically.
@@ -228,7 +228,7 @@ static void draw_example_05_polygon(DcDrawContext *draw_ctx, const DcDrawFuncArg
         {104.0f, 90.0f},
         {52.0f, 62.0f},
     };
-    dc_draw->polygon(draw_ctx, points, 5, (DcStroke){ .color = (DcVec4){ .r = 0.72f, .g = 0.92f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->polygon(draw_ctx, points, 5, (DcStroke){.color = (DcVec4){.r = 0.72f, .g = 0.92f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 06: convex_polygon_filled() makes the fill constraint explicit in its name.
@@ -242,7 +242,7 @@ static void draw_example_06_convex_polygon_filled(DcDrawContext *draw_ctx, const
         {104.0f, 90.0f},
         {52.0f, 62.0f},
     };
-    dc_draw->convex_polygon_filled(draw_ctx, points, 5, (DcVec4){ .r = 0.20f, .g = 0.42f, .b = 0.58f, .a = 0.80f });
+    dc_draw->convex_polygon_filled(draw_ctx, points, 5, (DcVec4){.r = 0.20f, .g = 0.42f, .b = 0.58f, .a = 0.80f});
 }
 
 // 07: rounded polygons soften the corners by a radius. The radius is in the
@@ -256,7 +256,7 @@ static void draw_example_07_rounded_polygon(DcDrawContext *draw_ctx, const DcDra
         {112.0f, 88.0f},
         {44.0f, 58.0f},
     };
-    dc_draw->rounded_polygon(draw_ctx, points, 5, 10.0f, (DcStroke){ .color = (DcVec4){ .r = 0.86f, .g = 0.78f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->rounded_polygon(draw_ctx, points, 5, 10.0f, (DcStroke){.color = (DcVec4){.r = 0.86f, .g = 0.78f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 08: rounded_convex_polygon_filled() has the same convex point requirement
@@ -270,70 +270,70 @@ static void draw_example_08_rounded_convex_polygon_filled(DcDrawContext *draw_ct
         {112.0f, 88.0f},
         {44.0f, 58.0f},
     };
-    dc_draw->rounded_convex_polygon_filled(draw_ctx, points, 5, 10.0f, (DcVec4){ .r = 0.28f, .g = 0.28f, .b = 0.60f, .a = 0.82f });
+    dc_draw->rounded_convex_polygon_filled(draw_ctx, points, 5, 10.0f, (DcVec4){.r = 0.28f, .g = 0.28f, .b = 0.60f, .a = 0.82f});
 }
 
 // 09: quads are explicit four-point shapes. They are useful when a rectangle is
 // not enough, but a full polygon point array would be noisy.
 static void draw_example_09_quad(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->quad(draw_ctx, (DcVec2){54.0f, 28.0f}, (DcVec2){176.0f, 36.0f}, (DcVec2){154.0f, 86.0f}, (DcVec2){34.0f, 74.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.92f, .g = 0.82f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->quad(draw_ctx, (DcVec2){54.0f, 28.0f}, (DcVec2){176.0f, 36.0f}, (DcVec2){154.0f, 86.0f}, (DcVec2){34.0f, 74.0f}, (DcStroke){.color = (DcVec4){.r = 0.92f, .g = 0.82f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 10: filled quads are the fill equivalent of quad().
 static void draw_example_10_quad_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->quad_filled(draw_ctx, (DcVec2){54.0f, 28.0f}, (DcVec2){176.0f, 36.0f}, (DcVec2){154.0f, 86.0f}, (DcVec2){34.0f, 74.0f}, (DcVec4){ .r = 0.48f, .g = 0.32f, .b = 0.70f, .a = 0.82f });
+    dc_draw->quad_filled(draw_ctx, (DcVec2){54.0f, 28.0f}, (DcVec2){176.0f, 36.0f}, (DcVec2){154.0f, 86.0f}, (DcVec2){34.0f, 74.0f}, (DcVec4){.r = 0.48f, .g = 0.32f, .b = 0.70f, .a = 0.82f});
 }
 
 // 11: rounded quads give the four-point form the same corner treatment as
 // rounded polygons.
 static void draw_example_11_rounded_quad(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rounded_quad(draw_ctx, (DcVec2){54.0f, 30.0f}, (DcVec2){174.0f, 30.0f}, (DcVec2){182.0f, 80.0f}, (DcVec2){42.0f, 86.0f}, 12.0f, (DcStroke){ .color = (DcVec4){ .r = 0.94f, .g = 0.78f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->rounded_quad(draw_ctx, (DcVec2){54.0f, 30.0f}, (DcVec2){174.0f, 30.0f}, (DcVec2){182.0f, 80.0f}, (DcVec2){42.0f, 86.0f}, 12.0f, (DcStroke){.color = (DcVec4){.r = 0.94f, .g = 0.78f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 12: filled rounded quads are the filled form of rounded_quad().
 static void draw_example_12_rounded_quad_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rounded_quad_filled(draw_ctx, (DcVec2){54.0f, 30.0f}, (DcVec2){174.0f, 30.0f}, (DcVec2){182.0f, 80.0f}, (DcVec2){42.0f, 86.0f}, 12.0f, (DcVec4){ .r = 0.42f, .g = 0.24f, .b = 0.58f, .a = 0.88f });
+    dc_draw->rounded_quad_filled(draw_ctx, (DcVec2){54.0f, 30.0f}, (DcVec2){174.0f, 30.0f}, (DcVec2){182.0f, 80.0f}, (DcVec2){42.0f, 86.0f}, 12.0f, (DcVec4){.r = 0.42f, .g = 0.24f, .b = 0.58f, .a = 0.88f});
 }
 
 // 13: rect() takes a bottom-left position and dimensions.
 static void draw_example_13_rect(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rect(draw_ctx, (DcVec2){48.0f, 32.0f}, (DcVec2){124.0f, 56.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.90f, .g = 0.82f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->rect(draw_ctx, (DcVec2){48.0f, 32.0f}, (DcVec2){124.0f, 56.0f}, (DcStroke){.color = (DcVec4){.r = 0.90f, .g = 0.82f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 14: rect_filled() is the simplest filled primitive for block shapes.
 static void draw_example_14_rect_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rect_filled(draw_ctx, (DcVec2){48.0f, 32.0f}, (DcVec2){124.0f, 56.0f}, (DcVec4){ .r = 0.34f, .g = 0.24f, .b = 0.62f, .a = 0.84f });
+    dc_draw->rect_filled(draw_ctx, (DcVec2){48.0f, 32.0f}, (DcVec2){124.0f, 56.0f}, (DcVec4){.r = 0.34f, .g = 0.24f, .b = 0.62f, .a = 0.84f});
 }
 
 // 15: rounded_rect() is usually the easiest way to draw outlined panels,
 // buttons, and badges from logic code.
 static void draw_example_15_rounded_rect(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rounded_rect(draw_ctx, (DcVec2){44.0f, 30.0f}, (DcVec2){132.0f, 60.0f}, 12.0f, (DcStroke){ .color = (DcVec4){ .r = 0.84f, .g = 0.80f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->rounded_rect(draw_ctx, (DcVec2){44.0f, 30.0f}, (DcVec2){132.0f, 60.0f}, 12.0f, (DcStroke){.color = (DcVec4){.r = 0.84f, .g = 0.80f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 16: rounded_rect_filled() is the filled counterpart.
 static void draw_example_16_rounded_rect_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){44.0f, 30.0f}, (DcVec2){132.0f, 60.0f}, 12.0f, (DcVec4){ .r = 0.26f, .g = 0.22f, .b = 0.52f, .a = 0.88f });
+    dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){44.0f, 30.0f}, (DcVec2){132.0f, 60.0f}, 12.0f, (DcVec4){.r = 0.26f, .g = 0.22f, .b = 0.52f, .a = 0.88f});
 }
 
 // 17: circle() draws the outline at center/radius.
 static void draw_example_17_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->circle(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcStroke){ .color = (DcVec4){ .r = 0.70f, .g = 1.0f, .b = 0.76f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->circle(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcStroke){.color = (DcVec4){.r = 0.70f, .g = 1.0f, .b = 0.76f, .a = 1.0f}, .width = 2.0f});
 }
 
 // 18: circle_filled() uses the same center/radius form with a fill color.
 static void draw_example_18_circle_filled(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->circle_filled(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){ .r = 0.20f, .g = 0.56f, .b = 0.34f, .a = 0.88f });
+    dc_draw->circle_filled(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){.r = 0.20f, .g = 0.56f, .b = 0.34f, .a = 0.88f});
 }
 
 // 19: text_size() includes multiline height. This cell draws the measured
@@ -341,27 +341,27 @@ static void draw_example_18_circle_filled(DcDrawContext *draw_ctx, const DcDrawF
 static void draw_example_19_text_size(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     const char *text = "text\nsize";
-    DcTextStyle style = (DcTextStyle){ .size = 10.0f, .color = (DcVec4){ .r = 0.70f, .g = 0.96f, .b = 0.76f, .a = 1.0f } };
+    DcTextStyle style = (DcTextStyle){.size = 10.0f, .color = (DcVec4){.r = 0.70f, .g = 0.96f, .b = 0.76f, .a = 1.0f}};
     DcVec2 size = dc_draw->text_size(draw_ctx, text, style);
-    DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
+    DcPlacement placement = (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE};
 
-    dc_draw->rect_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, size, (DcStroke){ .color = (DcVec4){ .r = 0.42f, .g = 0.64f, .b = 0.46f, .a = 1.0f }, .width = 1.0f }, placement, NULL);
+    dc_draw->rect_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, size, (DcStroke){.color = (DcVec4){.r = 0.42f, .g = 0.64f, .b = 0.46f, .a = 1.0f}, .width = 1.0f}, placement, NULL);
     dc_draw->text_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, text, style, placement, NULL);
 }
 
 // 20: text() is the simple path: position, string, style.
 static void draw_example_20_text(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->text(draw_ctx, (DcVec2){38.0f, 64.0f}, "dc_draw->text", (DcTextStyle){ .size = 14.0f, .color = (DcVec4){ .r = 0.88f, .g = 1.0f, .b = 0.90f, .a = 1.0f } });
-    dc_draw->text(draw_ctx, (DcVec2){38.0f, 42.0f}, "plain position", (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.54f, .g = 0.72f, .b = 0.58f, .a = 1.0f } });
+    dc_draw->text(draw_ctx, (DcVec2){38.0f, 64.0f}, "dc_draw->text", (DcTextStyle){.size = 14.0f, .color = (DcVec4){.r = 0.88f, .g = 1.0f, .b = 0.90f, .a = 1.0f}});
+    dc_draw->text(draw_ctx, (DcVec2){38.0f, 42.0f}, "plain position", (DcTextStyle){.size = 9.0f, .color = (DcVec4){.r = 0.54f, .g = 0.72f, .b = 0.58f, .a = 1.0f}});
 }
 
 // 21: text_ex() adds placement. The guide line shows the actual anchor; the
 // local-center placement centers the text on that anchor.
 static void draw_example_21_text_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->text_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, "centered", (DcTextStyle){ .size = 13.0f, .color = (DcVec4){ .r = 0.88f, .g = 1.0f, .b = 0.90f, .a = 1.0f } }, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
-    dc_draw->line(draw_ctx, (DcVec2){70.0f, 60.0f}, (DcVec2){150.0f, 60.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.32f, .g = 0.46f, .b = 0.34f, .a = 0.8f }, .width = 1.0f });
+    dc_draw->text_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, "centered", (DcTextStyle){.size = 13.0f, .color = (DcVec4){.r = 0.88f, .g = 1.0f, .b = 0.90f, .a = 1.0f}}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
+    dc_draw->line(draw_ctx, (DcVec2){70.0f, 60.0f}, (DcVec2){150.0f, 60.0f}, (DcStroke){.color = (DcVec4){.r = 0.32f, .g = 0.46f, .b = 0.34f, .a = 0.8f}, .width = 1.0f});
 }
 
 // 22: dc_texture->load_image() is called once in display_init(). The returned
@@ -373,18 +373,18 @@ static void draw_example_22_image(DcDrawContext *draw_ctx, const DcDrawFuncArgs 
             image_size.y = image_size.x * g_image_size.y / g_image_size.x;
         }
 
-        DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
+        DcPlacement placement = (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE};
         placement.pivot_align_x = DC_ALIGN_CENTER;
         placement.pivot_align_y = DC_ALIGN_MIDDLE;
-        placement.rotation      = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
+        placement.rotation = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
 
-        dc_draw->image(draw_ctx, g_image_texture, (DcVec2){30.0f, 38.0f}, image_size, (DcVec4){ .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f });
-        dc_draw->image_ex(draw_ctx, g_image_texture, (DcVec2){150.0f, 60.0f}, image_size, (DcVec4){ .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 0.85f }, placement, NULL);
-        dc_draw->text(draw_ctx, (DcVec2){32.0f, 20.0f}, "image()", (DcTextStyle){ .size = 8.0f, .color = (DcVec4){ .r = 0.62f, .g = 0.74f, .b = 0.82f, .a = 1.0f } });
-        dc_draw->text_ex(draw_ctx, (DcVec2){150.0f, 20.0f}, "image_ex()", (DcTextStyle){ .size = 8.0f, .color = (DcVec4){ .r = 0.62f, .g = 0.74f, .b = 0.82f, .a = 1.0f } }, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+        dc_draw->image(draw_ctx, g_image_texture, (DcVec2){30.0f, 38.0f}, image_size, (DcVec4){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
+        dc_draw->image_ex(draw_ctx, g_image_texture, (DcVec2){150.0f, 60.0f}, image_size, (DcVec4){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 0.85f}, placement, NULL);
+        dc_draw->text(draw_ctx, (DcVec2){32.0f, 20.0f}, "image()", (DcTextStyle){.size = 8.0f, .color = (DcVec4){.r = 0.62f, .g = 0.74f, .b = 0.82f, .a = 1.0f}});
+        dc_draw->text_ex(draw_ctx, (DcVec2){150.0f, 20.0f}, "image_ex()", (DcTextStyle){.size = 8.0f, .color = (DcVec4){.r = 0.62f, .g = 0.74f, .b = 0.82f, .a = 1.0f}}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
     } else {
-        dc_draw->rounded_rect(draw_ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, (DcStroke){ .color = (DcVec4){ .r = 0.70f, .g = 0.84f, .b = 0.92f, .a = 1.0f }, .width = 1.0f });
-        dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, g_image_status, (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
+        dc_draw->rounded_rect(draw_ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, (DcStroke){.color = (DcVec4){.r = 0.70f, .g = 0.84f, .b = 0.92f, .a = 1.0f}, .width = 1.0f});
+        dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, g_image_status, (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f}});
     }
 }
 
@@ -392,12 +392,12 @@ static void draw_example_22_image(DcDrawContext *draw_ctx, const DcDrawFuncArgs 
 // alignment centers the rectangle on the given position; pivot alignment makes
 // the rotation happen around that same center.
 static void draw_example_23_placement(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
-    DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
+    DcPlacement placement = (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE};
     placement.pivot_align_x = DC_ALIGN_CENTER;
     placement.pivot_align_y = DC_ALIGN_MIDDLE;
     float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
     placement.rotation = phase * 2.0f;
-    dc_draw->rect_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){62.0f, 22.0f}, (DcVec4){ .r = 0.86f, .g = 0.78f, .b = 0.30f, .a = 0.95f }, placement, NULL);
+    dc_draw->rect_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){62.0f, 22.0f}, (DcVec4){.r = 0.86f, .g = 0.78f, .b = 0.30f, .a = 0.95f}, placement, NULL);
 }
 
 // 24: Every _ex draw can optionally return a DcDrawResult. The result contains
@@ -406,17 +406,17 @@ static void draw_example_23_placement(DcDrawContext *draw_ctx, const DcDrawFuncA
 static void draw_example_24_draw_result(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     DcDrawResult result = {0};
-    dc_draw->circle_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){ .r = 0.18f, .g = 0.44f, .b = 0.34f, .a = 0.84f }, (DcPlacement){0}, &result);
+    dc_draw->circle_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){.r = 0.18f, .g = 0.44f, .b = 0.34f, .a = 0.84f}, (DcPlacement){0}, &result);
     if (dc_draw->container_push_area(draw_ctx, &result.area)) {
         const DcDrawArea *area = dc_draw->get_area(draw_ctx);
         float width = area ? area->dimensions[0] : 68.0f;
         float height = area ? area->dimensions[1] : 68.0f;
-        DcStroke area_stroke = (DcStroke){ .color = (DcVec4){ .r = 0.94f, .g = 0.82f, .b = 0.28f, .a = 1.0f }, .width = 1.0f };
+        DcStroke area_stroke = (DcStroke){.color = (DcVec4){.r = 0.94f, .g = 0.82f, .b = 0.28f, .a = 1.0f}, .width = 1.0f};
 
         dc_draw->rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){width, height}, area_stroke);
         dc_draw->line(draw_ctx, (DcVec2){0.0f, height * 0.5f}, (DcVec2){width, height * 0.5f}, area_stroke);
         dc_draw->line(draw_ctx, (DcVec2){width * 0.5f, 0.0f}, (DcVec2){width * 0.5f, height}, area_stroke);
-        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){10.0f, 10.0f}, (DcVec4){ .r = 0.94f, .g = 0.82f, .b = 0.28f, .a = 1.0f }, (DcPlacement){ .parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){10.0f, 10.0f}, (DcVec4){.r = 0.94f, .g = 0.82f, .b = 0.28f, .a = 1.0f}, (DcPlacement){.parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -427,8 +427,8 @@ static void draw_example_25_get_area(DcDrawContext *draw_ctx, const DcDrawFuncAr
     (void)args;
     const DcDrawArea *area = dc_draw->get_area(draw_ctx);
     if (!area) return;
-    dc_draw->text(draw_ctx, (DcVec2){30.0f, 64.0f}, "get_area(draw_ctx)", (DcTextStyle){ .size = 12.0f, .color = (DcVec4){ .r = 0.82f, .g = 0.94f, .b = 1.0f, .a = 1.0f } });
-    dc_draw->text(draw_ctx, (DcVec2){30.0f, 44.0f}, "current parent area", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.66f, .b = 0.74f, .a = 1.0f } });
+    dc_draw->text(draw_ctx, (DcVec2){30.0f, 64.0f}, "get_area(draw_ctx)", (DcTextStyle){.size = 12.0f, .color = (DcVec4){.r = 0.82f, .g = 0.94f, .b = 1.0f, .a = 1.0f}});
+    dc_draw->text(draw_ctx, (DcVec2){30.0f, 44.0f}, "current parent area", (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.54f, .g = 0.66f, .b = 0.74f, .a = 1.0f}});
 }
 
 // 26: container_push() creates a child draw area. All draw calls inside the
@@ -436,8 +436,8 @@ static void draw_example_25_get_area(DcDrawContext *draw_ctx, const DcDrawFuncAr
 static void draw_example_26_container_push(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     if (dc_draw->container_push(draw_ctx, (DcVec2){44.0f, 30.0f}, (DcVec2){132.0f, 66.0f}, (DcVec2){132.0f, 66.0f})) {
-        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){132.0f, 66.0f}, 8.0f, (DcVec4){ .r = 0.24f, .g = 0.18f, .b = 0.14f, .a = 0.92f });
-        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, (DcPlacement){ .parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){132.0f, 66.0f}, 8.0f, (DcVec4){.r = 0.24f, .g = 0.18f, .b = 0.14f, .a = 0.92f});
+        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){.r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f}, (DcPlacement){.parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -445,14 +445,14 @@ static void draw_example_26_container_push(DcDrawContext *draw_ctx, const DcDraw
 // 27: container_push_ex() adds placement to a container. This is the container
 // equivalent of the primitive _ex functions.
 static void draw_example_27_container_push_ex(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
-    DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
+    DcPlacement placement = (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE};
     placement.pivot_align_x = DC_ALIGN_CENTER;
     placement.pivot_align_y = DC_ALIGN_MIDDLE;
     float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
     placement.rotation = sinf(phase * 0.01745329251994329577f) * 10.0f;
     if (dc_draw->container_push_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){126.0f, 58.0f}, (DcVec2){126.0f, 58.0f}, placement, NULL)) {
-        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){126.0f, 58.0f}, 8.0f, (DcVec4){ .r = 0.26f, .g = 0.18f, .b = 0.13f, .a = 0.90f });
-        dc_draw->line(draw_ctx, (DcVec2){0.0f, 29.0f}, (DcVec2){126.0f, 29.0f}, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, .width = 2.0f });
+        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){126.0f, 58.0f}, 8.0f, (DcVec4){.r = 0.26f, .g = 0.18f, .b = 0.13f, .a = 0.90f});
+        dc_draw->line(draw_ctx, (DcVec2){0.0f, 29.0f}, (DcVec2){126.0f, 29.0f}, (DcStroke){.color = (DcVec4){.r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f}, .width = 2.0f});
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -462,9 +462,9 @@ static void draw_example_27_container_push_ex(DcDrawContext *draw_ctx, const DcD
 static void draw_example_28_container_push_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     DcDrawResult result = {0};
-    dc_draw->circle_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){ .r = 0.24f, .g = 0.18f, .b = 0.14f, .a = 0.92f }, (DcPlacement){0}, &result);
+    dc_draw->circle_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, (DcVec4){.r = 0.24f, .g = 0.18f, .b = 0.14f, .a = 0.92f}, (DcPlacement){0}, &result);
     if (dc_draw->container_push_area(draw_ctx, &result.area)) {
-        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, (DcPlacement){ .parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+        dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){18.0f, 18.0f}, (DcVec4){.r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f}, (DcPlacement){.parent_align_x = DC_ALIGN_CENTER, .parent_align_y = DC_ALIGN_MIDDLE, .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -485,25 +485,25 @@ static void draw_stripes(DcDrawContext *draw_ctx, DcVec2 position, DcVec2 size, 
 // content clipped to the accumulated mask.
 static void draw_example_29_stencil_add(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rect(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 64.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.40f, .g = 0.28f, .b = 0.22f, .a = 0.55f }, .width = 1.0f });
+    dc_draw->rect(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 64.0f}, (DcStroke){.color = (DcVec4){.r = 0.40f, .g = 0.28f, .b = 0.22f, .a = 0.55f}, .width = 1.0f});
 
     if (dc_draw->stencil_begin(draw_ctx)) {
         dc_draw->stencil_add(draw_ctx);
         dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){56.0f, 34.0f}, (DcVec2){108.0f, 52.0f}, 12.0f, dc_stencil_color());
 
         dc_draw->stencil_draw(draw_ctx);
-        draw_stripes(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 64.0f}, (DcVec4){ .r = 0.98f, .g = 0.50f, .b = 0.28f, .a = 1.0f }, (DcVec4){ .r = 1.0f, .g = 0.72f, .b = 0.36f, .a = 1.0f });
+        draw_stripes(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 64.0f}, (DcVec4){.r = 0.98f, .g = 0.50f, .b = 0.28f, .a = 1.0f}, (DcVec4){.r = 1.0f, .g = 0.72f, .b = 0.36f, .a = 1.0f});
         dc_draw->stencil_end(draw_ctx);
     }
 
-    dc_draw->rounded_rect(draw_ctx, (DcVec2){56.0f, 34.0f}, (DcVec2){108.0f, 52.0f}, 12.0f, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f }, .width = 1.0f });
+    dc_draw->rounded_rect(draw_ctx, (DcVec2){56.0f, 34.0f}, (DcVec2){108.0f, 52.0f}, 12.0f, (DcStroke){.color = (DcVec4){.r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f}, .width = 1.0f});
 }
 
 // 30: stencil_remove() subtracts from the current mask. The result is a ring:
 // the larger circle was added, then the smaller circle was removed.
 static void draw_example_30_stencil_remove(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rect(draw_ctx, (DcVec2){52.0f, 28.0f}, (DcVec2){116.0f, 64.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.40f, .g = 0.28f, .b = 0.22f, .a = 0.55f }, .width = 1.0f });
+    dc_draw->rect(draw_ctx, (DcVec2){52.0f, 28.0f}, (DcVec2){116.0f, 64.0f}, (DcStroke){.color = (DcVec4){.r = 0.40f, .g = 0.28f, .b = 0.22f, .a = 0.55f}, .width = 1.0f});
 
     if (dc_draw->stencil_begin(draw_ctx)) {
         dc_draw->stencil_add(draw_ctx);
@@ -513,19 +513,19 @@ static void draw_example_30_stencil_remove(DcDrawContext *draw_ctx, const DcDraw
         dc_draw->circle_filled(draw_ctx, (DcVec2){110.0f, 60.0f}, 18.0f, dc_stencil_color());
 
         dc_draw->stencil_draw(draw_ctx);
-        draw_stripes(draw_ctx, (DcVec2){52.0f, 28.0f}, (DcVec2){116.0f, 64.0f}, (DcVec4){ .r = 0.92f, .g = 0.58f, .b = 0.28f, .a = 1.0f }, (DcVec4){ .r = 1.0f, .g = 0.76f, .b = 0.42f, .a = 1.0f });
+        draw_stripes(draw_ctx, (DcVec2){52.0f, 28.0f}, (DcVec2){116.0f, 64.0f}, (DcVec4){.r = 0.92f, .g = 0.58f, .b = 0.28f, .a = 1.0f}, (DcVec4){.r = 1.0f, .g = 0.76f, .b = 0.42f, .a = 1.0f});
         dc_draw->stencil_end(draw_ctx);
     }
 
-    dc_draw->circle(draw_ctx, (DcVec2){110.0f, 60.0f}, 40.0f, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f }, .width = 1.0f });
-    dc_draw->circle(draw_ctx, (DcVec2){110.0f, 60.0f}, 18.0f, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f }, .width = 1.0f });
+    dc_draw->circle(draw_ctx, (DcVec2){110.0f, 60.0f}, 40.0f, (DcStroke){.color = (DcVec4){.r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f}, .width = 1.0f});
+    dc_draw->circle(draw_ctx, (DcVec2){110.0f, 60.0f}, 18.0f, (DcStroke){.color = (DcVec4){.r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f}, .width = 1.0f});
 }
 
 // 31: Stencils can nest. The inner stencil is evaluated while the outer stencil
 // is active, so the visible striped content is constrained by both masks.
 static void draw_example_31_nested_stencil(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
-    dc_draw->rect(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 68.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.40f, .g = 0.28f, .b = 0.22f, .a = 0.55f }, .width = 1.0f });
+    dc_draw->rect(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 68.0f}, (DcStroke){.color = (DcVec4){.r = 0.40f, .g = 0.28f, .b = 0.22f, .a = 0.55f}, .width = 1.0f});
 
     if (dc_draw->stencil_begin(draw_ctx)) {
         dc_draw->stencil_add(draw_ctx);
@@ -537,14 +537,14 @@ static void draw_example_31_nested_stencil(DcDrawContext *draw_ctx, const DcDraw
             dc_draw->circle_filled(draw_ctx, (DcVec2){142.0f, 60.0f}, 42.0f, dc_stencil_color());
 
             dc_draw->stencil_draw(draw_ctx);
-            draw_stripes(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 68.0f}, (DcVec4){ .r = 0.96f, .g = 0.42f, .b = 0.26f, .a = 1.0f }, (DcVec4){ .r = 1.0f, .g = 0.68f, .b = 0.34f, .a = 1.0f });
+            draw_stripes(draw_ctx, (DcVec2){44.0f, 28.0f}, (DcVec2){132.0f, 68.0f}, (DcVec4){.r = 0.96f, .g = 0.42f, .b = 0.26f, .a = 1.0f}, (DcVec4){.r = 1.0f, .g = 0.68f, .b = 0.34f, .a = 1.0f});
             dc_draw->stencil_end(draw_ctx);
         }
         dc_draw->stencil_end(draw_ctx);
     }
 
-    dc_draw->rounded_rect(draw_ctx, (DcVec2){52.0f, 34.0f}, (DcVec2){104.0f, 52.0f}, 10.0f, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f }, .width = 1.0f });
-    dc_draw->circle(draw_ctx, (DcVec2){142.0f, 60.0f}, 42.0f, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f }, .width = 1.0f });
+    dc_draw->rounded_rect(draw_ctx, (DcVec2){52.0f, 34.0f}, (DcVec2){104.0f, 52.0f}, 10.0f, (DcStroke){.color = (DcVec4){.r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f}, .width = 1.0f});
+    dc_draw->circle(draw_ctx, (DcVec2){142.0f, 60.0f}, 42.0f, (DcStroke){.color = (DcVec4){.r = 1.0f, .g = 0.84f, .b = 0.56f, .a = 0.85f}, .width = 1.0f});
 }
 
 // 32: Mouse hit registration is separate from drawing. The ID ties the hit
@@ -553,9 +553,9 @@ static void draw_example_32_mouse_rect(DcDrawContext *draw_ctx, const DcDrawFunc
     (void)args;
     const char *id = "drawfunction2_mouse_rect";
     dc_mouse->rect(draw_ctx, id, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f});
-    DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){ .r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f } : (DcVec4){ .r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f };
+    DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){.r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f} : (DcVec4){.r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f};
     dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, fill);
-    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "hover target", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
+    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "hover target", (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f}});
 }
 
 // 33: The mouse API has shape helpers that match common draw primitives. This
@@ -564,9 +564,9 @@ static void draw_example_33_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFu
     (void)args;
     const char *id = "drawfunction2_mouse_circle";
     dc_mouse->circle(draw_ctx, id, (DcVec2){110.0f, 60.0f}, 34.0f);
-    DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){ .r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f } : (DcVec4){ .r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f };
+    DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){.r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f} : (DcVec4){.r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f};
     dc_draw->circle_filled(draw_ctx, (DcVec2){110.0f, 60.0f}, 34.0f, fill);
-    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "circle hit", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
+    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "circle hit", (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f}});
 }
 
 // 34: Polygon hit targets use the same point data as polygon drawing. The same
@@ -581,9 +581,9 @@ static void draw_example_34_mouse_polygon(DcDrawContext *draw_ctx, const DcDrawF
         {52.0f, 72.0f},
     };
     dc_mouse->polygon(draw_ctx, id, points, 4, (DcVec2){0.0f, 0.0f});
-    DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){ .r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f } : (DcVec4){ .r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f };
+    DcVec4 fill = dc_mouse->hovered(draw_ctx, id) ? (DcVec4){.r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f} : (DcVec4){.r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f};
     dc_draw->convex_polygon_filled(draw_ctx, points, 4, fill);
-    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "polygon hit", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
+    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, "polygon hit", (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f}});
 }
 
 // 35: Registration contributes to this frame's hit test. Target event queries
@@ -599,27 +599,27 @@ static void draw_example_35_mouse_events(DcDrawContext *draw_ctx, const DcDrawFu
     bool active = dc_mouse->active(draw_ctx, id);
     bool clicked = dc_mouse->clicked(draw_ctx, id);
 
-    DcVec4 fill = (DcVec4){ .r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f };
+    DcVec4 fill = (DcVec4){.r = 0.34f, .g = 0.22f, .b = 0.16f, .a = 0.88f};
     const char *state = "hover/click/hold";
     if (clicked) {
-        fill = (DcVec4){ .r = 0.96f, .g = 0.72f, .b = 0.34f, .a = 1.0f };
+        fill = (DcVec4){.r = 0.96f, .g = 0.72f, .b = 0.34f, .a = 1.0f};
         state = "clicked";
     } else if (released) {
-        fill = (DcVec4){ .r = 0.92f, .g = 0.70f, .b = 0.30f, .a = 1.0f };
+        fill = (DcVec4){.r = 0.92f, .g = 0.70f, .b = 0.30f, .a = 1.0f};
         state = "released";
     } else if (pressed) {
-        fill = (DcVec4){ .r = 1.0f, .g = 0.86f, .b = 0.42f, .a = 1.0f };
+        fill = (DcVec4){.r = 1.0f, .g = 0.86f, .b = 0.42f, .a = 1.0f};
         state = "pressed";
     } else if (active) {
-        fill = (DcVec4){ .r = 0.98f, .g = 0.62f, .b = 0.32f, .a = 1.0f };
+        fill = (DcVec4){.r = 0.98f, .g = 0.62f, .b = 0.32f, .a = 1.0f};
         state = "active";
     } else if (hovered) {
-        fill = (DcVec4){ .r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f };
+        fill = (DcVec4){.r = 0.72f, .g = 0.38f, .b = 0.24f, .a = 0.94f};
         state = "hovered";
     }
 
     dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, fill);
-    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, state, (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f } });
+    dc_draw->text(draw_ctx, (DcVec2){12.0f, 18.0f}, state, (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.54f, .g = 0.64f, .b = 0.70f, .a = 1.0f}});
 }
 
 // 36: DrawFunction args and global mouse state are also available. PHASE comes
@@ -628,7 +628,7 @@ static void draw_example_36_args_and_state(DcDrawContext *draw_ctx, const DcDraw
     float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
     float radius = 20.0f + 8.0f * (0.5f + 0.5f * sinf(phase * 0.01745329251994329577f));
     const DcMouse *mouse = dc_mouse->get_state(draw_ctx);
-    dc_draw->circle_filled(draw_ctx, (DcVec2){70.0f, 60.0f}, radius, (DcVec4){ .r = 0.40f, .g = 0.62f, .b = 0.90f, .a = 0.90f });
-    dc_draw->text(draw_ctx, (DcVec2){112.0f, 66.0f}, "Arg PHASE", (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.88f, .g = 0.96f, .b = 1.0f, .a = 1.0f } });
-    dc_draw->text(draw_ctx, (DcVec2){112.0f, 46.0f}, mouse && mouse->position_valid ? "mouse valid" : "mouse invalid", (DcTextStyle){ .size = 8.5f, .color = (DcVec4){ .r = 0.58f, .g = 0.68f, .b = 0.76f, .a = 1.0f } });
+    dc_draw->circle_filled(draw_ctx, (DcVec2){70.0f, 60.0f}, radius, (DcVec4){.r = 0.40f, .g = 0.62f, .b = 0.90f, .a = 0.90f});
+    dc_draw->text(draw_ctx, (DcVec2){112.0f, 66.0f}, "Arg PHASE", (DcTextStyle){.size = 9.0f, .color = (DcVec4){.r = 0.88f, .g = 0.96f, .b = 1.0f, .a = 1.0f}});
+    dc_draw->text(draw_ctx, (DcVec2){112.0f, 46.0f}, mouse && mouse->position_valid ? "mouse valid" : "mouse invalid", (DcTextStyle){.size = 8.5f, .color = (DcVec4){.r = 0.58f, .g = 0.68f, .b = 0.76f, .a = 1.0f}});
 }

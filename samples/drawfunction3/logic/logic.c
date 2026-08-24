@@ -21,9 +21,9 @@ static Star g_stars[MAX_STARS];
 static uint32_t g_rng = 0x31415926u;
 
 static float rand_unit(void);
-static int   clamp_count(int count);
-static void  init_star(int index, bool at_top);
-static void  sync_star_count(void);
+static int clamp_count(int count);
+static void init_star(int index, bool at_top);
+static void sync_star_count(void);
 
 void display_init(DcAppContext *app_ctx, void **user_data) {
     (void)user_data;
@@ -61,7 +61,7 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
     (void)args;
     if (!dc_draw) return;
 
-    dc_draw->rect_filled(draw_ctx, (DcVec2){0.0f, FIELD_BOTTOM}, (DcVec2){FIELD_WIDTH, FIELD_HEIGHT}, (DcVec4){ .r = 0.018f, .g = 0.022f, .b = 0.032f, .a = 1.0f });
+    dc_draw->rect_filled(draw_ctx, (DcVec2){0.0f, FIELD_BOTTOM}, (DcVec2){FIELD_WIDTH, FIELD_HEIGHT}, (DcVec4){.r = 0.018f, .g = 0.022f, .b = 0.032f, .a = 1.0f});
 
     int count = StarCount ? clamp_count(*StarCount) : 0;
     for (int i = 0; i < count; i++) {
@@ -70,15 +70,15 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
         dc_draw->circle_filled(draw_ctx, (DcVec2){star->x, star->y}, star->size, star->color);
         if ((i % 9) == 0) {
             float sparkle = star->size * 2.4f;
-            dc_draw->line(draw_ctx, (DcVec2){star->x - sparkle, star->y}, (DcVec2){star->x + sparkle, star->y}, (DcStroke){ .color = star->color, .width = 0.8f });
-            dc_draw->line(draw_ctx, (DcVec2){star->x, star->y - sparkle}, (DcVec2){star->x, star->y + sparkle}, (DcStroke){ .color = star->color, .width = 0.8f });
+            dc_draw->line(draw_ctx, (DcVec2){star->x - sparkle, star->y}, (DcVec2){star->x + sparkle, star->y}, (DcStroke){.color = star->color, .width = 0.8f});
+            dc_draw->line(draw_ctx, (DcVec2){star->x, star->y - sparkle}, (DcVec2){star->x, star->y + sparkle}, (DcStroke){.color = star->color, .width = 0.8f});
         }
     }
 
-    dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcVec4){ .r = 0.10f, .g = 0.11f, .b = 0.13f, .a = 0.62f });
-    dc_draw->rounded_rect(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcStroke){ .color = (DcVec4){ .r = 0.44f, .g = 0.50f, .b = 0.58f, .a = 0.28f }, .width = 1.0f });
-    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 557.0f}, "C-generated starfield", (DcTextStyle){ .size = 18.0f, .color = (DcVec4){ .r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 1.0f } }, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
-    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 535.0f}, "Each star is just position, speed, size, and color.", (DcTextStyle){ .size = 10.0f, .color = (DcVec4){ .r = 0.68f, .g = 0.76f, .b = 0.84f, .a = 1.0f } }, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+    dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcVec4){.r = 0.10f, .g = 0.11f, .b = 0.13f, .a = 0.62f});
+    dc_draw->rounded_rect(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcStroke){.color = (DcVec4){.r = 0.44f, .g = 0.50f, .b = 0.58f, .a = 0.28f}, .width = 1.0f});
+    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 557.0f}, "C-generated starfield", (DcTextStyle){.size = 18.0f, .color = (DcVec4){.r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 1.0f}}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
+    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 535.0f}, "Each star is just position, speed, size, and color.", (DcTextStyle){.size = 10.0f, .color = (DcVec4){.r = 0.68f, .g = 0.76f, .b = 0.84f, .a = 1.0f}}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
 }
 
 static float rand_unit(void) {
@@ -103,11 +103,11 @@ static void init_star(int index, bool at_top) {
     star->size = 1.0f + depth * 2.4f;
 
     if (warm < 0.16f) {
-        star->color = (DcVec4){ .r = 1.0f, .g = 0.86f, .b = 0.58f, .a = 0.44f + depth * 0.44f };
+        star->color = (DcVec4){.r = 1.0f, .g = 0.86f, .b = 0.58f, .a = 0.44f + depth * 0.44f};
     } else if (warm > 0.86f) {
-        star->color = (DcVec4){ .r = 0.70f, .g = 0.84f, .b = 1.0f, .a = 0.42f + depth * 0.42f };
+        star->color = (DcVec4){.r = 0.70f, .g = 0.84f, .b = 1.0f, .a = 0.42f + depth * 0.42f};
     } else {
-        star->color = (DcVec4){ .r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 0.38f + depth * 0.44f };
+        star->color = (DcVec4){.r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 0.38f + depth * 0.44f};
     }
 }
 

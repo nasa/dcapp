@@ -155,15 +155,15 @@ const DcAppMouse *dc_app_mouse_get_state(DcAppDrawContext *draw_ctx);
 
 // Internal XML/node draw helpers not exposed through DrawFunction yet
 plVec2 dc_app_draw_text_options_size(const char *text, dcDrawTextOptions options);
-void   dc_app_draw_text_options(DcAppDrawContext *draw_ctx, const char *text, dcDrawTextOptions options);
-void   dc_app_draw_3d_sphere_textured(DcAppDrawContext *draw_ctx, uint32_t texture_id, plSphere sphere, const plMat4 *transform, uint32_t color);
-void   dc_app_draw_3d_sphere_filled(DcAppDrawContext *draw_ctx, plSphere sphere, uint32_t color);
-void   dc_app_draw_planet_convex_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color);
-void   dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color, uint8_t line_pattern);
-void   dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color, uint8_t line_pattern);
-void   dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius, float rotation_degrees, uint32_t segments, float line_width, uint32_t line_color, bool line_enabled, uint32_t fill_color, bool fill_enabled);
-void   dc_app_draw_planet_sphere(plPlanetView *view, float lon, float lat, float height, float radius, uint32_t color);
-void   dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 position, const char *text, float size, uint32_t color);
+void dc_app_draw_text_options(DcAppDrawContext *draw_ctx, const char *text, dcDrawTextOptions options);
+void dc_app_draw_3d_sphere_textured(DcAppDrawContext *draw_ctx, uint32_t texture_id, plSphere sphere, const plMat4 *transform, uint32_t color);
+void dc_app_draw_3d_sphere_filled(DcAppDrawContext *draw_ctx, plSphere sphere, uint32_t color);
+void dc_app_draw_planet_convex_polygon_filled(plPlanetView *view, plVec3 *points, uint32_t point_count, uint32_t color);
+void dc_app_draw_planet_polygon(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color, uint8_t line_pattern);
+void dc_app_draw_planet_line(plPlanetView *view, plVec3 *points, uint32_t point_count, float line_width, uint32_t color, uint8_t line_pattern);
+void dc_app_draw_planet_ellipse(plPlanetView *view, plVec3 center, plVec2 radius, float rotation_degrees, uint32_t segments, float line_width, uint32_t line_color, bool line_enabled, uint32_t fill_color, bool fill_enabled);
+void dc_app_draw_planet_sphere(plPlanetView *view, float lon, float lat, float height, float radius, uint32_t color);
+void dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 position, const char *text, float size, uint32_t color);
 
 const DcAppDrawApi *dc_app_draw_api(void);
 const DcAppMouseApi *dc_app_mouse_api(void);

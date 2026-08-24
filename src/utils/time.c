@@ -11,8 +11,8 @@
 #endif
 #endif
 
-static int    _time_initialized = 0;
-static double _time_origin      = 0.0;
+static int _time_initialized = 0;
+static double _time_origin = 0.0;
 
 #ifdef _WIN32
 static double _time_frequency = 0.0;
@@ -32,14 +32,14 @@ void dc_utils_sleep_ms(int milliseconds) {
 
 double dc_utils_time_get(void) {
     if (!_time_initialized) {
-        _time_origin      = _time_get_raw();
+        _time_origin = _time_get_raw();
         _time_initialized = 1;
     }
     return _time_get_raw() - _time_origin;
 }
 
 void dc_utils_time_reset(void) {
-    _time_origin      = _time_get_raw();
+    _time_origin = _time_get_raw();
     _time_initialized = 1;
 }
 

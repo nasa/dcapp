@@ -33,20 +33,20 @@ void draw_simple_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, voi
     float radius = 50.0f + 4.0f * sinf(t);
 
     dc_draw->circle_filled(draw_ctx, (DcVec2){196.0f, 76.0f}, radius, (DcVec4){
-        .r = 0.20f,
-        .g = 0.58f,
-        .b = 0.94f,
-        .a = 0.92f,
-    });
+                                                                          .r = 0.20f,
+                                                                          .g = 0.58f,
+                                                                          .b = 0.94f,
+                                                                          .a = 0.92f,
+                                                                      });
     dc_draw->circle(draw_ctx, (DcVec2){196.0f, 76.0f}, radius, (DcStroke){
-        .color = {
-            .r = 0.82f,
-            .g = 0.94f,
-            .b = 1.0f,
-            .a = 1.0f,
-        },
-        .width = 2.0f,
-    });
+                                                                   .color = {
+                                                                       .r = 0.82f,
+                                                                       .g = 0.94f,
+                                                                       .b = 1.0f,
+                                                                       .a = 1.0f,
+                                                                   },
+                                                                   .width = 2.0f,
+                                                               });
 }
 
 void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
@@ -61,36 +61,39 @@ void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, vo
     DcDrawResult circle_result = {0};
 
     dc_draw->circle_filled_ex(draw_ctx, (DcVec2){196.0f, 74.0f}, radius, (DcVec4){
-        .r = 0.46f,
-        .g = 0.22f,
-        .b = 0.62f,
-        .a = 0.94f,
-    }, (DcPlacement){0}, &circle_result);
+                                                                             .r = 0.46f,
+                                                                             .g = 0.22f,
+                                                                             .b = 0.62f,
+                                                                             .a = 0.94f,
+                                                                         },
+                              (DcPlacement){0}, &circle_result);
     dc_draw->circle(draw_ctx, (DcVec2){196.0f, 74.0f}, radius, (DcStroke){
-        .color = {
-            .r = 0.98f,
-            .g = 0.78f,
-            .b = 1.0f,
-            .a = 1.0f,
-        },
-        .width = 2.0f,
-    });
+                                                                   .color = {
+                                                                       .r = 0.98f,
+                                                                       .g = 0.78f,
+                                                                       .b = 1.0f,
+                                                                       .a = 1.0f,
+                                                                   },
+                                                                   .width = 2.0f,
+                                                               });
 
     if (dc_draw->container_push_area(draw_ctx, &circle_result.area)) {
         dc_draw->text_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, "C Text", (DcTextStyle){
-            .color = {
-                .r = 0.98f,
-                .g = 0.92f,
-                .b = 1.0f,
-                .a = 1.0f,
-            },
-            .size = 18.0f,
-        }, (DcPlacement){
-            .parent_align_x = DC_ALIGN_CENTER,
-            .parent_align_y = DC_ALIGN_MIDDLE,
-            .local_align_x = DC_ALIGN_CENTER,
-            .local_align_y = DC_ALIGN_MIDDLE,
-        }, NULL);
+                                                                       .color = {
+                                                                           .r = 0.98f,
+                                                                           .g = 0.92f,
+                                                                           .b = 1.0f,
+                                                                           .a = 1.0f,
+                                                                       },
+                                                                       .size = 18.0f,
+                                                                   },
+                         (DcPlacement){
+                             .parent_align_x = DC_ALIGN_CENTER,
+                             .parent_align_y = DC_ALIGN_MIDDLE,
+                             .local_align_x = DC_ALIGN_CENTER,
+                             .local_align_y = DC_ALIGN_MIDDLE,
+                         },
+                         NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }
@@ -110,36 +113,36 @@ void draw_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
 
     if (dc_mouse->active(draw_ctx, id)) {
         dc_draw->circle_filled(draw_ctx, (DcVec2){196.0f, 88.0f}, radius, (DcVec4){
-            .r = 0.22f,
-            .g = 0.80f,
-            .b = 0.44f,
-            .a = 0.96f,
-        });
+                                                                              .r = 0.22f,
+                                                                              .g = 0.80f,
+                                                                              .b = 0.44f,
+                                                                              .a = 0.96f,
+                                                                          });
     } else if (dc_mouse->hovered(draw_ctx, id)) {
         dc_draw->circle_filled(draw_ctx, (DcVec2){196.0f, 88.0f}, radius, (DcVec4){
-            .r = 0.42f,
-            .g = 0.78f,
-            .b = 0.42f,
-            .a = 0.92f,
-        });
+                                                                              .r = 0.42f,
+                                                                              .g = 0.78f,
+                                                                              .b = 0.42f,
+                                                                              .a = 0.92f,
+                                                                          });
     } else {
         dc_draw->circle_filled(draw_ctx, (DcVec2){196.0f, 88.0f}, radius, (DcVec4){
-            .r = 0.20f,
-            .g = 0.50f,
-            .b = 0.28f,
-            .a = 0.90f,
-        });
+                                                                              .r = 0.20f,
+                                                                              .g = 0.50f,
+                                                                              .b = 0.28f,
+                                                                              .a = 0.90f,
+                                                                          });
     }
 
     dc_draw->circle(draw_ctx, (DcVec2){196.0f, 88.0f}, radius, (DcStroke){
-        .color = {
-            .r = 0.72f,
-            .g = 1.0f,
-            .b = 0.76f,
-            .a = 0.90f,
-        },
-        .width = 2.0f,
-    });
+                                                                   .color = {
+                                                                       .r = 0.72f,
+                                                                       .g = 1.0f,
+                                                                       .b = 0.76f,
+                                                                       .a = 0.90f,
+                                                                   },
+                                                                   .width = 2.0f,
+                                                               });
 }
 
 void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
@@ -154,20 +157,21 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
     DcDrawResult circle_result = {0};
 
     dc_draw->circle_filled_ex(draw_ctx, (DcVec2){196.0f, 78.0f}, radius, (DcVec4){
-        .r = 0.18f,
-        .g = 0.30f,
-        .b = 0.42f,
-        .a = 0.92f,
-    }, (DcPlacement){0}, &circle_result);
+                                                                             .r = 0.18f,
+                                                                             .g = 0.30f,
+                                                                             .b = 0.42f,
+                                                                             .a = 0.92f,
+                                                                         },
+                              (DcPlacement){0}, &circle_result);
     dc_draw->circle(draw_ctx, (DcVec2){196.0f, 78.0f}, radius, (DcStroke){
-        .color = {
-            .r = 0.78f,
-            .g = 0.92f,
-            .b = 1.0f,
-            .a = 0.95f,
-        },
-        .width = 2.0f,
-    });
+                                                                   .color = {
+                                                                       .r = 0.78f,
+                                                                       .g = 0.92f,
+                                                                       .b = 1.0f,
+                                                                       .a = 0.95f,
+                                                                   },
+                                                                   .width = 2.0f,
+                                                               });
 
     if (dc_draw->container_push_area(draw_ctx, &circle_result.area)) {
         const DcDrawArea *area = dc_draw->get_area(draw_ctx);
@@ -211,13 +215,14 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
         };
         spin.pivot_align_x = DC_ALIGN_CENTER;
         spin.pivot_align_y = DC_ALIGN_MIDDLE;
-        spin.rotation      = t * 25.0f;
+        spin.rotation = t * 25.0f;
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){22.0f, 22.0f}, (DcVec4){
-            .r = 0.96f,
-            .g = 0.84f,
-            .b = 0.34f,
-            .a = 0.95f,
-        }, spin, NULL);
+                                                                                            .r = 0.96f,
+                                                                                            .g = 0.84f,
+                                                                                            .b = 0.34f,
+                                                                                            .a = 0.95f,
+                                                                                        },
+                                spin, NULL);
 
         DcPlacement left = {
             .parent_align_x = DC_ALIGN_LEFT,
@@ -226,11 +231,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .local_align_y = DC_ALIGN_MIDDLE,
         };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){18.0f, 0.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
-            .r = 0.70f,
-            .g = 0.90f,
-            .b = 1.0f,
-            .a = 0.90f,
-        }, left, NULL);
+                                                                                             .r = 0.70f,
+                                                                                             .g = 0.90f,
+                                                                                             .b = 1.0f,
+                                                                                             .a = 0.90f,
+                                                                                         },
+                                left, NULL);
 
         DcPlacement right = {
             .parent_align_x = DC_ALIGN_RIGHT,
@@ -239,11 +245,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .local_align_y = DC_ALIGN_MIDDLE,
         };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){-18.0f, 0.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
-            .r = 0.70f,
-            .g = 0.90f,
-            .b = 1.0f,
-            .a = 0.90f,
-        }, right, NULL);
+                                                                                              .r = 0.70f,
+                                                                                              .g = 0.90f,
+                                                                                              .b = 1.0f,
+                                                                                              .a = 0.90f,
+                                                                                          },
+                                right, NULL);
 
         DcPlacement top = {
             .parent_align_x = DC_ALIGN_CENTER,
@@ -252,11 +259,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .local_align_y = DC_ALIGN_TOP,
         };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, -18.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
-            .r = 0.70f,
-            .g = 0.90f,
-            .b = 1.0f,
-            .a = 0.90f,
-        }, top, NULL);
+                                                                                              .r = 0.70f,
+                                                                                              .g = 0.90f,
+                                                                                              .b = 1.0f,
+                                                                                              .a = 0.90f,
+                                                                                          },
+                                top, NULL);
 
         DcPlacement bottom = {
             .parent_align_x = DC_ALIGN_CENTER,
@@ -265,11 +273,12 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void
             .local_align_y = DC_ALIGN_BOTTOM,
         };
         dc_draw->rect_filled_ex(draw_ctx, (DcVec2){0.0f, 18.0f}, (DcVec2){12.0f, 12.0f}, (DcVec4){
-            .r = 0.70f,
-            .g = 0.90f,
-            .b = 1.0f,
-            .a = 0.90f,
-        }, bottom, NULL);
+                                                                                             .r = 0.70f,
+                                                                                             .g = 0.90f,
+                                                                                             .b = 1.0f,
+                                                                                             .a = 0.90f,
+                                                                                         },
+                                bottom, NULL);
         dc_draw->container_pop(draw_ctx);
     }
 }

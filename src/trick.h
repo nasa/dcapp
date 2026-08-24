@@ -22,8 +22,8 @@ void dc_trick_init(void);
 
 // lifecycle
 DcTrick *dc_trick_create(const char *host, int port, float data_rate, int timeout_s);
-void     dc_trick_cleanup(DcTrick *trick);
-void     dc_trick_update(DcTrick *trick);
+void dc_trick_cleanup(DcTrick *trick);
+void dc_trick_update(DcTrick *trick);
 
 // state checks
 bool dc_trick_is_connected(DcTrick *trick);

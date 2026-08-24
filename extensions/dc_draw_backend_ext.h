@@ -22,7 +22,8 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define dcDrawBackendI_version {2, 0, 0}
+#define dcDrawBackendI_version \
+    { 2, 0, 0 }
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -36,72 +37,68 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // external
-typedef struct _dcFontAtlas     dcFontAtlas;       // dc_draw_ext.h
-typedef struct _dcDrawList2D    dcDrawList2D;      // dc_draw_ext.h
-typedef struct _dcDrawList3D    dcDrawList3D;      // dc_draw_ext.h
-typedef struct _dcDrawLayer2D   dcDrawLayer2D;     // dc_draw_ext.h
-typedef int    dcDrawFlags;                        // dc_draw_ext.h
-typedef struct _plDevice        plDevice;          // pl_graphics_ext.h
+typedef struct _dcFontAtlas dcFontAtlas;           // dc_draw_ext.h
+typedef struct _dcDrawList2D dcDrawList2D;         // dc_draw_ext.h
+typedef struct _dcDrawList3D dcDrawList3D;         // dc_draw_ext.h
+typedef struct _dcDrawLayer2D dcDrawLayer2D;       // dc_draw_ext.h
+typedef int dcDrawFlags;                           // dc_draw_ext.h
+typedef struct _plDevice plDevice;                 // pl_graphics_ext.h
 typedef struct _plRenderEncoder plRenderEncoder;   // pl_graphics_ext.h
 typedef struct _plCommandBuffer plCommandBuffer;   // pl_graphics_ext.h
 typedef struct _plBindGroupPool plBindGroupPool;   // pl_graphics_ext.h
 typedef union plBindGroupHandle plBindGroupHandle; // pl_graphics_ext.h
-typedef union plTextureHandle   plTextureHandle;   // pl_graphics_ext.h
-typedef union plShaderHandle    plShaderHandle;    // pl_graphics_ext.h
+typedef union plTextureHandle plTextureHandle;     // pl_graphics_ext.h
+typedef union plShaderHandle plShaderHandle;       // pl_graphics_ext.h
 
-typedef struct _dcDrawSubmitInfo
-{
-    plVec2   tLogicalDimensions; // logical display dimensions
+typedef struct _dcDrawSubmitInfo {
+    plVec2 tLogicalDimensions; // logical display dimensions
     uint32_t uFramebufferWidth;
     uint32_t uFramebufferHeight;
     uint32_t uMSAASampleCount;
 } dcDrawSubmitInfo;
 
 // shader override data (passed via callback userData)
-typedef struct _dcShaderOverride
-{
-    plShaderHandle* pt2dShader;  // for regular draws (NULL = use default)
-    plShaderHandle* ptSdfShader; // for SDF draws (NULL = use default)
+typedef struct _dcShaderOverride {
+    plShaderHandle *pt2dShader;  // for regular draws (NULL = use default)
+    plShaderHandle *ptSdfShader; // for SDF draws (NULL = use default)
 } dcShaderOverride;
 
 // 3D shader override data (passed via callback userData)
-typedef struct _dcShaderOverride3D
-{
-    plShaderHandle* ptSolidShader;    // for solid draws (NULL = use default)
-    plShaderHandle* ptTexturedShader; // for textured draws (NULL = use default)
+typedef struct _dcShaderOverride3D {
+    plShaderHandle *ptSolidShader;    // for solid draws (NULL = use default)
+    plShaderHandle *ptTexturedShader; // for textured draws (NULL = use default)
 } dcShaderOverride3D;
 
 //-----------------------------------------------------------------------------
 // [SECTION] public api struct
 //-----------------------------------------------------------------------------
 
-typedef struct _dcDrawBackendI
-{
+typedef struct _dcDrawBackendI {
     // init/cleanup
-    void (*initialize)(plDevice*);
-    void (*cleanup)   (void);
+    void (*initialize)(plDevice *);
+    void (*cleanup)(void);
 
     void (*new_frame)(void);
 
-    bool (*build_font_atlas)  (plCommandBuffer*, dcFontAtlas*);
-    void (*cleanup_font_atlas)(dcFontAtlas*);
+    bool (*build_font_atlas)(plCommandBuffer *, dcFontAtlas *);
+    void (*cleanup_font_atlas)(dcFontAtlas *);
 
     plBindGroupHandle (*create_bind_group_for_texture)(plTextureHandle);
-    plBindGroupPool*  (*get_bind_group_pool)(void);
+    plBindGroupPool *(*get_bind_group_pool)(void);
 
-    void (*submit_2d_drawlist)(dcDrawList2D*, plRenderEncoder*, dcDrawSubmitInfo);
-    void (*submit_3d_drawlist)(dcDrawList3D*, plRenderEncoder*, dcDrawSubmitInfo, const plMat4* ptMVP, dcDrawFlags);
-    void (*submit_2d_drawlist_ex)(dcDrawList2D*, plRenderEncoder*, dcDrawSubmitInfo, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
-    void (*submit_3d_drawlist_ex)(dcDrawList3D*, plRenderEncoder*, dcDrawSubmitInfo, const plMat4* ptMVP, dcDrawFlags, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
+    void (*submit_2d_drawlist)(dcDrawList2D *, plRenderEncoder *, dcDrawSubmitInfo);
+    void (*submit_3d_drawlist)(dcDrawList3D *, plRenderEncoder *, dcDrawSubmitInfo, const plMat4 *ptMVP, dcDrawFlags);
+    void (*submit_2d_drawlist_ex)(dcDrawList2D *, plRenderEncoder *, dcDrawSubmitInfo, plShaderHandle *pt2dShader, plShaderHandle *ptSdfShader);
+    void (*submit_3d_drawlist_ex)(dcDrawList3D *, plRenderEncoder *, dcDrawSubmitInfo, const plMat4 *ptMVP, dcDrawFlags, plShaderHandle *ptSolidShader, plShaderHandle *ptTexturedShader);
 
     // misc.
-    void (*use_nearest_sampler)(dcDrawLayer2D*);
-    void (*use_linear_sampler) (dcDrawLayer2D*);
+    void (*use_nearest_sampler)(dcDrawLayer2D *);
+    void (*use_linear_sampler)(dcDrawLayer2D *);
 
     // shader overrides (inserts callback into command stream)
     // pass NULL for both shaders to reset to default
-    void (*set_shader)   (dcDrawLayer2D*, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
-    void (*set_3d_shader)(dcDrawList3D*,  plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
+    void (*set_shader)(dcDrawLayer2D *, plShaderHandle *pt2dShader, plShaderHandle *ptSdfShader);
+    void (*set_3d_shader)(dcDrawList3D *, plShaderHandle *ptSolidShader, plShaderHandle *ptTexturedShader);
 } dcDrawBackendI;
 
 #endif // DC_DRAW_BACKEND_EXT_H

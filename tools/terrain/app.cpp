@@ -57,52 +57,51 @@
 // [SECTION] global apis
 //-----------------------------------------------------------------------------
 
-const plWindowI*       gptWindows       = nullptr;
-const plStatsI*        gptStats         = nullptr;
-const plGraphicsI*     gptGfx           = nullptr;
-const plToolsI*        gptTools         = nullptr;
-const dcDrawBackendI*  gptDcDrawBackend = nullptr;
-const plUiI*           gptUI            = nullptr;
-const plIOI*           gptIO            = nullptr;
-const plShaderI*       gptShader        = nullptr;
-const plMemoryI*       gptMemory        = nullptr;
-const plNetworkI*      gptNetwork       = nullptr;
-const plStringInternI* gptString        = nullptr;
-const plProfileI*      gptProfile       = nullptr;
-const plFileI*         gptFile          = nullptr;
-const plConsoleI*      gptConsole       = nullptr;
-const plScreenLogI*    gptScreenLog     = nullptr;
-const plConfigI*       gptConfig        = nullptr;
-const plStarterI*      gptStarter       = nullptr;
-const plVfsI*          gptVfs           = nullptr;
-const plPakI*          gptPak           = nullptr;
-const plDateTimeI*     gptDateTime      = nullptr;
-const plCompressI*     gptCompress      = nullptr;
-const plDearImGuiI*    gptDearImGui     = nullptr;
-const plImageI*        gptImage         = nullptr;
-const plThreadsI*      gptThreads       = nullptr;
-const plResourceI*     gptResource      = nullptr;
-const plCameraI*       gptCamera        = nullptr;
+const plWindowI *gptWindows = nullptr;
+const plStatsI *gptStats = nullptr;
+const plGraphicsI *gptGfx = nullptr;
+const plToolsI *gptTools = nullptr;
+const dcDrawBackendI *gptDcDrawBackend = nullptr;
+const plUiI *gptUI = nullptr;
+const plIOI *gptIO = nullptr;
+const plShaderI *gptShader = nullptr;
+const plMemoryI *gptMemory = nullptr;
+const plNetworkI *gptNetwork = nullptr;
+const plStringInternI *gptString = nullptr;
+const plProfileI *gptProfile = nullptr;
+const plFileI *gptFile = nullptr;
+const plConsoleI *gptConsole = nullptr;
+const plScreenLogI *gptScreenLog = nullptr;
+const plConfigI *gptConfig = nullptr;
+const plStarterI *gptStarter = nullptr;
+const plVfsI *gptVfs = nullptr;
+const plPakI *gptPak = nullptr;
+const plDateTimeI *gptDateTime = nullptr;
+const plCompressI *gptCompress = nullptr;
+const plDearImGuiI *gptDearImGui = nullptr;
+const plImageI *gptImage = nullptr;
+const plThreadsI *gptThreads = nullptr;
+const plResourceI *gptResource = nullptr;
+const plCameraI *gptCamera = nullptr;
 
-const plPlanetI*           gptPlanet          = nullptr;
-const plPlanetProcessorI*  gptPlanetProcessor = nullptr;
+const plPlanetI *gptPlanet = nullptr;
+const plPlanetProcessorI *gptPlanetProcessor = nullptr;
 
-#define PL_ALLOC(x)      gptMemory->tracked_realloc(nullptr, (x), __FILE__, __LINE__)
+#define PL_ALLOC(x) gptMemory->tracked_realloc(nullptr, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) gptMemory->tracked_realloc((x), (y), __FILE__, __LINE__)
-#define PL_FREE(x)       gptMemory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_FREE(x) gptMemory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-#define PL_DS_ALLOC(x)                      gptMemory->tracked_realloc(nullptr, (x), __FILE__, __LINE__)
+#define PL_DS_ALLOC(x) gptMemory->tracked_realloc(nullptr, (x), __FILE__, __LINE__)
 #define PL_DS_ALLOC_INDIRECT(x, FILE, LINE) gptMemory->tracked_realloc(nullptr, (x), FILE, LINE)
-#define PL_DS_FREE(x)                       gptMemory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_DS_FREE(x) gptMemory->tracked_realloc((x), 0, __FILE__, __LINE__)
 #include "pl_ds.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs
 //-----------------------------------------------------------------------------
 
-typedef struct _plAppData
-{
-    plWindow* ptWindow;
+typedef struct _plAppData {
+    plWindow *ptWindow;
 
     // UI options
     bool bShowImGuiDemo;
@@ -112,14 +111,14 @@ typedef struct _plAppData
     double dHeight;
     double dLongitude;
     double dLatitude;
-    float  fPitchMod;
-    float  fYawMod;
+    float fPitchMod;
+    float fYawMod;
 
     // 3d drawing
     plCamera tCamera0;
 
-    plPlanet* ptPlanet0;
-    plPlanetView* ptPlanetView;
+    plPlanet *ptPlanet0;
+    plPlanetView *ptPlanetView;
     // plPlanet* ptPlanet1;
 } plAppData;
 
@@ -127,21 +126,20 @@ typedef struct _plAppData
 // [SECTION] helpers
 //-----------------------------------------------------------------------------
 
-void pl__load_apis(plApiRegistryI*);
+void pl__load_apis(plApiRegistryI *);
 
 //-----------------------------------------------------------------------------
 // [SECTION] pl_app_load
 //-----------------------------------------------------------------------------
 
-PL_EXPORT void*
-pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
-{
+PL_EXPORT void *
+pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData) {
     // NOTE: on first load, "pAppData" will be NULL but on reloads
     //       it will be the value returned from this function
 
     // retrieve the data registry API, this is the API used for sharing data
     // between extensions & the runtime
-    const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
+    const plDataRegistryI *ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~dear imgui context stuff~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -151,7 +149,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     // be retrieved and set.
 
     // retrieve/set imgui context
-    ImGuiContext* ptImguiContext = (ImGuiContext*)ptDataRegistry->get_data("imgui");
+    ImGuiContext *ptImguiContext = (ImGuiContext *)ptDataRegistry->get_data("imgui");
     ImGui::SetCurrentContext(ptImguiContext);
 
     // retrieve/set imgui allocator functions
@@ -161,23 +159,22 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
 
     // if "ptAppData" is a valid pointer, then this function is being called
     // during a hot reload.
-    if(ptAppData)
-    {
+    if (ptAppData) {
         pl__load_apis(ptApiRegistry);
         gptScreenLog->add_message_ex(0, 15.0, PL_COLOR_32_MAGENTA, 1.5f, "%s", "App Hot Reloaded");
-        ImPlot::SetCurrentContext((ImPlotContext*)ptDataRegistry->get_data("implot"));
+        ImPlot::SetCurrentContext((ImPlotContext *)ptDataRegistry->get_data("implot"));
         return ptAppData;
     }
 
     // this path is taken only during first load, so we
     // allocate app memory here
-    ptAppData = (plAppData*)malloc(sizeof(plAppData));
+    ptAppData = (plAppData *)malloc(sizeof(plAppData));
     memset(ptAppData, 0, sizeof(plAppData));
 
     ptAppData->bVSync = true;
 
     // retrieve extension registry
-    const plExtensionRegistryI* ptExtensionRegistry = pl_get_api_latest(ptApiRegistry, plExtensionRegistryI);
+    const plExtensionRegistryI *ptExtensionRegistry = pl_get_api_latest(ptApiRegistry, plExtensionRegistryI);
 
     // load extensions
     // ptExtensionRegistry->add_path("../../pl-terrain/out");
@@ -188,7 +185,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     ptExtensionRegistry->load("pl_planet_processor_ext", NULL, NULL, true);
     ptExtensionRegistry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
     ptExtensionRegistry->load("pl_dear_imgui_ext", "pl_load_dear_imgui_ext", "pl_unload_dear_imgui_ext", false);
-    
+
     // load required apis
     pl__load_apis(ptApiRegistry);
 
@@ -208,14 +205,13 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
         1000,
         1000,
         200,
-        200
-    };
+        200};
     gptWindows->create(tWindowDesc, &ptAppData->ptWindow);
     gptWindows->show(ptAppData->ptWindow);
 
     // setup starter extension
     plStarterInit tStarterInit = {};
-    tStarterInit.tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS;
+    tStarterInit.tFlags = PL_STARTER_FLAGS_ALL_EXTENSIONS;
     tStarterInit.ptWindow = ptAppData->ptWindow;
     tStarterInit.tFlags &= ~PL_STARTER_FLAGS_SHADER_EXT;
     gptStarter->initialize(tStarterInit);
@@ -233,7 +229,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     // wraps up (i.e. builds font atlas)
     gptStarter->finalize();
 
-    const dcDrawI* ptDcDraw = pl_get_api_latest(ptApiRegistry, dcDrawI);
+    const dcDrawI *ptDcDraw = pl_get_api_latest(ptApiRegistry, dcDrawI);
     dcDrawInit tDrawInit = {};
     ptDcDraw->initialize(&tDrawInit);
     gptDcDrawBackend->initialize(gptStarter->get_device());
@@ -241,14 +237,14 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     // create camera
     ptAppData->tCamera0 = {};
     // ptAppData->tCamera.tPos         = {0.0f, -1738400.0f * 1.2f, 10.0f};
-    ptAppData->tCamera0.tPosDouble   = {1062766.250, -1965753.0, 1243953.0};
-    ptAppData->tCamera0.fNearZ       = 10.0f;
-    ptAppData->tCamera0.fFarZ        = 1737400.0f * 3.0f;
+    ptAppData->tCamera0.tPosDouble = {1062766.250, -1965753.0, 1243953.0};
+    ptAppData->tCamera0.fNearZ = 10.0f;
+    ptAppData->tCamera0.fFarZ = 1737400.0f * 3.0f;
     ptAppData->tCamera0.fFieldOfView = PL_PI_3;
     ptAppData->tCamera0.fAspectRatio = 1.0f;
-    ptAppData->tCamera0.fYaw         = PL_PI + PL_PI_4;
-    ptAppData->tCamera0.fPitch       = PL_PI_4;
-    ptAppData->tCamera0.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
+    ptAppData->tCamera0.fYaw = PL_PI + PL_PI_4;
+    ptAppData->tCamera0.fPitch = PL_PI_4;
+    ptAppData->tCamera0.tType = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
     gptCamera->update(&ptAppData->tCamera0);
 
     plResourceManagerInit tResourceManagerInit = {};
@@ -261,7 +257,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     ImGui::GetIO().ConfigFlags &= ~ImGuiBackendFlags_PlatformHasViewports;
 
     // same process for implot as imgui
-    ImPlot::SetCurrentContext((ImPlotContext*)ptDataRegistry->get_data("implot"));
+    ImPlot::SetCurrentContext((ImPlotContext *)ptDataRegistry->get_data("implot"));
 
     plPlanetExtInit tPlanetExtInit = {};
     tPlanetExtInit.ptDevice = gptStarter->get_device();
@@ -271,7 +267,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     tPlanetInit.dRadius = 1737400.0;
     tPlanetInit.tLoadFlags = PL_PLANET_LOAD_FLAGS_DEBUG | PL_PLANET_LOAD_FLAGS_CACHE_TEXTURES;
 
-    plCommandBuffer* ptCmdBuffer = gptStarter->get_temporary_command_buffer();
+    plCommandBuffer *ptCmdBuffer = gptStarter->get_temporary_command_buffer();
 
     {
         plPlanetProcessTileInfo atTiles[64] = {};
@@ -292,16 +288,14 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
         tPlanetInfo.uTileCount = 64;
         tPlanetInfo.atTiles = atTiles;
 
-        for(uint32_t i = 0; i < 8; i++)
-        {
-            for(uint32_t j = 0; j < 8; j++)
-            {
+        for (uint32_t i = 0; i < 8; i++) {
+            for (uint32_t j = 0; j < 8; j++) {
                 uint32_t uTileIndex = i + j * 8;
                 plPlanetProcessTileInfo tInfo = {};
-                atTiles[uTileIndex].iTreeDepth      = 6;
-                atTiles[uTileIndex].dMaxHeight      = 14052.0;
-                atTiles[uTileIndex].dMinHeight      = -18256.0;
-                atTiles[uTileIndex].dMaxBaseError   = 15.0;
+                atTiles[uTileIndex].iTreeDepth = 6;
+                atTiles[uTileIndex].dMaxHeight = 14052.0;
+                atTiles[uTileIndex].dMinHeight = -18256.0;
+                atTiles[uTileIndex].dMaxBaseError = 15.0;
                 atTiles[uTileIndex].dOriginX = -1440000.0 + (double)i * 409600.0 + 409600.0 * 0.5;
                 atTiles[uTileIndex].dOriginY = -(-1440000.0 + (double)j * 409600.0 + 409600.0 * 0.5);
 
@@ -312,9 +306,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
 
         gptPlanetProcessor->process(&tPlanetInfo);
 
-        
         ptAppData->ptPlanet0 = gptPlanet->create_planet(ptCmdBuffer, tPlanetInit, &tPlanetInfo);
-        
     }
 
     plPlanetViewInit tViewInit = {};
@@ -332,9 +324,8 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_shutdown(plAppData* ptAppData)
-{
-    plDevice* ptDevice = gptStarter->get_device();
+pl_app_shutdown(plAppData *ptAppData) {
+    plDevice *ptDevice = gptStarter->get_device();
     gptGfx->flush_device(ptDevice);
 
     gptPlanet->cleanup_planet(ptAppData->ptPlanet0);
@@ -353,8 +344,7 @@ pl_app_shutdown(plAppData* ptAppData)
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_resize(plWindow* ptWindow, plAppData* ptAppData)
-{
+pl_app_resize(plWindow *ptWindow, plAppData *ptAppData) {
     gptStarter->resize();
     // plIO* ptIO = gptIO->get_io();
     // gptCamera->set_aspect(&ptAppData->tCamera, ptIO->tMainViewportSize.x / ptIO->tMainViewportSize.y);
@@ -366,11 +356,10 @@ pl_app_resize(plWindow* ptWindow, plAppData* ptAppData)
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_update(plAppData* ptAppData)
-{
-    plIO* ptIO = gptIO->get_io();
+pl_app_update(plAppData *ptAppData) {
+    plIO *ptIO = gptIO->get_io();
 
-    if(!gptStarter->begin_frame())
+    if (!gptStarter->begin_frame())
         return;
 
     gptDcDrawBackend->new_frame();
@@ -379,31 +368,31 @@ pl_app_update(plAppData* ptAppData)
 
     static uint32_t uActiveCamera = 0;
 
-    plCamera* ptCamera = &ptAppData->tCamera0;
+    plCamera *ptCamera = &ptAppData->tCamera0;
 
     static float fCameraTravelSpeed = 100000.0f;
 
-    if((!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse) && !gptUI->wants_mouse_capture())
-    {
+    if ((!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse) && !gptUI->wants_mouse_capture()) {
 
-        
         static const float fCameraRotationSpeed = 0.005f;
 
-        if(gptIO->is_key_pressed(PL_KEY_MINUS, false)) fCameraTravelSpeed /= 10.0f;
-        if(gptIO->is_key_pressed(PL_KEY_EQUAL, false)) fCameraTravelSpeed *= 10.0f;
-
+        if (gptIO->is_key_pressed(PL_KEY_MINUS, false)) fCameraTravelSpeed /= 10.0f;
+        if (gptIO->is_key_pressed(PL_KEY_EQUAL, false)) fCameraTravelSpeed *= 10.0f;
 
         // camera space
-        if(gptIO->is_key_down(PL_KEY_W)) gptCamera->translate(ptCamera,  0.0f,  0.0f,  fCameraTravelSpeed * ptIO->fDeltaTime);
-        if(gptIO->is_key_down(PL_KEY_S)) gptCamera->translate(ptCamera,  0.0f,  0.0f, -fCameraTravelSpeed* ptIO->fDeltaTime);
-        if(gptIO->is_key_down(PL_KEY_A)) gptCamera->translate(ptCamera, -fCameraTravelSpeed * ptIO->fDeltaTime,  0.0f,  0.0f);
-        if(gptIO->is_key_down(PL_KEY_D)) gptCamera->translate(ptCamera,  fCameraTravelSpeed * ptIO->fDeltaTime,  0.0f,  0.0f);
+        if (gptIO->is_key_down(PL_KEY_W)) gptCamera->translate(ptCamera, 0.0f, 0.0f, fCameraTravelSpeed * ptIO->fDeltaTime);
+        if (gptIO->is_key_down(PL_KEY_S)) gptCamera->translate(ptCamera, 0.0f, 0.0f, -fCameraTravelSpeed * ptIO->fDeltaTime);
+        if (gptIO->is_key_down(PL_KEY_A)) gptCamera->translate(ptCamera, -fCameraTravelSpeed * ptIO->fDeltaTime, 0.0f, 0.0f);
+        if (gptIO->is_key_down(PL_KEY_D)) gptCamera->translate(ptCamera, fCameraTravelSpeed * ptIO->fDeltaTime, 0.0f, 0.0f);
 
         // world space
-        if(gptIO->is_key_down(PL_KEY_F)) { gptCamera->translate(ptCamera,  0.0f, -fCameraTravelSpeed * ptIO->fDeltaTime,  0.0f); }
-        if(gptIO->is_key_down(PL_KEY_R)) { gptCamera->translate(ptCamera,  0.0f,  fCameraTravelSpeed * ptIO->fDeltaTime,  0.0f); }
-        if(gptIO->is_key_down(PL_KEY_O))
-        {
+        if (gptIO->is_key_down(PL_KEY_F)) {
+            gptCamera->translate(ptCamera, 0.0f, -fCameraTravelSpeed * ptIO->fDeltaTime, 0.0f);
+        }
+        if (gptIO->is_key_down(PL_KEY_R)) {
+            gptCamera->translate(ptCamera, 0.0f, fCameraTravelSpeed * ptIO->fDeltaTime, 0.0f);
+        }
+        if (gptIO->is_key_down(PL_KEY_O)) {
             ptCamera->fRoll += 0.1f;
             ptCamera->fRoll = fmodf(ptCamera->fRoll, PL_PI * 2.0f);
         }
@@ -412,11 +401,9 @@ pl_app_update(plAppData* ptAppData)
         ptAppData->dLatitude = asin(ptCamera->tPos.y / pl_length_vec3(ptCamera->tPos));
         ptAppData->dHeight = pl_length_vec3(ptCamera->tPos) - 1737400.0 * 10000.0;
 
-
-        if(gptIO->is_mouse_dragging(PL_MOUSE_BUTTON_LEFT, 1.0f))
-        {
+        if (gptIO->is_mouse_dragging(PL_MOUSE_BUTTON_LEFT, 1.0f)) {
             const plVec2 tMouseDelta = gptIO->get_mouse_drag_delta(PL_MOUSE_BUTTON_LEFT, 1.0f);
-            gptCamera->rotate(ptCamera,  -tMouseDelta.y * fCameraRotationSpeed,  -tMouseDelta.x * fCameraRotationSpeed);
+            gptCamera->rotate(ptCamera, -tMouseDelta.y * fCameraRotationSpeed, -tMouseDelta.x * fCameraRotationSpeed);
             // gptIO->reset_mouse_drag_delta(PL_MOUSE_BUTTON_LEFT);
         }
     }
@@ -426,13 +413,11 @@ pl_app_update(plAppData* ptAppData)
         "/assets/hazard.png",
         800.0f,
         0.0f,
-        0.0f
-    };
+        0.0f};
 
     static bool bShowSphere = false;
 
-    if(gptUI->begin_window("Debug", NULL, 0))
-    {
+    if (gptUI->begin_window("Debug", NULL, 0)) {
         gptUI->layout_dynamic(0, 1);
         plPlanetRuntimeOptions tMainOptions = gptPlanet->get_runtime_options(ptAppData->ptPlanet0);
         plPlanetViewRuntimeOptions tOptions = gptPlanet->get_view_runtime_options(ptAppData->ptPlanetView);
@@ -441,10 +426,11 @@ pl_app_update(plAppData* ptAppData)
         bool bShowOrigin = tOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN;
         bool bShowChunks = tOptions.tFlags & PL_PLANET_FLAGS_SHOW_CHUNKS;
         bool bFlat = tOptions.tFlags & PL_PLANET_FLAGS_FLATTEN;
-        if(gptUI->button("Toggle Camera"))
-        {
-            if(uActiveCamera == 0) uActiveCamera = 1;
-            else uActiveCamera = 0;
+        if (gptUI->button("Toggle Camera")) {
+            if (uActiveCamera == 0)
+                uActiveCamera = 1;
+            else
+                uActiveCamera = 0;
         }
         gptUI->slider_float("Tau", &tOptions.fTau, 0.1f, 10.0f, 0);
         gptUI->slider_float("Hazard Map Strength", &tOptions.fHazardMapStrength, 0.0f, 1.0f, 0);
@@ -454,71 +440,61 @@ pl_app_update(plAppData* ptAppData)
         tMainOptions.tLightDirection = pl_norm_vec3(tMainOptions.tLightDirection);
 
         gptUI->checkbox("Show Sphere", &bShowSphere);
-        if(gptUI->checkbox("Show Origin", &bShowOrigin))
-        {
-            if(bShowOrigin)
+        if (gptUI->checkbox("Show Origin", &bShowOrigin)) {
+            if (bShowOrigin)
                 tOptions.tFlags |= PL_PLANET_FLAGS_SHOW_ORIGIN;
             else
                 tOptions.tFlags &= ~PL_PLANET_FLAGS_SHOW_ORIGIN;
         }
 
-        if(gptUI->checkbox("Show Chunks", &bShowChunks))
-        {
-            if(bShowChunks)
+        if (gptUI->checkbox("Show Chunks", &bShowChunks)) {
+            if (bShowChunks)
                 tOptions.tFlags |= PL_PLANET_FLAGS_SHOW_CHUNKS;
             else
                 tOptions.tFlags &= ~PL_PLANET_FLAGS_SHOW_CHUNKS;
         }
 
-        if(gptUI->checkbox("Wireframe", &bWireframe))
-        {
-            if(bWireframe)
+        if (gptUI->checkbox("Wireframe", &bWireframe)) {
+            if (bWireframe)
                 tOptions.tFlags |= PL_PLANET_FLAGS_WIREFRAME;
             else
                 tOptions.tFlags &= ~PL_PLANET_FLAGS_WIREFRAME;
         }
 
-        if(gptUI->checkbox("Levels", &bShowDebug))
-        {
-            if(bShowDebug)
+        if (gptUI->checkbox("Levels", &bShowDebug)) {
+            if (bShowDebug)
                 tOptions.tFlags |= PL_PLANET_FLAGS_SHOW_LEVELS;
             else
                 tOptions.tFlags &= ~PL_PLANET_FLAGS_SHOW_LEVELS;
         }
 
-        if(gptUI->checkbox("Flatten", &bFlat))
-        {
-            if(bFlat)
+        if (gptUI->checkbox("Flatten", &bFlat)) {
+            if (bFlat)
                 tOptions.tFlags |= PL_PLANET_FLAGS_FLATTEN;
             else
                 tOptions.tFlags &= ~PL_PLANET_FLAGS_FLATTEN;
         }
 
         // gptUI->slider_float("Tau", &ptAppData->fTau, 0.0f, 10.0f, 0);
-        if(gptUI->button("Reload Shaders"))
-        {
+        if (gptUI->button("Reload Shaders")) {
             gptPlanet->reload_shaders(ptAppData->ptPlanetView);
         }
 
         float fOriginX = (float)tTexture.dOriginX;
         float fOriginY = (float)tTexture.dOriginY;
-        if(gptUI->input_float("dOriginX", &fOriginX, NULL, 0))
-        {
+        if (gptUI->input_float("dOriginX", &fOriginX, NULL, 0)) {
             tTexture.dOriginX = (double)fOriginX;
         }
-        if(gptUI->input_float("dOriginY", &fOriginY, NULL, 0))
-        {
+        if (gptUI->input_float("dOriginY", &fOriginY, NULL, 0)) {
             tTexture.dOriginY = (double)fOriginY;
         }
         gptUI->input_float("fMetersPerPixel", &tTexture.fMetersPerPixel, NULL, 0);
 
-        if(gptUI->button("Update Hazard"))
-        {
+        if (gptUI->button("Update Hazard")) {
             gptPlanet->set_texture(ptAppData->ptPlanet0, &tTexture, 0);
         }
 
-        if(gptUI->button("Remove Hazard"))
-        {
+        if (gptUI->button("Remove Hazard")) {
             gptPlanet->set_texture(ptAppData->ptPlanet0, NULL, 0);
         }
 
@@ -536,43 +512,40 @@ pl_app_update(plAppData* ptAppData)
 
     gptScreenLog->add_message_ex(186, 10.0, PL_COLOR_32_GREEN, 1.0f, "FPS: %0.0f", ptIO->fFrameRate);
     gptScreenLog->add_message_ex(187, 10.0, PL_COLOR_32_GREEN, 1.0f, "Pos: %0.3f, %0.3f, %0.3f", ptCamera->tPos.x, ptCamera->tPos.y, ptCamera->tPos.z);
-    
+
     gptScreenLog->add_message_ex(189, 10.0, PL_COLOR_32_GREEN, 1.0f, "%0.0f meters / second", fCameraTravelSpeed);
     gptScreenLog->add_message_ex(190, 10.0, PL_COLOR_32_GREEN, 1.0f, "Yaw:   %0.0f", pl_degreesf(ptCamera->fYaw));
     gptScreenLog->add_message_ex(191, 10.0, PL_COLOR_32_GREEN, 1.0f, "Pitch: %0.0f", pl_degreesf(ptCamera->fPitch));
     gptScreenLog->add_message_ex(192, 10.0, PL_COLOR_32_GREEN, 1.0f, "Roll:  %0.0f", pl_degreesf(ptCamera->fRoll));
-    
+
     gptScreenLog->add_message_ex(194, 10.0, PL_COLOR_32_GREEN, 1.0f, "Longitude:  %0.0f", ptAppData->dLongitude * 57.29577951);
     gptScreenLog->add_message_ex(195, 10.0, PL_COLOR_32_GREEN, 1.0f, "Latitude:  %0.0f", ptAppData->dLatitude * 57.29577951);
     gptScreenLog->add_message_ex(193, 10.0, PL_COLOR_32_GREEN, 1.0f, "Height:  %0.0f", ptAppData->dHeight);
 
     ImGui::DockSpaceOverViewport(0, 0, ImGuiDockNodeFlags_PassthruCentralNode);
-    if(ImGui::BeginMainMenuBar())
-    {
-        if(ImGui::BeginMenu("File", false)) ImGui::EndMenu();
-        if(ImGui::BeginMenu("Edit", false)) ImGui::EndMenu();
-        if(ImGui::BeginMenu("Tools", true))
-        {
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File", false)) ImGui::EndMenu();
+        if (ImGui::BeginMenu("Edit", false)) ImGui::EndMenu();
+        if (ImGui::BeginMenu("Tools", true)) {
             ImGui::MenuItem("Dear ImGui Demo", nullptr, &ptAppData->bShowImGuiDemo);
             ImGui::MenuItem("ImPlot Demo", nullptr, &ptAppData->bShowImPlotDemo);
             ImGui::EndMenu();
         }
-        if(ImGui::BeginMenu("Help", false)) ImGui::EndMenu();
+        if (ImGui::BeginMenu("Help", false)) ImGui::EndMenu();
         ImGui::EndMainMenuBar();
     }
 
-    if(ptAppData->bShowImPlotDemo)
+    if (ptAppData->bShowImPlotDemo)
         ImPlot::ShowDemoWindow(&ptAppData->bShowImPlotDemo);
-    if(ptAppData->bShowImGuiDemo)
+    if (ptAppData->bShowImGuiDemo)
         ImGui::ShowDemoWindow(&ptAppData->bShowImGuiDemo);
 
     // gptPlanet->draw_sphere(ptAppData->ptPlanet, 45.0f, -45.0f, 1000.0f, 10000.0f, PL_COLOR_32_CYAN);
     // gptPlanet->draw_sphere(ptAppData->ptPlanet0, 63.6156921f, -60.7322617f, 10000.0f, 10000.0f, PL_COLOR_32_CYAN);
 
-
-    plCommandBuffer* ptCmdBuffer = gptStarter->get_temporary_command_buffer();
+    plCommandBuffer *ptCmdBuffer = gptStarter->get_temporary_command_buffer();
     PL_PROFILE_BEGIN_SAMPLE_API(gptProfile, 0, "prepare terrain");
-    gptPlanet->prepare(ptAppData->ptPlanet0,  ptCmdBuffer);
+    gptPlanet->prepare(ptAppData->ptPlanet0, ptCmdBuffer);
     PL_PROFILE_END_SAMPLE_API(gptProfile, 0);
     gptStarter->submit_temporary_command_buffer(ptCmdBuffer);
 
@@ -582,9 +555,8 @@ pl_app_update(plAppData* ptAppData)
     gptPlanet->render_view(ptAppData->ptPlanetView, ptCamera, ptCmdBuffer, tPlanetViewSize);
     PL_PROFILE_END_SAMPLE_API(gptProfile, 0);
     gptStarter->submit_command_buffer(ptCmdBuffer);
-    
-    if(ImGui::Begin("View 0"))
-    {
+
+    if (ImGui::Begin("View 0")) {
         ImVec2 tContextSize = ImGui::GetContentRegionAvail();
         tPlanetViewSize = {tContextSize.x, tContextSize.y};
         gptCamera->set_aspect(ptCamera, tContextSize.x / tContextSize.y);
@@ -594,17 +566,15 @@ pl_app_update(plAppData* ptAppData)
     }
     ImGui::End();
 
-    plRenderEncoder* ptEncoder = gptStarter->begin_main_pass();
-    
+    plRenderEncoder *ptEncoder = gptStarter->begin_main_pass();
 
-    plDevice* ptDevice = gptStarter->get_device();
+    plDevice *ptDevice = gptStarter->get_device();
 
     gptDearImGui->render(ptEncoder, gptGfx->get_encoder_command_buffer(ptEncoder));
     gptStarter->end_main_pass();
-    gptStarter->end_frame(); 
+    gptStarter->end_frame();
 
-    if(gptIO->is_mouse_dragging(PL_MOUSE_BUTTON_LEFT, 1.0f))
-    {
+    if (gptIO->is_mouse_dragging(PL_MOUSE_BUTTON_LEFT, 1.0f)) {
 
         gptIO->reset_mouse_drag_delta(PL_MOUSE_BUTTON_LEFT);
     }
@@ -614,36 +584,34 @@ pl_app_update(plAppData* ptAppData)
 // [SECTION] helper implementations
 //-----------------------------------------------------------------------------
 
-void
-pl__load_apis(plApiRegistryI* ptApiRegistry)
-{
-    gptWindows         = pl_get_api_latest(ptApiRegistry, plWindowI);
-    gptStats           = pl_get_api_latest(ptApiRegistry, plStatsI);
-    gptGfx             = pl_get_api_latest(ptApiRegistry, plGraphicsI);
-    gptTools           = pl_get_api_latest(ptApiRegistry, plToolsI);
-    gptDcDrawBackend   = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
-    gptUI              = pl_get_api_latest(ptApiRegistry, plUiI);
-    gptIO              = pl_get_api_latest(ptApiRegistry, plIOI);
-    gptShader          = pl_get_api_latest(ptApiRegistry, plShaderI);
-    gptMemory          = pl_get_api_latest(ptApiRegistry, plMemoryI);
-    gptNetwork         = pl_get_api_latest(ptApiRegistry, plNetworkI);
-    gptString          = pl_get_api_latest(ptApiRegistry, plStringInternI);
-    gptProfile         = pl_get_api_latest(ptApiRegistry, plProfileI);
-    gptFile            = pl_get_api_latest(ptApiRegistry, plFileI);
-    gptConsole         = pl_get_api_latest(ptApiRegistry, plConsoleI);
-    gptScreenLog       = pl_get_api_latest(ptApiRegistry, plScreenLogI);
-    gptConfig          = pl_get_api_latest(ptApiRegistry, plConfigI);
-    gptStarter         = pl_get_api_latest(ptApiRegistry, plStarterI);
-    gptDearImGui       = pl_get_api_latest(ptApiRegistry, plDearImGuiI);
-    gptDateTime        = pl_get_api_latest(ptApiRegistry, plDateTimeI);
-    gptVfs             = pl_get_api_latest(ptApiRegistry, plVfsI);
-    gptPak             = pl_get_api_latest(ptApiRegistry, plPakI);
-    gptDateTime        = pl_get_api_latest(ptApiRegistry, plDateTimeI);
-    gptCompress        = pl_get_api_latest(ptApiRegistry, plCompressI);
-    gptImage           = pl_get_api_latest(ptApiRegistry, plImageI);
-    gptPlanet          = pl_get_api_latest(ptApiRegistry, plPlanetI);
+void pl__load_apis(plApiRegistryI *ptApiRegistry) {
+    gptWindows = pl_get_api_latest(ptApiRegistry, plWindowI);
+    gptStats = pl_get_api_latest(ptApiRegistry, plStatsI);
+    gptGfx = pl_get_api_latest(ptApiRegistry, plGraphicsI);
+    gptTools = pl_get_api_latest(ptApiRegistry, plToolsI);
+    gptDcDrawBackend = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
+    gptUI = pl_get_api_latest(ptApiRegistry, plUiI);
+    gptIO = pl_get_api_latest(ptApiRegistry, plIOI);
+    gptShader = pl_get_api_latest(ptApiRegistry, plShaderI);
+    gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
+    gptNetwork = pl_get_api_latest(ptApiRegistry, plNetworkI);
+    gptString = pl_get_api_latest(ptApiRegistry, plStringInternI);
+    gptProfile = pl_get_api_latest(ptApiRegistry, plProfileI);
+    gptFile = pl_get_api_latest(ptApiRegistry, plFileI);
+    gptConsole = pl_get_api_latest(ptApiRegistry, plConsoleI);
+    gptScreenLog = pl_get_api_latest(ptApiRegistry, plScreenLogI);
+    gptConfig = pl_get_api_latest(ptApiRegistry, plConfigI);
+    gptStarter = pl_get_api_latest(ptApiRegistry, plStarterI);
+    gptDearImGui = pl_get_api_latest(ptApiRegistry, plDearImGuiI);
+    gptDateTime = pl_get_api_latest(ptApiRegistry, plDateTimeI);
+    gptVfs = pl_get_api_latest(ptApiRegistry, plVfsI);
+    gptPak = pl_get_api_latest(ptApiRegistry, plPakI);
+    gptDateTime = pl_get_api_latest(ptApiRegistry, plDateTimeI);
+    gptCompress = pl_get_api_latest(ptApiRegistry, plCompressI);
+    gptImage = pl_get_api_latest(ptApiRegistry, plImageI);
+    gptPlanet = pl_get_api_latest(ptApiRegistry, plPlanetI);
     gptPlanetProcessor = pl_get_api_latest(ptApiRegistry, plPlanetProcessorI);
-    gptThreads         = pl_get_api_latest(ptApiRegistry, plThreadsI);
-    gptResource        = pl_get_api_latest(ptApiRegistry, plResourceI);
-    gptCamera          = pl_get_api_latest(ptApiRegistry, plCameraI);
+    gptThreads = pl_get_api_latest(ptApiRegistry, plThreadsI);
+    gptResource = pl_get_api_latest(ptApiRegistry, plResourceI);
+    gptCamera = pl_get_api_latest(ptApiRegistry, plCameraI);
 }

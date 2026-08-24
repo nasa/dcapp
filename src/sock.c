@@ -23,19 +23,19 @@ typedef uintptr_t _DcSockFd;
 #include <sys/socket.h>
 #include <unistd.h>
 typedef int _DcSockFd;
-#define _DC_SOCK_FD_FAILED ((_DcSockFd) - 1)
+#define _DC_SOCK_FD_FAILED ((_DcSockFd)-1)
 #endif
 
 // A socket can exist before it owns a native socket.
-#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd) - 2) // reserved but not yet connected
+#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2) // reserved but not yet connected
 #define _DC_SOCK_FD_IS_INVALID(fd) ((fd) == _DC_SOCK_FD_FAILED || (fd) == _DC_SOCK_FD_ALLOCATED)
 
 struct DcSock {
-    _DcSockFd   sock_fd;
+    _DcSockFd sock_fd;
     DcSockFlags flags;
 };
 
-static void         _close_fd(DcSock *sock);
+static void _close_fd(DcSock *sock);
 static DcSockResult _set_non_nagle(DcSock *sock);
 static DcSockResult _set_non_blocking(DcSock *sock);
 
@@ -59,14 +59,14 @@ DcSock *dc_sock_create(DcSockFlags flags) {
     }
 
     sock->sock_fd = _DC_SOCK_FD_ALLOCATED;
-    sock->flags   = flags;
+    sock->flags = flags;
     return sock;
 }
 
 DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
 
     // Check if already a valid IP address
-    struct in_addr  addr4;
+    struct in_addr addr4;
     struct in6_addr addr6;
     if (inet_pton(AF_INET, host, &addr4) == 1 || inet_pton(AF_INET6, host, &addr6) == 1) {
         strncpy(out, host, INET6_ADDRSTRLEN - 1);
@@ -75,23 +75,23 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     }
 
     struct addrinfo hints = {0}, *result, *entry;
-    hints.ai_family       = AF_UNSPEC;
-    hints.ai_socktype     = SOCK_STREAM;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
     if (getaddrinfo(host, NULL, &hints, &result) != 0) {
         DC_LOG_ERROR("Sock", "Failed to resolve host: %s", host);
         return DC_SOCK_RESULT_FAIL;
     }
 
-    char  ip_str[INET6_ADDRSTRLEN] = {0};
-    void *addr_ptr                 = NULL;
-    int   family                   = 0;
+    char ip_str[INET6_ADDRSTRLEN] = {0};
+    void *addr_ptr = NULL;
+    int family = 0;
 
     // default to ipv4
     for (entry = result; entry != NULL; entry = entry->ai_next) {
         if (entry->ai_family == AF_INET) {
             struct sockaddr_in *ipv4 = (struct sockaddr_in *)entry->ai_addr;
-            addr_ptr                 = &(ipv4->sin_addr);
-            family                   = AF_INET;
+            addr_ptr = &(ipv4->sin_addr);
+            family = AF_INET;
             break;
         }
     }
@@ -101,8 +101,8 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
         for (entry = result; entry != NULL; entry = entry->ai_next) {
             if (entry->ai_family == AF_INET6) {
                 struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)entry->ai_addr;
-                addr_ptr                  = &(ipv6->sin6_addr);
-                family                    = AF_INET6;
+                addr_ptr = &(ipv6->sin6_addr);
+                family = AF_INET6;
                 break;
             }
         }
@@ -122,25 +122,25 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
 DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port) {
     if (!sock) return DC_SOCK_RESULT_FAIL;
 
-    struct sockaddr_in  addr4;
+    struct sockaddr_in addr4;
     struct sockaddr_in6 addr6;
-    socklen_t           socket_addr_len;
-    int                 family;
-    struct sockaddr    *addr_ptr = NULL;
+    socklen_t socket_addr_len;
+    int family;
+    struct sockaddr *addr_ptr = NULL;
 
     // setup ipv4 vs. v6
     if (inet_pton(AF_INET, ip, &addr4.sin_addr) == 1) {
-        family           = AF_INET;
+        family = AF_INET;
         addr4.sin_family = AF_INET;
-        addr4.sin_port   = htons((u_short)port);
-        socket_addr_len  = sizeof(addr4);
-        addr_ptr         = (struct sockaddr *)&addr4;
+        addr4.sin_port = htons((u_short)port);
+        socket_addr_len = sizeof(addr4);
+        addr_ptr = (struct sockaddr *)&addr4;
     } else if (inet_pton(AF_INET6, ip, &addr6.sin6_addr) == 1) {
-        family            = AF_INET6;
+        family = AF_INET6;
         addr6.sin6_family = AF_INET6;
-        addr6.sin6_port   = htons((u_short)port);
-        socket_addr_len   = sizeof(addr6);
-        addr_ptr          = (struct sockaddr *)&addr6;
+        addr6.sin6_port = htons((u_short)port);
+        socket_addr_len = sizeof(addr6);
+        addr_ptr = (struct sockaddr *)&addr6;
     } else {
         DC_LOG_ERROR("Sock", "Invalid IP address: %s", ip);
         return DC_SOCK_RESULT_FAIL;
@@ -212,9 +212,9 @@ DcSockState dc_sock_connection_status(DcSock *sock) {
         FD_SET(sock->sock_fd, &wfds);
         FD_SET(sock->sock_fd, &efds);
         struct timeval tv;
-        tv.tv_sec  = 0;
+        tv.tv_sec = 0;
         tv.tv_usec = 0;
-        int ret    = select((int)(sock->sock_fd + 1), NULL, &wfds, &efds, &tv);
+        int ret = select((int)(sock->sock_fd + 1), NULL, &wfds, &efds, &tv);
         if (ret < 0)
             return DC_SOCK_STATE_DISCONNECTED;
         if (ret == 0)
@@ -223,13 +223,13 @@ DcSockState dc_sock_connection_status(DcSock *sock) {
             return DC_SOCK_STATE_CONNECTING;
     }
 
-    int       err = 0;
+    int err = 0;
     socklen_t len = sizeof(err);
     if (getsockopt(sock->sock_fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len) < 0 || err != 0)
         return DC_SOCK_STATE_DISCONNECTED;
 
     struct sockaddr_storage peer;
-    socklen_t               plen = sizeof(peer);
+    socklen_t plen = sizeof(peer);
     if (getpeername(sock->sock_fd, (struct sockaddr *)&peer, &plen) == 0)
         return DC_SOCK_STATE_CONNECTED;
 
@@ -338,7 +338,7 @@ DcSockResult dc_sock_set_recv_timeout(DcSock *sock, int timeout_ms) {
     if (setsockopt(sock->sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)) < 0) {
 #else
     struct timeval tv;
-    tv.tv_sec  = timeout_ms / 1000;
+    tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     if (setsockopt(sock->sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
 #endif
@@ -372,7 +372,7 @@ static void _close_fd(DcSock *sock) {
 }
 
 static DcSockResult _set_non_nagle(DcSock *sock) {
-    int flag   = 1;
+    int flag = 1;
     int result = setsockopt(sock->sock_fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&flag, (socklen_t)sizeof(flag));
     if (result < 0) {
         DC_LOG_ERROR("Sock", "set_non_nagle: %s", strerror(errno));

@@ -54,14 +54,14 @@ bool dc_utils_char_in(const char c, const char *set) {
 
 bool dc_utils_string_is_double(const char *text) {
     char *end = NULL;
-    errno     = 0;
+    errno = 0;
     strtof(text, &end);
     return (end != text && *end == '\0' && errno == 0);
 }
 
 bool dc_utils_string_is_int(const char *text) {
     char *end = NULL;
-    errno     = 0;
+    errno = 0;
     strtol(text, &end, 0);
     return (end != text && *end == '\0' && errno == 0);
 }
@@ -230,9 +230,9 @@ void dc_utils_trim_whitespace_inplace(char *text) {
         return;
     }
 
-    size_t len   = strlen(text);
+    size_t len = strlen(text);
     size_t start = 0;
-    size_t end   = len;
+    size_t end = len;
 
     while (start < len && isspace((unsigned char)text[start])) {
         start++;
@@ -256,9 +256,9 @@ void dc_utils_trim_whitespace_copy(const char *input, char *out, size_t out_size
         return;
     }
 
-    size_t len   = strlen(input);
+    size_t len = strlen(input);
     size_t start = 0;
-    size_t end   = len;
+    size_t end = len;
 
     while (start < len && isspace((unsigned char)input[start])) {
         start++;
@@ -361,9 +361,9 @@ void dc_utils_split_string_inplace(char *text, const char *delimiters, size_t *o
         return;
     }
 
-    size_t len   = strlen(text);
+    size_t len = strlen(text);
     size_t count = 0;
-    size_t ii    = 0;
+    size_t ii = 0;
 
     while (ii < len) {
         while (ii < len && strchr(delimiters, text[ii]) != NULL) {
@@ -405,9 +405,9 @@ void dc_utils_split_string_copy(const char *text, const char *delimiters, char *
     strncpy(out, text, out_size - 1);
     out[out_size - 1] = '\0';
 
-    size_t len   = strlen(out);
+    size_t len = strlen(out);
     size_t count = 0;
-    size_t ii    = 0;
+    size_t ii = 0;
 
     while (ii < len) {
         while (ii < len && strchr(delimiters, out[ii]) != NULL) {
@@ -462,7 +462,7 @@ bool dc_utils_is_format_specifier_string(const char *value) {
 #ifdef _WIN32
 char *strndup(const char *s, size_t n) {
     size_t len = strnlen(s, n);
-    char  *new = malloc(len + 1);
+    char *new = malloc(len + 1);
     if (new) {
         memcpy(new, s, len);
         new[len] = '\0';

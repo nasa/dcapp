@@ -65,20 +65,20 @@ typedef struct _DcPlanetDemInfo {
 // [SECTION] forward declarations
 //-----------------------------------------------------------------------------
 
-static bool  _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info);
-static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
-static bool  _write_height_tile(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, uint32_t tile_size, double min_h, double max_h);
-static bool  _almost_zero(double v);
+static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info);
+static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
+static bool _write_height_tile(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, uint32_t tile_size, double min_h, double max_h);
+static bool _almost_zero(double v);
 static uint16_t _scale_raw_to_u16(double value, double min_h, double max_h);
-static void  _show_help(void);
+static void _show_help(void);
 static char *_get_stem(const char *path, char *buf, size_t buf_size);
-static void  _pixel_to_projected_meters(const DcPlanetDemInfo *info, double pixel_x, double pixel_y, double *out_x, double *out_y);
+static void _pixel_to_projected_meters(const DcPlanetDemInfo *info, double pixel_x, double pixel_y, double *out_x, double *out_y);
 
 //-----------------------------------------------------------------------------
 // [SECTION] extension globals
 //-----------------------------------------------------------------------------
 
-static const plIOI              *_ext_ioi              = NULL;
+static const plIOI *_ext_ioi = NULL;
 static const plPlanetProcessorI *_ext_planet_processor = NULL;
 
 //-----------------------------------------------------------------------------
@@ -97,33 +97,33 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     extension_registry->load("pl_planet_processor_ext", NULL, NULL, true);
 
     // fetch APIs
-    _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
+    _ext_ioi = pl_get_api_latest(api_registry, plIOI);
     _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
     if (!_ext_planet_processor) {
         fprintf(stderr, "Error: failed to get plPlanetProcessorI from registry\n");
-        plIO *io     = _ext_ioi->get_io();
+        plIO *io = _ext_ioi->get_io();
         io->bRunning = false;
         return NULL;
     }
 
     // get args (argv[0]=pilot_light, argv[1]=-a, argv[2]=dcapp-planet-chunkgen, argv[3]+=app args)
-    plIO  *io   = _ext_ioi->get_io();
-    int    argc = io->iArgc - 3;
+    plIO *io = _ext_ioi->get_io();
+    int argc = io->iArgc - 3;
     char **argv = io->apArgv + 3;
 
     //---- parse arguments ----
 
-    const char *input_dem        = NULL;
-    const char *output_dir       = NULL;
-    double      radius           = 0.0;
-    uint32_t    tile_size        = 4096;
-    double      min_height       = NAN;
-    double      max_height       = NAN;
-    double      meters_per_pixel = 0.0;
-    int         tree_depth       = 6;
-    float       max_base_error   = 0.0f;
-    const char *prefix           = NULL;
-    bool        keep_tiles       = false;
+    const char *input_dem = NULL;
+    const char *output_dir = NULL;
+    double radius = 0.0;
+    uint32_t tile_size = 4096;
+    double min_height = NAN;
+    double max_height = NAN;
+    double meters_per_pixel = 0.0;
+    int tree_depth = 6;
+    float max_base_error = 0.0f;
+    const char *prefix = NULL;
+    bool keep_tiles = false;
 
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
@@ -298,24 +298,22 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         .tGeodeticModel = {
             .tDatum = PL_DATUM_SPHERE,
             .sphere = {
-                .dRadius = radius
-            }
-        },
-        .dMetersPerPixel  = meters_per_pixel,
-        .uSize            = tile_size,
-        .uTileCount       = tile_count,
-        .atTiles          = tiles,
+                .dRadius = radius}},
+        .dMetersPerPixel = meters_per_pixel,
+        .uSize = tile_size,
+        .uTileCount = tile_count,
+        .atTiles = tiles,
         .uHorizontalTiles = cols,
-        .uVerticalTiles   = rows,
+        .uVerticalTiles = rows,
     };
 
     for (uint32_t row = 0; row < rows; row++) {
         for (uint32_t col = 0; col < cols; col++) {
             uint32_t idx = col + row * cols;
 
-            tiles[idx].iTreeDepth    = tree_depth;
-            tiles[idx].dMaxHeight    = max_height;
-            tiles[idx].dMinHeight    = min_height;
+            tiles[idx].iTreeDepth = tree_depth;
+            tiles[idx].dMaxHeight = max_height;
+            tiles[idx].dMinHeight = min_height;
             tiles[idx].dMaxBaseError = (double)max_base_error;
 
             double tile_center_x = 0.0;
@@ -408,10 +406,10 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     for (uint32_t t = 0; t < tile_count; t++) {
         uint32_t col = t % cols;
         uint32_t row = t / cols;
-        uint32_t sx  = col * tile_size;
-        uint32_t sy  = row * tile_size;
-        uint32_t w   = tile_size;
-        uint32_t h   = tile_size;
+        uint32_t sx = col * tile_size;
+        uint32_t sy = row * tile_size;
+        uint32_t w = tile_size;
+        uint32_t h = tile_size;
         if (sx + w > dem_info.width)
             w = dem_info.width - sx;
         if (sy + h > dem_info.height)
@@ -461,7 +459,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void pl_app_update(void *app_data) {
-    plIO *io     = _ext_ioi->get_io();
+    plIO *io = _ext_ioi->get_io();
     io->bRunning = false;
 }
 
@@ -495,11 +493,11 @@ static void _show_help(void) {
 static char *_get_stem(const char *path, char *buf, size_t buf_size) {
     const char *fslash = strrchr(path, '/');
     const char *bslash = strrchr(path, '\\');
-    const char *slash  = (fslash > bslash) ? fslash : bslash;
-    const char *name   = slash ? slash + 1 : path;
+    const char *slash = (fslash > bslash) ? fslash : bslash;
+    const char *name = slash ? slash + 1 : path;
     strncpy(buf, name, buf_size - 1);
     buf[buf_size - 1] = '\0';
-    char *dot         = strrchr(buf, '.');
+    char *dot = strrchr(buf, '.');
     if (dot)
         *dot = '\0';
     return buf;
@@ -532,7 +530,7 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
         return false;
     }
 
-    info->width  = (uint32_t)GDALGetRasterXSize(ds);
+    info->width = (uint32_t)GDALGetRasterXSize(ds);
     info->height = (uint32_t)GDALGetRasterYSize(ds);
     if (info->width == 0 || info->height == 0) {
         fprintf(stderr, "Error: DEM has invalid raster size: %u x %u\n", info->width, info->height);
@@ -541,8 +539,8 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
     }
 
     // get linear unit conversion factor (to meters)
-    double               to_meters = 1.0;
-    OGRSpatialReferenceH srs       = GDALGetSpatialRef(ds);
+    double to_meters = 1.0;
+    OGRSpatialReferenceH srs = GDALGetSpatialRef(ds);
     if (!srs) {
         fprintf(stderr, "Error: DEM is missing spatial reference metadata; use a projected polar stereographic DEM\n");
         GDALClose(ds);
@@ -598,8 +596,8 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
             return false;
         }
         scale_factor = (fabs(fabs(lat_ts) - 90.0) <= 1.0e-9)
-            ? 1.0
-            : 0.5 * (1.0 + sin(fabs(lat_ts) * M_PI / 180.0));
+                           ? 1.0
+                           : 0.5 * (1.0 + sin(fabs(lat_ts) * M_PI / 180.0));
     }
     if (scale_factor <= 0.0)
         scale_factor = 1.0;
@@ -664,7 +662,7 @@ static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *ma
     }
 
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-    CPLErr          err  = GDALComputeRasterStatistics(band, FALSE, min_val, max_val, NULL, NULL, NULL, NULL);
+    CPLErr err = GDALComputeRasterStatistics(band, FALSE, min_val, max_val, NULL, NULL, NULL, NULL);
     GDALClose(ds);
 
     if (err != CE_None) {

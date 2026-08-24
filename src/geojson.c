@@ -19,23 +19,22 @@ struct DcGeojson {
     DcGeojsonFeature *sb_features;
 };
 
-static uint32_t          _json_array_count(plJsonObject *array);
-static plJsonObject     *_json_member(plJsonObject *json, const char *name);
+static uint32_t _json_array_count(plJsonObject *array);
+static plJsonObject *_json_member(plJsonObject *json, const char *name);
 static DcGeojsonFeature *_push_feature(DcGeojson *gj);
-static bool              _parse_hex_color(const char *hex, DcGeojsonColor *color_out);
-static void              _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style);
-static bool              _parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoordArray *out);
-static bool              _parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out);
-static void              _free_feature(DcGeojsonFeature *feat);
-static bool              _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom);
+static bool _parse_hex_color(const char *hex, DcGeojsonColor *color_out);
+static void _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style);
+static bool _parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoordArray *out);
+static bool _parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out);
+static void _free_feature(DcGeojsonFeature *feat);
+static bool _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom);
 
 //-----------------------------------------------------------------------------
 // public api
 //-----------------------------------------------------------------------------
 
 DcGeojson *
-dc_geojson_load(const char *filepath)
-{
+dc_geojson_load(const char *filepath) {
     char *json_str = dc_utils_load_text_file(filepath);
     if (!json_str) {
         DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to load file: %s", filepath);
@@ -76,12 +75,14 @@ dc_geojson_load(const char *filepath)
                 if (geom) {
                     DcGeojsonFeature *feat = _push_feature(gj);
                     _parse_style_properties(props, &feat->style);
-                    if (!_parse_geometry(feat, geom)) { ok = false; break; }
+                    if (!_parse_geometry(feat, geom)) {
+                        ok = false;
+                        break;
+                    }
                 }
             }
         }
-    }
-    else if (strcmp(type_buf, "Feature") == 0) {
+    } else if (strcmp(type_buf, "Feature") == 0) {
         plJsonObject *geom = pl_json_member(root, "geometry");
         plJsonObject *props = pl_json_member(root, "properties");
         if (geom) {
@@ -91,8 +92,7 @@ dc_geojson_load(const char *filepath)
         } else {
             ok = false;
         }
-    }
-    else {
+    } else {
         // bare geometry
         DcGeojsonFeature *feat = _push_feature(gj);
         ok = _parse_geometry(feat, root);
@@ -110,9 +110,7 @@ dc_geojson_load(const char *filepath)
     return gj;
 }
 
-void
-dc_geojson_free(DcGeojson *geojson)
-{
+void dc_geojson_free(DcGeojson *geojson) {
     if (!geojson) return;
 
     for (int i = 0; i < sbcount(geojson->sb_features); i++)
@@ -122,14 +120,12 @@ dc_geojson_free(DcGeojson *geojson)
 }
 
 uint32_t
-dc_geojson_feature_count(DcGeojson *geojson)
-{
+dc_geojson_feature_count(DcGeojson *geojson) {
     return geojson ? (uint32_t)sbcount(geojson->sb_features) : 0;
 }
 
 const DcGeojsonFeature *
-dc_geojson_feature(DcGeojson *geojson, uint32_t index)
-{
+dc_geojson_feature(DcGeojson *geojson, uint32_t index) {
     if (!geojson || index >= (uint32_t)sbcount(geojson->sb_features)) return NULL;
     return &geojson->sb_features[index];
 }
@@ -139,8 +135,7 @@ dc_geojson_feature(DcGeojson *geojson, uint32_t index)
 //-----------------------------------------------------------------------------
 
 static uint32_t
-_json_array_count(plJsonObject *array)
-{
+_json_array_count(plJsonObject *array) {
     uint32_t count = 0;
     while (pl_json_member_by_index(array, count) != NULL)
         count++;
@@ -150,10 +145,9 @@ _json_array_count(plJsonObject *array)
 // pl_json_member_by_name uses strncmp with the child's name length,
 // so "stroke-opacity" matches "stroke". This does an exact match.
 static plJsonObject *
-_json_member(plJsonObject *json, const char *name)
-{
+_json_member(plJsonObject *json, const char *name) {
     if (!json) return NULL;
-    for (uint32_t i = 0; ; i++) {
+    for (uint32_t i = 0;; i++) {
         plJsonObject *child = pl_json_member_by_index(json, i);
         if (!child) break;
         const char *child_name = pl_json_get_name(child);
@@ -164,8 +158,7 @@ _json_member(plJsonObject *json, const char *name)
 }
 
 static DcGeojsonFeature *
-_push_feature(DcGeojson *gj)
-{
+_push_feature(DcGeojson *gj) {
     DcGeojsonFeature feat;
     memset(&feat, 0, sizeof(DcGeojsonFeature));
     sbpush(gj->sb_features, feat);
@@ -173,8 +166,7 @@ _push_feature(DcGeojson *gj)
 }
 
 static bool
-_parse_hex_color(const char *hex, DcGeojsonColor *color_out)
-{
+_parse_hex_color(const char *hex, DcGeojsonColor *color_out) {
     if (!hex || hex[0] != '#') return false;
 
     unsigned int r, g, b, a = 255;
@@ -199,8 +191,7 @@ _parse_hex_color(const char *hex, DcGeojsonColor *color_out)
 }
 
 static void
-_parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style)
-{
+_parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style) {
     if (!properties) return;
 
     // stroke color
@@ -235,8 +226,7 @@ _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style)
 //-----------------------------------------------------------------------------
 
 static bool
-_parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoordArray *out)
-{
+_parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoordArray *out) {
     out->count = coord_count;
     out->positions = calloc(coord_count, sizeof(DcGeojsonPosition));
     if (!out->positions) {
@@ -258,25 +248,24 @@ _parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoo
             return false;
         }
 
-        out->positions[i].lon     = dims[0];
-        out->positions[i].lat     = dims[1];
-        out->positions[i].alt     = dim_count >= 3 ? dims[2] : 0.0;
+        out->positions[i].lon = dims[0];
+        out->positions[i].lat = dims[1];
+        out->positions[i].alt = dim_count >= 3 ? dims[2] : 0.0;
         out->positions[i].has_alt = dim_count >= 3;
     }
     return true;
 }
 
 static bool
-_parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out)
-{
+_parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out) {
     double dims[4] = {0};
     uint32_t dim_count = 0;
     pl_json_double_array_member(geom, "coordinates", dims, &dim_count);
     if (dim_count < 2) return false;
 
-    point_out->lon     = dims[0];
-    point_out->lat     = dims[1];
-    point_out->alt     = dim_count >= 3 ? dims[2] : 0.0;
+    point_out->lon = dims[0];
+    point_out->lat = dims[1];
+    point_out->alt = dim_count >= 3 ? dims[2] : 0.0;
     point_out->has_alt = dim_count >= 3;
     return true;
 }
@@ -286,8 +275,7 @@ _parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out)
 //-----------------------------------------------------------------------------
 
 static void
-_free_feature(DcGeojsonFeature *feat)
-{
+_free_feature(DcGeojsonFeature *feat) {
     switch (feat->type) {
         case DC_GEOJSON_FEATURE_UNDEFINED:
         case DC_GEOJSON_FEATURE_POINT:
@@ -335,32 +323,28 @@ _free_feature(DcGeojsonFeature *feat)
 //-----------------------------------------------------------------------------
 
 static bool
-_parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
-{
+_parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
     char type_buf[64] = {0};
     pl_json_string_member(geom, "type", type_buf, sizeof(type_buf));
 
     if (strcmp(type_buf, "Point") == 0) {
         feat->type = DC_GEOJSON_FEATURE_POINT;
         return _parse_point_coords(geom, &feat->geom.point.position);
-    }
-    else if (strcmp(type_buf, "MultiPoint") == 0) {
+    } else if (strcmp(type_buf, "MultiPoint") == 0) {
         uint32_t coord_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &coord_count);
         if (!coords) return false;
 
         feat->type = DC_GEOJSON_FEATURE_MULTI_POINT;
         return _parse_coord_array(coords, coord_count, &feat->geom.multi_point);
-    }
-    else if (strcmp(type_buf, "LineString") == 0) {
+    } else if (strcmp(type_buf, "LineString") == 0) {
         uint32_t coord_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &coord_count);
         if (!coords) return false;
 
         feat->type = DC_GEOJSON_FEATURE_LINE_STRING;
         return _parse_coord_array(coords, coord_count, &feat->geom.line_string);
-    }
-    else if (strcmp(type_buf, "MultiLineString") == 0) {
+    } else if (strcmp(type_buf, "MultiLineString") == 0) {
         uint32_t line_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &line_count);
         if (!coords) return false;
@@ -380,8 +364,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
                 return false;
         }
         return true;
-    }
-    else if (strcmp(type_buf, "Polygon") == 0) {
+    } else if (strcmp(type_buf, "Polygon") == 0) {
         uint32_t ring_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &ring_count);
         if (!coords) return false;
@@ -401,8 +384,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
                 return false;
         }
         return true;
-    }
-    else if (strcmp(type_buf, "MultiPolygon") == 0) {
+    } else if (strcmp(type_buf, "MultiPolygon") == 0) {
         uint32_t poly_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &poly_count);
         if (!coords) return false;
@@ -434,8 +416,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom)
             }
         }
         return true;
-    }
-    else if (strcmp(type_buf, "GeometryCollection") == 0) {
+    } else if (strcmp(type_buf, "GeometryCollection") == 0) {
         uint32_t geom_count = 0;
         plJsonObject *geometries = pl_json_array_member(geom, "geometries", &geom_count);
         if (!geometries) return false;

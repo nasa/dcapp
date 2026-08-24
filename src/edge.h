@@ -22,8 +22,8 @@ void dc_edge_init(void);
 
 // lifecycle
 DcEdge *dc_edge_create(const char *host, int port, float data_rate, int timeout_s);
-void    dc_edge_cleanup(DcEdge *edge);
-void    dc_edge_update(DcEdge *edge);
+void dc_edge_cleanup(DcEdge *edge);
+void dc_edge_update(DcEdge *edge);
 
 // state checks
 bool dc_edge_is_connected(DcEdge *edge);

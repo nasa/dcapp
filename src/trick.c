@@ -9,35 +9,35 @@
 #include <time.h>
 
 struct DcTrick {
-    char  ip[46]; // INET6_ADDRSTRLEN
-    int   port;
+    char ip[46]; // INET6_ADDRSTRLEN
+    int port;
     float data_rate;
-    int   timeout_s;
+    int timeout_s;
 
     // state
     bool is_connected;
     bool has_new_data;
 
     // socket
-    DcSock      *sock;
-    DcSockState  state;
+    DcSock *sock;
+    DcSockState state;
 
     // time between reconnects
     time_t reconnect_start;
 
     // stretchy buffers
     char *rx_cmds;
-    int  *rx_cmd_offsets;
+    int *rx_cmd_offsets;
     char *tx_cmds;
-    int  *tx_cmd_offsets;
+    int *tx_cmd_offsets;
     char *rx_oad_vars;
-    int  *rx_oad_var_offsets;
+    int *rx_oad_var_offsets;
     char *tx_buffer;
     char *rx_buffer;
     char *rx_var_values;
-    int  *rx_var_offsets;
+    int *rx_var_offsets;
     char *rx_oad_var_values;
-    int  *rx_oad_var_value_offsets;
+    int *rx_oad_var_value_offsets;
 
     // general use buffer
     char *temp_buffer;
@@ -76,31 +76,31 @@ DcTrick *dc_trick_create(const char *host, int port, float data_rate, int timeou
         free(trick);
         return NULL;
     }
-    trick->port                     = port;
-    trick->data_rate                = data_rate;
-    trick->timeout_s                = timeout_s;
-    trick->is_connected             = false;
-    trick->has_new_data             = false;
-    trick->sock                     = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    trick->port = port;
+    trick->data_rate = data_rate;
+    trick->timeout_s = timeout_s;
+    trick->is_connected = false;
+    trick->has_new_data = false;
+    trick->sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
     if (!trick->sock) {
         free(trick);
         return NULL;
     }
-    trick->state                    = DC_SOCK_STATE_DISCONNECTED;
-    trick->reconnect_start          = 0;
-    trick->rx_cmds                  = NULL;
-    trick->rx_cmd_offsets           = NULL;
-    trick->tx_cmds                  = NULL;
-    trick->tx_cmd_offsets           = NULL;
-    trick->rx_oad_vars              = NULL;
-    trick->rx_oad_var_offsets       = NULL;
-    trick->tx_buffer                = NULL;
-    trick->rx_buffer                = NULL;
-    trick->rx_var_values            = NULL;
-    trick->rx_var_offsets           = NULL;
-    trick->rx_oad_var_values        = NULL;
+    trick->state = DC_SOCK_STATE_DISCONNECTED;
+    trick->reconnect_start = 0;
+    trick->rx_cmds = NULL;
+    trick->rx_cmd_offsets = NULL;
+    trick->tx_cmds = NULL;
+    trick->tx_cmd_offsets = NULL;
+    trick->rx_oad_vars = NULL;
+    trick->rx_oad_var_offsets = NULL;
+    trick->tx_buffer = NULL;
+    trick->rx_buffer = NULL;
+    trick->rx_var_values = NULL;
+    trick->rx_var_offsets = NULL;
+    trick->rx_oad_var_values = NULL;
     trick->rx_oad_var_value_offsets = NULL;
-    trick->temp_buffer              = (char *)malloc(DC_TRICK_TEMP_BUFFER_SIZE);
+    trick->temp_buffer = (char *)malloc(DC_TRICK_TEMP_BUFFER_SIZE);
     if (!trick->temp_buffer) {
         DC_LOG_ERROR("Trick", "Failed to allocate temp buffer");
         dc_sock_close(trick->sock);
@@ -190,7 +190,7 @@ void dc_trick_update(DcTrick *trick) {
                     }
 
                     // update connection state
-                    trick->state        = curr_state;
+                    trick->state = curr_state;
                     trick->is_connected = curr_state == DC_SOCK_STATE_CONNECTED;
 
                     break;
@@ -232,7 +232,6 @@ bool dc_trick_has_new_data(DcTrick *trick) {
 }
 
 DcTrickVarIndex dc_trick_add_tx_var(DcTrick *trick, const char *path, const char *units, bool is_string) {
-
 
     // create cmd
     if (is_string) {
@@ -317,7 +316,7 @@ static DcTrickResult _dc_trick_send(DcTrick *trick) {
     // only send if there is data to send
     if (sbcount(trick->tx_buffer)) {
 
-        int          sent_count;
+        int sent_count;
         DcSockResult result = dc_sock_send(trick->sock, trick->tx_buffer, sbcount(trick->tx_buffer), &sent_count);
         switch (result) {
             case DC_SOCK_RESULT_FAIL:
@@ -351,7 +350,7 @@ static DcTrickResult _dc_trick_receive(DcTrick *trick) {
     // read all available data from socket, not just one chunk
     bool received_any = false;
     for (;;) {
-        int          recv_count;
+        int recv_count;
         DcSockResult result = dc_sock_receive(trick->sock, trick->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &recv_count);
         if (result == DC_SOCK_RESULT_FAIL || result == DC_SOCK_RESULT_CONN_CLOSED) {
             trick->has_new_data = false;
@@ -461,8 +460,8 @@ static void _dc_trick_close(DcTrick *trick) {
     }
 
     dc_sock_close(trick->sock);
-    trick->sock         = NULL;
-    trick->state        = DC_SOCK_STATE_DISCONNECTED;
+    trick->sock = NULL;
+    trick->state = DC_SOCK_STATE_DISCONNECTED;
     trick->is_connected = false;
     trick->has_new_data = false;
 }

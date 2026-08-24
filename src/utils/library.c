@@ -4,10 +4,10 @@
 #include <string.h>
 
 #ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #else
-    #include <dlfcn.h>
+#include <dlfcn.h>
 #endif
 
 #define _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE 512

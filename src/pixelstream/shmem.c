@@ -32,8 +32,8 @@ struct DcPsShmemSource {
     _ShmemHeader *shm;
 
     // state
-    bool     connected;
-    bool     has_new_data;
+    bool connected;
+    bool has_new_data;
     uint64_t buffercount;
 
     // reconnect
@@ -41,10 +41,9 @@ struct DcPsShmemSource {
 
     // latest frame
     unsigned char *pixels;
-    uint32_t       width;
-    uint32_t       height;
-    size_t         alloc_size;
-
+    uint32_t width;
+    uint32_t height;
+    size_t alloc_size;
 };
 
 struct DcPsShmemContext {
@@ -52,12 +51,12 @@ struct DcPsShmemContext {
     DcPsShmemSource **sb_sources;
 };
 
-#define _MAX_SOURCES      10
+#define _MAX_SOURCES 10
 #define _STALE_THRESHOLD 300 // frames without new data before reconnect (~5s at 60fps)
 
 // static functions
-static int  _try_attach_shm(DcPsShmemSource *ctx);
-static int  _read_frame(DcPsShmemSource *ctx);
+static int _try_attach_shm(DcPsShmemSource *ctx);
+static int _read_frame(DcPsShmemSource *ctx);
 static void _detach_shm(DcPsShmemSource *ctx);
 static void _source_cleanup(DcPsShmemSource *ctx);
 
@@ -116,15 +115,15 @@ DcPsShmemSource *dc_ps_shmem_add_source(DcPsShmemContext *context, const char *f
         free(ctx);
         return NULL;
     }
-    ctx->shm          = NULL;
-    ctx->connected    = false;
+    ctx->shm = NULL;
+    ctx->connected = false;
     ctx->has_new_data = false;
-    ctx->buffercount  = 0;
-    ctx->pixels       = NULL;
-    ctx->width        = 0;
-    ctx->height       = 0;
-    ctx->alloc_size   = 0;
-    ctx->context      = context;
+    ctx->buffercount = 0;
+    ctx->pixels = NULL;
+    ctx->width = 0;
+    ctx->height = 0;
+    ctx->alloc_size = 0;
+    ctx->context = context;
 
     bool stored = false;
     for (int ii = 0; ii < sbcount(context->sb_sources); ii++) {
@@ -239,8 +238,8 @@ static void _detach_shm(DcPsShmemSource *ctx) {
         shmdt(ctx->shm);
         ctx->shm = NULL;
     }
-    ctx->connected    = false;
-    ctx->buffercount  = 0;
+    ctx->connected = false;
+    ctx->buffercount = 0;
     ctx->stale_frames = 0;
 }
 
@@ -260,10 +259,10 @@ static int _read_frame(DcPsShmemSource *ctx) {
 
     // Check if new frame available
     if (ctx->buffercount != ctx->shm->buffercount) {
-        ctx->buffercount  = ctx->shm->buffercount;
+        ctx->buffercount = ctx->shm->buffercount;
         ctx->stale_frames = 0;
-        ctx->width        = ctx->shm->width;
-        ctx->height       = ctx->shm->height;
+        ctx->width = ctx->shm->width;
+        ctx->height = ctx->shm->height;
 
         // Read pixel data from file
         FILE *fp = fopen(ctx->filepath, "r");
@@ -279,7 +278,7 @@ static int _read_frame(DcPsShmemSource *ctx) {
                     memcpy(&ctx->shm->reading, &off, 4);
                     return 0;
                 }
-                ctx->pixels     = new_pixels;
+                ctx->pixels = new_pixels;
                 ctx->alloc_size = nbytes;
             }
 

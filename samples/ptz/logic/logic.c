@@ -11,10 +11,10 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
 void display_draw(DcAppContext *app_ctx, void *user_data) {
     (void)user_data;
     (void)app_ctx;
-    *IMAGE_WIDTH  = *ZOOM * BaseWidth;
+    *IMAGE_WIDTH = *ZOOM * BaseWidth;
     *IMAGE_HEIGHT = *ZOOM * BaseHeight;
-    *IMAGE_X      = 50.0 + ((*PAN) * (*ZOOM));
-    *IMAGE_Y      = 50.0 + ((*TILT) * (*ZOOM));
+    *IMAGE_X = 50.0 + ((*PAN) * (*ZOOM));
+    *IMAGE_Y = 50.0 + ((*TILT) * (*ZOOM));
 }
 
 void display_close(DcAppContext *app_ctx, void *user_data) {

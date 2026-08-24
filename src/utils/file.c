@@ -138,7 +138,7 @@ bool dc_utils_is_canonical_path(const char *path) {
     }
 
 #if defined(_WIN32)
-    char  resolved[MAX_PATH];
+    char resolved[MAX_PATH];
     DWORD len = GetFullPathNameA(path, MAX_PATH, resolved, NULL);
     if (len == 0 || len >= MAX_PATH) {
         return 0;
@@ -284,7 +284,7 @@ char *dc_utils_load_text_file(const char *path) {
         return NULL;
     }
 
-    size_t read  = fread(buffer, 1, size, file);
+    size_t read = fread(buffer, 1, size, file);
     buffer[read] = '\0';
     fclose(file);
     return buffer;

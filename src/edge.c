@@ -18,18 +18,18 @@
 #define DC_EDGE_DEFAULT_PORT 5451
 
 struct DcEdge {
-    char  ip[46]; // INET6_ADDRSTRLEN
-    int   port;
+    char ip[46]; // INET6_ADDRSTRLEN
+    int port;
     float data_rate;
-    int   timeout_s;
+    int timeout_s;
 
     // state
     bool is_connected;
     bool has_new_data;
 
     // socket
-    DcSock      *sock;
-    DcSockState  state;
+    DcSock *sock;
+    DcSockState state;
 
     // time tracking
     time_t reconnect_start;
@@ -40,15 +40,15 @@ struct DcEdge {
 
     // stretchy buffers for rx commands (for command group)
     char *rx_cmds;
-    int  *rx_cmd_offsets;
+    int *rx_cmd_offsets;
 
     // stretchy buffers for tx commands
     char *tx_cmds;
-    int  *tx_cmd_offsets;
+    int *tx_cmd_offsets;
 
     // stretchy buffers for received values
     char *rx_var_values;
-    int  *rx_var_offsets;
+    int *rx_var_offsets;
 
     // tx buffer for pending writes
     char *tx_buffer;
@@ -61,7 +61,7 @@ struct DcEdge {
 
 // internal helpers
 static DcEdgeResult _dc_edge_connect(DcEdge *edge);
-static void         _dc_edge_close(DcEdge *edge);
+static void _dc_edge_close(DcEdge *edge);
 static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **response);
 static DcEdgeResult _dc_edge_read_message(DcEdge *edge, char **response);
 static DcEdgeResult _dc_edge_setup_command_group(DcEdge *edge);
@@ -82,28 +82,28 @@ DcEdge *dc_edge_create(const char *host, int port, float data_rate, int timeout_
         free(edge);
         return NULL;
     }
-    edge->port            = port > 0 ? port : DC_EDGE_DEFAULT_PORT;
-    edge->data_rate       = data_rate;
-    edge->timeout_s       = timeout_s;
-    edge->is_connected    = false;
-    edge->has_new_data    = false;
-    edge->sock            = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    edge->port = port > 0 ? port : DC_EDGE_DEFAULT_PORT;
+    edge->data_rate = data_rate;
+    edge->timeout_s = timeout_s;
+    edge->is_connected = false;
+    edge->has_new_data = false;
+    edge->sock = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
     if (!edge->sock) {
         free(edge);
         return NULL;
     }
-    edge->state           = DC_SOCK_STATE_DISCONNECTED;
+    edge->state = DC_SOCK_STATE_DISCONNECTED;
     edge->reconnect_start = 0;
-    edge->last_update     = 0;
-    edge->cmd_group_id    = NULL;
-    edge->rx_cmds         = NULL;
-    edge->rx_cmd_offsets  = NULL;
-    edge->tx_cmds         = NULL;
-    edge->tx_cmd_offsets  = NULL;
-    edge->rx_var_values   = NULL;
-    edge->rx_var_offsets  = NULL;
-    edge->tx_buffer       = NULL;
-    edge->temp_buffer     = (char *)malloc(DC_EDGE_TEMP_BUFFER_SIZE);
+    edge->last_update = 0;
+    edge->cmd_group_id = NULL;
+    edge->rx_cmds = NULL;
+    edge->rx_cmd_offsets = NULL;
+    edge->tx_cmds = NULL;
+    edge->tx_cmd_offsets = NULL;
+    edge->rx_var_values = NULL;
+    edge->rx_var_offsets = NULL;
+    edge->tx_buffer = NULL;
+    edge->temp_buffer = (char *)malloc(DC_EDGE_TEMP_BUFFER_SIZE);
     if (!edge->temp_buffer) {
         DC_LOG_ERROR("Edge", "Failed to allocate temp buffer");
         dc_sock_close(edge->sock);
@@ -170,11 +170,11 @@ void dc_edge_update(DcEdge *edge) {
     // send any pending tx commands
     for (int ii = 0; ii < sbcount(edge->tx_buffer);) {
         // find end of command (null terminated)
-        char *cmd     = &edge->tx_buffer[ii];
-        int   cmd_len = (int)strlen(cmd);
+        char *cmd = &edge->tx_buffer[ii];
+        int cmd_len = (int)strlen(cmd);
 
-        char        *response = NULL;
-        DcEdgeResult result   = _dc_edge_send_command(edge, cmd, &response);
+        char *response = NULL;
+        DcEdgeResult result = _dc_edge_send_command(edge, cmd, &response);
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {
@@ -191,8 +191,8 @@ void dc_edge_update(DcEdge *edge) {
     if (edge->cmd_group_id && sbcount(edge->rx_cmd_offsets) > 0) {
         snprintf(edge->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE, "execute_command_group %s", edge->cmd_group_id);
 
-        char        *response = NULL;
-        DcEdgeResult result   = _dc_edge_send_command(edge, edge->temp_buffer, &response);
+        char *response = NULL;
+        DcEdgeResult result = _dc_edge_send_command(edge, edge->temp_buffer, &response);
 
         if (result != DC_EDGE_RESULT_SUCCESS || !response) {
             DC_LOG_WARN("EDGE", "[%s:%d] execute_command_group failed, disconnecting", edge->ip, edge->port);
@@ -316,8 +316,8 @@ static DcEdgeResult _dc_edge_connect(DcEdge *edge) {
             dc_sock_set_recv_timeout(edge->sock, 2000);
 
             // read server version string
-            char        *version = NULL;
-            DcEdgeResult result  = _dc_edge_read_message(edge, &version);
+            char *version = NULL;
+            DcEdgeResult result = _dc_edge_read_message(edge, &version);
             if (result == DC_EDGE_RESULT_SUCCESS && version) {
                 DC_LOG_INFO("EDGE", "[%s:%d] Server version: %s", edge->ip, edge->port, version);
                 free(version);
@@ -344,8 +344,8 @@ static DcEdgeResult _dc_edge_connect(DcEdge *edge) {
 static void _dc_edge_close(DcEdge *edge) {
 
     dc_sock_close(edge->sock);
-    edge->sock         = NULL;
-    edge->state        = DC_SOCK_STATE_DISCONNECTED;
+    edge->sock = NULL;
+    edge->state = DC_SOCK_STATE_DISCONNECTED;
     edge->is_connected = false;
     edge->has_new_data = false;
 
@@ -366,8 +366,8 @@ static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **
     }
 
     // wait for connection (with timeout)
-    time_t start     = time(NULL);
-    bool   connected = false;
+    time_t start = time(NULL);
+    bool connected = false;
     while (difftime(time(NULL), start) < 2.0) {
         DcSockState state = dc_sock_connection_status(cmd_sock);
         if (state == DC_SOCK_STATE_CONNECTED) {
@@ -393,17 +393,17 @@ static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **
     dc_sock_set_recv_timeout(cmd_sock, 500);
 
     // read and discard server version
-    int   buf_size = 256;
-    int   nread    = 0;
-    char *buf      = (char *)malloc(buf_size);
+    int buf_size = 256;
+    int nread = 0;
+    char *buf = (char *)malloc(buf_size);
     if (!buf) {
         dc_sock_close(cmd_sock);
         return DC_EDGE_RESULT_FAIL;
     }
 
     for (;;) {
-        char         c;
-        int          recv_count;
+        char c;
+        int recv_count;
         DcSockResult res = dc_sock_receive(cmd_sock, &c, 1, &recv_count);
 
         if (res == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
@@ -430,8 +430,8 @@ static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **
     free(buf);
 
     // send command
-    int          cmd_len = (int)strlen(cmd);
-    int          sent_count;
+    int cmd_len = (int)strlen(cmd);
+    int sent_count;
     DcSockResult result = dc_sock_send(cmd_sock, cmd, cmd_len, &sent_count);
     if (result != DC_SOCK_RESULT_SUCCESS || sent_count != cmd_len) {
         dc_sock_close(cmd_sock);
@@ -443,16 +443,16 @@ static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **
 
     // read response
     buf_size = 256;
-    nread    = 0;
-    buf      = (char *)malloc(buf_size);
+    nread = 0;
+    buf = (char *)malloc(buf_size);
     if (!buf) {
         dc_sock_close(cmd_sock);
         return DC_EDGE_RESULT_FAIL;
     }
 
     for (;;) {
-        char         c;
-        int          recv_count;
+        char c;
+        int recv_count;
         DcSockResult res = dc_sock_receive(cmd_sock, &c, 1, &recv_count);
 
         if (res == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
@@ -489,16 +489,16 @@ static DcEdgeResult _dc_edge_send_command(DcEdge *edge, const char *cmd, char **
 
 static DcEdgeResult _dc_edge_read_message(DcEdge *edge, char **response) {
 
-    int   buf_size = 256;
-    int   nread    = 0;
-    char *buf      = (char *)malloc(buf_size);
+    int buf_size = 256;
+    int nread = 0;
+    char *buf = (char *)malloc(buf_size);
     if (!buf) return DC_EDGE_RESULT_FAIL;
 
     // blocking read until END_OF_MSG character (0x04)
     // (socket is already set to blocking with recv timeout)
     for (;;) {
-        char         c;
-        int          recv_count;
+        char c;
+        int recv_count;
         DcSockResult result = dc_sock_receive(edge->sock, &c, 1, &recv_count);
 
         if (result == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
@@ -534,8 +534,8 @@ static DcEdgeResult _dc_edge_read_message(DcEdge *edge, char **response) {
 static DcEdgeResult _dc_edge_setup_command_group(DcEdge *edge) {
 
     // create command group
-    char        *group_id = NULL;
-    DcEdgeResult result   = _dc_edge_send_command(edge, "create_command_group", &group_id);
+    char *group_id = NULL;
+    DcEdgeResult result = _dc_edge_send_command(edge, "create_command_group", &group_id);
     if (result != DC_EDGE_RESULT_SUCCESS || !group_id || !group_id[0]) {
         free(group_id);
         return DC_EDGE_RESULT_FAIL;
@@ -552,7 +552,7 @@ static DcEdgeResult _dc_edge_setup_command_group(DcEdge *edge) {
                  "add_command_to_group %s \"%s\"", edge->cmd_group_id, rx_cmd);
 
         char *response = NULL;
-        result         = _dc_edge_send_command(edge, edge->temp_buffer, &response);
+        result = _dc_edge_send_command(edge, edge->temp_buffer, &response);
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {

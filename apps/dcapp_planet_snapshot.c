@@ -325,8 +325,7 @@ PL_EXPORT void pl_app_update(AppData *app) {
         plVec3d target = {
             eye.x + (double)forward.x,
             eye.y + (double)forward.y,
-            eye.z + (double)forward.z
-        };
+            eye.z + (double)forward.z};
         _ext_camera->look_at(&camera, eye, target);
         camera.fRoll = 0.0f;
         _ext_camera->update(&camera);

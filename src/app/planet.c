@@ -20,13 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const plMemoryI  *_ext_memory  = NULL;
+static const plMemoryI *_ext_memory = NULL;
 static const plStarterI *_ext_starter = NULL;
-static const plPlanetI  *_ext_planet  = NULL;
-static const plVfsI     *_ext_vfs     = NULL;
+static const plPlanetI *_ext_planet = NULL;
+static const plVfsI *_ext_vfs = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_FREE(x)  _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 // Runtime handles are separately allocated so registry growth cannot invalidate them.
 struct DcAppPlanetContext {
@@ -85,10 +85,10 @@ static bool _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs,
 static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b);
 
 void dc_app_planet_init(plApiRegistryI *api_registry) {
-    _ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
     _ext_starter = pl_get_api_latest(api_registry, plStarterI);
-    _ext_planet  = pl_get_api_latest(api_registry, plPlanetI);
-    _ext_vfs     = pl_get_api_latest(api_registry, plVfsI);
+    _ext_planet = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_vfs = pl_get_api_latest(api_registry, plVfsI);
 }
 
 DcAppPlanetContext *dc_app_planet_context_create(const char *asset_root) {
@@ -201,7 +201,7 @@ DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, Dc
     if (mesh_cache_size_mb > 0) {
         uint32_t buffer_size = mesh_cache_size_mb * (1024u * 1024u / 2u);
         planet_init.uVertexBufferSize = buffer_size;
-        planet_init.uIndexBufferSize  = buffer_size;
+        planet_init.uIndexBufferSize = buffer_size;
     }
 
     // delegates renderer and streaming allocation to pl_planet_ext.
@@ -220,8 +220,8 @@ DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, Dc
     handle->geodetic_crs = dc_geo_create_crs_geodetic(radius);
     handle->cartesian_crs = dc_geo_create_crs_cartesian(radius);
     handle->polar_crs = dc_geo_create_crs_polar_stereographic(radius,
-        projection.tPolarStereo.dLatitudeOfOrigin,
-        projection.tPolarStereo.dLongitudeOfOrigin);
+                                                              projection.tPolarStereo.dLatitudeOfOrigin,
+                                                              projection.tPolarStereo.dLongitudeOfOrigin);
     handle->polar_crs.scale_factor = projection.tPolarStereo.dScaleFactor;
     handle->polar_crs.false_easting = projection.tPolarStereo.dFalseEasting;
     handle->polar_crs.false_northing = projection.tPolarStereo.dFalseNorthing;
@@ -389,7 +389,7 @@ bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vert
 
     if (view->vertex_shader_path) PL_FREE(view->vertex_shader_path);
     if (view->fragment_shader_path) PL_FREE(view->fragment_shader_path);
-    view->vertex_shader_path   = owned_vertex_path;
+    view->vertex_shader_path = owned_vertex_path;
     view->fragment_shader_path = owned_fragment_path;
     return true;
 }
@@ -687,16 +687,16 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
         return false;
     }
 
-    double radius           = pl_json_double_member(root, "radius", 0.0);
-    float  meters_per_pixel = pl_json_float_member(root, "meters_per_pixel", 0.0f);
-    int    tile_size        = pl_json_int_member(root, "tile_size", 0);
-    int    cols             = pl_json_int_member(root, "cols", 0);
-    int    rows             = pl_json_int_member(root, "rows", 0);
-    float  min_height       = pl_json_float_member(root, "min_height", 0.0f);
-    float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
-    int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
-    float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
-    uint32_t tile_count     = 0;
+    double radius = pl_json_double_member(root, "radius", 0.0);
+    float meters_per_pixel = pl_json_float_member(root, "meters_per_pixel", 0.0f);
+    int tile_size = pl_json_int_member(root, "tile_size", 0);
+    int cols = pl_json_int_member(root, "cols", 0);
+    int rows = pl_json_int_member(root, "rows", 0);
+    float min_height = pl_json_float_member(root, "min_height", 0.0f);
+    float max_height = pl_json_float_member(root, "max_height", 0.0f);
+    int tree_depth = pl_json_int_member(root, "tree_depth", 0);
+    float max_base_error = pl_json_float_member(root, "max_base_error", 0.0f);
+    uint32_t tile_count = 0;
     plJsonObject *tile_array = pl_json_array_member(root, "tiles", &tile_count);
 
     if (radius <= 0.0 || meters_per_pixel <= 0.0f || tile_size <= 0 || cols <= 0 || rows <= 0 || !tile_array || tile_count == 0) {
@@ -802,8 +802,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
             plVec3d geodetic_in = {
                 pl_json_double_member(tile_obj, "lat", 0.0),
                 pl_json_double_member(tile_obj, "lon", 0.0),
-                0.0
-            };
+                0.0};
             plVec2d polar_out;
             if (legacy_projected_origin) {
                 // The mirrored-longitude helper already reproduces the original

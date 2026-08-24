@@ -5,7 +5,7 @@ typedef int DcAppNodeIndex;
 
 enum {
     NODE_INDEX_UNDEFINED = 0,
-    NODE_FIRST_INDEX     = 1,
+    NODE_FIRST_INDEX = 1,
 };
 
 typedef enum DcAppNodeType {
@@ -60,23 +60,23 @@ typedef enum DcAppNodeType {
 
 // State flags that parents set for conditional child nodes to check
 typedef enum DcAppNodeStateFlags {
-    NODE_STATE_FLAG_NONE          = 0,
-    NODE_STATE_FLAG_ENABLED       = 1 << 0,
-    NODE_STATE_FLAG_INDICATOR_ON  = 1 << 1,
+    NODE_STATE_FLAG_NONE = 0,
+    NODE_STATE_FLAG_ENABLED = 1 << 0,
+    NODE_STATE_FLAG_INDICATOR_ON = 1 << 1,
     NODE_STATE_FLAG_TRANSITIONING = 1 << 2,
-    NODE_STATE_FLAG_PRESSED       = 1 << 3,
-    NODE_STATE_FLAG_ACTIVE        = 1 << 4,
-    NODE_STATE_FLAG_HOVERED       = 1 << 5,
-    NODE_STATE_FLAG_RELEASED      = 1 << 6,
-    NODE_STATE_FLAG_TRUE          = 1 << 7,
-    NODE_STATE_FLAG_FALSE         = 1 << 8,
+    NODE_STATE_FLAG_PRESSED = 1 << 3,
+    NODE_STATE_FLAG_ACTIVE = 1 << 4,
+    NODE_STATE_FLAG_HOVERED = 1 << 5,
+    NODE_STATE_FLAG_RELEASED = 1 << 6,
+    NODE_STATE_FLAG_TRUE = 1 << 7,
+    NODE_STATE_FLAG_FALSE = 1 << 8,
 } DcAppNodeStateFlags;
 
 // Config flags set at parse time (never change at runtime)
 typedef enum DcAppNodeConfigFlags {
-    NODE_CONFIG_FLAG_NONE               = 0,
-    NODE_CONFIG_FLAG_FILL_ENABLED       = 1 << 0,
-    NODE_CONFIG_FLAG_LINE_ENABLED       = 1 << 1,
+    NODE_CONFIG_FLAG_NONE = 0,
+    NODE_CONFIG_FLAG_FILL_ENABLED = 1 << 0,
+    NODE_CONFIG_FLAG_LINE_ENABLED = 1 << 1,
     NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS = 1 << 2,
     NODE_CONFIG_FLAG_BACKGROUND_ENABLED = 1 << 3,
 } DcAppNodeConfigFlags;

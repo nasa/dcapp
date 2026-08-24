@@ -34,7 +34,7 @@ void draw_lissajous(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *u
         points[i].y = 380.0f + sinf(t * 4.0f) * 300.0f;
     }
 
-    dc_draw->line(draw_ctx, (DcVec2){100.0f, 380.0f}, (DcVec2){700.0f, 380.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.18f, .g = 0.28f, .b = 0.34f, .a = 1.0f }, .width = 1.0f });
-    dc_draw->line(draw_ctx, (DcVec2){400.0f, 80.0f}, (DcVec2){400.0f, 680.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.18f, .g = 0.28f, .b = 0.34f, .a = 1.0f }, .width = 1.0f });
-    dc_draw->polyline(draw_ctx, points, POINT_COUNT, (DcStroke){ .color = (DcVec4){ .r = 0.30f, .g = 0.80f, .b = 1.0f, .a = 1.0f }, .width = 2.0f });
+    dc_draw->line(draw_ctx, (DcVec2){100.0f, 380.0f}, (DcVec2){700.0f, 380.0f}, (DcStroke){.color = (DcVec4){.r = 0.18f, .g = 0.28f, .b = 0.34f, .a = 1.0f}, .width = 1.0f});
+    dc_draw->line(draw_ctx, (DcVec2){400.0f, 80.0f}, (DcVec2){400.0f, 680.0f}, (DcStroke){.color = (DcVec4){.r = 0.18f, .g = 0.28f, .b = 0.34f, .a = 1.0f}, .width = 1.0f});
+    dc_draw->polyline(draw_ctx, points, POINT_COUNT, (DcStroke){.color = (DcVec4){.r = 0.30f, .g = 0.80f, .b = 1.0f, .a = 1.0f}, .width = 2.0f});
 }

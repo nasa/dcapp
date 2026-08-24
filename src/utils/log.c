@@ -23,8 +23,8 @@
 #define ANSI_RED "\033[31m"
 
 // Current minimum log level (messages below this level are ignored)
-static DcLogLevel _dc_log_level          = DC_LOG_LEVEL_INFO;
-static int        _dc_log_colors_enabled = -1; // -1 = auto, 0 = off, 1 = on
+static DcLogLevel _dc_log_level = DC_LOG_LEVEL_INFO;
+static int _dc_log_colors_enabled = -1; // -1 = auto, 0 = off, 1 = on
 
 #ifdef _WIN32
 static int _dc_win_console_initialized = 0;
@@ -50,7 +50,7 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
 
     const char *level_str;
     const char *color = "";
-    FILE       *out   = stderr;
+    FILE *out = stderr;
 
 #ifdef _WIN32
     _dc_init_win_console();
@@ -59,20 +59,20 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
     switch (level) {
         case DC_LOG_LEVEL_DEBUG:
             level_str = "DEBUG";
-            color     = ANSI_CYAN;
+            color = ANSI_CYAN;
             break;
         case DC_LOG_LEVEL_INFO:
             level_str = "INFO";
-            color     = ANSI_GREEN;
-            out       = stdout;
+            color = ANSI_GREEN;
+            out = stdout;
             break;
         case DC_LOG_LEVEL_WARN:
             level_str = "WARN";
-            color     = ANSI_YELLOW;
+            color = ANSI_YELLOW;
             break;
         case DC_LOG_LEVEL_ERROR:
             level_str = "ERROR";
-            color     = ANSI_RED;
+            color = ANSI_RED;
             break;
         default:
             level_str = "???";
@@ -119,7 +119,7 @@ static void _dc_init_win_console(void) {
     // Enable ANSI escape sequences on Windows 10+
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
-    DWORD  mode = 0;
+    DWORD mode = 0;
 
     if (hOut != INVALID_HANDLE_VALUE && GetConsoleMode(hOut, &mode)) {
         SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);

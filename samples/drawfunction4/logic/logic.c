@@ -72,11 +72,11 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
     }
 
     dc_draw->rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f}, (DcVec4){
-        .r = 0.040f,
-        .g = 0.045f,
-        .b = 0.052f,
-        .a = 1.0f,
-    });
+                                                                                       .r = 0.040f,
+                                                                                       .g = 0.045f,
+                                                                                       .b = 0.052f,
+                                                                                       .a = 1.0f,
+                                                                                   });
 
     // ---------------------------------------------------------------------
     // Generated Square Field
@@ -118,11 +118,12 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
                 .local_align_y = DC_ALIGN_MIDDLE,
             };
             dc_draw->rect_filled_ex(draw_ctx, (DcVec2){cx, cy}, (DcVec2){size, size}, (DcVec4){
-                .r = 0.08f + v * 0.18f + hit * 0.60f,
-                .g = 0.18f + v * 0.42f + hit * 0.26f,
-                .b = 0.30f + (1.0f - v) * 0.44f + hit * 0.12f,
-                .a = 0.88f,
-            }, placement, NULL);
+                                                                                          .r = 0.08f + v * 0.18f + hit * 0.60f,
+                                                                                          .g = 0.18f + v * 0.42f + hit * 0.26f,
+                                                                                          .b = 0.30f + (1.0f - v) * 0.44f + hit * 0.12f,
+                                                                                          .a = 0.88f,
+                                                                                      },
+                                    placement, NULL);
         }
     }
 
@@ -151,11 +152,11 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
     // thing that is awkward to express compactly in XML.
     if (dc_draw->container_push(draw_ctx, (DcVec2){54.0f, 24.0f}, (DcVec2){792.0f, 70.0f}, (DcVec2){792.0f, 70.0f})) {
         dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcVec4){
-            .r = 0.070f,
-            .g = 0.078f,
-            .b = 0.088f,
-            .a = 0.96f,
-        });
+                                                                                                        .r = 0.070f,
+                                                                                                        .g = 0.078f,
+                                                                                                        .b = 0.088f,
+                                                                                                        .a = 0.96f,
+                                                                                                    });
 
         if (dc_draw->stencil_begin(draw_ctx)) {
             dc_draw->stencil_add(draw_ctx);
@@ -169,24 +170,24 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
                 float h = 10.0f + 36.0f * (0.5f + 0.5f * sinf(u * 28.0f + g_time * 3.0f));
                 h += 12.0f * (0.5f + 0.5f * cosf(u * 73.0f - g_time * 1.7f));
                 dc_draw->rect_filled(draw_ctx, (DcVec2){22.0f + u * 748.0f, 12.0f}, (DcVec2){5.0f, h}, (DcVec4){
-                    .r = 0.25f + u * 0.55f,
-                    .g = 0.82f - u * 0.25f,
-                    .b = 0.90f,
-                    .a = 0.90f,
-                });
+                                                                                                           .r = 0.25f + u * 0.55f,
+                                                                                                           .g = 0.82f - u * 0.25f,
+                                                                                                           .b = 0.90f,
+                                                                                                           .a = 0.90f,
+                                                                                                       });
             }
             dc_draw->stencil_end(draw_ctx);
         }
 
         dc_draw->rounded_rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcStroke){
-            .color = {
-                .r = 0.30f,
-                .g = 0.36f,
-                .b = 0.42f,
-                .a = 1.0f,
-            },
-            .width = 1.0f,
-        });
+                                                                                                 .color = {
+                                                                                                     .r = 0.30f,
+                                                                                                     .g = 0.36f,
+                                                                                                     .b = 0.42f,
+                                                                                                     .a = 1.0f,
+                                                                                                 },
+                                                                                                 .width = 1.0f,
+                                                                                             });
         dc_draw->container_pop(draw_ctx);
     }
 }

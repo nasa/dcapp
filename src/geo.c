@@ -25,8 +25,7 @@ DcGeoCrsPolarStereo dc_geo_create_crs_polar_stereographic(double planet_radius, 
         .lon_origin = lon_origin,
         .scale_factor = 1.0,
         .false_easting = 0.0,
-        .false_northing = 0.0
-    };
+        .false_northing = 0.0};
 }
 
 // Coordinate conversions
@@ -104,8 +103,8 @@ void dc_geo_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCr
         float lat_rad = in[i].x * (float)M_PI / 180.0f;
         float lon_rad = (in[i].y - (float)to->lon_origin) * (float)M_PI / 180.0f;
         float rho = lat_origin > 0.0
-            ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
-            : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
+                        ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
+                        : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
         out[i].x = (float)to->false_easting + rho * sinf(lon_rad);
         out[i].y = (float)to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cosf(lon_rad);
     }
@@ -119,8 +118,8 @@ void dc_geo_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const DcGeo
         double lat_rad = in[i].x * M_PI / 180.0;
         double lon_rad = (in[i].y - to->lon_origin) * M_PI / 180.0;
         double rho = lat_origin > 0.0
-            ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
-            : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
+                         ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
+                         : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
         out[i].x = to->false_easting + rho * sin(lon_rad);
         out[i].y = to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cos(lon_rad);
     }
@@ -137,8 +136,8 @@ void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const Dc
         float lon_deg = 180.0f - in[i].y;
         float lon_rad = (lon_deg - (float)to->lon_origin) * (float)M_PI / 180.0f;
         float rho = lat_origin > 0.0
-            ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
-            : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
+                        ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
+                        : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
         out[i].x = (float)to->false_easting + rho * sinf(lon_rad);
         out[i].y = (float)to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cosf(lon_rad);
     }
@@ -155,8 +154,8 @@ void dc_geo_user_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const 
         double lon_deg = 180.0 - in[i].y;
         double lon_rad = (lon_deg - to->lon_origin) * M_PI / 180.0;
         double rho = lat_origin > 0.0
-            ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
-            : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
+                         ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
+                         : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
         out[i].x = to->false_easting + rho * sin(lon_rad);
         out[i].y = to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cos(lon_rad);
     }
@@ -172,20 +171,17 @@ void dc_geo_get_local_ned_basis(double lat_rad, double lon_rad, plVec3 *out_nort
     *out_north = pl_norm_vec3((plVec3){
         (float)(-sin_lat * sin_lon),
         (float)cos_lat,
-        (float)(-sin_lat * cos_lon)
-    });
+        (float)(-sin_lat * cos_lon)});
 
     *out_east = pl_norm_vec3((plVec3){
         (float)cos_lon,
         0.0f,
-        (float)-sin_lon
-    });
+        (float)-sin_lon});
 
     *out_up = pl_norm_vec3((plVec3){
         (float)(cos_lat * sin_lon),
         (float)sin_lat,
-        (float)(cos_lat * cos_lon)
-    });
+        (float)(cos_lat * cos_lon)});
 
     *out_down = pl_mul_vec3_scalarf(*out_up, -1.0f);
 }
@@ -215,7 +211,8 @@ float dc_geo_signed_angle_around_axis(plVec3 from, plVec3 to, plVec3 axis) {
     plVec3 axis_norm = pl_norm_vec3(axis);
 
     float cos_angle = pl_dot_vec3(from_norm, to_norm);
-    cos_angle = (cos_angle < -1.0f) ? -1.0f : (cos_angle > 1.0f) ? 1.0f : cos_angle;
+    cos_angle = (cos_angle < -1.0f) ? -1.0f : (cos_angle > 1.0f) ? 1.0f
+                                                                 : cos_angle;
 
     plVec3 cross = pl_cross_vec3(from_norm, to_norm);
     float sin_angle = pl_dot_vec3(cross, axis_norm);

@@ -49,12 +49,12 @@ static const DcVec2 logic_doghouse[] = {
 };
 
 static float texture_mpp_for_refresh(int refresh);
-static bool  build_dcapp_path(char *path, size_t path_capacity, const char *dcapp_home, const char *relative_path);
-static int  *texture_enabled_variable(uint32_t slot);
-static int   texture_enabled(uint32_t slot);
-static void  update_planet_texture_slot(DcAppContext *app_ctx, uint32_t slot, float mpp);
-static void  update_planet_textures(DcAppContext *app_ctx, int refresh);
-static void  update_logic_shader(void);
+static bool build_dcapp_path(char *path, size_t path_capacity, const char *dcapp_home, const char *relative_path);
+static int *texture_enabled_variable(uint32_t slot);
+static int texture_enabled(uint32_t slot);
+static void update_planet_texture_slot(DcAppContext *app_ctx, uint32_t slot, float mpp);
+static void update_planet_textures(DcAppContext *app_ctx, int refresh);
+static void update_logic_shader(void);
 
 void display_init(DcAppContext *app_ctx, void **user_data) {
     (void)user_data;
@@ -70,9 +70,9 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
     }
 
     logic_planet = dc_planet->create_planet_with_id(app_ctx, "LogicMoon", (DcPlanetCreateInfo){
-        .data_path = data_path,
-        .mesh_cache_size_mb = 128u,
-    });
+                                                                              .data_path = data_path,
+                                                                              .mesh_cache_size_mb = 128u,
+                                                                          });
     logic_geojson = dc_planet->load_geojson(app_ctx, "assets/geojson_test.geojson");
     update_planet_textures(app_ctx, TextureRefresh ? *TextureRefresh : 0);
     logic_texture_refresh = TextureRefresh ? *TextureRefresh : -1;
@@ -102,7 +102,7 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
 
     if (logic_planet && logic_orbit_breadcrumbs) {
         dc_planet->update_breadcrumbs_geodetic(logic_orbit_breadcrumbs, logic_planet,
-                                              (DcVec3d){.x = *OrbitLat, .y = *OrbitLon, .z = 50000.0});
+                                               (DcVec3d){.x = *OrbitLat, .y = *OrbitLon, .z = 50000.0});
     }
 
     if (logic_planet && LightY) {
@@ -256,12 +256,18 @@ static bool build_dcapp_path(char *path, size_t path_capacity, const char *dcapp
 
 static int *texture_enabled_variable(uint32_t slot) {
     switch (slot) {
-        case 0: return HazardMap0Enabled;
-        case 1: return HazardMap1Enabled;
-        case 2: return HazardMap2Enabled;
-        case 3: return HazardMap3Enabled;
-        case 4: return HazardMap4Enabled;
-        default: return NULL;
+        case 0:
+            return HazardMap0Enabled;
+        case 1:
+            return HazardMap1Enabled;
+        case 2:
+            return HazardMap2Enabled;
+        case 3:
+            return HazardMap3Enabled;
+        case 4:
+            return HazardMap4Enabled;
+        default:
+            return NULL;
     }
 }
 

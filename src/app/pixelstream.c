@@ -15,19 +15,19 @@
 // unique pixelstream source (shared across nodes with the same key)
 typedef struct _DcAppPixelstreamSource {
     DcAppPixelstreamType type;
-    DcAppTextureId       texture;
-    bool                 is_connected;
+    DcAppTextureId texture;
+    bool is_connected;
 
     // frame data (fetched once per frame by the source, not per-node)
     unsigned char *frame;
-    int            frame_width;
-    int            frame_height;
+    int frame_width;
+    int frame_height;
 
     union {
         struct {
             DcPsMjpegServer *server;
-            unsigned char   *raw_jpeg;
-            size_t           raw_jpeg_size;
+            unsigned char *raw_jpeg;
+            size_t raw_jpeg_size;
         } mjpeg;
         struct {
             DcPsShmemSource *source;
@@ -37,24 +37,24 @@ typedef struct _DcAppPixelstreamSource {
 
 struct DcAppPixelstreamContext {
     DcAppTextureContext *textures;
-    DcPsMjpegContext    *mjpeg;
-    DcPsShmemContext    *shmem;
+    DcPsMjpegContext *mjpeg;
+    DcPsShmemContext *shmem;
 
     // pixelstream sources (unique, deduplicated by source key during XML parse)
     _DcAppPixelstreamSource *sb_sources;
-    char                    *sb_source_keys;        // stretchy buffer of null-terminated key strings
-    int                     *sb_source_key_offsets; // offset into sb_source_keys for each source
+    char *sb_source_keys;       // stretchy buffer of null-terminated key strings
+    int *sb_source_key_offsets; // offset into sb_source_keys for each source
 };
 
 static const plMemoryI *_ext_memory = NULL;
-static const plImageI  *_ext_image  = NULL;
+static const plImageI *_ext_image = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_FREE(x)  _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 void dc_app_pixelstream_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_image  = pl_get_api_latest(api_registry, plImageI);
+    _ext_image = pl_get_api_latest(api_registry, plImageI);
 }
 
 DcAppPixelstreamContext *dc_app_pixelstream_context_create(DcAppTextureContext *textures) {
@@ -121,9 +121,9 @@ DcAppPixelstreamSourceIndex dc_app_pixelstream_add(DcAppPixelstreamContext *pixe
 
     // create new source if not found
     _DcAppPixelstreamSource src = {0};
-    src.type         = type;
-    src.frame        = NULL;
-    src.frame_width  = 0;
+    src.type = type;
+    src.frame = NULL;
+    src.frame_width = 0;
     src.frame_height = 0;
     src.is_connected = false;
 
@@ -141,9 +141,9 @@ DcAppPixelstreamSourceIndex dc_app_pixelstream_add(DcAppPixelstreamContext *pixe
             src.shmem.source = dc_ps_shmem_add_source(pixelstreams->shmem, key);
             break;
         case DC_APP_PIXELSTREAM_TYPE_MJPEG:
-            src.mjpeg.server        = dc_ps_mjpeg_add_server(pixelstreams->mjpeg, key, timeout);
+            src.mjpeg.server = dc_ps_mjpeg_add_server(pixelstreams->mjpeg, key, timeout);
             src.mjpeg.raw_jpeg_size = DC_APP_PIXELSTREAM_MAX_WIDTH * DC_APP_PIXELSTREAM_MAX_HEIGHT * 4;
-            src.mjpeg.raw_jpeg      = (unsigned char *)malloc(src.mjpeg.raw_jpeg_size);
+            src.mjpeg.raw_jpeg = (unsigned char *)malloc(src.mjpeg.raw_jpeg_size);
             break;
         default:
             DC_LOG_ERROR("PixelStream", "Unknown pixelstream type");
@@ -163,10 +163,10 @@ bool dc_app_pixelstream_get_state(DcAppPixelstreamContext *pixelstreams, DcAppPi
     if (!pixelstreams || !state || index < 0 || index >= sbcount(pixelstreams->sb_sources)) return false;
     const _DcAppPixelstreamSource *source = &pixelstreams->sb_sources[index];
     *state = (DcAppPixelstreamState){
-        .texture   = source->texture,
+        .texture = source->texture,
         .connected = source->is_connected,
-        .width     = source->frame_width,
-        .height    = source->frame_height,
+        .width = source->frame_width,
+        .height = source->frame_height,
     };
     return true;
 }
@@ -213,7 +213,7 @@ void dc_app_pixelstream_update(DcAppPixelstreamContext *pixelstreams) {
                 if (!src->is_connected) break;
 
                 if (dc_ps_shmem_has_new_data(src->shmem.source)) {
-                    uint32_t width  = dc_ps_shmem_get_width(src->shmem.source);
+                    uint32_t width = dc_ps_shmem_get_width(src->shmem.source);
                     uint32_t height = dc_ps_shmem_get_height(src->shmem.source);
 
                     if (width * height > DC_APP_PIXELSTREAM_MAX_WIDTH * DC_APP_PIXELSTREAM_MAX_HEIGHT) {
@@ -232,7 +232,7 @@ void dc_app_pixelstream_update(DcAppPixelstreamContext *pixelstreams) {
                     size_t out_size;
                     dc_ps_shmem_get_data(src->shmem.source, src->frame, frame_size, &out_size);
 
-                    src->frame_width  = (int)width;
+                    src->frame_width = (int)width;
                     src->frame_height = (int)height;
                 }
                 break;

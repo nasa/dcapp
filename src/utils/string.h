@@ -10,18 +10,18 @@
 extern "C" {
 #endif
 
-int  dc_utils_str_find(const char *s, const char *pattern);
-int  dc_utils_str_find_first(const char *s, char ch);
-int  dc_utils_str_find_first_of(const char *s, const char *chars);
-int  dc_utils_str_find_first_not_of(const char *s, const char *chars);
+int dc_utils_str_find(const char *s, const char *pattern);
+int dc_utils_str_find_first(const char *s, char ch);
+int dc_utils_str_find_first_of(const char *s, const char *chars);
+int dc_utils_str_find_first_not_of(const char *s, const char *chars);
 bool dc_utils_char_in(const char c, const char *set);
 
 void dc_utils_trim_whitespace_inplace(char *text);
 void dc_utils_trim_whitespace_copy(const char *input, char *out, size_t out_size);
 
 double dc_utils_string_to_double(const char *text);
-int    dc_utils_string_to_integer(const char *text);
-int    dc_utils_string_to_boolean(const char *text);
+int dc_utils_string_to_integer(const char *text);
+int dc_utils_string_to_boolean(const char *text);
 
 bool dc_utils_string_is_double(const char *text);
 bool dc_utils_string_is_int(const char *text);
