@@ -4,9 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//-----------------------------------------------------------------------------
-// types
-//-----------------------------------------------------------------------------
+//~ types
 
 typedef struct DcGeojson DcGeojson;
 
@@ -21,12 +19,16 @@ typedef enum {
     DC_GEOJSON_FEATURE_POLYGON,
 } DcGeojsonFeatureType;
 
+//- coordinate values
+
 typedef struct DcGeojsonPosition {
     double lon;
     double lat;
     double alt;
     bool has_alt;
 } DcGeojsonPosition;
+
+//- styling
 
 typedef struct DcGeojsonColor {
     float r, g, b, a;
@@ -39,6 +41,8 @@ typedef struct DcGeojsonStyle {
     float stroke_width;
     bool has_stroke_width;
 } DcGeojsonStyle;
+
+//- geometry storage
 
 typedef struct DcGeojsonCoordArray {
     DcGeojsonPosition *positions;
@@ -54,6 +58,7 @@ typedef struct DcGeojsonPolygon {
 
 typedef struct DcGeojsonFeature DcGeojsonFeature;
 
+// nested arrays are owned by the document
 struct DcGeojsonFeature {
     DcGeojsonFeatureType type;
     DcGeojsonStyle style;
@@ -79,9 +84,7 @@ struct DcGeojsonFeature {
     } geom;
 };
 
-//-----------------------------------------------------------------------------
-// api
-//-----------------------------------------------------------------------------
+//~ api
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,6 +93,8 @@ extern "C" {
 DcGeojson *dc_geojson_load(const char *filepath);
 void dc_geojson_free(DcGeojson *geojson);
 uint32_t dc_geojson_feature_count(DcGeojson *geojson);
+
+// returned feature pointers remain valid until the document is freed
 const DcGeojsonFeature *dc_geojson_feature(DcGeojson *geojson, uint32_t index);
 
 #ifdef __cplusplus

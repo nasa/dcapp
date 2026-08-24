@@ -20,6 +20,8 @@
 #include "utils/math.h"
 #include "utils/stb_sb.h"
 
+//~ types
+
 typedef enum _DcAppStencilPhase {
     _DC_APP_STENCIL_PHASE_NONE,
     _DC_APP_STENCIL_PHASE_CREATE,
@@ -37,7 +39,7 @@ typedef struct _DcAppStencilRecorder {
     _DcAppStencilPhase phase;
 } _DcAppStencilRecorder;
 
-// Split batches when drawing switches between 2D and 3D so submission preserves call order.
+// split batches on dimensional changes to preserve submission order
 typedef enum __DrawBatchType {
     DRAW_BATCH_TYPE_UNDEFINED,
     DRAW_BATCH_TYPE_2D,
@@ -103,7 +105,7 @@ struct DcAppDrawContext {
 
     _DcAppStencilRecorder stencil;
 
-    // queues planet views so they render to textures before entering the 2d draw stream.
+    // queue planet views before they enter the two dimensional stream
     DcAppDrawPlanetViewHandle *sb_planet_views;
     _DcAppPlanetContainerFrame *sb_planet_container_stack;
 
@@ -113,6 +115,8 @@ struct DcAppDrawContext {
     int draw_list_2d_index;
     int draw_list_3d_index;
 };
+
+//~ extension interfaces
 
 static const plMemoryI *_ext_memory = NULL;
 static const plCameraI *_ext_camera = NULL;
@@ -126,6 +130,8 @@ static const plStarterI *_ext_starter = NULL;
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) _ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+
+//~ planet draw types
 
 struct DcAppDrawPlanetView {
     DcAppPlanetViewHandle view;
@@ -143,6 +149,8 @@ typedef struct _DcAppResolvedGeojsonStyle {
     bool line_enabled;
     bool fill_enabled;
 } _DcAppResolvedGeojsonStyle;
+
+//~ declarations
 
 static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx);
 static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx);
@@ -194,6 +202,8 @@ static void _draw_planet_polygon_geodetic_enabled(
 static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *feature, DcAppPlanetGeojsonStyle fallback);
 static plVec3 *_planet_geojson_points(DcAppPlanetHandle planet, const DcGeojsonCoordArray *coordinates, double height_above_terrain);
 static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, const DcGeojsonFeature *feature, _DcAppResolvedGeojsonStyle style);
+
+//~ api tables
 
 static const DcAppDrawApi dc_app_draw_interface = {
     .get_area = dc_app_draw_get_area,
@@ -291,6 +301,8 @@ static const DcAppMouseApi dc_app_mouse_interface = {
     .get_state = dc_app_mouse_get_state,
 };
 
+//~ module lifecycle
+
 void dc_app_draw_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
     _ext_camera = pl_get_api_latest(api_registry, plCameraI);
@@ -310,9 +322,7 @@ const DcAppMouseApi *dc_app_mouse_api(void) {
     return &dc_app_mouse_interface;
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] DrawFunction context helpers
-//-----------------------------------------------------------------------------
+//~ frame context
 
 DcAppDrawContext *dc_app_draw_context_create(dcFont *default_font, DcAppTextureContext *texture_ctx) {
     if (!texture_ctx) return NULL;
@@ -330,12 +340,12 @@ DcAppDrawContext *dc_app_draw_context_create(dcFont *default_font, DcAppTextureC
 void dc_app_draw_context_destroy(DcAppDrawContext *ctx) {
     if (!ctx) return;
 
-    // cleans up every queued planet view.
+    //- release queued planet views
     for (int i = 0; i < sbcount(ctx->sb_planet_views); i++) {
         PL_FREE(ctx->sb_planet_views[i]);
     }
 
-    // cleanup draw batch system
+    //- release draw batch pools
     for (int i = 0; i < sbcount(ctx->sb_draw_list_2d_pool); i++) {
         _ext_dc_draw->return_2d_drawlist(ctx->sb_draw_list_2d_pool[i].draw_list);
     }
@@ -357,6 +367,7 @@ void dc_app_draw_context_destroy(DcAppDrawContext *ctx) {
 void dc_app_draw_context_begin(DcAppDrawContext *ctx, DcAppDrawFrameInput input) {
     if (!ctx) return;
 
+    //- capture input edges
     bool was_mouse_down = ctx->screen_mouse.down;
     ctx->screen_mouse.x = input.mouse_position.x;
     ctx->screen_mouse.y = input.mouse_position.y;
@@ -369,7 +380,7 @@ void dc_app_draw_context_begin(DcAppDrawContext *ctx, DcAppDrawFrameInput input)
         PL_FREE(ctx->sb_planet_views[ii]);
     }
 
-    // clear the batches array (doesn't free memory, just resets count)
+    //- reset frame storage
     sbclear(ctx->sb_draw_batches);
     sbclear(ctx->stencil.sb_frames);
     sbclear(ctx->sb_planet_views);
@@ -377,11 +388,12 @@ void dc_app_draw_context_begin(DcAppDrawContext *ctx, DcAppDrawFrameInput input)
     sbclear(ctx->sb_scope_stack);
     sbclear(ctx->sb_container_stack);
 
-    // reset pool indices
+    // rewind reusable draw list pools
     ctx->draw_list_2d_index = 0;
     ctx->draw_list_3d_index = 0;
     ctx->stencil.phase = _DC_APP_STENCIL_PHASE_NONE;
 
+    // seed the root draw area from the viewport
     ctx->area = (DcAppDrawArea){0};
     const plIO *io = _ext_ioi->get_io();
     ctx->area.dimensions[0] = io->tMainViewportSize.x;
@@ -394,6 +406,7 @@ void dc_app_draw_context_begin(DcAppDrawContext *ctx, DcAppDrawFrameInput input)
 void dc_app_draw_context_end(DcAppDrawContext *ctx) {
     if (!ctx) return;
 
+    // close scopes before restoring root state
     while (sbcount(ctx->sb_scope_stack) > 0) {
         DcAppDrawScope scope = ctx->sb_scope_stack[sbcount(ctx->sb_scope_stack) - 1];
         dc_app_draw_scope_end(ctx, scope);
@@ -408,7 +421,7 @@ void dc_app_draw_context_end(DcAppDrawContext *ctx) {
 void dc_app_draw_context_submit(DcAppDrawContext *ctx, plRenderEncoder *encoder) {
     if (!ctx || !encoder) return;
 
-    // submit draw lists from batch system in order
+    // submit batches in recorded order
     plIO *ptIO = _ext_ioi->get_io();
     {
         const plSwapchainInfo swapchain_info = _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain());
@@ -419,8 +432,7 @@ void dc_app_draw_context_submit(DcAppDrawContext *ctx, plRenderEncoder *encoder)
             .uMSAASampleCount = swapchain_info.tSampleCount,
         };
 
-        // orthographic MVP for 3D objects in 2D space
-        // Note: dcapp uses bottom-left origin, so Y is NOT flipped here (parent_transform handles it)
+        // use a bottom-left orthographic transform without flipping y
         float w = draw_submit.tLogicalDimensions.x;
         float h = draw_submit.tLogicalDimensions.y;
         float n = -1000.0f;
@@ -456,6 +468,7 @@ void dc_app_draw_context_submit(DcAppDrawContext *ctx, plRenderEncoder *encoder)
 void dc_app_draw_context_commit(DcAppDrawContext *ctx) {
     if (!ctx) return;
 
+    // promote this frame's hit targets
     ctx->pressed_target = ctx->next_pressed_target;
     ctx->hovered_target = ctx->next_hovered_target;
     if (ctx->screen_mouse.pressed) {
@@ -496,7 +509,7 @@ void dc_app_draw_context_pop(DcAppDrawContext *ctx) {
     _draw_context_update_mouse(ctx);
 }
 
-// A scope snapshots every mutable draw stack so nested callbacks cannot leak state.
+// a scope snapshots mutable stacks so nested callbacks cannot leak state
 DcAppDrawScope dc_app_draw_scope_begin(DcAppDrawContext *ctx) {
     if (!ctx) return (DcAppDrawScope){0};
 
@@ -518,7 +531,7 @@ void dc_app_draw_scope_end(DcAppDrawContext *ctx, DcAppDrawScope scope) {
         scope = ctx->sb_scope_stack[sbcount(ctx->sb_scope_stack) - 1];
     }
 
-    // flushes queued planet views after overlays have been submitted.
+    // flush queued planet views after their overlays are submitted
     _flush_planet_views(ctx, scope.planet_view_count);
 
     while (sbcount(ctx->stencil.sb_frames) > scope.stencil_count) {
@@ -538,9 +551,9 @@ void dc_app_draw_scope_end(DcAppDrawContext *ctx, DcAppDrawScope scope) {
     _draw_context_update_mouse(ctx);
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] DrawFunction utility API
-//-----------------------------------------------------------------------------
+//~ placement containers and stencils
+
+//- point placement
 
 const DcAppDrawArea *dc_app_draw_get_area(DcAppDrawContext *ctx) {
     return ctx ? &ctx->area : NULL;
@@ -554,6 +567,7 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
     plMat4 transform = pl_identity_mat4();
     memcpy(transform.d, base_area->transform, sizeof(transform.d));
 
+    //- measure local bounds
     float min_x = points[0].x;
     float min_y = points[0].y;
     float max_x = points[0].x;
@@ -565,6 +579,7 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
         max_y = fmaxf(max_y, points[ii].y);
     }
 
+    //- apply the identity placement fast path
     if (_placement_is_default(placement) && position.x == 0.0f && position.y == 0.0f) {
         for (uint32_t ii = 0; ii < point_count; ii++) {
             plVec4 p = pl_mul_mat4_vec4(&transform, (plVec4){points[ii].x, points[ii].y, 0.0f, 1.0f});
@@ -588,6 +603,7 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
     float x = position.x;
     float y = position.y;
 
+    //- resolve alignment and pivot
     switch (placement.parent_align_x) {
         case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
             x += base_area->dimensions[0] * 0.5f;
@@ -667,6 +683,7 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
     pivot.y += placement.pivot_y;
 
     float rotation = pl_radiansf(placement.rotation);
+    //- transform resolved points
     if (rotation != 0.0f) {
         float s = sinf(rotation);
         float c = cosf(rotation);
@@ -685,6 +702,7 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
         }
     }
 
+    //- publish the resolved area
     if (out_area) {
         DcAppVec2 area_points[3] = {
             {min_x, min_y},
@@ -697,6 +715,8 @@ void dc_app_draw_resolve_points(DcAppDrawContext *ctx, const DcAppVec2 *points, 
     }
 }
 
+//- containers
+
 bool dc_app_draw_container_push(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec2 virtual_size) {
     return dc_app_draw_container_push_ex(ctx, position, size, virtual_size, (DcAppPlacement){0}, NULL);
 }
@@ -706,6 +726,7 @@ bool dc_app_draw_container_push_ex(DcAppDrawContext *ctx, DcAppVec2 position, Dc
     if (!ctx || size.x == 0.0f || size.y == 0.0f) return false;
     DcAppDrawArea *out_area = _draw_result_area(result);
 
+    //- resolve the virtual frame
     if (virtual_size.x == 0.0f) {
         virtual_size.x = size.x;
     }
@@ -723,6 +744,7 @@ bool dc_app_draw_container_push_ex(DcAppDrawContext *ctx, DcAppVec2 position, Dc
     plVec2 p1 = points[1];
     plVec2 p3 = points[3];
 
+    //- install the local transform
     plMat4 transform = pl_identity_mat4();
     transform.x11 = (p1.x - p0.x) / virtual_size.x;
     transform.x21 = (p1.y - p0.y) / virtual_size.x;
@@ -756,6 +778,8 @@ bool dc_app_draw_container_push_area(DcAppDrawContext *ctx, const DcAppDrawArea 
 void dc_app_draw_container_pop(DcAppDrawContext *ctx) {
     dc_app_draw_context_pop(ctx);
 }
+
+//- stencils
 
 bool dc_app_draw_stencil_begin(DcAppDrawContext *ctx) {
     if (!ctx) return false;
@@ -805,9 +829,9 @@ void dc_app_draw_stencil_end(DcAppDrawContext *ctx) {
     _restore_stencil_phase(ctx, frame.previous_phase);
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] DrawFunction mouse API
-//-----------------------------------------------------------------------------
+//~ mouse interaction
+
+//- internal targets
 
 const DcAppMouse *dc_app_mouse_get_state(DcAppDrawContext *ctx) {
     return ctx ? &ctx->mouse : NULL;
@@ -841,6 +865,8 @@ bool dc_app_draw_mouse_target_released(DcAppDrawContext *ctx, DcAppDrawTargetId 
 bool dc_app_draw_mouse_target_active(DcAppDrawContext *ctx, DcAppDrawTargetId target_id) {
     return ctx && target_id != 0 && _draw_mouse_target_is_internal(ctx->active_target, target_id);
 }
+
+//- hit registration
 
 void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size) {
     dc_app_mouse_rect_ex(ctx, id, position, size, (DcAppPlacement){0});
@@ -908,6 +934,8 @@ void dc_app_mouse_polygon_ex(DcAppDrawContext *ctx, const char *id, const DcAppV
     }
 }
 
+//- resolved events
+
 bool dc_app_mouse_hovered(DcAppDrawContext *ctx, const char *id) {
     if (!ctx) return false;
     uint64_t mouse_id = _mouse_id(id);
@@ -944,9 +972,9 @@ bool dc_app_mouse_down(DcAppDrawContext *ctx) {
     return ctx && ctx->mouse.down;
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] DrawFunction primitive API
-//-----------------------------------------------------------------------------
+//~ primitive drawing
+
+//- convenience wrappers
 
 void dc_app_draw_line(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppStroke stroke) {
     dc_app_draw_line_ex(ctx, p0, p1, stroke, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
@@ -1027,6 +1055,8 @@ void dc_app_draw_ellipse_filled(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVe
 void dc_app_draw_text(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style) {
     dc_app_draw_text_ex(ctx, position, text, style, (DcAppPlacement){0}, NULL);
 }
+
+//- placed primitives
 
 void dc_app_draw_line_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result) {
     DcAppVec2 points[2] = {
@@ -1294,9 +1324,9 @@ void dc_app_draw_text_ex(DcAppDrawContext *ctx, DcAppVec2 position, const char *
     _ext_dc_draw->add_text(_draw_batch_get_2d(ctx), (plVec2){0.0f, 0.0f}, text, options);
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] Internal XML/node draw helpers
-//-----------------------------------------------------------------------------
+//~ node and planet drawing
+
+//- backend primitives
 
 plVec2 dc_app_draw_text_options_size(const char *text, dcDrawTextOptions options) {
     if (!text) return (plVec2){0.0f, 0.0f};
@@ -1379,12 +1409,14 @@ void dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 positi
     _ext_planet->draw_text(view, camera, position, text, size, color);
 }
 
+//- planet views
+
 DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
     if (result) *result = (DcAppDrawResult){0};
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_GEODETIC) return NULL;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
-    // stores draw-frame camera and placement until the current draw scope ends.
+    // keep camera and placement alive for the current draw scope
     DcAppDrawPlanetViewHandle draw_view = (DcAppDrawPlanetViewHandle)PL_ALLOC(sizeof(*draw_view));
     memset(draw_view, 0, sizeof(*draw_view));
     draw_view->view = view;
@@ -1425,7 +1457,7 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ct
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
-    // stores draw-frame camera and placement until the current draw scope ends.
+    // keep camera and placement alive for the current draw scope
     DcAppDrawPlanetViewHandle draw_view = (DcAppDrawPlanetViewHandle)PL_ALLOC(sizeof(*draw_view));
     memset(draw_view, 0, sizeof(*draw_view));
     draw_view->view = view;
@@ -1503,6 +1535,8 @@ void dc_app_draw_planet_container_pop(DcAppDrawContext *ctx) {
     }
     sbpop(ctx->sb_planet_container_stack);
 }
+
+//- local planet geometry
 
 void dc_app_draw_planet_line_local(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke) {
     if (!points || point_count < 2) return;
@@ -1588,6 +1622,8 @@ void dc_app_draw_planet_polygon_local_enabled(
     PL_FREE(cartesian);
 }
 
+//- planet overlays
+
 void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, double radius, DcAppVec4 color) {
     (void)ctx;
     if (!draw_view) return;
@@ -1601,7 +1637,7 @@ void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetV
     const DcGeoCrsCartesian *cartesian_crs = dc_app_planet_cartesian_crs(planet);
     const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
     if (!cartesian_crs || !geodetic_crs) return;
-    // converts cartesian centers because pl_planet draws spheres from geodetic centers.
+    // convert cartesian centers for the geodetic sphere renderer
     plVec3d cartesian = {position.x, position.y, position.z};
     plVec3d geodetic;
     dc_geo_cartesian_to_geodetic_d(cartesian_crs, geodetic_crs, &cartesian, &geodetic, 1);
@@ -1774,7 +1810,7 @@ void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetView
     const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
     const DcGeoCrsCartesian *cartesian_crs = dc_app_planet_cartesian_crs(planet);
     if (!geodetic_crs || !cartesian_crs) return;
-    // converts geodetic text positions to renderer-native cartesian coordinates.
+    // convert geodetic labels to renderer-native cartesian coordinates
     plVec3d geodetic_in = {lat, lon, height};
     plVec3d cartesian_out;
     dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic_in, &cartesian_out, 1);
@@ -1895,6 +1931,10 @@ void dc_app_draw_planet_geojson(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle
     }
 }
 
+//~ internal placement and input helpers
+
+//- point and area resolution
+
 static plVec2 *_alloc_resolved_points(DcAppDrawContext *ctx, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area) {
     if (!ctx || !points || point_count == 0 || point_count > DCAPP_DRAW_POINT_COUNT_MAX) return NULL;
     if ((size_t)point_count > ((size_t)-1) / sizeof(plVec2)) return NULL;
@@ -1979,6 +2019,8 @@ static void _draw_area_from_rect_points(float width, float height, plVec2 p0, pl
     memcpy(out_area->transform, transform.d, sizeof(out_area->transform));
 }
 
+//- mouse resolution
+
 static uint64_t _mouse_id(const char *id) {
     if (!id || id[0] == '\0') return 0;
 
@@ -2059,6 +2101,8 @@ static void _mouse_register(DcAppDrawContext *ctx, uint64_t id) {
     }
 }
 
+//- text and image placement
+
 static dcDrawTextOptions _text_options(DcAppDrawContext *ctx, DcAppTextStyle style) {
     dcDrawTextOptions options = {0};
 
@@ -2076,6 +2120,7 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
 
     plMat4 transform = pl_identity_mat4();
 
+    //- apply local alignment
     float align_x = 0.0f;
     switch (placement.local_align_x) {
         case DC_APP_DRAW_ALIGNMENT_TYPE_CENTER:
@@ -2105,6 +2150,7 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
     plMat4 trans_local_align_xform = pl_mat4_translate_xyz(align_x, align_y, 0.0f);
     transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
 
+    //- anchor within the parent area
     float anchor_x = 0.0f;
     float anchor_y = 0.0f;
     if (base_area) {
@@ -2136,6 +2182,7 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
     plMat4 trans_position_xform = pl_mat4_translate_xyz(anchor_x + position.x, anchor_y + position.y, 0.0f);
     transform = pl_mul_mat4t(&transform, &trans_position_xform);
 
+    //- rotate around the resolved pivot
     if (placement.rotation != 0.0f) {
         float pivot_x = 0.0f;
         float pivot_y = 0.0f;
@@ -2175,11 +2222,13 @@ static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcApp
         transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
     }
 
+    //- flip into backend coordinates
     plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0.0f, dimensions.y, 0.0f);
     plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
     transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
     transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
 
+    //- compose with the parent transform
     if (base_area) {
         plMat4 base_transform = pl_identity_mat4();
         memcpy(base_transform.d, base_area->transform, sizeof(base_transform.d));
@@ -2218,6 +2267,8 @@ static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id
     if (!ctx || texture_id == 0 || !out) return false;
     return dc_app_texture_get_bind_group(ctx->texture_ctx, texture_id, out);
 }
+
+//- planet geometry
 
 static void _draw_planet_polygon_geodetic_enabled(
     DcAppDrawPlanetViewHandle draw_view,
@@ -2258,6 +2309,8 @@ static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *
     bool line_enabled = (fallback.flags & DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR) != 0;
     bool fill_enabled = (fallback.flags & DC_APP_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR) != 0;
     bool line_width_set = (fallback.flags & DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH) != 0;
+
+    // seed defaults from the caller fallback
     _DcAppResolvedGeojsonStyle style = {
         .height_above_terrain = fallback.height_above_terrain,
         .line_width = line_width_set ? fallback.line_width : 1.0f,
@@ -2267,6 +2320,7 @@ static _DcAppResolvedGeojsonStyle _planet_geojson_style(const DcGeojsonFeature *
         .fill_enabled = fill_enabled,
     };
 
+    // feature properties override only the values they provide
     if (feature->style.stroke.has_value) {
         style.line_color = (DcAppVec4){
             feature->style.stroke.r,
@@ -2323,6 +2377,7 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
     uint32_t line_color = PL_COLOR_32_RGBA(style.line_color.r, style.line_color.g, style.line_color.b, style.line_color.a);
     uint32_t fill_color = PL_COLOR_32_RGBA(style.fill_color.r, style.fill_color.g, style.fill_color.b, style.fill_color.a);
 
+    // dispatch geometry recursively while using only outer polygon rings
     switch (feature->type) {
         case DC_GEOJSON_FEATURE_POINT: {
             const DcGeojsonPosition *point = &feature->geom.point.position;
@@ -2400,9 +2455,9 @@ static void _planet_draw_geojson_feature(DcAppDrawPlanetViewHandle draw_view, co
     }
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] draw batch utils
-//-----------------------------------------------------------------------------
+//~ batching and stencil state
+
+//- draw list pools
 
 static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx) {
     if (!ctx) return NULL;
@@ -2414,7 +2469,7 @@ static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx) {
         return batch->draw_list_2d.layer;
     }
 
-    // grow pool if needed - request from extension
+    // grow the pool on demand
     int pool_size = sbcount(ctx->sb_draw_list_2d_pool);
     if (ctx->draw_list_2d_index >= pool_size) {
         dcDrawList2D *new_draw_list = _ext_dc_draw->request_2d_drawlist();
@@ -2423,11 +2478,11 @@ static dcDrawLayer2D *_draw_batch_get_2d(DcAppDrawContext *ctx) {
         sbpush(ctx->sb_draw_list_2d_pool, new_entry);
     }
 
-    // get draw list + layer from pool
+    // reuse the next draw list and layer
     _DrawList2D *draw_list_2d = &ctx->sb_draw_list_2d_pool[ctx->draw_list_2d_index];
     ctx->draw_list_2d_index++;
 
-    // add batch entry
+    // record the dimensional batch
     _DrawBatch batch = {
         .type = DRAW_BATCH_TYPE_2D,
         .draw_list_2d = *draw_list_2d};
@@ -2448,18 +2503,18 @@ static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx) {
         return batch->draw_list_3d;
     }
 
-    // grow pool if needed - request from extension
+    // grow the pool on demand
     int pool_size = sbcount(ctx->sb_draw_list_3d_pool);
     if (ctx->draw_list_3d_index >= pool_size) {
         dcDrawList3D *new_list = _ext_dc_draw->request_3d_drawlist();
         sbpush(ctx->sb_draw_list_3d_pool, new_list);
     }
 
-    // get draw list from pool
+    // reuse the next draw list
     dcDrawList3D *draw_list = ctx->sb_draw_list_3d_pool[ctx->draw_list_3d_index];
     ctx->draw_list_3d_index++;
 
-    // add batch entry
+    // record the dimensional batch
     _DrawBatch batch = {
         .type = DRAW_BATCH_TYPE_3D,
         .draw_list_3d = draw_list};
@@ -2469,6 +2524,8 @@ static dcDrawList3D *_draw_batch_get_3d(DcAppDrawContext *ctx) {
 
     return draw_list;
 }
+
+//- stencil state
 
 static void _set_stencil_phase(DcAppDrawContext *ctx, _DcAppStencilPhase phase) {
     int depth = ctx ? sbcount(ctx->stencil.sb_frames) : 0;
@@ -2539,6 +2596,10 @@ static void _clear_stencil_bit(DcAppDrawContext *ctx) {
                                                                            });
 }
 
+//~ planet projection helpers
+
+//- local tangent frames
+
 static _DcAppPlanetContainerFrame *_planet_container_frame(DcAppDrawContext *ctx) {
     if (!ctx || sbcount(ctx->sb_planet_container_stack) == 0) return NULL;
     return &ctx->sb_planet_container_stack[sbcount(ctx->sb_planet_container_stack) - 1];
@@ -2551,7 +2612,7 @@ static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const D
     plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
     if (!cartesian) return NULL;
 
-    // Treat local XY as tangent-plane meters and wrap it onto the sphere by arc length.
+    // wrap local tangent-plane meters onto the sphere by arc length
     for (uint32_t i = 0; i < point_count; i++) {
         double local_x = (double)points[i].x * frame->scale;
         double local_y = (double)points[i].y * frame->scale;
@@ -2583,6 +2644,8 @@ static plVec3 *_planet_container_transform_points(DcAppDrawContext *ctx, const D
     return cartesian;
 }
 
+//- queued views
+
 static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view) {
     if (!draw_view) return;
 
@@ -2610,7 +2673,7 @@ static void _flush_planet_views(DcAppDrawContext *ctx, int first_view) {
 
         _apply_planet_view_options(draw_view);
 
-        // renders the queued planet view into the texture drawn at call time.
+        // render the queued view into its draw-time texture
         plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
         _ext_planet->render_view(view, &draw_view->camera, cmd_buf, draw_view->logical_dimensions);
         _ext_starter->submit_command_buffer(cmd_buf);
@@ -2621,6 +2684,8 @@ static void _flush_planet_views(DcAppDrawContext *ctx, int first_view) {
     }
     sbpopn(ctx->sb_planet_views, view_count - first_view);
 }
+
+//- cameras and projected labels
 
 static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size) {
     plCamera camera = {0};
@@ -2638,7 +2703,7 @@ static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppV
 static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera) {
     if (!planet || !camera) return;
 
-    // derives orthographic scale from camera altitude to match xml and snapshot behavior.
+    // derive orthographic scale from altitude for xml and snapshot parity
     double cam_dist = sqrt(camera->tPosDouble.x * camera->tPosDouble.x +
                            camera->tPosDouble.y * camera->tPosDouble.y +
                            camera->tPosDouble.z * camera->tPosDouble.z);
@@ -2667,6 +2732,9 @@ static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVe
     double dx = position.x - draw_view->camera.tPosDouble.x;
     double dy = position.y - draw_view->camera.tPosDouble.y;
     double dz = position.z - draw_view->camera.tPosDouble.z;
+
+    //- reject labels hidden behind the planet
+
     if (planet_radius > 0.0) {
         double a = dx * dx + dy * dy + dz * dz;
         double b = 2.0 * (draw_view->camera.tPosDouble.x * dx +
@@ -2683,6 +2751,8 @@ static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVe
         }
     }
 
+    //- project visible positions into the view
+
     plMat4 mvp = pl_mul_mat4(&draw_view->camera.tProjMat, &draw_view->camera.tViewMatDouble);
     plVec4 projected = pl_mul_mat4_vec4(
         &mvp,
@@ -2696,6 +2766,8 @@ static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVe
     float pixel_x = output_width * 0.5f * (1.0f + projected.x);
     float pixel_y = output_height * 0.5f * (1.0f + projected.y);
     if (pixel_x < 0.0f || pixel_x > output_width || pixel_y < 0.0f || pixel_y > output_height) return false;
+
+    //- scale world size into display pixels
 
     double distance = sqrt(dx * dx + dy * dy + dz * dz);
     if (distance < 0.001) distance = 0.001;
@@ -2808,7 +2880,7 @@ static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, do
 
     plVec3 north, east, down, up;
     dc_geo_get_local_ned_basis(lat_rad, lon_rad, &north, &east, &down, &up);
-    // applies local-ned attitude as yaw about down, pitch about right, and roll about boresight.
+    // apply local-ned yaw about down pitch about right and roll about boresight
     float yaw = pl_radiansf(rpy_degrees.yaw);
     float pitch = pl_radiansf(rpy_degrees.pitch);
     float roll = pl_radiansf(rpy_degrees.roll);
@@ -2836,7 +2908,7 @@ static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, do
 
 static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d position, DcAppVec3 rpy_degrees, float fov_degrees, bool orthographic, DcAppVec2 size) {
     plCamera camera = _planet_camera_base(fov_degrees, orthographic, size);
-    // applies cartesian attitude through pilotlight camera pitch, yaw, and roll.
+    // apply cartesian attitude through the pilotlight camera
     _ext_camera->set_pos(&camera, position.x, position.y, position.z);
     _ext_camera->set_pitch_yaw(&camera, pl_radiansf(rpy_degrees.pitch), pl_radiansf(rpy_degrees.yaw));
     camera.fRoll = pl_radiansf(rpy_degrees.roll);

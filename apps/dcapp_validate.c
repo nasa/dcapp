@@ -10,13 +10,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-// validation context
+//~ validation state
+
 typedef struct {
     int error_count;
     int warning_count;
 } ValidationContext;
 
-// Valid attributes for each element type
+//~ attribute schemas
+
 static const char *_valid_attrs_common[] = {"Style", "_Directory", NULL};
 static const char *_valid_attrs_position[] = {"X", "Y", "PositionX", "PositionY", NULL};
 static const char *_valid_attrs_negate[] = {"NegateX", "NegateY", NULL};
@@ -66,7 +68,8 @@ static const char *_valid_attrs_variable[] = {"Type", "InitialValue", NULL};
 static const char *_valid_attrs_vertex[] = {NULL};
 static const char *_valid_attrs_window[] = {"Title", "ActiveDisplay", "UpdateRate", "Fullscreen", NULL};
 
-// forward declarations
+//~ declarations
+
 static void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType parent_type);
 static void _validate_children(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType parent_type);
 static bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_type);
@@ -84,6 +87,8 @@ static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, 
 static void _check_var_attr(ValidationContext *ctx, xmlNodePtr node, const char *attr_name);
 static void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type);
 
+//~ validation entry point
+
 int main(int argc, char **argv) {
 
     if (argc < 2) {
@@ -91,7 +96,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // parse --preprocessed flag (before constants)
+    //- parse validator options
+
+    // find the preprocessed output before collecting constants
     const char *preprocessed_output = NULL;
     int const_count = 0;
     char **const_args = NULL;
@@ -102,19 +109,20 @@ int main(int argc, char **argv) {
         }
     }
 
-    // collect constant args (skip --preprocessed and its value)
+    // collect constants apart from the output option
     if (argc > 2) {
         const_args = (char **)malloc(sizeof(char *) * (argc - 2));
         for (int ii = 2; ii < argc; ii++) {
             if (strcmp(argv[ii], "--preprocessed") == 0 && ii + 1 < argc) {
-                ii++; // skip value
+                ii++; // skip the output path
                 continue;
             }
             const_args[const_count++] = argv[ii];
         }
     }
 
-    // create config
+    //- preprocess the display configuration
+
     DcAppXmlPreprocessorContext *config;
     const char *config_filepath = argv[1];
     if (const_count > 0) {
@@ -124,26 +132,27 @@ int main(int argc, char **argv) {
     }
     free(const_args);
 
-    // Export the same roots available to the runtime before preprocessing.
+    // export the same path roots used by the runtime
     dc_app_xml_preprocessor_export_environment(config);
 
-    // preprocess XML file (expands includes, constants, staticifs)
+    // expand includes, constants, and static conditions
     dc_app_xml_preprocessor_preprocess(config);
 
-    // dump preprocessed XML for debugging
+    // save the expanded xml when requested
     dc_app_xml_preprocessor_save_preprocessed(config, preprocessed_output);
 
-    // validate
+    //- validate the expanded tree
     ValidationContext ctx = {0};
     xmlNodePtr root_node = dc_app_xml_preprocessor_root(config);
 
     _validate_node(&ctx, root_node, DC_APP_XML_ELEMENT_TYPE_NONELEM);
 
-    // report summary
     DC_LOG_INFO("Validate", "Complete: %d error(s), %d warning(s)", ctx.error_count, ctx.warning_count);
 
     return ctx.error_count > 0 ? 1 : 0;
 }
+
+//~ tree validation
 
 void _validate_children(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType parent_type) {
     xmlNodePtr child = node->children;
@@ -157,38 +166,35 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType
 
     DcAppXmlElementType elem_type = dc_app_xml_element_type_from_xml_node(node);
 
-    // skip non-element nodes
     if (elem_type == DC_APP_XML_ELEMENT_TYPE_NONELEM) {
         return;
     }
 
-    // check parent-child relationship
+    //- validate node placement
     if (!_is_valid_child(parent_type, elem_type)) {
         DC_LOG_ERROR("Validate", "<%s> is not a valid child of <%s> (line %ld)",
                      node->name, node->parent ? node->parent->name : (xmlChar *)"root", xmlGetLineNo(node));
         ctx->error_count++;
     }
 
-    // validate required attributes for this element type
+    //- validate node attributes
+
     _validate_required_attributes(ctx, node, elem_type);
 
-    // local planet primitives use only container placement and Vertex X/Y.
+    // enforce local planet primitive placement
     _validate_planet_local_attributes(ctx, node, elem_type, parent_type);
 
-    // validate that all attributes are valid for this element type
     _validate_attribute_names(ctx, node, elem_type);
 
-    // validate attribute values are valid
     _validate_attribute_values(ctx, node, elem_type);
 
-    // validate variable references point to declared variables
     _validate_variable_references(ctx, node, elem_type);
 
-    // recurse into children
     _validate_children(ctx, node, elem_type);
 }
 
 static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type, DcAppXmlElementType parent_type) {
+    //- direct planet container primitives
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_PLANET_CONTAINER) {
         if (elem_type == DC_APP_XML_ELEMENT_TYPE_PLANET_LINE || elem_type == DC_APP_XML_ELEMENT_TYPE_PLANET_POLYGON) {
             const char *invalid_attrs[] = {"CRS", "HeightAboveTerrain"};
@@ -224,6 +230,7 @@ static void _validate_planet_local_attributes(ValidationContext *ctx, xmlNodePtr
         }
     }
 
+    //- nested planet container vertices
     if (elem_type != DC_APP_XML_ELEMENT_TYPE_VERTEX ||
         (parent_type != DC_APP_XML_ELEMENT_TYPE_PLANET_LINE && parent_type != DC_APP_XML_ELEMENT_TYPE_PLANET_POLYGON)) return;
 
@@ -286,28 +293,28 @@ static bool _is_window_render_parent(DcAppXmlElementType parent_type) {
     }
 }
 
+//~ parent and child rules
+
 bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_type) {
 
-    // These elements should have been removed during preprocessing
-    // If they still exist, the preprocessor failed or they're in an invalid location
-    // Note: True/False are valid inside <If> elements (runtime conditionals)
+    // reject preprocessing elements that survive expansion
     switch (child_type) {
         case DC_APP_XML_ELEMENT_TYPE_CONSTANT:
         case DC_APP_XML_ELEMENT_TYPE_STYLE:
         case DC_APP_XML_ELEMENT_TYPE_INCLUDE:
         case DC_APP_XML_ELEMENT_TYPE_DUMMY:
-            return false; // These should never exist after preprocessing
+            return false; // these should never exist after preprocessing
         default:
             break;
     }
 
-    // Callback nodes execute only when reached through the Window render tree.
+    // callbacks execute only through the window render tree
     if (child_type == DC_APP_XML_ELEMENT_TYPE_FUNCTION ||
         child_type == DC_APP_XML_ELEMENT_TYPE_DRAW_FUNCTION) {
         return _is_window_render_parent(parent_type);
     }
 
-    // DCAPP root can contain top-level elements
+    //- dcapp root children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_DCAPP) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_WINDOW:
@@ -322,12 +329,12 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Window can contain panels, drawing elements, and config elements
+    //- window children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_WINDOW) {
         switch (child_type) {
             // legacy support
             case DC_APP_XML_ELEMENT_TYPE_PANEL:
-            // config elements
+            // configuration elements
             case DC_APP_XML_ELEMENT_TYPE_VARIABLE:
             // drawing elements
             case DC_APP_XML_ELEMENT_TYPE_CONTAINER:
@@ -355,10 +362,10 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Panel can contain drawing elements
+    //- panel children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_PANEL) {
         switch (child_type) {
-            // config elements
+            // configuration elements
             case DC_APP_XML_ELEMENT_TYPE_VARIABLE:
             // drawing elements
             case DC_APP_XML_ELEMENT_TYPE_CONTAINER:
@@ -386,10 +393,10 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Container can contain same as Panel, plus mouse events
+    //- container children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_CONTAINER) {
         switch (child_type) {
-            // config elements
+            // configuration elements
             case DC_APP_XML_ELEMENT_TYPE_VARIABLE:
             // drawing elements
             case DC_APP_XML_ELEMENT_TYPE_CONTAINER:
@@ -423,7 +430,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Blink can contain drawable content
+    //- blink children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_BLINK) {
         switch (child_type) {
             // drawing elements
@@ -450,12 +457,12 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // DrawFunction can contain positional arguments
+    //- draw function children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_DRAW_FUNCTION) {
         return child_type == DC_APP_XML_ELEMENT_TYPE_ARG;
     }
 
-    // Button can contain drawing elements and button state elements
+    //- button children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_BUTTON) {
         switch (child_type) {
             // drawing elements
@@ -495,7 +502,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Button state elements can contain drawable content
+    //- button state children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_BUTTON_PRESSED ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_BUTTON_RELEASED ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_BUTTON_ENABLED ||
@@ -528,13 +535,13 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // If can contain True/False branches and drawable content
+    //- conditional children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_IF) {
         switch (child_type) {
             // conditional branches
             case DC_APP_XML_ELEMENT_TYPE_TRUE:
             case DC_APP_XML_ELEMENT_TYPE_FALSE:
-            // config elements
+            // configuration elements
             case DC_APP_XML_ELEMENT_TYPE_VARIABLE:
             // drawing elements
             case DC_APP_XML_ELEMENT_TYPE_CONTAINER:
@@ -562,10 +569,10 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // True/False (inside If) can contain drawable content
+    //- conditional branch children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_TRUE || parent_type == DC_APP_XML_ELEMENT_TYPE_FALSE) {
         switch (child_type) {
-            // config elements
+            // configuration elements
             case DC_APP_XML_ELEMENT_TYPE_VARIABLE:
             // drawing elements
             case DC_APP_XML_ELEMENT_TYPE_CONTAINER:
@@ -592,7 +599,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Stencil can contain stencil operations and drawing elements
+    //- stencil children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_STENCIL) {
         switch (child_type) {
             // stencil operations
@@ -623,7 +630,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Stencil sub-elements
+    //- stencil operation children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_STENCIL_ADD ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_STENCIL_REMOVE ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_STENCIL_DRAW) {
@@ -652,13 +659,13 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Default/Style can contain element templates
+    //- template children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_DEFAULT || parent_type == DC_APP_XML_ELEMENT_TYPE_STYLE) {
-        // Allow any element type as a template
+        // allow any element type as a template
         return true;
     }
 
-    // TrickIO can contain TrickFrom/TrickTo
+    //- trick io children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_TRICK_IO) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_TRICK_FROM:
@@ -669,7 +676,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // TrickFrom/TrickTo can contain TrickVariable
+    //- trick direction children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_TRICK_FROM ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_TRICK_TO) {
         switch (child_type) {
@@ -680,7 +687,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // EdgeIO can contain EdgeFrom/EdgeTo
+    //- edge io children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_EDGE_IO) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_EDGE_FROM:
@@ -691,7 +698,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // EdgeFrom/EdgeTo can contain EdgeVariable
+    //- edge direction children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_EDGE_FROM ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_EDGE_TO) {
         switch (child_type) {
@@ -702,7 +709,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Planet can contain PlanetData, PlanetTexture, and PlanetShader
+    //- planet children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_PLANET) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_PLANET_DATA:
@@ -714,7 +721,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // PlanetView can contain planet overlay elements
+    //- planet view children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_PLANET_VIEW) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_PLANET_BREADCRUMBS:
@@ -732,20 +739,20 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // PlanetContainer holds local-space line, polygon, and text primitives.
+    //- planet container children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_PLANET_CONTAINER) {
         return child_type == DC_APP_XML_ELEMENT_TYPE_PLANET_LINE ||
                child_type == DC_APP_XML_ELEMENT_TYPE_PLANET_POLYGON ||
                child_type == DC_APP_XML_ELEMENT_TYPE_PLANET_TEXT;
     }
 
-    // Planet line and polygon primitives contain vertices.
+    //- planet primitive children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_PLANET_LINE ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_PLANET_POLYGON) {
         return child_type == DC_APP_XML_ELEMENT_TYPE_VERTEX;
     }
 
-    // Polygon can contain Vertex, drawable content, and mouse events
+    //- polygon children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_POLYGON) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_VERTEX:
@@ -779,7 +786,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Line can contain Vertex
+    //- line children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_LINE) {
         switch (child_type) {
             case DC_APP_XML_ELEMENT_TYPE_VERTEX:
@@ -789,7 +796,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Shapes that can contain drawable content and mouse events
+    //- shape children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_ELLIPSE ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_IMAGE ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_PIXELSTREAM ||
@@ -825,7 +832,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Mouse event elements can contain drawable content
+    //- mouse event children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_MOUSE_ACTIVE ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_MOUSE_INACTIVE ||
         parent_type == DC_APP_XML_ELEMENT_TYPE_MOUSE_HOVERED ||
@@ -856,7 +863,7 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
         }
     }
 
-    // Primitives without children (Text, Arc, Sphere, Set, Constant, Variable, etc.)
+    //- leaf elements
     switch (parent_type) {
         case DC_APP_XML_ELEMENT_TYPE_TEXT:
         case DC_APP_XML_ELEMENT_TYPE_ARC:
@@ -880,18 +887,20 @@ bool _is_valid_child(DcAppXmlElementType parent_type, DcAppXmlElementType child_
             break;
     }
 
-    // Root level (before DCAPP)
+    //- document root children
     if (parent_type == DC_APP_XML_ELEMENT_TYPE_NONELEM) {
         return child_type == DC_APP_XML_ELEMENT_TYPE_DCAPP;
     }
 
-    // Unknown parent - be permissive but warn
+    // allow unknown parents for forward compatibility
     return true;
 }
 
+//~ required attributes
+
 void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type) {
 
-    // Check for required attributes based on element type
+    //- declarations and controls
     switch (elem_type) {
 
         case DC_APP_XML_ELEMENT_TYPE_VARIABLE: {
@@ -945,7 +954,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         }
 
         case DC_APP_XML_ELEMENT_TYPE_WINDOW:
-            // Title is optional
+            // title is optional
             break;
 
         case DC_APP_XML_ELEMENT_TYPE_PANEL: {
@@ -1003,6 +1012,8 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
+            //- data links
+
         case DC_APP_XML_ELEMENT_TYPE_TRICK_IO: {
             xmlChar *host = xmlGetProp(node, BAD_CAST "Host");
             xmlChar *port = xmlGetProp(node, BAD_CAST "Port");
@@ -1051,9 +1062,11 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         }
 
         case DC_APP_XML_ELEMENT_TYPE_EDGE_VARIABLE: {
-            // EdgeVariable uses content for variable name, Command attribute is optional
+            // edge variables may use content instead of a command attribute
             break;
         }
+
+            //- resources callbacks and input
 
         case DC_APP_XML_ELEMENT_TYPE_IMAGE: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
@@ -1121,6 +1134,8 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
                 xmlFree(vy);
             break;
         }
+
+            //- planet and stream nodes
 
         case DC_APP_XML_ELEMENT_TYPE_PLANET: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
@@ -1272,7 +1287,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         }
 
         case DC_APP_XML_ELEMENT_TYPE_PLANET_TEXTURE:
-            // All attributes are optional (dynamic, can be set via variables at runtime)
+            // all attributes may be supplied dynamically at runtime
             break;
 
         case DC_APP_XML_ELEMENT_TYPE_PLANET_IMAGE: {
@@ -1329,7 +1344,9 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
     }
 }
 
-// Check if an attribute name is in a list
+//~ allowed attributes
+
+// check whether an attribute appears in a schema list
 static bool _attr_in_list(const char *attr_name, const char **list) {
     if (!list)
         return false;
@@ -1340,14 +1357,14 @@ static bool _attr_in_list(const char *attr_name, const char **list) {
     return false;
 }
 
-// Check if attribute is valid for element type
+// check whether an attribute belongs to an element schema
 static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType elem_type) {
 
-    // Common attributes always valid
+    // accept shared attributes first
     if (_attr_in_list(attr_name, _valid_attrs_common))
         return true;
 
-    // Element-specific checks
+    //- core and two dimensional nodes
     switch (elem_type) {
         case DC_APP_XML_ELEMENT_TYPE_ARC:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
@@ -1381,7 +1398,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
         case DC_APP_XML_ELEMENT_TYPE_BUTTON_TRANSITION:
         case DC_APP_XML_ELEMENT_TYPE_BUTTON_INDICATOR_ON:
         case DC_APP_XML_ELEMENT_TYPE_BUTTON_INDICATOR_OFF:
-            return true; // No specific attributes, allow common
+            return true; // no specific attributes beyond common ones
 
         case DC_APP_XML_ELEMENT_TYPE_CONSTANT:
             return _attr_in_list(attr_name, _valid_attrs_constant);
@@ -1396,7 +1413,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
                    _attr_in_list(attr_name, _valid_attrs_rotation);
 
         case DC_APP_XML_ELEMENT_TYPE_DCAPP:
-            return true; // DCAPP element allows any attribute (config)
+            return true; // dcapp accepts arbitrary configuration attributes
 
         case DC_APP_XML_ELEMENT_TYPE_ELLIPSE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
@@ -1410,11 +1427,11 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
 
         case DC_APP_XML_ELEMENT_TYPE_DEFAULT:
         case DC_APP_XML_ELEMENT_TYPE_STYLE:
-            return true; // Default/Style elements are templates, allow all
+            return true; // templates accept attributes for their target elements
 
         case DC_APP_XML_ELEMENT_TYPE_FALSE:
         case DC_APP_XML_ELEMENT_TYPE_TRUE:
-            return true; // True/False just wrap content
+            return true; // conditional branches only wrap content
 
         case DC_APP_XML_ELEMENT_TYPE_FUNCTION:
             return _attr_in_list(attr_name, _valid_attrs_function);
@@ -1453,7 +1470,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
         case DC_APP_XML_ELEMENT_TYPE_MOUSE_INACTIVE:
         case DC_APP_XML_ELEMENT_TYPE_MOUSE_PRESSED:
         case DC_APP_XML_ELEMENT_TYPE_MOUSE_RELEASED:
-            return true; // Mouse event elements are wrappers
+            return true; // mouse event elements only wrap content
 
         case DC_APP_XML_ELEMENT_TYPE_MOUSE_MOTION:
             return _attr_in_list(attr_name, _valid_attrs_mouse_motion);
@@ -1509,7 +1526,9 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
         case DC_APP_XML_ELEMENT_TYPE_STENCIL_ADD:
         case DC_APP_XML_ELEMENT_TYPE_STENCIL_REMOVE:
         case DC_APP_XML_ELEMENT_TYPE_STENCIL_DRAW:
-            return true; // Stencil elements are wrappers
+            return true; // stencil elements only wrap content
+
+            //- planet nodes
 
         case DC_APP_XML_ELEMENT_TYPE_PLANET:
             return _attr_in_list(attr_name, _valid_attrs_planet);
@@ -1566,6 +1585,8 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
                    _attr_in_list(attr_name, _valid_attrs_color) ||
                    _attr_in_list(attr_name, _valid_attrs_line);
 
+            //- text and data links
+
         case DC_APP_XML_ELEMENT_TYPE_TEXT:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
                    _attr_in_list(attr_name, _valid_attrs_negate) ||
@@ -1580,7 +1601,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
 
         case DC_APP_XML_ELEMENT_TYPE_TRICK_FROM:
         case DC_APP_XML_ELEMENT_TYPE_TRICK_TO:
-            return true; // These just map variables
+            return true; // direction elements only map variables
 
         case DC_APP_XML_ELEMENT_TYPE_TRICK_VARIABLE:
             return _attr_in_list(attr_name, _valid_attrs_trick_variable);
@@ -1590,10 +1611,12 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
 
         case DC_APP_XML_ELEMENT_TYPE_EDGE_FROM:
         case DC_APP_XML_ELEMENT_TYPE_EDGE_TO:
-            return true; // These just group variables
+            return true; // direction elements only group variables
 
         case DC_APP_XML_ELEMENT_TYPE_EDGE_VARIABLE:
             return _attr_in_list(attr_name, _valid_attrs_edge_variable);
+
+            //- variables vertices and window
 
         case DC_APP_XML_ELEMENT_TYPE_VARIABLE:
             return _attr_in_list(attr_name, _valid_attrs_variable);
@@ -1616,24 +1639,26 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppXmlElementType e
             return true;
 
         default:
-            return true; // Unknown element, be permissive
+            return true; // allow unknown elements for forward compatibility
     }
 }
 
+//- declared attribute names
+
 void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type) {
 
-    // Iterate through all attributes on this node
+    // inspect every declared attribute
     xmlAttr *attr = node->properties;
     while (attr) {
         const char *attr_name = (const char *)attr->name;
 
-        // Skip attributes starting with '_' (commented out / not yet implemented)
+        // ignore disabled attributes prefixed with an underscore
         if (attr_name[0] == '_') {
             attr = attr->next;
             continue;
         }
 
-        // Check if attribute is valid for this element type
+        // warn on attributes outside the element schema
         if (!_is_valid_attr_for_elem(attr_name, elem_type)) {
             DC_LOG_WARN("Validate", "<%s> has unrecognized attribute '%s' (line %ld)",
                         node->name, attr_name, xmlGetLineNo(node));
@@ -1644,38 +1669,40 @@ void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppXml
     }
 }
 
-// Check if a value is a variable reference (@name) - these are runtime values
+//~ attribute values
+
+// identify runtime variable references by their prefix
 static bool _is_variable_ref(const char *value) {
     return value && value[0] == '@';
 }
 
-// Check if value is a valid integer in range
+// validate a complete integer within an inclusive range
 static bool _is_valid_int_in_range(const char *value, int min, int max) {
     if (!value || value[0] == '\0')
         return false;
     char *end;
     long val = strtol(value, &end, 10);
     if (*end != '\0')
-        return false; // not a pure integer
+        return false; // trailing text makes the integer invalid
     return val >= min && val <= max;
 }
 
-// Validate an enum attribute value (constants are already expanded to integers by preprocess)
+// validate an expanded enum value
 static void _validate_enum_attr(ValidationContext *ctx, xmlNodePtr node, const char *attr_name,
                                 int min_val, int max_val, const char *valid_values_desc) {
     xmlChar *raw_value = xmlGetProp(node, BAD_CAST attr_name);
     if (!raw_value)
-        return; // attribute not present, nothing to validate
+        return; // absent attributes need no validation
 
     const char *value = (const char *)raw_value;
 
-    // Skip validation for variable references (runtime values)
+    // defer runtime variable references
     if (_is_variable_ref(value)) {
         xmlFree(raw_value);
         return;
     }
 
-    // Check if it's a valid integer value
+    // require a valid enum integer
     if (!_is_valid_int_in_range(value, min_val, max_val)) {
         DC_LOG_ERROR("Validate", "<%s> attribute '%s' has invalid value '%s' (line %ld). Valid values: %s",
                      node->name, attr_name, value, xmlGetLineNo(node), valid_values_desc);
@@ -1687,27 +1714,29 @@ static void _validate_enum_attr(ValidationContext *ctx, xmlNodePtr node, const c
 
 void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppXmlElementType elem_type) {
 
-    // Alignment X attributes (left=1, center=2, right=3)
+    //- shared alignment values
+
+    // validate horizontal alignment values
     static const char *align_x_attrs[] = {"LocalAlignX", "ParentAlignX", "PivotLocalAlignX", "HorizontalAlign", NULL};
     for (int i = 0; align_x_attrs[i]; i++) {
         _validate_enum_attr(ctx, node, align_x_attrs[i], 1, 3,
                             "left(1), center(2), right(3)");
     }
 
-    // Alignment Y attributes (bottom=4, middle=5, top=6)
+    // validate vertical alignment values
     static const char *align_y_attrs[] = {"LocalAlignY", "ParentAlignY", "PivotLocalAlignY", "VerticalAlign", NULL};
     for (int i = 0; align_y_attrs[i]; i++) {
         _validate_enum_attr(ctx, node, align_y_attrs[i], 4, 6,
                             "bottom(4), middle(5), top(6)");
     }
 
-    // Element-specific enum attributes
+    //- element-specific enums
     switch (elem_type) {
         case DC_APP_XML_ELEMENT_TYPE_IF: {
             _validate_enum_attr(ctx, node, "Operator", 1, 8,
                                 "true(1), false(2), eq(3), ne(4), lt(5), gt(6), lte(7), gte(8)");
 
-            // Check for Static="true" - Value/Value1/Value2 cannot be runtime variables
+            // static conditions cannot depend on runtime variables
             xmlChar *static_attr = xmlGetProp(node, BAD_CAST "Static");
             if (static_attr && (strcmp((const char *)static_attr, "true") == 0 || strcmp((const char *)static_attr, "1") == 0)) {
                 xmlChar *value = xmlGetProp(node, BAD_CAST "Value");
@@ -1768,13 +1797,9 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppXm
     }
 }
 
-// ============================================================================
-// Variable reference validation
-// ============================================================================
+//~ variable reference validation
 
-// Attributes that take a variable NAME should not have a leading '@'.
-// The '@' prefix is the legacy dereference syntax and should have been
-// stripped during conversion.
+// variable name attributes must not use the legacy dereference prefix
 static void _check_var_attr(ValidationContext *ctx, xmlNodePtr node, const char *attr_name) {
     xmlChar *value = xmlGetProp(node, BAD_CAST attr_name);
     if (!value) return;

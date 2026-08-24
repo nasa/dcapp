@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+//~ callback discovery state
+
 typedef enum DcLogicCallbackType {
     DC_LOGIC_CALLBACK_TYPE_FUNCTION,
     DC_LOGIC_CALLBACK_TYPE_DRAW_FUNCTION,
@@ -31,9 +33,13 @@ typedef struct DcLogicCallbacks {
     bool failed;
 } DcLogicCallbacks;
 
+//~ declarations
+
 static void _process_node_children(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, DcLogicCallbacks *callbacks);
 static void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, DcLogicCallbacks *callbacks);
 static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, DcLogicCallbacks *callbacks);
+
+//~ header generation
 
 int main(int argc, char **argv) {
 
@@ -42,7 +48,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // parse --preprocessed flag (before constants)
+    //- parse generator options
+
+    // find the preprocessed output before collecting constants
     const char *preprocessed_output = NULL;
     int const_count = 0;
     char **const_args = NULL;
@@ -53,19 +61,20 @@ int main(int argc, char **argv) {
         }
     }
 
-    // collect constant args (skip --preprocessed and its value)
+    // collect constants apart from the output option
     if (argc > 2) {
         const_args = (char **)malloc(sizeof(char *) * (argc - 2));
         for (int ii = 2; ii < argc; ii++) {
             if (strcmp(argv[ii], "--preprocessed") == 0 && ii + 1 < argc) {
-                ii++; // skip value
+                ii++; // skip the output path
                 continue;
             }
             const_args[const_count++] = argv[ii];
         }
     }
 
-    // create config
+    //- preprocess the display configuration
+
     DcAppXmlPreprocessorContext *config;
     const char *config_filepath = argv[1];
     if (const_count > 0) {
@@ -75,34 +84,32 @@ int main(int argc, char **argv) {
     }
     free(const_args);
 
-    // create lookup
     DcAppVariableRegistryContext *lookup = dc_app_variable_registry_context_create();
     DcLogicCallbacks callbacks = {};
 
-    // Export the same roots available to the runtime before preprocessing.
+    // export the same path roots used by the runtime
     dc_app_xml_preprocessor_export_environment(config);
 
-    // preprocess XML file
     dc_app_xml_preprocessor_preprocess(config);
     dc_app_variable_registry_set_suppress_missing_variable(
         lookup,
         dc_app_xml_preprocessor_suppresses_missing_variable(config));
 
-    // dump preprocessed XML for debugging
+    // save the expanded xml when requested
     dc_app_xml_preprocessor_save_preprocessed(config, preprocessed_output);
 
-    // process XML
+    // discover variables and callback names
     _process_node(dc_app_xml_preprocessor_root(config), lookup, &callbacks);
     if (callbacks.failed) {
         return 1;
     }
 
-    // create directory
+    //- open the generated header
+
     char logic_dir[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_join_paths(dc_app_xml_preprocessor_directory(config), "logic", logic_dir, sizeof(logic_dir));
     dc_utils_create_directory(logic_dir);
 
-    // open/create file
     char logic_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_join_paths(logic_dir, "dcapp.h", logic_filepath, sizeof(logic_filepath));
     FILE *file = fopen(logic_filepath, "w");
@@ -113,7 +120,7 @@ int main(int argc, char **argv) {
 
     int var_count = dc_app_variable_registry_get_variable_count(lookup);
 
-    // file header
+    //- write header preamble
     fprintf(file, "%s\n", "// ********************************************* //");
     fprintf(file, "%s\n", "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //");
     fprintf(file, "%s\n", "// ********************************************* //");
@@ -127,6 +134,8 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#ifndef DCAPP_H");
     fprintf(file, "%s\n", "#define DCAPP_H");
     fprintf(file, "%s\n", "");
+
+    //- write shared value and draw types
 
     fprintf(file, "%s\n", "// Alignment values used by DcPlacement.");
     fprintf(file, "%s\n", "typedef enum DcAlign {");
@@ -382,6 +391,9 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "// Texture handle returned by dc_texture->load_image() and consumed by dc_draw->image().");
     fprintf(file, "%s\n", "typedef uint32_t DcTextureId;");
     fprintf(file, "%s\n", "");
+
+    //- write planet types
+
     fprintf(file, "%s\n", "// opaque planet handles.");
     fprintf(file, "%s\n", "typedef struct DcPlanet *DcPlanetHandle;");
     fprintf(file, "%s\n", "typedef struct DcPlanetView *DcPlanetViewHandle;");
@@ -432,6 +444,9 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    float tau;");
     fprintf(file, "%s\n", "} DcPlanetViewOptions;");
     fprintf(file, "%s\n", "");
+
+    //- write api tables
+
     fprintf(file, "%s\n", "// One XML <Arg> value passed into a DrawFunction.");
     fprintf(file, "%s\n", "typedef struct DcDrawFuncArg {");
     fprintf(file, "%s\n", "    DcValueType type;");
@@ -620,7 +635,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "} DcInit;");
     fprintf(file, "%s\n", "");
 
-    // file function declarations
+    //- write callback declarations
     fprintf(file, "%s\n", "#if defined(_WIN32)");
     fprintf(file, "%s\n", "#define DCAPP_LOGIC_EXPORT __declspec(dllexport)");
     fprintf(file, "%s\n", "#elif defined(__GNUC__) || defined(__clang__)");
@@ -683,7 +698,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "const DcPlanetApi *dc_planet;");
     fprintf(file, "%s\n", "");
 
-    // file variable definitions
+    //- write generated variable pointers
     if (var_count > DC_APP_VARIABLE_REGISTRY_FIRST_INDEX) {
         fprintf(file, "%s\n", "// XML variable pointers resolved during display_pre_init().");
     }
@@ -711,7 +726,7 @@ int main(int argc, char **argv) {
     }
     if (var_count > DC_APP_VARIABLE_REGISTRY_FIRST_INDEX) fprintf(file, "%s\n", "");
 
-    // define dc_get_variable() and display_pre_init()
+    //- write api and variable initialization
     fprintf(file, "%s\n", "// Legacy lookup helper for variables declared in XML.");
     fprintf(file, "%s\n", "// Deprecated: use generated variable pointers instead.");
     fprintf(file, "%s\n", "void *dc_get_variable(const char *name) {");
@@ -759,17 +774,17 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
 
-    // C/C++ compatibility guard closer
+    // close the implementation linkage guard
     fprintf(file, "%s\n", "#ifdef __cplusplus");
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
 
-    // extern definitions for logic externs
+    //- write the extern translation unit view
     fprintf(file, "%s\n", "#else");
     fprintf(file, "%s\n", "");
 
-    // lookup function for externs
+    // open extern declarations with c linkage
     fprintf(file, "%s\n", "#ifdef __cplusplus");
     fprintf(file, "%s\n", "extern \"C\" {");
     fprintf(file, "%s\n", "#endif");
@@ -816,16 +831,17 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
 
-    // file closer
+    //- close the generated header
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "#endif");
 
-    // exit
     fclose(file);
     return 0;
 }
 
-// Collect XML callback names for declaration in the generated logic header.
+//~ xml discovery
+
+// collect callback names for generated declarations
 static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, DcLogicCallbacks *callbacks) {
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     if (!raw_name || raw_name[0] == '\0') {
@@ -848,7 +864,7 @@ static void _register_callback(xmlNodePtr xml_node, DcLogicCallbackType type, Dc
         return;
     }
 
-    // Repeated uses share a declaration, but the two callback kinds have different signatures.
+    // reject names reused across incompatible callback signatures
     for (size_t ii = 0; ii < callbacks->count; ii++) {
         if (strcmp(callbacks->values[ii].name, (const char *)raw_name) != 0) continue;
         if (callbacks->values[ii].type != type) {
@@ -911,7 +927,7 @@ void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, Dc
 
         case DC_APP_XML_ELEMENT_TYPE_VARIABLE: {
 
-            // name
+            //- validate the generated variable name
             xmlChar *raw_name = xmlNodeGetContent(xml_node);
             char clean_name[DC_APP_VALUE_STRING_BUFFER_SIZE];
             bool valid_name = false;
@@ -938,7 +954,6 @@ void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, Dc
                 callbacks->failed = true;
             }
 
-            // type
             xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
             DcAppValueType type = DC_APP_VALUE_TYPE_STRING;
             if (raw_type) {
@@ -949,14 +964,12 @@ void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, Dc
                 type = (DcAppValueType)dc_utils_string_to_integer(clean_type);
             }
 
-            // don't care about initial value here
-            // xmlChar *raw_init_value = xmlGetProp(xml_node, BAD_CAST "InitialValue");
+            // initial values do not affect declarations
 
             if (!valid_name) {
                 break;
             }
 
-            // register variable
             DcAppValue value = {};
             value.type = type;
             DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_register_value(lookup, &value);
@@ -976,7 +989,6 @@ void _process_node(xmlNodePtr xml_node, DcAppVariableRegistryContext *lookup, Dc
             break;
         }
 
-        // for anything else, just process the children inside
         default: {
             _process_node_children(xml_node, lookup, callbacks);
             break;

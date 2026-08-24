@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Sentinel values for sock_fd.
-// _DcSockFd is 'int' on POSIX and 'uintptr_t' on Windows (unsigned), so we
-// can't use raw negative literals in comparisons — define typed sentinels instead.
+//~ platform socket types
+
+// typed sentinels work for signed posix and unsigned windows descriptors
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -26,8 +26,8 @@ typedef int _DcSockFd;
 #define _DC_SOCK_FD_FAILED ((_DcSockFd)-1)
 #endif
 
-// A socket can exist before it owns a native socket.
-#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2) // reserved but not yet connected
+// reserve a socket before it owns a native descriptor
+#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2) // reserved but not connected
 #define _DC_SOCK_FD_IS_INVALID(fd) ((fd) == _DC_SOCK_FD_FAILED || (fd) == _DC_SOCK_FD_ALLOCATED)
 
 struct DcSock {
@@ -35,9 +35,15 @@ struct DcSock {
     DcSockFlags flags;
 };
 
+//~ internal declarations
+
 static void _close_fd(DcSock *sock);
 static DcSockResult _set_non_nagle(DcSock *sock);
 static DcSockResult _set_non_blocking(DcSock *sock);
+
+//~ public api
+
+//- lifecycle
 
 DcSock *dc_sock_create(DcSockFlags flags) {
 
@@ -63,9 +69,11 @@ DcSock *dc_sock_create(DcSockFlags flags) {
     return sock;
 }
 
+//- address resolution
+
 DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
 
-    // Check if already a valid IP address
+    // preserve addresses that are already numeric
     struct in_addr addr4;
     struct in6_addr addr6;
     if (inet_pton(AF_INET, host, &addr4) == 1 || inet_pton(AF_INET6, host, &addr6) == 1) {
@@ -86,7 +94,7 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     void *addr_ptr = NULL;
     int family = 0;
 
-    // default to ipv4
+    // prefer ipv4
     for (entry = result; entry != NULL; entry = entry->ai_next) {
         if (entry->ai_family == AF_INET) {
             struct sockaddr_in *ipv4 = (struct sockaddr_in *)entry->ai_addr;
@@ -96,7 +104,7 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
         }
     }
 
-    // fallback to ipv6
+    // fall back to ipv6
     if (!addr_ptr) {
         for (entry = result; entry != NULL; entry = entry->ai_next) {
             if (entry->ai_family == AF_INET6) {
@@ -119,6 +127,8 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     return DC_SOCK_RESULT_SUCCESS;
 }
 
+//- connection state
+
 DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port) {
     if (!sock) return DC_SOCK_RESULT_FAIL;
 
@@ -128,7 +138,7 @@ DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port) {
     int family;
     struct sockaddr *addr_ptr = NULL;
 
-    // setup ipv4 vs. v6
+    // resolve the socket address family
     if (inet_pton(AF_INET, ip, &addr4.sin_addr) == 1) {
         family = AF_INET;
         addr4.sin_family = AF_INET;
@@ -146,7 +156,7 @@ DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port) {
         return DC_SOCK_RESULT_FAIL;
     }
 
-    // create socket
+    // create the native socket
     _close_fd(sock);
     sock->sock_fd = socket(family, SOCK_STREAM, 0);
 #ifdef _WIN32
@@ -158,17 +168,17 @@ DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port) {
         return DC_SOCK_RESULT_FAIL;
     }
 
-    // disable nagle's algorithm
+    // apply low-latency delivery when requested
     if (sock->flags & DC_SOCK_FLAGS_NON_NAGLE) {
         _set_non_nagle(sock);
     }
 
-    // make socket non-blocking
+    // apply non-blocking io when requested
     if (sock->flags & DC_SOCK_FLAGS_NON_BLOCKING) {
         _set_non_blocking(sock);
     }
 
-    // connect
+    // start the connection
     if (connect(sock->sock_fd, addr_ptr, socket_addr_len) < 0) {
         if (sock->flags & DC_SOCK_FLAGS_NON_BLOCKING) {
 #ifdef _WIN32
@@ -205,6 +215,7 @@ DcSockState dc_sock_connection_status(DcSock *sock) {
     if (_DC_SOCK_FD_IS_INVALID(sock->sock_fd))
         return DC_SOCK_STATE_DISCONNECTED;
 
+    // poll non-blocking connection progress without stalling
     if (sock->flags & DC_SOCK_FLAGS_NON_BLOCKING) {
         fd_set wfds, efds;
         FD_ZERO(&wfds);
@@ -223,11 +234,13 @@ DcSockState dc_sock_connection_status(DcSock *sock) {
             return DC_SOCK_STATE_CONNECTING;
     }
 
+    // reject completed connections with a socket error
     int err = 0;
     socklen_t len = sizeof(err);
     if (getsockopt(sock->sock_fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len) < 0 || err != 0)
         return DC_SOCK_STATE_DISCONNECTED;
 
+    // confirm the peer is fully established
     struct sockaddr_storage peer;
     socklen_t plen = sizeof(peer);
     if (getpeername(sock->sock_fd, (struct sockaddr *)&peer, &plen) == 0)
@@ -236,9 +249,12 @@ DcSockState dc_sock_connection_status(DcSock *sock) {
     return (errno == ENOTCONN) ? DC_SOCK_STATE_CONNECTING : DC_SOCK_STATE_DISCONNECTED;
 }
 
+//- io
+
 DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sent_size) {
     if (!sock) return DC_SOCK_RESULT_FAIL;
 
+        // suppress sigpipe where the platform supports it
 #if defined(__linux__)
     int sent = send(sock->sock_fd, in, (int)in_size, MSG_NOSIGNAL);
 #else
@@ -248,6 +264,7 @@ DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sen
         *sent_size = sent;
     }
 
+    // normalize platform errors into transport results
     if (sent == 0 && in_size != 0) {
         return DC_SOCK_RESULT_CONN_CLOSED;
     } else if (sent == -1) {
@@ -286,6 +303,7 @@ DcSockResult dc_sock_receive(DcSock *sock, char *out, size_t out_size, int *rece
         *receive_size = received;
     }
 
+    // normalize platform errors into transport results
     if (received == 0 && out_size != 0) {
         return DC_SOCK_RESULT_CONN_CLOSED;
     } else if (received == -1) {
@@ -315,6 +333,8 @@ DcSockResult dc_sock_receive(DcSock *sock, char *out, size_t out_size, int *rece
     }
     return DC_SOCK_RESULT_SUCCESS;
 }
+
+//- socket options and write shutdown
 
 DcSockResult dc_sock_set_blocking(DcSock *sock) {
     if (!sock) return DC_SOCK_RESULT_FAIL;
@@ -360,6 +380,8 @@ DcSockResult dc_sock_shutdown_write(DcSock *sock) {
     }
     return DC_SOCK_RESULT_SUCCESS;
 }
+
+//~ internal helpers
 
 static void _close_fd(DcSock *sock) {
     if (_DC_SOCK_FD_IS_INVALID(sock->sock_fd)) return;

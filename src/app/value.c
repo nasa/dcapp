@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+//~ value creation
+
 DcAppValue dc_app_value_create_typed_value_from_string(DcAppValueType type, const char *value_str) {
     DcAppValue new_value = {0};
     new_value.type = type;
@@ -44,6 +46,8 @@ DcAppValue dc_app_value_create_value_boolean(bool value) {
     dc_app_value_refresh(&new_value);
     return new_value;
 }
+
+//~ representation sync
 
 void dc_app_value_refresh(DcAppValue *value) {
     dc_app_value_refresh_from_type(value, value->type);
@@ -120,6 +124,8 @@ void *dc_app_value_get_addr(DcAppValue *value) {
     }
     return NULL;
 }
+
+//~ value comparisons
 
 bool dc_app_value_is_equal(DcAppValue *value1, DcAppValue *value2) {
     switch (value1->type) {

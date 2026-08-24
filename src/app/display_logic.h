@@ -3,19 +3,27 @@
 
 #include <stdbool.h>
 
+//~ types
+
 typedef struct _plApiRegistryI plApiRegistryI;
 typedef struct DcAppDisplayLogicContext DcAppDisplayLogicContext;
 struct DcAppContext;
 struct DcAppDisplayLogicInit;
+
+//~ lifecycle
 
 void dc_app_display_logic_init(plApiRegistryI *api_registry);
 
 DcAppDisplayLogicContext *dc_app_display_logic_context_create(void);
 void dc_app_display_logic_context_destroy(DcAppDisplayLogicContext *display_logic, struct DcAppContext *app_context);
 
+//~ library access
+
 bool dc_app_display_logic_load(DcAppDisplayLogicContext *display_logic, const char *path, const char *base_directory);
 bool dc_app_display_logic_is_loaded(const DcAppDisplayLogicContext *display_logic);
 void *dc_app_display_logic_symbol(DcAppDisplayLogicContext *display_logic, const char *name);
+
+//~ callback dispatch
 
 void dc_app_display_logic_pre_init(DcAppDisplayLogicContext *display_logic, const struct DcAppDisplayLogicInit *init);
 void dc_app_display_logic_initialize(DcAppDisplayLogicContext *display_logic, struct DcAppContext *app_context);

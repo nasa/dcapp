@@ -16,6 +16,8 @@
 #define DC_APP_DISPLAY_LOGIC_MAX_FRAME_DELTA 0.25
 #define DC_APP_DISPLAY_LOGIC_MAX_UPDATES_PER_FRAME 16
 
+//~ logic state
+
 struct DcAppDisplayLogicContext {
     DcLibrary *library;
     DcAppDisplayLogicPreInitFn pre_init;
@@ -29,10 +31,14 @@ struct DcAppDisplayLogicContext {
     double last_update_rate;
 };
 
+//~ extension interfaces
+
 static const plMemoryI *_ext_memory = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+
+//~ lifecycle
 
 void dc_app_display_logic_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
@@ -48,18 +54,19 @@ DcAppDisplayLogicContext *dc_app_display_logic_context_create(void) {
 void dc_app_display_logic_context_destroy(DcAppDisplayLogicContext *logic, struct DcAppContext *app_context) {
     if (!logic) return;
 
-    // call logic close
-    // User cleanup must run before unloading the library that implements it.
+    // run user cleanup before unloading its code
     if (logic->close) {
         logic->close(app_context, logic->user_data);
     }
 
-    // unload logic shared library
+    // unload the logic library
     if (logic->library) {
         dc_utils_library_close(logic->library);
     }
     PL_FREE(logic);
 }
+
+//~ library loading
 
 bool dc_app_display_logic_load(DcAppDisplayLogicContext *logic, const char *path, const char *base_directory) {
     if (!logic || !path || path[0] == '\0') return false;
@@ -68,7 +75,7 @@ bool dc_app_display_logic_load(DcAppDisplayLogicContext *logic, const char *path
         return false;
     }
 
-    // convert to absolute path
+    //- resolve the requested path
     char abs_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
     if (dc_utils_is_relative_path(path)) {
         dc_utils_join_paths(base_directory, path, abs_filepath, sizeof(abs_filepath));
@@ -76,7 +83,7 @@ bool dc_app_display_logic_load(DcAppDisplayLogicContext *logic, const char *path
         strcpy(abs_filepath, path);
     }
 
-    // strip any user-supplied platform extension; try each in turn
+    //- build platform library candidates
     char base_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
     strncpy(base_filepath, abs_filepath, DC_APP_VALUE_STRING_BUFFER_SIZE - 1);
     base_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
@@ -117,7 +124,7 @@ bool dc_app_display_logic_load(DcAppDisplayLogicContext *logic, const char *path
         return false;
     }
 
-    // These fixed names form the lifecycle ABI between dcapp and the logic library.
+    // bind the fixed lifecycle abi
     logic->pre_init = (DcAppDisplayLogicPreInitFn)dc_utils_library_symbol(logic->library, "display_pre_init");
     logic->initialize = (DcAppDisplayLogicInitFn)dc_utils_library_symbol(logic->library, "display_init");
     logic->update = (DcAppDisplayLogicUpdateFn)dc_utils_library_symbol(logic->library, "display_draw");
@@ -132,6 +139,8 @@ bool dc_app_display_logic_is_loaded(const DcAppDisplayLogicContext *logic) {
 void *dc_app_display_logic_symbol(DcAppDisplayLogicContext *logic, const char *name) {
     return logic && logic->library && name ? dc_utils_library_symbol(logic->library, name) : NULL;
 }
+
+//~ callback dispatch
 
 void dc_app_display_logic_pre_init(DcAppDisplayLogicContext *logic, const struct DcAppDisplayLogicInit *init) {
     if (logic && logic->pre_init) {
@@ -148,6 +157,7 @@ void dc_app_display_logic_initialize(DcAppDisplayLogicContext *logic, struct DcA
 void dc_app_display_logic_update(DcAppDisplayLogicContext *logic, struct DcAppContext *app_context, double update_rate) {
     if (!logic || !logic->update) return;
 
+    //- run uncapped callbacks directly
     if (!isfinite(update_rate) || update_rate <= 0.0) {
         logic->last_update_time = dc_utils_time_get();
         logic->update_accumulator = 0.0;
@@ -159,6 +169,7 @@ void dc_app_display_logic_update(DcAppDisplayLogicContext *logic, struct DcAppCo
     double update_interval = 1.0 / update_rate;
     double now = dc_utils_time_get();
 
+    //- accumulate fixed-rate work
     if (logic->last_update_time <= 0.0 || logic->last_update_rate != update_rate) {
         logic->last_update_time = now;
         logic->update_accumulator = update_interval;
@@ -172,7 +183,7 @@ void dc_app_display_logic_update(DcAppDisplayLogicContext *logic, struct DcAppCo
         logic->update_accumulator += elapsed;
     }
 
-    // Catch up fixed-rate updates without allowing one slow frame to cause unbounded work.
+    // catch up without allowing unbounded work
     int update_count = 0;
     while (logic->update_accumulator >= update_interval &&
            update_count < DC_APP_DISPLAY_LOGIC_MAX_UPDATES_PER_FRAME) {
@@ -183,7 +194,7 @@ void dc_app_display_logic_update(DcAppDisplayLogicContext *logic, struct DcAppCo
 
     if (update_count == DC_APP_DISPLAY_LOGIC_MAX_UPDATES_PER_FRAME &&
         logic->update_accumulator >= update_interval) {
-        // Drop excess backlog so a stalled frame cannot leave logic permanently behind.
+        // discard excess backlog after a stalled frame
         logic->update_accumulator = 0.0;
     }
 }

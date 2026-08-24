@@ -20,16 +20,21 @@ static const DcAppVariableRegistryValueIndex DC_APP_VARIABLE_REGISTRY_VALUE_INDE
 extern "C" {
 #endif
 
-// Variable registry functions
+//~ registry lifecycle
+
 DcAppVariableRegistryContext *dc_app_variable_registry_context_create(void);
 void dc_app_variable_registry_context_destroy(DcAppVariableRegistryContext *registry);
-// Prevents further registration so published value pointers remain stable.
+// prevent further registration so published value pointers remain stable
 void dc_app_variable_registry_seal(DcAppVariableRegistryContext *registry);
 
-// The pointer may move during registration but remains stable after sealing.
+//~ value registry
+
+// pointers may move during registration but remain stable after sealing
 struct DcAppValue *dc_app_variable_registry_get_value(DcAppVariableRegistryContext *registry, DcAppVariableRegistryValueIndex index);
 DcAppVariableRegistryValueIndex dc_app_variable_registry_register_value(DcAppVariableRegistryContext *registry, struct DcAppValue *value);
 DcAppVariableRegistryValueIndex dc_app_variable_registry_register_value_from_string(DcAppVariableRegistryContext *registry, DcAppValueType type, const char *text);
+
+//~ variable registry
 
 int dc_app_variable_registry_get_variable_count(DcAppVariableRegistryContext *registry);
 DcAppVariableRegistryVariableIndex dc_app_variable_registry_get_variable_index(DcAppVariableRegistryContext *registry, const char *name);
@@ -42,10 +47,13 @@ void dc_app_variable_registry_mark_variable_written(DcAppVariableRegistryContext
 
 void dc_app_variable_registry_set_variable_to_string(DcAppVariableRegistryContext *registry, DcAppVariableRegistryVariableIndex variable_index, const char *value);
 
-// push/pop operations for per-variable stacks
+//~ variable stacks
+
 void dc_app_variable_registry_variable_push(DcAppVariableRegistryContext *registry, DcAppVariableRegistryVariableIndex variable_index);
 void dc_app_variable_registry_variable_pop(DcAppVariableRegistryContext *registry, DcAppVariableRegistryVariableIndex variable_index);
 void dc_app_variable_registry_reset_variable_stacks(DcAppVariableRegistryContext *registry);
+
+//~ registry controls
 
 void dc_app_variable_registry_set_suppress_missing_variable(DcAppVariableRegistryContext *registry, bool suppress);
 

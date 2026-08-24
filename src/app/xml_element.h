@@ -9,7 +9,8 @@ struct _xmlNode;
 extern "C" {
 #endif
 
-// element functions
+//~ element name conversion
+
 const char *dc_app_xml_element_type_to_string(DcAppXmlElementType type);
 DcAppXmlElementType dc_app_xml_element_type_from_string(const char *name);
 DcAppXmlElementType dc_app_xml_element_type_from_xml_node(struct _xmlNode *node);

@@ -10,36 +10,49 @@
 extern "C" {
 #endif
 
+//~ search
+
 int dc_utils_str_find(const char *s, const char *pattern);
 int dc_utils_str_find_first(const char *s, char ch);
 int dc_utils_str_find_first_of(const char *s, const char *chars);
 int dc_utils_str_find_first_not_of(const char *s, const char *chars);
 bool dc_utils_char_in(const char c, const char *set);
 
+//~ whitespace
+
 void dc_utils_trim_whitespace_inplace(char *text);
 void dc_utils_trim_whitespace_copy(const char *input, char *out, size_t out_size);
+
+//~ conversion
 
 double dc_utils_string_to_double(const char *text);
 int dc_utils_string_to_integer(const char *text);
 int dc_utils_string_to_boolean(const char *text);
 
+//~ validation
+
 bool dc_utils_string_is_double(const char *text);
 bool dc_utils_string_is_int(const char *text);
 bool dc_utils_string_is_boolean(const char *text);
 
-// Checks an ASCII C identifier intended for a generated symbol.
-// Leading underscores are accepted; C and C++ keywords are rejected.
+// accept ascii c symbols with leading underscores except c and c++ keywords
 bool dc_utils_string_is_c_identifier(const char *text);
+
+//~ hashing and splitting
 
 void dc_utils_string_to_hash(const char *text, char *out, size_t out_size);
 
 void dc_utils_split_string_inplace(char *text, const char *delimiters, size_t *out_indices, size_t out_indices_size, size_t *out_indices_count);
 void dc_utils_split_string_copy(const char *text, const char *delimiters, char *out, size_t out_size, size_t *out_indices, size_t out_indices_size, size_t *out_indices_count);
 
+//~ format validation
+
 bool dc_utils_is_format_specifier_bool(const char *value);
 bool dc_utils_is_format_specifier_int(const char *value);
 bool dc_utils_is_format_specifier_double(const char *value);
 bool dc_utils_is_format_specifier_string(const char *value);
+
+//~ platform compatibility
 
 #ifdef _WIN32
 char *strndup(const char *s, size_t n);

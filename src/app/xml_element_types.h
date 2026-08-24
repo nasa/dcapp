@@ -1,7 +1,8 @@
 #ifndef DC_APP_XML_ELEMENT_TYPES_H
 #define DC_APP_XML_ELEMENT_TYPES_H
 
-// element types
+//~ element types
+
 typedef enum DcAppXmlElementType {
     DC_APP_XML_ELEMENT_TYPE_UNDEFINED,
     DC_APP_XML_ELEMENT_TYPE_ARC,

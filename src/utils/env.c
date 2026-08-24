@@ -5,6 +5,7 @@
 
 const char *dc_utils_get_env(const char *name) {
     const char *val = getenv(name);
+    // keep callers free from null checks
     return (val != NULL) ? val : "";
 }
 

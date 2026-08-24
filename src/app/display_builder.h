@@ -4,6 +4,8 @@
 #include "app/xml_element_types.h"
 #include "app/node_types.h"
 
+//~ types
+
 typedef struct _plApiRegistryI plApiRegistryI;
 typedef struct DcAppNode DcAppNode;
 typedef struct DcAppDisplayBuilderContext DcAppDisplayBuilderContext;
@@ -17,11 +19,12 @@ struct DcAppTextureContext;
 struct DcAppDataLinkContext;
 struct _xmlNode;
 
-// Called after the Window has been parsed and registered, before its children
-// are parsed. The app initializes the display runtime here and injects
-// GPU-dependent font, texture, and pixelstream contexts through the setters
-// below.
+//~ bootstrap
+
+// bootstrap after window registration and before child parsing to inject runtime contexts
 typedef void (*DcAppDisplayBuilderBootstrapFn)(struct DcAppContext *app_context, DcAppDisplayBuilderContext *builder, DcAppNode *window);
+
+//~ lifecycle
 
 void dc_app_display_builder_init(plApiRegistryI *api_registry);
 
@@ -34,9 +37,13 @@ DcAppDisplayBuilderContext *dc_app_display_builder_context_create(
     DcAppDisplayBuilderBootstrapFn bootstrap);
 void dc_app_display_builder_context_destroy(DcAppDisplayBuilderContext *builder);
 
+//~ runtime dependencies
+
 void dc_app_display_builder_set_fonts(DcAppDisplayBuilderContext *builder, struct DcAppFontContext *fonts);
 void dc_app_display_builder_set_textures(DcAppDisplayBuilderContext *builder, struct DcAppTextureContext *textures);
 void dc_app_display_builder_set_pixelstreams(DcAppDisplayBuilderContext *builder, struct DcAppPixelstreamContext *pixelstreams);
+
+//~ xml processing
 
 DcAppNodeIndex dc_app_display_builder_process_xml_node(DcAppDisplayBuilderContext *builder, struct _xmlNode *xml_node, DcAppNodeIndex parent_node_index, DcAppXmlElementType parent_element_type, const char *directory);
 

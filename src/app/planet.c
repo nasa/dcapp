@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+//~ extension interfaces
+
 static const plMemoryI *_ext_memory = NULL;
 static const plStarterI *_ext_starter = NULL;
 static const plPlanetI *_ext_planet = NULL;
@@ -28,7 +30,9 @@ static const plVfsI *_ext_vfs = NULL;
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-// Runtime handles are separately allocated so registry growth cannot invalidate them.
+//~ internal state
+
+// separately allocated handles survive registry growth
 struct DcAppPlanetContext {
     char *asset_root;
     bool extension_initialized;
@@ -75,6 +79,8 @@ struct DcAppPlanetGeojson {
     DcGeojson *geojson;
 };
 
+//~ forward declarations
+
 static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx);
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin);
 static void _planet_free_process_info(plPlanetProcessInfo *info);
@@ -83,6 +89,8 @@ static bool _planet_file_path_to_absolute(DcAppPlanetContext *planet_ctx, const 
 static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
 static bool _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
 static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3d a, DcAppVec3d b);
+
+//~ subsystem lifecycle
 
 void dc_app_planet_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
@@ -106,7 +114,7 @@ DcAppPlanetContext *dc_app_planet_context_create(const char *asset_root) {
         memcpy(planet_ctx->asset_root, asset_root, length);
     }
 
-    // Resource indices are one-based; index zero is always undefined.
+    // reserve index zero as undefined
     sbpush(planet_ctx->sb_planets, NULL);
     sbpush(planet_ctx->sb_views, NULL);
     return planet_ctx;
@@ -115,6 +123,7 @@ DcAppPlanetContext *dc_app_planet_context_create(const char *asset_root) {
 void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx) {
     if (!planet_ctx) return;
 
+    //- release loaded geojson
     for (int i = 0; i < sbcount(planet_ctx->sb_geojsons); i++) {
         DcAppPlanetGeojsonHandle geojson = planet_ctx->sb_geojsons[i];
         if (!geojson) continue;
@@ -123,6 +132,7 @@ void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx) {
     }
     sbfree(planet_ctx->sb_geojsons);
 
+    //- release breadcrumb trails
     for (int i = 0; i < sbcount(planet_ctx->sb_breadcrumbs); i++) {
         DcAppPlanetBreadcrumbsHandle breadcrumbs = planet_ctx->sb_breadcrumbs[i];
         if (!breadcrumbs) continue;
@@ -131,7 +141,7 @@ void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx) {
     }
     sbfree(planet_ctx->sb_breadcrumbs);
 
-    // cleans up every planet view created by the shared planet subsystem.
+    //- release subsystem-owned views
     for (int i = 0; i < sbcount(planet_ctx->sb_view_handles); i++) {
         DcAppPlanetViewHandle view = planet_ctx->sb_view_handles[i];
         if (!view) continue;
@@ -142,7 +152,7 @@ void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx) {
     }
     sbfree(planet_ctx->sb_view_handles);
 
-    // cleans up every planet created by the shared planet subsystem.
+    //- release subsystem-owned planets
     for (int i = 0; i < sbcount(planet_ctx->sb_planet_handles); i++) {
         DcAppPlanetHandle planet = planet_ctx->sb_planet_handles[i];
         if (!planet) continue;
@@ -160,6 +170,8 @@ void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx) {
     PL_FREE(planet_ctx);
 }
 
+//~ planet resources
+
 DcAppPlanetHandle dc_app_planet_get_planet_by_id(DcAppPlanetContext *planet_ctx, const char *id) {
     if (!planet_ctx || !id || id[0] == '\0') return NULL;
 
@@ -174,13 +186,14 @@ DcAppPlanetHandle dc_app_planet_get_planet_by_id(DcAppPlanetContext *planet_ctx,
 DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, DcAppPlanetCreateInfo info) {
     if (!planet_ctx || !info.data_path || info.data_path[0] == '\0') return NULL;
 
-    // initializes the planet extension on first use.
+    // initialize the extension on first use
     _planet_ensure_initialized(planet_ctx);
     if (sbcount(planet_ctx->sb_planets) > UINT8_MAX) {
         DC_LOG_ERROR("Planet", "Too many planets; dcapp supports at most %u planet handles", UINT8_MAX);
         return NULL;
     }
 
+    //- load processed terrain metadata
     double radius = 0.0;
     plPlanetProcessInfo process_info = {0};
     bool legacy_projected_origin = false;
@@ -193,6 +206,7 @@ DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, Dc
     plPlanetInit planet_init = {0};
     planet_init.dRadius = radius;
 
+    //- configure renderer caches
     uint32_t mesh_cache_size_mb = info.mesh_cache_size_mb;
     if (mesh_cache_size_mb > UINT32_MAX / (1024u * 1024u / 2u)) {
         DC_LOG_WARN("Planet", "mesh_cache_size_mb is %u MiB; using renderer default instead", mesh_cache_size_mb);
@@ -204,7 +218,7 @@ DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, Dc
         planet_init.uIndexBufferSize = buffer_size;
     }
 
-    // delegates renderer and streaming allocation to pl_planet_ext.
+    //- allocate renderer and streaming resources
     plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
     plPlanet *planet = _ext_planet->create_planet(cmd_buf, planet_init, &process_info);
     if (planet) _ext_planet->prepare(planet, cmd_buf);
@@ -212,11 +226,12 @@ DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, Dc
     _planet_free_process_info(&process_info);
     if (!planet) return NULL;
 
+    //- publish the stable application handle
     DcAppPlanetHandle handle = (DcAppPlanetHandle)PL_ALLOC(sizeof(*handle));
     memset(handle, 0, sizeof(*handle));
     handle->planet = planet;
     handle->radius = radius;
-    // stores crs helpers so xml and logic share the same conversions.
+    // share coordinate conversions between xml and display logic
     handle->geodetic_crs = dc_geo_create_crs_geodetic(radius);
     handle->cartesian_crs = dc_geo_create_crs_cartesian(radius);
     handle->polar_crs = dc_geo_create_crs_polar_stereographic(radius,
@@ -248,6 +263,8 @@ DcAppPlanetHandle dc_app_planet_create_planet_with_id(DcAppPlanetContext *planet
     return planet;
 }
 
+//~ texture overlays
+
 bool dc_app_planet_set_texture_geodetic(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel) {
     return dc_app_planet_set_texture_geodetic_slot(planet_ctx, planet, 0, path, lat, lon, meters_per_pixel);
 }
@@ -262,8 +279,7 @@ bool dc_app_planet_set_texture_geodetic_slot(DcAppPlanetContext *planet_ctx, DcA
     plVec3d geodetic_in = {lat, lon, 0.0};
     plVec2d polar_out;
     if (planet->legacy_projected_origin) {
-        // Old planet metadata expects the historical user-longitude projection
-        // convention. New metadata uses real projected CRS meters.
+        // legacy metadata uses the historical mirrored-longitude projection
         dc_geo_user_geodetic_to_polar_stereo_d(&planet->geodetic_crs, &planet->polar_crs, &geodetic_in, &polar_out, 1);
         polar_out.y = -polar_out.y;
     } else {
@@ -295,8 +311,7 @@ bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, Dc
     plVec2d polar_out;
     dc_geo_cartesian_to_geodetic_d(&planet->cartesian_crs, &planet->geodetic_crs, &cartesian_in, &geodetic_out, 1);
     if (planet->legacy_projected_origin) {
-        // Old planet metadata expects the historical user-longitude projection
-        // convention. New metadata uses real projected CRS meters.
+        // legacy metadata uses the historical mirrored-longitude projection
         dc_geo_user_geodetic_to_polar_stereo_d(&planet->geodetic_crs, &planet->polar_crs, &geodetic_out, &polar_out, 1);
         polar_out.y = -polar_out.y;
     } else {
@@ -341,6 +356,8 @@ bool dc_app_planet_set_light_direction(DcAppPlanetHandle planet, DcAppVec3 direc
     return true;
 }
 
+//~ planet views
+
 DcAppPlanetViewHandle dc_app_planet_create_geodetic_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height) {
     return _planet_create_view(planet_ctx, planet, DC_APP_PLANET_CRS_GEODETIC, width, height);
 }
@@ -366,7 +383,7 @@ bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vert
         fragment_path = fragment_vfs;
     }
 
-    // The view owns copies because the planet extension retains both path pointers.
+    // copy shader paths because the extension retains their pointers
     char *owned_vertex_path = NULL;
     char *owned_fragment_path = NULL;
     if (vertex_path) {
@@ -393,6 +410,8 @@ bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vert
     view->fragment_shader_path = owned_fragment_path;
     return true;
 }
+
+//~ breadcrumbs
 
 DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(DcAppPlanetContext *planet_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing) {
     if (!planet_ctx) return NULL;
@@ -434,6 +453,8 @@ DcAppPlanetBreadcrumbsPoints dc_app_planet_get_breadcrumbs_points(DcAppPlanetBre
     };
 }
 
+//~ geojson
+
 DcAppPlanetGeojsonHandle dc_app_planet_load_geojson(DcAppPlanetContext *planet_ctx, const char *path) {
     char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     if (!_planet_file_path_to_absolute(planet_ctx, path, absolute_path, sizeof(absolute_path))) return NULL;
@@ -454,6 +475,8 @@ DcAppPlanetGeojsonHandle dc_app_planet_load_geojson(DcAppPlanetContext *planet_c
     sbpush(planet_ctx->sb_geojsons, handle);
     return handle;
 }
+
+//~ registry metadata
 
 uint32_t dc_app_planet_count(const DcAppPlanetContext *planet_ctx) {
     return planet_ctx ? (uint32_t)sbcount(planet_ctx->sb_planet_handles) : 0;
@@ -513,6 +536,8 @@ DcGeojson *dc_app_planet_geojson(DcAppPlanetGeojsonHandle geojson) {
     return geojson ? geojson->geojson : NULL;
 }
 
+//~ renderer integration
+
 plPlanet *dc_app_planet_pl(DcAppPlanetHandle planet) {
     return planet ? planet->planet : NULL;
 }
@@ -528,6 +553,10 @@ DcAppPlanetCrs dc_app_planet_view_crs(DcAppPlanetViewHandle view) {
 DcAppPlanetHandle dc_app_planet_view_planet(DcAppPlanetViewHandle view) {
     return view ? view->planet : NULL;
 }
+
+//~ internal helpers
+
+//- breadcrumb updates
 
 static bool _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position) {
     if (!isfinite(position.x) || !isfinite(position.y) || !isfinite(position.z)) return false;
@@ -567,6 +596,8 @@ static double _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanet
     return sqrt(dx * dx + dy * dy + dz * dz);
 }
 
+//- extension initialization
+
 static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx) {
     if (!planet_ctx || planet_ctx->extension_initialized) return;
 
@@ -575,6 +606,8 @@ static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx) {
     _ext_planet->initialize(init);
     planet_ctx->extension_initialized = true;
 }
+
+//- path resolution
 
 static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size) {
     if (!planet_ctx || !path || path[0] == '\0' || !out || out_size == 0) return false;
@@ -604,7 +637,7 @@ static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char 
     char dir[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
     dc_utils_get_directory(abs_path, dir, sizeof(dir));
 
-    // Mount the containing directory under a stable hash for VFS-based planet loading.
+    // mount the containing directory under a stable vfs hash
     char hash[32] = {0};
     dc_utils_string_to_hash(dir, hash, sizeof(hash));
 
@@ -641,6 +674,8 @@ static bool _planet_file_path_to_absolute(DcAppPlanetContext *planet_ctx, const 
     return dc_utils_canonicalize_path(joined, out, out_size) == 0;
 }
 
+//- view creation
+
 static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height) {
     if (!planet_ctx || !planet || !planet->planet) return NULL;
 
@@ -673,7 +708,10 @@ static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx,
     return handle;
 }
 
+//- process metadata
+
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin) {
+    // load and parse the metadata document
     char *json_str = dc_utils_load_text_file(json_path);
     if (!json_str) {
         DC_LOG_ERROR("Planet", "Failed to load planet data: %s", json_path);
@@ -687,6 +725,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
         return false;
     }
 
+    //- validate the terrain layout
     double radius = pl_json_double_member(root, "radius", 0.0);
     float meters_per_pixel = pl_json_float_member(root, "meters_per_pixel", 0.0f);
     int tile_size = pl_json_int_member(root, "tile_size", 0);
@@ -713,6 +752,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
         return false;
     }
 
+    //- configure the coordinate projection
     memset(out_info, 0, sizeof(*out_info));
     out_info->tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
     out_info->tProjection.tPolarStereo.dLatitudeOfOrigin = -90.0;
@@ -721,8 +761,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
     out_info->tProjection.tPolarStereo.dFalseEasting = 0.0;
     out_info->tProjection.tPolarStereo.dFalseNorthing = 0.0;
     plJsonObject *projection_obj = pl_json_member(root, "projection");
-    // Pre-projection .planet.json files omitted this block and stored tile centers
-    // as legacy lat/lon values instead of explicit projected CRS meters.
+    // metadata without a projection stores tile centers as legacy latitude and longitude
     bool legacy_projected_origin = projection_obj == NULL;
     if (out_legacy_projected_origin)
         *out_legacy_projected_origin = legacy_projected_origin;
@@ -763,7 +802,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
     out_info->uHorizontalTiles = (uint32_t)cols;
     out_info->uVerticalTiles = (uint32_t)rows;
 
-    // uses the same processed planet json format as xml planets.
+    //- prepare coordinate helpers for tile conversion
     DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
     DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(
         radius,
@@ -779,6 +818,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
         return false;
     }
 
+    //- build tile metadata
     out_info->atTiles = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
     if (!out_info->atTiles) {
         DC_LOG_ERROR("Planet", "Failed to allocate planet tile metadata: %s", json_path);
@@ -805,8 +845,7 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
                 0.0};
             plVec2d polar_out;
             if (legacy_projected_origin) {
-                // The mirrored-longitude helper already reproduces the original
-                // legacy tile convention; the user-overlay Y flip does not apply here.
+                // tile conversion already includes the legacy longitude mirroring
                 dc_geo_user_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
             } else {
                 dc_geo_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);

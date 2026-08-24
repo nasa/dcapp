@@ -14,11 +14,13 @@ typedef struct DcPsShmemSource DcPsShmemSource;
 extern "C" {
 #endif
 
+//~ context
+
 DcPsShmemContext *dc_ps_shmem_context_create(void);
 void dc_ps_shmem_context_destroy(DcPsShmemContext *context);
 void dc_ps_shmem_update(DcPsShmemContext *context);
 
-// individual sources
+//~ sources
 DcPsShmemSource *dc_ps_shmem_add_source(DcPsShmemContext *context, const char *filepath);
 void dc_ps_shmem_remove_source(DcPsShmemSource *source);
 bool dc_ps_shmem_is_connected(DcPsShmemSource *source);
@@ -33,7 +35,9 @@ uint32_t dc_ps_shmem_get_height(DcPsShmemSource *source);
 
 #else
 
-// Shared memory pixel streams are not supported on Windows.
+//~ windows stubs
+
+// shared memory pixel streams are unavailable on windows
 static inline DcPsShmemContext *dc_ps_shmem_context_create(void) {
     return NULL;
 }
@@ -83,6 +87,6 @@ static inline uint32_t dc_ps_shmem_get_height(DcPsShmemSource *source) {
     return 0;
 }
 
-#endif // _WIN32
+#endif // windows branch
 
 #endif

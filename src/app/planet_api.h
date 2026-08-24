@@ -22,14 +22,15 @@ typedef struct DcAppPlanetGeojsonStyle DcAppPlanetGeojsonStyle;
 typedef struct DcAppPlanetCreateInfo DcAppPlanetCreateInfo;
 typedef struct DcAppPlanetApi DcAppPlanetApi;
 
-// Local geometry starts in tangent-plane units before scale and rotation.
-// Overlay line widths remain in logical display pixels.
+//~ planet options
+
+// local geometry uses tangent-plane units while overlay widths use display pixels
 struct DcAppPlanetLocalTransform {
     float scale;
     float rotation_degrees;
 };
 
-// The points are borrowed until the breadcrumbs are next mutated or destroyed.
+// points are borrowed until the breadcrumbs are next mutated or destroyed
 struct DcAppPlanetBreadcrumbsPoints {
     const DcAppVec3d *points;
     uint32_t count;
@@ -51,14 +52,16 @@ struct DcAppPlanetGeojsonStyle {
 
 struct DcAppPlanetCreateInfo {
     const char *data_path;
-    uint32_t mesh_cache_size_mb; // combined cache size in MiB, 0 = renderer default
+    uint32_t mesh_cache_size_mb; // combined cache size in mib or zero for the renderer default
 };
 
+//~ planet api
+
 struct DcAppPlanetApi {
-    // planet resources live until app shutdown.
+    // planet resources live until app shutdown
     DcAppPlanetHandle (*get_planet_by_id)(DcAppContext *app_ctx, const char *id);
     DcAppPlanetHandle (*create_planet)(DcAppContext *app_ctx, DcAppPlanetCreateInfo info);
-    // fails if id already exists.
+    // creation fails when the id already exists
     DcAppPlanetHandle (*create_planet_with_id)(DcAppContext *app_ctx, const char *id, DcAppPlanetCreateInfo info);
     bool (*set_texture_geodetic)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, double lat, double lon, float meters_per_pixel);
     bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3d position, float meters_per_pixel);
@@ -73,7 +76,7 @@ struct DcAppPlanetApi {
     bool (*set_view_shaders)(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
     DcAppPlanetGeojsonHandle (*load_geojson)(DcAppContext *app_ctx, const char *path);
     DcAppPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
-    // returns true only when the position is appended.
+    // breadcrumbs update only when a point is appended
     bool (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3d position);
     bool (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3d position);
     void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);

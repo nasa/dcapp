@@ -7,7 +7,9 @@
 
 #define DC_APP_VALUE_STRING_BUFFER_SIZE 256
 
-// Each value caches every representation while type marks the authoritative field.
+//~ value storage
+
+// each value caches every representation while type marks the authoritative field
 typedef struct DcAppValue {
     DcAppValueType type;
 
@@ -57,6 +59,8 @@ typedef struct DcAppValue4 {
 extern "C" {
 #endif
 
+//~ value creation and conversion
+
 DcAppValue dc_app_value_create_typed_value_from_string(DcAppValueType type, const char *value_str);
 DcAppValue dc_app_value_create_value_string(const char *value);
 DcAppValue dc_app_value_create_value_integer(int value);
@@ -66,6 +70,8 @@ void dc_app_value_refresh(DcAppValue *value);
 void dc_app_value_refresh_from_type(DcAppValue *value, DcAppValueType type);
 void dc_app_value_set_from_string(DcAppValue *value, const char *string_value);
 void *dc_app_value_get_addr(DcAppValue *value);
+
+//~ value comparisons
 
 bool dc_app_value_is_equal(DcAppValue *value1, DcAppValue *value2);
 bool dc_app_value_is_not_equal(DcAppValue *value1, DcAppValue *value2);

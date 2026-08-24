@@ -47,7 +47,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Private composition root. Subsystems own the state behind these contexts.
+//~ application state
+
+// subsystems own the state behind this composition root
 struct DcAppContext {
     DcAppXmlPreprocessorContext *config;
     plWindow *pl_window;
@@ -81,7 +83,8 @@ static const dcDrawBackendI *_ext_dc_draw_backend = NULL;
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
-// declarations
+//~ declarations
+
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void pl_app_resize(plWindow *window, _AppData *app_data);
@@ -110,6 +113,8 @@ static DcAppPlanetViewHandle _planet_create_geodetic_view(DcAppContext *app_cont
 static DcAppPlanetViewHandle _planet_create_cartesian_view(DcAppContext *app_context, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
 static DcAppPlanetGeojsonHandle _planet_load_geojson(DcAppContext *app_context, const char *path);
 static DcAppPlanetBreadcrumbsHandle _planet_create_breadcrumbs(DcAppContext *app_context, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
+
+//~ logic api tables
 
 static const DcAppDisplayLogicApi _app_api = {
     .get_variable = _get_variable,
@@ -143,34 +148,39 @@ static const DcAppPlanetApi _planet_api = {
     .get_breadcrumbs_points = dc_app_planet_get_breadcrumbs_points,
 };
 
+//~ application entry points
+
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     if (app_data) {
-        // Hot reload keeps app state but refreshes extension pointers and logic-facing API tables.
+        // refresh api pointers while preserving hot-reloaded state
         _load_apis(api_registry);
         _pre_init_logic(app_data);
         return app_data;
     }
 
-    // retrieve extension registry
+    //- load extensions and api tables
+
     const plExtensionRegistryI *extension_registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
 
-    // load required extensions
+    // load pilotlight extensions
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
 
-    // load dcapp extensions (separate from pilotlight's draw extensions)
+    // load dcapp rendering extensions
     extension_registry->load("dc_draw_ext", NULL, NULL, true);
     extension_registry->load("dc_draw_backend_ext", NULL, NULL, true);
     extension_registry->load("pl_planet_processor_ext", NULL, NULL, true);
     extension_registry->load("pl_planet_ext", NULL, NULL, true);
     _load_apis(api_registry);
 
-    // allocate app memory
+    //- create application state
+
     app_data = (_AppData *)PL_ALLOC(sizeof(_AppData));
     memset(app_data, 0, sizeof(_AppData));
 
-    // parse input arguments
+    //- preprocess the display configuration
+
     plIO *_ext_io = _ext_ioi->get_io();
     if (_ext_io->iArgc < 4) {
         DC_LOG_ERROR("App", "Missing dcapp config file");
@@ -178,7 +188,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         return NULL;
     }
 
-    // parse --preprocessed flag (before constants)
+    // find the preprocessed output before collecting constants
     const char *preprocessed_output = NULL;
     int const_count = 0;
     char **const_args = NULL;
@@ -189,19 +199,19 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         }
     }
 
-    // collect constant args (skip --preprocessed and its value)
+    // collect constant arguments apart from the output option
     if (_ext_io->iArgc > 4) {
         const_args = (char **)malloc(sizeof(char *) * (_ext_io->iArgc - 4));
         for (int ii = 4; ii < _ext_io->iArgc; ii++) {
             if (strcmp(_ext_io->apArgv[ii], "--preprocessed") == 0 && ii + 1 < _ext_io->iArgc) {
-                ii++; // skip value
+                ii++; // skip the output path
                 continue;
             }
             const_args[const_count++] = _ext_io->apArgv[ii];
         }
     }
 
-    // create config
+    // create the preprocessor context
     const char *config_filepath = _ext_io->apArgv[3];
     if (const_count > 0) {
         app_data->config = dc_app_xml_preprocessor_context_create(config_filepath, const_args, const_count);
@@ -210,25 +220,25 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     }
     free(const_args);
 
-    // initialize subsystem contexts
+    // create model-side subsystem contexts
     app_data->scene = dc_app_display_model_context_create();
     app_data->planets = dc_app_planet_context_create(dc_app_xml_preprocessor_directory(app_data->config));
     app_data->logic = dc_app_display_logic_context_create();
     app_data->data_link = dc_app_data_link_context_create();
 
-    // Export application and display roots before preprocessing XML paths.
+    // export path roots before expanding xml paths
     dc_app_xml_preprocessor_export_environment(app_data->config);
 
-    // create lookup
+    // resolve the shared variable registry
     DcAppVariableRegistryContext *lookup = dc_app_display_model_get_variable_registry(app_data->scene);
 
-    // preprocess XML file
+    // expand the display xml
     dc_app_xml_preprocessor_preprocess(app_data->config);
     dc_app_variable_registry_set_suppress_missing_variable(
         lookup,
         dc_app_xml_preprocessor_suppresses_missing_variable(app_data->config));
 
-    // dump preprocessed XML for debugging
+    // save the expanded xml when requested
     dc_app_xml_preprocessor_save_preprocessed(app_data->config, preprocessed_output);
 
     DcAppDisplayBuilderContext *xml_ctx = dc_app_display_builder_context_create(
@@ -239,7 +249,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         dc_app_xml_preprocessor_root_directory(app_data->config),
         _bootstrap_runtime);
 
-    // build dcapp node tree
+    //- build and seal the display model
+
     xmlNodePtr root = dc_app_xml_preprocessor_root(app_data->config);
     dc_app_display_builder_process_xml_node(
         xml_ctx,
@@ -247,73 +258,78 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         NODE_INDEX_UNDEFINED,
         DC_APP_XML_ELEMENT_TYPE_UNDEFINED,
         dc_app_xml_preprocessor_directory(app_data->config));
-    // Freeze value storage before generated logic publishes pointers into it.
+    // freeze value storage before logic publishes pointers into it
     dc_app_variable_registry_seal(lookup);
     dc_app_display_builder_context_destroy(xml_ctx);
 
-    // initialize resource manager (needed by planet texture loading)
+    //- initialize runtime resources and logic
+
+    // initialize resources before loading planet textures
     plResourceManagerInit resource_init = {0};
     resource_init.ptDevice = _ext_starter->get_device();
     _ext_resource->initialize(resource_init);
 
-    // initialize planet rendering instances
+    // initialize planet render instances
     dc_app_display_runtime_initialize_planets(app_data->renderer);
 
-    // initialize logic (link values)
+    // link logic values and api tables
     _pre_init_logic(app_data);
 
-    // call logic init
+    // run the display logic initializer
     dc_app_display_logic_initialize(app_data->logic, (DcAppContext *)app_data);
 
-    // return app memory
     return app_data;
 }
 
 PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
-    // call logic close
-    // unload logic shared library
+    //- stop application logic
+
+    // close logic and unload its shared library
     dc_app_display_logic_context_destroy(app_data->logic, (DcAppContext *)app_data);
     app_data->logic = NULL;
 
-    // get device
+    //- drain gpu work
+
     plDevice *device = _ext_starter->get_device();
 
-    // wait for GPU to finish all work before destroying resources
+    // wait for gpu work before destroying resources
     _ext_gfx->flush_device(device);
 
-    // cleanup draw batch system
+    //- destroy application contexts
+
+    // release display and draw state
     dc_app_display_runtime_context_destroy(app_data->renderer);
     dc_app_draw_context_destroy(app_data->draw);
 
-    // cleanup pixelstream sources
-    // cleanup pixelstream global contexts
+    // release pixelstream sources and global state
     dc_app_pixelstream_context_destroy(app_data->pixelstreams);
 
-    // cleanup fonts
+    // release font state
     dc_app_font_context_destroy(app_data->fonts);
 
-    // cleanup textures
+    // release texture state
     dc_app_texture_context_destroy(app_data->textures);
 
-    // cleanup planet views, instances, and extension
+    // release planets before resource ownership
     dc_app_planet_context_destroy(app_data->planets);
     _ext_resource->cleanup();
 
-    // cleanup trick contexts
-    // cleanup edge contexts
+    // release trick and edge links
     dc_app_data_link_context_destroy(app_data->data_link);
 
-    // cleanup lookup and config
+    // release the model and expanded configuration
     dc_app_display_model_context_destroy(app_data->scene);
     dc_app_xml_preprocessor_context_destroy(app_data->config);
 
-    // cleanup draw backend (GPU buffers, bind group pool, font atlas, drawlists)
+    //- destroy rendering extensions
+
+    // release draw gpu objects and the font atlas
     _ext_dc_draw_backend->cleanup_font_atlas(NULL);
     _ext_dc_draw_backend->cleanup();
     _ext_dc_draw->cleanup();
 
-    // cleanup GPU memory allocators (buddy heap, staging allocators)
+    // release gpu allocators and the starter
     _ext_gpu_allocators->cleanup(device);
     _ext_starter->cleanup();
     _ext_windows->destroy(app_data->pl_window);
@@ -328,8 +344,9 @@ PL_EXPORT void pl_app_resize(plWindow *window, _AppData *app_data) {
 
 PL_EXPORT void pl_app_update(_AppData *app_data) {
 
-    // this needs to be the first call when using the starter
-    // extension. You must return if it returns false (usually a swapchain recreation).
+    //- begin the frame
+
+    // let the starter defer frames during swapchain recreation
     if (!_ext_starter->begin_frame()) {
         return;
     }
@@ -337,65 +354,70 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     _ext_resource->new_frame();
     DcAppVariableRegistryContext *lookup = dc_app_display_model_get_variable_registry(app_data->scene);
 
-    // External and logic writes happen before cached value representations are synchronized.
+    //- update application state
+
+    // apply external writes before refreshing cached values
     dc_app_data_link_update(app_data->data_link, lookup);
 
-    // process pixelstream data
+    // ingest pixelstream frames
     dc_app_pixelstream_update(app_data->pixelstreams);
 
-    // process logic
+    // advance display logic
     dc_app_display_logic_update(app_data->logic, (DcAppContext *)app_data, _get_update_rate(app_data));
 
-    // refresh variables
+    // synchronize cached value representations
     _refresh_values(lookup);
 
-    // get mouse position
+    // assemble frame input
     plVec2 mouse_position = _ext_ioi->get_mouse_pos();
 
-    // get mouse button status
     DcAppDrawFrameInput draw_input = {
         .mouse_position = mouse_position,
         .mouse_position_valid = isfinite(mouse_position.x) && isfinite(mouse_position.y),
         .mouse_down = _ext_ioi->is_mouse_down(PL_MOUSE_BUTTON_LEFT),
     };
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //- build the frame
 
-    // new_frame: backend calls draw's new_frame + allocates dynamic data block
+    // begin backend dynamic data allocation
     _ext_dc_draw_backend->new_frame();
 
-    // reset draw batch system for new frame
+    // reset draw batches with current input
     dc_app_draw_context_begin(app_data->draw, draw_input);
 
-    // update planet definitions (texture reload, prepare)
+    // prepare planet textures and definitions
     dc_app_display_runtime_update_planets(app_data->renderer);
 
-    // draw node
+    // render the display node tree
     dc_app_display_runtime_render(app_data->renderer, app_data->draw);
     dc_app_draw_context_end(app_data->draw);
 
-    // flush deferred set operations (deferred Sets applied atomically)
+    // apply deferred sets atomically after traversal
     dc_app_display_runtime_flush_deferred_sets(app_data->renderer);
 
-    // reset any unpoped variable stacks
+    // recover any unpopped variable stacks
     dc_app_variable_registry_reset_variable_stacks(lookup);
 
-    // start main pass & return the encoder being used
+    //- submit the frame
+
+    // begin the main render pass
     plRenderEncoder *encoder = _ext_starter->begin_main_pass();
 
-    // submit draw lists from batch system in order
+    // submit ordered draw batches
     dc_app_draw_context_submit(app_data->draw, encoder);
     _ext_starter->end_main_pass();
 
-    // must be the last function called when using the starter extension
+    // finish starter frame ownership last
     _ext_starter->end_frame();
 
-    // update node states
+    // commit interaction state for the next frame
     dc_app_draw_context_commit(app_data->draw);
 }
 
+//~ runtime setup
+
 static void _pre_init_logic(_AppData *app_data) {
-    // exposes only dcapp-owned api tables to logic.
+    // expose only dcapp-owned api tables to logic
     const DcAppDisplayLogicInit init = {
         .app_ctx = (DcAppContext *)app_data,
         .app = &_app_api,
@@ -410,7 +432,7 @@ static void _pre_init_logic(_AppData *app_data) {
 static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderContext *xml_ctx, DcAppNode *window_node) {
     _AppData *app_data = (_AppData *)app_context;
 
-    // mount VFS dirs
+    //- mount runtime paths
     _ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
     _ext_vfs->mount_directory("/assets", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
     _ext_vfs->mount_directory("/cache", "cache", PL_VFS_MOUNT_FLAGS_NONE);
@@ -418,7 +440,7 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderCon
     _ext_vfs->mount_directory("/shader-temp", "../shader-temp", PL_VFS_MOUNT_FLAGS_NONE);
     _ext_vfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
 
-    // set initial window params
+    //- create the display window
     plWindowDesc window_desc = {};
     window_desc.pcTitle = window_node->window.title;
     window_desc.uWidth = window_node->window.fullscreen && window_node->window.init_dimension.x < 1.0f
@@ -440,7 +462,9 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderCon
 
     _ext_windows->show(app_data->pl_window);
 
-    // initialize the starter API (handles alot of boilerplate)
+    //- initialize rendering
+
+    // let the starter initialize shared rendering extensions
     plStarterInit tStarterInit = {
         .tFlags = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA | PL_STARTER_FLAGS_DEPTH_BUFFER,
         .ptWindow = app_data->pl_window};
@@ -450,19 +474,19 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderCon
     _ext_screen_log->set_flags(PL_SCREEN_LOG_FLAGS_HIDE_MESSAGES);
 #endif
 
-    // get device
+    // resolve the initialized device
     plDevice *device = _ext_starter->get_device();
 
-    // initialize dc_draw_ext and dc_draw_backend_ext (pl_starter doesn't do this since we use dcDrawI)
+    // initialize dc draw outside the starter extension set
     dcDrawInit tDrawInit = {0};
     _ext_dc_draw->initialize(&tDrawInit);
     _ext_dc_draw_backend->initialize(device);
 
-    // create default font atlas
+    // create the default font atlas
     app_data->fonts = dc_app_font_context_create();
     dc_app_display_builder_set_fonts(xml_ctx, app_data->fonts);
 
-    // initialize shader compiler
+    // initialize shader compilation paths
     plShaderOptions shader_options = {};
     shader_options.apcIncludeDirectories[0] = "/shaders/";
     shader_options.apcIncludeDirectories[1] = "/shaders-terrain/";
@@ -472,12 +496,14 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderCon
     shader_options.tFlags = PL_SHADER_FLAGS_AUTO_OUTPUT | PL_SHADER_FLAGS_INCLUDE_DEBUG | PL_SHADER_FLAGS_ALWAYS_COMPILE;
     _ext_shader->initialize(&shader_options);
 
-    // wraps up
+    // finalize starter render resources
     _ext_starter->finalize();
 
     app_data->textures = dc_app_texture_context_create(dc_app_xml_preprocessor_directory(app_data->config));
 
-    // initialize pixelstream contexts
+    //- connect application render contexts
+
+    // create pixelstream and draw state
     app_data->pixelstreams = dc_app_pixelstream_context_create(app_data->textures);
     app_data->draw = dc_app_draw_context_create(
         dc_app_font_default(app_data->fonts),
@@ -495,19 +521,19 @@ static void _bootstrap_runtime(DcAppContext *app_context, DcAppDisplayBuilderCon
     dc_app_display_builder_set_pixelstreams(xml_ctx, app_data->pixelstreams);
 }
 
-// -- handlers for logic files --
-// * only works once all variables are registered, as pointer
-// * values could change otherwise
+//~ logic api bridges
+
+// variable addresses are stable only after registry sealing
 static void *_get_variable(DcAppContext *app_ctx, const char *name) {
     _AppData *app_data = (_AppData *)app_ctx;
     if (!app_data) return NULL;
 
-    // get variable
+    // resolve the registered value
     DcAppVariableRegistryContext *lookup = dc_app_display_model_get_variable_registry(app_data->scene);
     DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index_by_name(lookup, name);
     if (value_index == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) return NULL;
 
-    // return value
+    // expose the underlying storage
     DcAppValue *value = dc_app_variable_registry_get_value(lookup, value_index);
     return dc_app_value_get_addr(value);
 }
@@ -538,6 +564,8 @@ static void _refresh_values(DcAppVariableRegistryContext *lookup) {
     }
 }
 
+//- texture api
+
 static DcAppTextureId _texture_load_image(DcAppContext *app_context, const char *path, DcAppVec2 *out_size) {
     _AppData *app_data = (_AppData *)app_context;
     return dc_app_texture_load_image(app_data ? app_data->textures : NULL, path, out_size);
@@ -547,6 +575,8 @@ static bool _texture_get_size(DcAppContext *app_context, DcAppTextureId texture,
     _AppData *app_data = (_AppData *)app_context;
     return dc_app_texture_get_size(app_data ? app_data->textures : NULL, texture, out_size);
 }
+
+//- planet api
 
 static DcAppPlanetHandle _planet_get_by_id(DcAppContext *app_context, const char *id) {
     _AppData *app_data = (_AppData *)app_context;
@@ -612,6 +642,8 @@ static DcAppPlanetBreadcrumbsHandle _planet_create_breadcrumbs(DcAppContext *app
     _AppData *app_data = (_AppData *)app_context;
     return dc_app_planet_create_breadcrumbs(app_data ? app_data->planets : NULL, crs, max_points, point_spacing);
 }
+
+//~ api loading
 
 static void _load_apis(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);

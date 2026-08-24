@@ -11,6 +11,8 @@
 
 static bool _is_format_specifier(const char *value, const char *valid_specifiers);
 
+//~ search
+
 int dc_utils_str_find(const char *s, const char *pattern) {
     if (!s || !pattern)
         return -1;
@@ -52,6 +54,8 @@ bool dc_utils_char_in(const char c, const char *set) {
     return false;
 }
 
+//~ validation
+
 bool dc_utils_string_is_double(const char *text) {
     char *end = NULL;
     errno = 0;
@@ -69,7 +73,7 @@ bool dc_utils_string_is_int(const char *text) {
 bool dc_utils_string_is_boolean(const char *text) {
     if (!text) return false;
 
-    // Check for common boolean strings (case sensitive to match string_to_boolean behavior)
+    // recognize common boolean spellings
     if (strcmp(text, "true") == 0 || strcmp(text, "True") == 0 || strcmp(text, "TRUE") == 0 ||
         strcmp(text, "false") == 0 || strcmp(text, "False") == 0 || strcmp(text, "FALSE") == 0 ||
         strcmp(text, "yes") == 0 || strcmp(text, "Yes") == 0 || strcmp(text, "YES") == 0 ||
@@ -105,8 +109,7 @@ bool dc_utils_string_is_c_identifier(const char *text) {
         }
     }
 
-    // Standard C23 and C++23 keywords. GNU C's "asm" is already a C++
-    // keyword, and "typeof"/"typeof_unqual" are C23 keywords.
+    // cover c23 and c++23 keywords including gnu asm
     static const char *keywords[] = {
         "_Alignas",
         "_Alignof",
@@ -225,6 +228,8 @@ bool dc_utils_string_is_c_identifier(const char *text) {
     return true;
 }
 
+//~ whitespace
+
 void dc_utils_trim_whitespace_inplace(char *text) {
     if (text == NULL) {
         return;
@@ -278,6 +283,8 @@ void dc_utils_trim_whitespace_copy(const char *input, char *out, size_t out_size
     out[trimmed_len] = '\0';
 }
 
+//~ conversion
+
 double dc_utils_string_to_double(const char *text) {
     if (dc_utils_string_is_double(text)) {
         return strtod(text, NULL);
@@ -301,32 +308,29 @@ int dc_utils_string_to_boolean(const char *text) {
         return 0;
     }
 
-    // Work buffer
+    //- normalize input
     char result[DC_UTILS_STRING_MAX_BUFFER_SIZE];
 
-    // Defensive length check using strnlen (caps scanning)
+    // cap scanning at the work buffer size
     size_t in_len = strnlen(text, DC_UTILS_STRING_MAX_BUFFER_SIZE + 1);
     if (in_len > DC_UTILS_STRING_MAX_BUFFER_SIZE) {
         DC_LOG_WARN("String", "dc_utils_string_to_boolean(): input text exceeds max string buffer size");
-        // Option: treat oversize as invalid
-        // return false;
+        // leave oversized input on the normal conversion path
     }
 
-    // Copy with trim; if this helper is not guaranteed to NUL-terminate,
-    // replace with a safe copy + explicit trim.
     dc_utils_trim_whitespace_copy(text, result, sizeof(result));
-    result[sizeof(result) - 1] = '\0'; // hard guarantee
+    result[sizeof(result) - 1] = '\0'; // guarantee termination
 
     if (result[0] == '\0') {
         return 0;
     }
 
-    // Lowercase safely
+    // normalize case before matching
     for (char *p = result; *p; ++p) {
         *p = (char)tolower((unsigned char)*p);
     }
 
-    // Recognized falsy tokens
+    //- match false values
     if (strcmp(result, "false") == 0 ||
         strcmp(result, "no") == 0 ||
         strcmp(result, "off") == 0 ||
@@ -336,6 +340,8 @@ int dc_utils_string_to_boolean(const char *text) {
 
     return 1;
 }
+
+//~ hashing
 
 void dc_utils_string_to_hash(const char *text, char *out, size_t out_size) {
     if (!out || out_size == 0) {
@@ -354,6 +360,10 @@ void dc_utils_string_to_hash(const char *text, char *out, size_t out_size) {
     (void)snprintf(out, out_size, "%020llu", (unsigned long long)hash);
 }
 
+//~ splitting
+
+//- mutable tokenization
+
 void dc_utils_split_string_inplace(char *text, const char *delimiters, size_t *out_indices, size_t out_indices_size, size_t *out_indices_count) {
     *out_indices_count = 0;
 
@@ -365,6 +375,7 @@ void dc_utils_split_string_inplace(char *text, const char *delimiters, size_t *o
     size_t count = 0;
     size_t ii = 0;
 
+    // replace delimiters while recording token starts
     while (ii < len) {
         while (ii < len && strchr(delimiters, text[ii]) != NULL) {
             text[ii] = '\0';
@@ -395,6 +406,8 @@ void dc_utils_split_string_inplace(char *text, const char *delimiters, size_t *o
     *out_indices_count = count;
 }
 
+//- copied tokenization
+
 void dc_utils_split_string_copy(const char *text, const char *delimiters, char *out, size_t out_size, size_t *out_indices, size_t out_indices_size, size_t *out_indices_count) {
     *out_indices_count = 0;
 
@@ -402,6 +415,7 @@ void dc_utils_split_string_copy(const char *text, const char *delimiters, char *
         return;
     }
 
+    // tokenize only the bounded copy
     strncpy(out, text, out_size - 1);
     out[out_size - 1] = '\0';
 
@@ -439,6 +453,8 @@ void dc_utils_split_string_copy(const char *text, const char *delimiters, char *
     *out_indices_count = count;
 }
 
+//~ format validation
+
 bool dc_utils_is_format_specifier_bool(const char *value) {
     static const char *chars = "dis";
     return _is_format_specifier(value, chars);
@@ -459,6 +475,8 @@ bool dc_utils_is_format_specifier_string(const char *value) {
     return _is_format_specifier(value, chars);
 }
 
+//~ platform compatibility
+
 #ifdef _WIN32
 char *strndup(const char *s, size_t n) {
     size_t len = strnlen(s, n);
@@ -471,22 +489,30 @@ char *strndup(const char *s, size_t n) {
 }
 #endif
 
+//~ private functions
+
 static bool _is_format_specifier(const char *value, const char *valid_specifiers) {
     if (!value || value[0] != '%')
         return false;
     size_t ii = 1;
+
+    //- consume flags and width
     while (value[ii] && strchr("-+0 #", value[ii])) {
         ii++;
     }
     while (value[ii] && isdigit((unsigned char)value[ii])) {
         ii++;
     }
+
+    //- consume optional precision
     if (value[ii] == '.') {
         ii++;
         while (value[ii] && isdigit((unsigned char)value[ii])) {
             ii++;
         }
     }
+
+    //- match the conversion
     if (value[ii] && strchr(valid_specifiers, value[ii])) {
         return true;
     }

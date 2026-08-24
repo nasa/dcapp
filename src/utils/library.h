@@ -16,4 +16,4 @@ const char *dc_utils_library_last_error(void);
 }
 #endif
 
-#endif // _DC_UTILS_LIBRARY_
+#endif

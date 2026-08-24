@@ -11,11 +11,13 @@ typedef struct DcPsMjpegServer DcPsMjpegServer;
 extern "C" {
 #endif
 
+//~ context
+
 DcPsMjpegContext *dc_ps_mjpeg_context_create(void);
 void dc_ps_mjpeg_context_destroy(DcPsMjpegContext *context);
 void dc_ps_mjpeg_update(DcPsMjpegContext *context);
 
-// individual servers
+//~ servers
 DcPsMjpegServer *dc_ps_mjpeg_add_server(DcPsMjpegContext *context, const char *url, int timeout_s);
 void dc_ps_mjpeg_remove_server(DcPsMjpegServer *server);
 bool dc_ps_mjpeg_server_is_connected(DcPsMjpegServer *server);

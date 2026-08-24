@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdio.h>
 
+//~ internal types
+
 typedef struct _DcAppVariableRegistryVariable {
     DcAppVariableRegistryValueIndex value_index;
     DcAppValue *sb_value_stack; // per-variable stack for push/pop
@@ -16,27 +18,30 @@ typedef struct _DcAppVariableRegistryVariable {
 } _DcAppVariableRegistryVariable;
 
 struct DcAppVariableRegistryContext {
-    // warning suppression
+    //- registry state
     bool suppress_missing_variable;
     bool sealed;
 
-    // vars
+    //- variables
     char *sb_var_names;
     int *sb_var_name_offsets;
     _DcAppVariableRegistryVariable *sb_vars;
 
-    // values
+    //- values
     DcAppValue *sb_vals;
 };
 
+//~ forward declarations
+
 static _DcAppVariableRegistryVariable *_get_var(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryVariableIndex index);
 
-// create an app lookup
+//~ registry lifecycle
+
 DcAppVariableRegistryContext *dc_app_variable_registry_context_create(void) {
     DcAppVariableRegistryContext *lookup = (DcAppVariableRegistryContext *)malloc(sizeof(DcAppVariableRegistryContext));
     *lookup = (DcAppVariableRegistryContext){0};
 
-    // reserve index 0 as undefined for values and variables
+    // reserve index zero for undefined values and variables
     sbresize(lookup->sb_vals, 1);
     sbresize(lookup->sb_vars, 1);
     sbresize(lookup->sb_var_name_offsets, 1);
@@ -48,7 +53,7 @@ void dc_app_variable_registry_context_destroy(DcAppVariableRegistryContext *look
     sbfree(lookup->sb_var_names);
     sbfree(lookup->sb_var_name_offsets);
 
-    // free per-variable stacks
+    // release stacks owned by each variable
     for (int ii = DC_APP_VARIABLE_REGISTRY_FIRST_INDEX; ii < sbcount(lookup->sb_vars); ii++) {
         sbfree(lookup->sb_vars[ii].sb_value_stack);
     }
@@ -58,9 +63,10 @@ void dc_app_variable_registry_context_destroy(DcAppVariableRegistryContext *look
     free(lookup);
 }
 
+//~ value registry
+
 DcAppValue *dc_app_variable_registry_get_value(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryValueIndex index) {
     if (index == DC_APP_VARIABLE_REGISTRY_INDEX_UNDEFINED) {
-        // DC_LOG_ERROR("Lookup", "dc_app_variable_registry_get_value(): attempting to fetch invalid index %d", index);
         return NULL;
     }
     return &(lookup->sb_vals[index]);
@@ -79,7 +85,7 @@ DcAppVariableRegistryValueIndex dc_app_variable_registry_register_value_from_str
     char text_cleaned[DC_APP_VALUE_STRING_BUFFER_SIZE];
     dc_utils_trim_whitespace_copy(text, text_cleaned, sizeof(text_cleaned));
 
-    // check for var
+    // resolve variable references before creating literals
     if (strlen(text_cleaned) > 1 && text_cleaned[0] == '@') {
         DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index_by_name(lookup, &(text_cleaned[1]));
         if (value_index != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
@@ -88,10 +94,12 @@ DcAppVariableRegistryValueIndex dc_app_variable_registry_register_value_from_str
         return DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     }
 
-    // otherwise create new DcAppValue and return its index
+    // register literal values directly
     DcAppValue val = dc_app_value_create_typed_value_from_string(type, text);
     return dc_app_variable_registry_register_value(lookup, &val);
 }
+
+//~ variable registry
 
 int dc_app_variable_registry_get_variable_count(DcAppVariableRegistryContext *lookup) {
     return sbcount(lookup->sb_vars);
@@ -172,6 +180,8 @@ void dc_app_variable_registry_set_variable_to_string(DcAppVariableRegistryContex
     dc_app_value_set_from_string(val, new_string);
 }
 
+//~ variable stacks
+
 void dc_app_variable_registry_variable_push(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryVariableIndex var_index) {
     _DcAppVariableRegistryVariable *var = _get_var(lookup, var_index);
     if (!var) return;
@@ -194,13 +204,15 @@ void dc_app_variable_registry_reset_variable_stacks(DcAppVariableRegistryContext
     for (int ii = DC_APP_VARIABLE_REGISTRY_FIRST_INDEX; ii < sbcount(lookup->sb_vars); ii++) {
         _DcAppVariableRegistryVariable *var = &lookup->sb_vars[ii];
         if (sbcount(var->sb_value_stack) > 0) {
-            // restore original value (bottom of stack) and clear
+            // restore the original value before clearing the stack
             DcAppValue *value = &lookup->sb_vals[var->value_index];
             *value = var->sb_value_stack[0];
             sbclear(var->sb_value_stack);
         }
     }
 }
+
+//~ registry controls
 
 void dc_app_variable_registry_set_suppress_missing_variable(DcAppVariableRegistryContext *lookup, bool suppress) {
     lookup->suppress_missing_variable = suppress;
@@ -209,6 +221,8 @@ void dc_app_variable_registry_set_suppress_missing_variable(DcAppVariableRegistr
 void dc_app_variable_registry_seal(DcAppVariableRegistryContext *lookup) {
     if (lookup) lookup->sealed = true;
 }
+
+//~ internal helpers
 
 static _DcAppVariableRegistryVariable *_get_var(DcAppVariableRegistryContext *lookup, DcAppVariableRegistryVariableIndex index) {
     if (index == DC_APP_VARIABLE_REGISTRY_INDEX_UNDEFINED) {

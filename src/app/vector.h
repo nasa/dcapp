@@ -1,12 +1,16 @@
 #ifndef DC_APP_VECTOR_H
 #define DC_APP_VECTOR_H
 
+//~ vector declarations
+
 typedef union DcAppVec2 DcAppVec2;
 typedef union DcAppVec2d DcAppVec2d;
 typedef union DcAppVec3 DcAppVec3;
 typedef union DcAppVec3d DcAppVec3d;
 typedef union DcAppVec4 DcAppVec4;
 typedef union DcAppVec4d DcAppVec4d;
+
+//~ two dimensional vectors
 
 union DcAppVec2 {
     struct {
@@ -33,6 +37,8 @@ union DcAppVec2d {
     };
     double d[2];
 };
+
+//~ three dimensional vectors
 
 union DcAppVec3 {
     struct {
@@ -113,6 +119,8 @@ union DcAppVec3d {
     };
     double d[3];
 };
+
+//~ four dimensional vectors
 
 union DcAppVec4 {
     struct {

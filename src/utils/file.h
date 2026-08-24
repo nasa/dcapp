@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+//~ path helpers
+
 int dc_utils_get_exe_path(char *buffer, size_t size);
 int dc_utils_get_cwd(char *buffer, size_t size);
 int dc_utils_join_paths(const char *dir, const char *rel_path, char *out, size_t out_size);
@@ -19,6 +21,9 @@ bool dc_utils_is_canonical_path(const char *path);
 int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size);
 int dc_utils_get_directory(const char *path, char *out, size_t out_size);
 int dc_utils_create_directory(const char *path);
+
+//~ file loading
+
 unsigned char *dc_utils_load_binary_file(const char *path, size_t *out_size);
 char *dc_utils_load_text_file(const char *path);
 bool dc_utils_file_exists(const char *path);

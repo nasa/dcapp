@@ -38,9 +38,13 @@
 
 #define _NODE_ARC_MAX_SEGMENTS 200
 
+//~ extension interfaces
+
 static const plMemoryI *_ext_memory = NULL;
 static const plPlanetI *_ext_planet = NULL;
 static const plStarterI *_ext_starter = NULL;
+
+//~ runtime state
 
 typedef struct _DcAppDeferredSetOp {
     DcAppVariableRegistryVariableIndex var_index;
@@ -62,8 +66,7 @@ struct DcAppDisplayRuntimeContext {
     DcAppVec3d *sb_planet_points;
     char *sb_planet_text;
     char *sb_render_text;
-    // Persistent storage avoids a large stack allocation that can cause issues
-    // with stack guard pages during rapid redraws (e.g., window resize).
+    // persistent scratch avoids stack guard pressure during rapid redraws
     DcAppVec2 ellipse_triangle_points[DC_APP_NODE_ELLIPSE_MAX_SEGMENTS * 3];
 };
 
@@ -72,6 +75,8 @@ typedef struct _DcAppRenderFrame {
     plVec2 dimensions;
     plMat4 transform;
 } _DcAppRenderFrame;
+
+//~ declarations
 
 static void _render_node_list(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index);
 static void _render_node(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index);
@@ -82,7 +87,6 @@ static bool _build_planet_texture(
     DcAppPlanetTextureEntry *entry,
     plPlanetTexture *out);
 
-// Local node draw helpers
 static void _render_blink(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static void _render_state_button_enabled(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
@@ -129,6 +133,8 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
 static void _render_window(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node);
 static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVariableRegistryVariableIndex var_index, DcAppValue *var_value, DcAppValue *op_value, DcAppSetType operation);
 
+//~ lifecycle
+
 void dc_app_display_runtime_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
     _ext_planet = pl_get_api_latest(api_registry, plPlanetI);
@@ -169,6 +175,8 @@ void dc_app_display_runtime_context_destroy(DcAppDisplayRuntimeContext *renderer
     PL_FREE(renderer);
 }
 
+//~ planet setup
+
 void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *renderer) {
     if (!renderer) return;
 
@@ -178,7 +186,7 @@ void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *rende
 
     DC_LOG_INFO("Planet", "Initializing %d planet def(s), %d view(s)", def_count, view_count);
 
-    // create planets from definitions through the shared planet subsystem.
+    //- create shared planets from parsed definitions
     for (int i = 0; i < def_count; i++) {
         DcAppPlanetDefinition *def = dc_app_display_model_get_planet_definition(renderer->scene, i);
 
@@ -211,7 +219,7 @@ void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *rende
 
         plPlanet *planet = dc_app_planet_pl(def->handle);
 
-        // apply each initially enabled texture overlay in declaration order.
+        // apply enabled texture overlays in declaration order
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             DcAppPlanetTextureEntry *entry = &def->sb_textures[t];
             bool enabled = true;
@@ -237,7 +245,7 @@ void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *rende
         DC_LOG_INFO("Planet", "  [%d] '%s' created (radius=%.0f)", i, def->name, def->radius);
     }
 
-    // create views from planet view nodes through the shared planet subsystem.
+    //- create views from their parsed nodes
     for (int i = 0; i < view_count; i++) {
         DcAppNodeIndex node_index = dc_app_display_model_get_planet_view_node(renderer->scene, i);
         DcAppNode *node = dc_app_display_model_get_node(renderer->scene, node_index);
@@ -268,7 +276,7 @@ void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *rende
         node->planet_view.handle = view_handle;
         node->planet_view.planet_view_index = dc_app_planet_view_index(view_handle);
 
-        // force shader mismatch so first draw applies the shader.
+        // force a mismatch so the first draw applies its shader
         if (node->planet_view.shader_index != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
             int initial = (int)dc_app_variable_registry_get_value(renderer->lookup, node->planet_view.shader_index)->value_integer;
             node->planet_view.active_shader_index = initial + 1;
@@ -289,7 +297,7 @@ void dc_app_display_runtime_update_planets(DcAppDisplayRuntimeContext *renderer)
         plPlanet *planet = dc_app_planet_pl(def->handle);
         if (!planet) continue;
 
-        // texture enabled/refresh checks
+        //- apply texture state changes
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             DcAppPlanetTextureEntry *tex = &def->sb_textures[t];
             bool enabled = true;
@@ -319,7 +327,7 @@ void dc_app_display_runtime_update_planets(DcAppDisplayRuntimeContext *renderer)
             }
         }
 
-        // light direction
+        //- update lighting
         if (def->light_direction.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ||
             def->light_direction.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ||
             def->light_direction.z != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
@@ -336,7 +344,7 @@ void dc_app_display_runtime_update_planets(DcAppDisplayRuntimeContext *renderer)
         }
     }
 
-    // prepares every shared planet once per frame.
+    // prepare each shared planet once per frame
     for (int i = 0; i < (int)dc_app_planet_count(renderer->planets); i++) {
         DcAppPlanetHandle handle = dc_app_planet_at(renderer->planets, i);
         plPlanet *planet = dc_app_planet_pl(handle);
@@ -347,6 +355,8 @@ void dc_app_display_runtime_update_planets(DcAppDisplayRuntimeContext *renderer)
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
     }
 }
+
+//~ frame dispatch
 
 void dc_app_display_runtime_render(DcAppDisplayRuntimeContext *renderer, DcAppDrawContext *ctx) {
     if (!ctx || !renderer) return;
@@ -361,7 +371,7 @@ void dc_app_display_runtime_flush_deferred_sets(DcAppDisplayRuntimeContext *rend
             renderer->lookup,
             dc_app_variable_registry_get_variable_value_index(renderer->lookup, qop->var_index));
         if (_apply_set_operation(renderer, qop->var_index, var_value, &qop->value, qop->operation)) {
-            // re-fetch var_value after POP (value_index may have changed)
+            // refresh the address after pop changes its value index
             if (qop->operation == DC_APP_SET_TYPE_POP) {
                 var_value = dc_app_variable_registry_get_value(
                     renderer->lookup,
@@ -372,6 +382,8 @@ void dc_app_display_runtime_flush_deferred_sets(DcAppDisplayRuntimeContext *rend
     }
     sbclear(renderer->sb_deferred_sets);
 }
+
+//~ planet texture resolution
 
 static bool _build_planet_texture(
     DcAppDisplayRuntimeContext *renderer,
@@ -415,8 +427,7 @@ static bool _build_planet_texture(
         plVec2d polar_out;
         dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
         if (def->legacy_projected_origin) {
-            // Old planet metadata expects the historical user-longitude projection
-            // convention. New metadata uses real projected CRS meters.
+            // legacy metadata mirrors longitude and flips y instead of using projected meters
             dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
             polar_out.y = -polar_out.y;
         } else {
@@ -432,8 +443,7 @@ static bool _build_planet_texture(
             0.0};
         plVec2d polar_out;
         if (def->legacy_projected_origin) {
-            // Old planet metadata expects the historical user-longitude projection
-            // convention. New metadata uses real projected CRS meters.
+            // legacy metadata mirrors longitude and flips y instead of using projected meters
             dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
             polar_out.y = -polar_out.y;
         } else {
@@ -449,6 +459,8 @@ static bool _build_planet_texture(
     return true;
 }
 
+//~ node traversal
+
 static _DcAppRenderFrame _get_current_frame(DcAppDrawContext *ctx) {
     const DcAppDrawArea *area = dc_app_draw_get_area(ctx);
     _DcAppRenderFrame frame = {
@@ -459,7 +471,7 @@ static _DcAppRenderFrame _get_current_frame(DcAppDrawContext *ctx) {
     return frame;
 }
 
-// Siblings stay flat while container handlers recurse into child lists in draw order.
+// siblings stay flat while container handlers recurse in draw order
 static void _render_node_list(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index) {
     DcAppNodeIndex current_node_index = node_index;
     while (current_node_index != NODE_INDEX_UNDEFINED) {
@@ -603,6 +615,8 @@ static void _render_node(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
     }
 }
 
+//~ controls and state
+
 static void _render_blink(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
 
     double current_time = dc_utils_time_get();
@@ -654,7 +668,7 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_dimension[2] = {
         node->button.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->button.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -665,35 +679,33 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
     bool use_pivot_position = (node->button.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->button.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->button.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->button.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float dimension[2] = {
         use_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->button.dimension.x)->value_double : parent_dimensions->x,
         use_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->button.dimension.y)->value_double : parent_dimensions->y};
 
-    // get virtual dimensions
+    //- resolve virtual dimensions
     float virtual_dimension[2] = {
         use_virtual_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->button.virtual_dimension.x)->value_double : dimension[0],
         use_virtual_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->button.virtual_dimension.y)->value_double : dimension[1]};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->button.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->button.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->button.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -750,14 +762,12 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->button.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->button.local_align.x)->value_integer,
             node->button.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->button.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -790,14 +800,12 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->button.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -853,23 +861,20 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
 
-        // compute matrix
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppDrawAlignmentType local_pivot_aligns[2] = {
                 node->button.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->button.pivot_local_align.x)->value_integer,
                 node->button.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->button.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -903,28 +908,24 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
             }
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->button.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         }
     }
 
-    // xform scale
+    // apply scale
     {
-        // compute matrix
         plMat4 scale_xform = pl_mat4_scale_xyz(dimension[0] / virtual_dimension[0], dimension[1] / virtual_dimension[1], 1.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &scale_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // determine enabled state
@@ -1066,7 +1067,9 @@ static void _render_button(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
     dc_app_draw_context_pop(ctx);
 }
 
-// Helper to get parent's state_flags (returns NODE_STATE_FLAG_NONE if parent doesn't have state_flags)
+//- state branches
+
+// return no state when the parent does not expose state flags
 static uint32_t _get_parent_state_flags(DcAppDisplayRuntimeContext *renderer, DcAppNode *node) {
     DcAppNode *parent_node = dc_app_display_model_get_node(renderer->scene, node->parent);
     if (!parent_node) return NODE_STATE_FLAG_NONE;
@@ -1151,7 +1154,7 @@ static void _render_state_mouse_active(DcAppDrawContext *ctx, DcAppDisplayRuntim
 
 static void _render_state_mouse_inactive(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     uint32_t flags = _get_parent_state_flags(renderer, node);
-    // Inactive when not active, not hovered, not pressed
+    // inactive means no active hover or press state
     if (!(flags & NODE_STATE_FLAG_ACTIVE) && !(flags & NODE_STATE_FLAG_HOVERED) && !(flags & NODE_STATE_FLAG_PRESSED)) {
         _render_node_list(ctx, renderer, node->state_event.child);
     }
@@ -1178,19 +1181,21 @@ static void _render_state_if_false(DcAppDrawContext *ctx, DcAppDisplayRuntimeCon
     }
 }
 
+//~ basic geometry
+
 static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_radius = node->arc.radius != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_rotation = node->arc.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_pivot_position = (node->arc.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->arc.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->arc.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->arc.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get radius
+    //- resolve radius
     float radius;
     if (use_radius) {
         radius = (float)dc_app_variable_registry_get_value(renderer->lookup, node->arc.radius)->value_double;
@@ -1202,10 +1207,10 @@ static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rende
     float angle_span = (float)dc_app_variable_registry_get_value(renderer->lookup, node->arc.angle)->value_double;
     float arc_rotation = use_rotation ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->arc.rotation)->value_double : 0.0f;
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     if (use_rotation && use_pivot_position) {
         float pivot_position[2] = {
             (float)dc_app_variable_registry_get_value(renderer->lookup, node->arc.pivot_position.x)->value_double,
@@ -1271,16 +1276,14 @@ static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rende
         transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
     }
 
-    // xform local alignment
+    // apply local alignment
     {
         float diameter = 2 * radius;
 
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->arc.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->arc.local_align.x)->value_integer,
             node->arc.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->arc.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
@@ -1315,14 +1318,12 @@ static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rende
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->arc.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -1382,16 +1383,15 @@ static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rende
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
         float diameter = 2 * radius;
 
-        // get alignment
         DcAppDrawAlignmentType local_pivot_aligns[2] = {
             node->arc.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->arc.pivot_local_align.x)->value_integer,
             node->arc.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->arc.pivot_local_align.y)->value_integer};
 
-        // get pivot XY
+        // resolve the pivot
         float pivot_position[2] = {0, 0};
         switch (local_pivot_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
@@ -1427,34 +1427,28 @@ static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rende
         }
         float rotation = pl_radiansf(arc_rotation);
 
-        // compute matrices
         plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
         plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
         plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
         transform = pl_mul_mat4t(&transform, &rotate_xform);
         transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // calculate arc points
-    // Corner-based: points range from (0,0) to (diameter, diameter), center at (radius, radius)
-    // Arc starts at 3 o'clock (standard math convention), rotation handled by transform matrix
-    // LocalAlign (default=CENTER) shifts by -radius to center at position
+    //- generate corner-based arc geometry
     int num_segments = node->arc.num_segments == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
                            (int)dc_app_variable_registry_get_value(renderer->lookup, node->arc.num_segments)->value_double;
     if (num_segments < 2) num_segments = 2;
     if (num_segments > _NODE_ARC_MAX_SEGMENTS - 1) num_segments = _NODE_ARC_MAX_SEGMENTS - 1;
 
-    // Convert to radians
+    // convert to radians
     float span_rad = pl_radiansf(angle_span);
 
-    // Generate arc points (start-based)
-    // Arc starts at 3 o'clock (standard math convention), rotation handled by transform matrix
+    // generate arc points from the positive x axis
     DcAppVec2 points[_NODE_ARC_MAX_SEGMENTS];
     int num_arc_points = num_segments + 1; // segments + 1 = number of vertices on arc
 
@@ -1463,7 +1457,7 @@ static void _render_arc(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rende
         float angle = t * span_rad;                // from 0 to span
         float final_angle = angle;
 
-        // Corner-based: center at (radius, radius), points from 0 to diameter
+        // keep the center in corner-based local space
         points[ii] = (DcAppVec2){
             radius * (1.0f + cosf(final_angle)),
             radius * (1.0f + sinf(final_angle)),
@@ -1498,14 +1492,14 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_radius_x = node->ellipse.radius_x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_radius_y = node->ellipse.radius_y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_rotation = node->ellipse.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_pivot_position = (node->ellipse.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->ellipse.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->ellipse.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->ellipse.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float radius_x, radius_y, diameter_x, diameter_y;
     if (use_radius_x) {
         radius_x = (float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.radius_x)->value_double;
@@ -1522,25 +1516,23 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         radius_y = diameter_y / 2;
     }
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -1597,14 +1589,12 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->ellipse.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.local_align.x)->value_integer,
             node->ellipse.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
@@ -1637,14 +1627,12 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->ellipse.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -1704,16 +1692,15 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppDrawAlignmentType local_pivot_aligns[2] = {
                 node->ellipse.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.pivot_local_align.x)->value_integer,
                 node->ellipse.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_LEFT:
@@ -1747,19 +1734,17 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
             }
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         }
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // check if this is a pie/wedge (angle specified and != 360)
@@ -1777,15 +1762,13 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
     int num_points = 0;
 
     if (is_pie) {
-        // Pie/wedge mode: center point + arc points
-        // Center point goes first for proper convex polygon winding
+        // seed wedge geometry with its center for convex winding
         plVec4 center4 = (plVec4){radius_x, radius_y, 0, 1};
         center4 = pl_mul_mat4_vec4(&transform, center4);
         points[0] = (DcAppVec2){center4.x, center4.y};
         num_points = 1;
 
-        // Generate arc points (start-based)
-        // Wedge starts at 3 o'clock (standard math convention), rotation handled by transform matrix
+        // generate wedge points from the positive x axis
         float span_rad = pl_radiansf(angle_span);
 
         for (int ii = 0; ii <= num_segments; ii++) {
@@ -1801,7 +1784,7 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
             points[num_points++] = (DcAppVec2){point4.x, point4.y};
         }
     } else {
-        // Full ellipse mode
+        // use a closed ellipse for a full sweep
         for (int ii = 0; ii < num_segments; ii++) {
             float angle = ii * (2.0f * (float)M_PI / num_segments);
             plVec4 point4 = (plVec4){
@@ -1823,9 +1806,7 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
             node->ellipse.fill_color.a == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 1.0f : (float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.fill_color.a)->value_double,
         };
         if (is_pie && num_points >= 3) {
-            // Use triangle fan for pie/wedge (works for any angle, including > 180 degrees)
-            // points[0] = center, points[1..num_points-1] = arc points
-            // Reuse context-owned scratch to keep this large fan off the stack.
+            // triangulate the center and arc points using context scratch
             int num_triangles = num_points - 2;
             if (num_triangles > 0) {
                 DcAppVec2 *triangle_points = renderer->ellipse_triangle_points;
@@ -1859,7 +1840,7 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         }
     }
 
-    // draw outline
+    //- render outline
     if (node->ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_color[4] = {
             node->ellipse.line_color.r == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 0.0f : (float)dc_app_variable_registry_get_value(renderer->lookup, node->ellipse.line_color.r)->value_double,
@@ -1887,7 +1868,7 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         dc_app_draw_context_pop(ctx);
     }
 
-    // mouse events
+    //- resolve mouse events
     if (node->ellipse.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
@@ -1930,7 +1911,7 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         }
     }
 
-    // draw children
+    //- render children
     plVec2 position = (plVec2){0.0f, 0.0f};
     plVec2 dimensions = (plVec2){diameter_x, diameter_y};
     dc_app_draw_context_push(ctx, position, dimensions, &transform);
@@ -1938,13 +1919,15 @@ static void _render_ellipse(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
     dc_app_draw_context_pop(ctx);
 }
 
+//~ containers and callbacks
+
 static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_dimension[2] = {
         node->container.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->container.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -1955,35 +1938,33 @@ static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
     bool use_pivot_position = (node->container.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->container.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->container.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->container.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float dimension[2] = {
         use_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->container.dimension.x)->value_double : parent_dimensions->x,
         use_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->container.dimension.y)->value_double : parent_dimensions->y};
 
-    // get virtual dimensions
+    //- resolve virtual dimensions
     float virtual_dimension[2] = {
         use_virtual_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->container.virtual_dimension.x)->value_double : dimension[0],
         use_virtual_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->container.virtual_dimension.y)->value_double : dimension[1]};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->container.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->container.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->container.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2040,14 +2021,12 @@ static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->container.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->container.local_align.x)->value_integer,
             node->container.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->container.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -2080,14 +2059,12 @@ static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->container.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -2147,16 +2124,15 @@ static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppDrawAlignmentType local_pivot_aligns[2] = {
                 node->container.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->container.pivot_local_align.x)->value_integer,
                 node->container.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->container.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -2190,31 +2166,27 @@ static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
             }
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->container.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         }
     }
 
-    // xform scale
+    // apply scale
     {
-        // compute matrix
         plMat4 scale_xform = pl_mat4_scale_xyz(dimension[0] / virtual_dimension[0], dimension[1] / virtual_dimension[1], 1.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &scale_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // mouse events
+    //- resolve mouse events
     if (node->container.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
@@ -2249,7 +2221,7 @@ static void _render_container(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
         }
     }
 
-    // draw children
+    //- render children
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
     plVec2 position_vec2 = (plVec2){0.0f, 0.0f};
     dc_app_draw_context_push(ctx, position_vec2, virtual_dimensions_vec2, &transform);
@@ -2261,7 +2233,7 @@ static void _render_conditional(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
 
     DcAppValue *val1 = dc_app_variable_registry_get_value(renderer->lookup, node->conditional.value1);
     if (!val1) {
-        // DC_LOG_WARN("If", "Value1 is undefined, skipping conditional");
+        // optional warning remains suppressed for undefined condition values
         return;
     }
     DcAppConditionalType type = (node->conditional.type == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED)
@@ -2269,7 +2241,7 @@ static void _render_conditional(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
                                     : (DcAppConditionalType)dc_app_variable_registry_get_value(renderer->lookup, node->conditional.type)->value_integer;
     bool use_val2 = node->conditional.value2 != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
 
-    // evaluate
+    //- evaluate condition
     bool result = false;
     if (use_val2) {
         DcAppValue *val2 = dc_app_variable_registry_get_value(renderer->lookup, node->conditional.value2);
@@ -2322,6 +2294,8 @@ static void _render_conditional(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     _render_node_list(ctx, renderer, node->conditional.child);
 }
 
+//- user callbacks
+
 static void _execute_function(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     if (!node->function.callback) return;
 
@@ -2359,7 +2333,7 @@ static void _execute_draw_function(DcAppDrawContext *ctx, DcAppDisplayRuntimeCon
         sbpush(renderer->sb_draw_function_args, resolved);
     }
 
-    // Contain any draw stacks opened by user code so they cannot affect later siblings.
+    // contain user draw stacks so they cannot affect later siblings
     DcAppDrawScope scope = dc_app_draw_scope_begin(ctx);
     DcAppDrawFuncArgs args = {
         .count = (uint32_t)arg_count,
@@ -2369,13 +2343,15 @@ static void _execute_draw_function(DcAppDrawContext *ctx, DcAppDisplayRuntimeCon
     dc_app_draw_scope_end(ctx, scope);
 }
 
+//~ images
+
 static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_dimension[2] = {
         node->image.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->image.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -2383,30 +2359,28 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
     bool use_pivot_position = (node->image.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->image.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->image.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->image.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float dimension[2] = {
         use_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->image.dimension.x)->value_double : parent_dimensions->x,
         use_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->image.dimension.y)->value_double : parent_dimensions->y};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->image.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->image.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->image.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2463,14 +2437,12 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->image.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->image.local_align.x)->value_integer,
             node->image.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->image.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -2503,14 +2475,12 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->image.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -2570,16 +2540,15 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppDrawAlignmentType local_pivot_aligns[2] = {
                 node->image.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->image.pivot_local_align.x)->value_integer,
                 node->image.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->image.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -2613,19 +2582,17 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
             }
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->image.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         }
     }
 
-    // PL specific fixes
+    // pilotlight coordinate fixes
     {
         // move from top-left reference to bottom-left
         plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
@@ -2633,12 +2600,11 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         // flip over the y axis
         plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
 
-        // apply transforms
         transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
         transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // draw (skip if texture failed to load)
@@ -2662,7 +2628,7 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         dc_app_draw_context_pop(ctx);
     }
 
-    // mouse events
+    //- resolve mouse events
     if (node->image.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
@@ -2697,7 +2663,7 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         }
     }
 
-    // draw children
+    //- render children
     plVec2 position = (plVec2){0.0f, 0.0f};
     plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
     dc_app_draw_context_push(ctx, position, dimensions, &transform);
@@ -2705,35 +2671,35 @@ static void _render_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
     dc_app_draw_context_pop(ctx);
 }
 
+//~ lines panels streams and shapes
+
 static void _render_line(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_rotation = node->line.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_pivot_position = (node->line.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->line.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->line.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->line.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->line.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->line.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->line.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2790,7 +2756,7 @@ static void _render_line(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         }
     }
 
-    // xform position
+    // apply position
     {
         // boolean check
         bool use_position[2] = {
@@ -2811,17 +2777,15 @@ static void _render_line(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
             position[1] = -position[1];
         }
 
-        // compute matrix
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // get points, min/max
+    //- resolve geometry bounds
     plVec2 min_pos = (plVec2){FLT_MAX, FLT_MAX};
     plVec2 max_pos = (plVec2){FLT_MIN, FLT_MIN};
     int num_points = sbcount(node->line.sb_vertices);
@@ -2884,7 +2848,7 @@ static void _render_line(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         points[ii] = (DcAppVec2){raw_points[ii].x, raw_points[ii].y};
     }
 
-    // draw outline
+    //- render outline
     if (node->line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_color[4] = {
             node->line.line_color.r == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 0.0f : (float)dc_app_variable_registry_get_value(renderer->lookup, node->line.line_color.r)->value_double,
@@ -2913,7 +2877,7 @@ static void _render_panel(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // DisplayIndex/ActiveDisplay check - skip panel if index doesn't match window's active display
+    // skip panels outside the window active display
     DcAppNode *window_node = dc_app_display_model_get_node(renderer->scene, dc_app_display_model_get_window(renderer->scene));
     DcAppVariableRegistryValueIndex window_active_display = window_node ? window_node->window.active_display : DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     DcAppVariableRegistryValueIndex panel_index = node->panel.index;
@@ -2921,36 +2885,34 @@ static void _render_panel(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         int active_display_value = dc_app_variable_registry_get_value(renderer->lookup, window_active_display)->value_integer;
         int panel_index_value = dc_app_variable_registry_get_value(renderer->lookup, panel_index)->value_integer;
         if (active_display_value != panel_index_value) {
-            return; // skip this panel - DisplayIndex doesn't match ActiveDisplay
+            return; // skip panels outside the active display
         }
     }
 
-    // boolean checks
+    //- validate visibility
     bool use_virtual_dimension[2] = {
         node->panel.virtual_dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->panel.virtual_dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
 
-    // get virtual dimensions
+    //- resolve virtual dimensions
     float virtual_dimension[2] = {
         use_virtual_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->panel.virtual_dimension.x)->value_double : parent_dimensions->x,
         use_virtual_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->panel.virtual_dimension.y)->value_double : parent_dimensions->y};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform scale
+    // apply scale
     {
-        // compute matrix
         plMat4 scale_xform = pl_mat4_scale_xyz(parent_dimensions->x / virtual_dimension[0], parent_dimensions->y / virtual_dimension[1], 1.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &scale_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // draw background
+    //- render background
     if (node->panel.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
         float bg[4] = {
             node->panel.background_color.r == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 0.0f : (float)dc_app_variable_registry_get_value(renderer->lookup, node->panel.background_color.r)->value_double,
@@ -2968,7 +2930,7 @@ static void _render_panel(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *ren
         dc_app_draw_context_pop(ctx);
     }
 
-    // draw children
+    //- render children
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
     plVec2 position_vec2 = (plVec2){0.0f, 0.0f};
     dc_app_draw_context_push(ctx, position_vec2, virtual_dimensions_vec2, &transform);
@@ -2982,7 +2944,7 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // get source (data fetching + GPU upload already done at top of frame)
+    // use the source uploaded at the start of the frame
     if (node->pixelstream.source_index == DC_APP_PIXELSTREAM_SOURCE_INDEX_UNDEFINED) return;
     DcAppPixelstreamState source = {0};
     if (!dc_app_pixelstream_get_state(renderer->pixelstreams, node->pixelstream.source_index, &source)) return;
@@ -2993,7 +2955,7 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     // don't draw anything if no data and no test pattern
     if ((source.width <= 0 || source.height <= 0) && !use_test_pattern) return;
 
-    // boolean checks
+    //- validate visibility
     bool use_dimension[2] = {
         node->pixelstream.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->pixelstream.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -3001,30 +2963,28 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     bool use_pivot_position = (node->pixelstream.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->pixelstream.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->pixelstream.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->pixelstream.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float dimension[2] = {
         use_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.dimension.x)->value_double : parent_dimensions->x,
         use_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.dimension.y)->value_double : parent_dimensions->y};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -3081,14 +3041,12 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->pixelstream.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.local_align.x)->value_integer,
             node->pixelstream.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -3121,14 +3079,12 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->pixelstream.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -3188,16 +3144,15 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppDrawAlignmentType local_pivot_aligns[2] = {
                 node->pixelstream.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.pivot_local_align.x)->value_integer,
                 node->pixelstream.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -3231,19 +3186,17 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
             }
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->pixelstream.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         }
     }
 
-    // PL specific fixes
+    // pilotlight coordinate fixes
     {
         // move from top-left reference to bottom-left
         plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
@@ -3251,15 +3204,14 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         // flip over the y axis
         plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
 
-        // apply transforms
         transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
         transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // compute UV coordinates
+    // compute uv coordinates
     plVec2 min_uv = {0.0f, 0.0f};
     plVec2 max_uv;
     plBindGroupHandle bind_group_handle;
@@ -3278,7 +3230,7 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
             ((float)source.height) / texture_size.y};
     }
 
-    // draw
+    //- render geometry
     {
         dc_app_draw_context_push(ctx, (plVec2){0.0f, 0.0f}, (plVec2){dimension[0], dimension[1]}, &transform);
         dc_app_draw_image_quad_uv(ctx, bind_group_handle.uData,
@@ -3296,7 +3248,7 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         dc_app_draw_context_pop(ctx);
     }
 
-    // mouse events
+    //- resolve mouse events
     if (node->pixelstream.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
@@ -3331,7 +3283,7 @@ static void _render_pixelstream(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         }
     }
 
-    // draw children
+    //- render children
     plVec2 position = (plVec2){0.0f, 0.0f};
     plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
     dc_app_draw_context_push(ctx, position, dimensions, &transform);
@@ -3345,30 +3297,28 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_rotation = node->polygon.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_pivot_position = (node->polygon.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->polygon.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->polygon.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->polygon.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->polygon.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->polygon.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->polygon.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -3425,7 +3375,7 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         }
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->polygon.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -3485,10 +3435,10 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // get points, min/max
+    //- resolve geometry bounds
     plVec2 min_pos = (plVec2){FLT_MAX, FLT_MAX};
     plVec2 max_pos = (plVec2){FLT_MIN, FLT_MIN};
     int num_points = sbcount(node->polygon.sb_vertices);
@@ -3551,7 +3501,7 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         points[ii] = (DcAppVec2){raw_points[ii].x, raw_points[ii].y};
     }
 
-    // rounded check
+    //- resolve rounded geometry
     bool is_rounded = node->polygon.rounded != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
                       dc_app_variable_registry_get_value(renderer->lookup, node->polygon.rounded)->value_boolean;
     float corner_radius = is_rounded ? fminf(max_pos.x - min_pos.x, max_pos.y - min_pos.y) * 0.1f : 0.0f;
@@ -3592,7 +3542,7 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
     }
     dc_app_draw_context_pop(ctx);
 
-    // mouse events
+    //- resolve mouse events
     if (node->polygon.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
@@ -3603,8 +3553,7 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         plMat4 transform_inverse = pl_mat4t_invert(&transform);
         mouse_position = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
 
-        // check whether mouse is over/in
-        // first do the simple check to make sure it's even within the bounds (for performance)
+        // reject bounds misses before testing rounded geometry
         bool inside = false;
         if (mouse_position.x > min_pos.x && mouse_position.x < max_pos.x && mouse_position.y > min_pos.y && mouse_position.y < max_pos.y) {
 
@@ -3641,7 +3590,7 @@ static void _render_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
         }
     }
 
-    // draw children
+    //- render children
     plVec2 position = (plVec2){min_pos.x, min_pos.y};
     plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
     dc_app_draw_context_push(ctx, position, dimensions, &transform);
@@ -3655,7 +3604,7 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_dimension[2] = {
         node->rectangle.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->rectangle.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -3663,30 +3612,28 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
     bool use_pivot_position = (node->rectangle.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->rectangle.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->rectangle.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->rectangle.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float dimension[2] = {
         use_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.dimension.x)->value_double : parent_dimensions->x,
         use_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.dimension.y)->value_double : parent_dimensions->y};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.pivot_position.x)->value_double,
                 (float)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.pivot_position.y)->value_double};
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -3743,14 +3690,12 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
-        // get alignment
         DcAppDrawAlignmentType local_aligns[2] = {
             node->rectangle.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.local_align.x)->value_integer,
             node->rectangle.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -3783,14 +3728,12 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->rectangle.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -3850,16 +3793,15 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppDrawAlignmentType local_pivot_aligns[2] = {
                 node->rectangle.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.pivot_local_align.x)->value_integer,
                 node->rectangle.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
+            // resolve pivot and rotation
             float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -3893,29 +3835,27 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
             }
             float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         }
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // get points
+    //- resolve geometry
     plVec2 raw_points[4] = {
         (plVec2){0.0f, 0.0f},
         (plVec2){dimension[0], 0.0f},
         (plVec2){dimension[0], dimension[1]},
         (plVec2){0.0f, dimension[1]}};
 
-    // rounded check
+    //- resolve rounded geometry
     bool is_rounded = node->rectangle.rounded != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
                       dc_app_variable_registry_get_value(renderer->lookup, node->rectangle.rounded)->value_boolean;
     float corner_radius = is_rounded ? fminf(dimension[0], dimension[1]) * 0.1f : 0.0f;
@@ -3970,7 +3910,7 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
     }
     dc_app_draw_context_pop(ctx);
 
-    // mouse events
+    //- resolve mouse events
     if (node->rectangle.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
@@ -4005,7 +3945,7 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
         }
     }
 
-    // draw children
+    //- render children
     plVec2 position = (plVec2){0.0f, 0.0f};
     plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
     dc_app_draw_context_push(ctx, position, dimensions, &transform);
@@ -4013,24 +3953,26 @@ static void _render_rectangle(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext 
     dc_app_draw_context_pop(ctx);
 }
 
+//~ interaction and assignments
+
 static void _process_mouse_motion(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plMat4 *parent_transform = &parent_frame.transform;
-    // Only update if mouse is down (being dragged)
+    // update only while dragging
     if (!dc_app_draw_context_get_screen_mouse(ctx)->down) {
         return;
     }
 
-    // Get mouse position in window coordinates
+    // read the mouse in window coordinates
     const DcAppMouse *mouse = dc_app_draw_context_get_screen_mouse(ctx);
     plVec2 mouse_pos = {mouse->x, mouse->y};
 
-    // Transform mouse position from screen space to parent's virtual coordinate space
+    // map the mouse into parent virtual coordinates
     plMat4 inv_transform = pl_mat4t_invert(parent_transform);
     plVec4 mouse_screen = {mouse_pos.x, mouse_pos.y, 0.0f, 1.0f};
     plVec4 mouse_local = pl_mul_mat4_vec4(&inv_transform, mouse_screen);
 
-    // Set VariableX if defined
+    // assign variable x when present
     if (node->mouse_motion.var_x != DC_APP_VARIABLE_REGISTRY_VARIABLE_INDEX_UNDEFINED) {
         DcAppValue *var_x = dc_app_variable_registry_get_value(renderer->lookup, dc_app_variable_registry_get_variable_value_index(renderer->lookup, node->mouse_motion.var_x));
         if (var_x->type == DC_APP_VALUE_TYPE_DOUBLE) {
@@ -4040,7 +3982,7 @@ static void _process_mouse_motion(DcAppDrawContext *ctx, DcAppDisplayRuntimeCont
         }
     }
 
-    // Set VariableY if defined
+    // assign variable y when present
     if (node->mouse_motion.var_y != DC_APP_VARIABLE_REGISTRY_VARIABLE_INDEX_UNDEFINED) {
         DcAppValue *var_y = dc_app_variable_registry_get_value(renderer->lookup, dc_app_variable_registry_get_variable_value_index(renderer->lookup, node->mouse_motion.var_y));
         if (var_y->type == DC_APP_VALUE_TYPE_DOUBLE) {
@@ -4053,6 +3995,8 @@ static void _process_mouse_motion(DcAppDrawContext *ctx, DcAppDisplayRuntimeCont
 
 static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVariableRegistryVariableIndex var_index, DcAppValue *var_value, DcAppValue *op_value, DcAppSetType operation) {
     switch (operation) {
+            //- assignment
+
         case DC_APP_SET_TYPE_UNDEFINED:
         case DC_APP_SET_TYPE_EQUAL:
             switch (var_value->type) {
@@ -4073,6 +4017,8 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
                     break;
             }
             break;
+
+            //- basic arithmetic
 
         case DC_APP_SET_TYPE_ADD:
             switch (var_value->type) {
@@ -4161,6 +4107,8 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
             }
             break;
 
+            //- bounds
+
         case DC_APP_SET_TYPE_MIN:
             // min(var, operand) - caps value at operand (upper bound)
             switch (var_value->type) {
@@ -4199,6 +4147,8 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
             }
             break;
 
+            //- variable stack
+
         case DC_APP_SET_TYPE_PUSH:
             dc_app_variable_registry_variable_push(renderer->lookup, var_index);
             return false; // don't refresh - we're just saving state
@@ -4206,6 +4156,8 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
         case DC_APP_SET_TYPE_POP:
             dc_app_variable_registry_variable_pop(renderer->lookup, var_index);
             break;
+
+            //- unary transforms
 
         case DC_APP_SET_TYPE_NEGATE:
             switch (var_value->type) {
@@ -4289,6 +4241,8 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
             }
             break;
 
+            //- modulo and exponent operations
+
         case DC_APP_SET_TYPE_MODULO:
             switch (var_value->type) {
                 case DC_APP_VALUE_TYPE_INTEGER:
@@ -4332,6 +4286,8 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
                     break;
             }
             break;
+
+            //- logarithmic and rounding operations
 
         case DC_APP_SET_TYPE_LOG:
             switch (var_value->type) {
@@ -4401,7 +4357,7 @@ static bool _apply_set_operation(DcAppDisplayRuntimeContext *renderer, DcAppVari
             return false;
     }
 
-    // Legacy Set operations forced an outbound write even when the value was unchanged.
+    // legacy set operations force an outbound write even when unchanged
     dc_app_variable_registry_mark_variable_written(renderer->lookup, var_index);
     return true; // refresh needed
 }
@@ -4431,7 +4387,7 @@ static void _execute_set(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
     // immediate execution
     DcAppValue *var_value = dc_app_variable_registry_get_value(renderer->lookup, dc_app_variable_registry_get_variable_value_index(renderer->lookup, node->set.var_index));
     if (_apply_set_operation(renderer, node->set.var_index, var_value, op_value, operation)) {
-        // re-fetch var_value after POP (value_index may have changed)
+        // refresh the address after pop changes its value index
         if (operation == DC_APP_SET_TYPE_POP) {
             var_value = dc_app_variable_registry_get_value(renderer->lookup, dc_app_variable_registry_get_variable_value_index(renderer->lookup, node->set.var_index));
         }
@@ -4439,19 +4395,21 @@ static void _execute_set(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
     }
 }
 
+//~ spheres and stencils
+
 static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // boolean checks
+    //- validate visibility
     bool use_radius = node->sphere.radius != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_rotation = node->sphere.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_pivot_position = (node->sphere.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->sphere.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->sphere.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->sphere.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get radius
+    //- resolve radius
     float radius, diameter;
     if (use_radius) {
         radius = (float)dc_app_variable_registry_get_value(renderer->lookup, node->sphere.radius)->value_double;
@@ -4461,10 +4419,10 @@ static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         radius = diameter / 2;
     }
 
-    // 2D transform (for positioning in orthographic view)
+    // build the two dimensional placement transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
             float pivot_position[2] = {
@@ -4532,8 +4490,7 @@ static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         }
     }
 
-    // xform local alignment
-    // note: sphere is built centered at origin, so alignment works differently than rect-based elements
+    // align around the origin-centered sphere
     {
         DcAppDrawAlignmentType local_aligns[2] = {
             node->sphere.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->sphere.local_align.x)->value_integer,
@@ -4575,7 +4532,7 @@ static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->sphere.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -4685,21 +4642,20 @@ static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         }
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // build sphere transform: first internal rotation, then 2D positioning/scaling
-    // start with internal rotation (roll, pitch, yaw) - applied first (rightmost in multiplication)
+    // apply internal attitude before two dimensional placement
     plMat4 sphere_transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     {
         float roll = node->sphere.rpy.roll == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->sphere.rpy.roll)->value_double);
         float pitch = node->sphere.rpy.pitch == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->sphere.rpy.pitch)->value_double);
         float yaw = node->sphere.rpy.yaw == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->sphere.rpy.yaw)->value_double);
 
-        // offset yaw by -90 degrees to match legacy ADI ball orientation
+        // offset yaw to match the legacy adi ball orientation
         yaw -= (float)M_PI_2;
 
-        // apply rotations in order: yaw (Y), pitch (X), roll (Z) for globe-like rotation
+        // apply yaw about y then pitch about x then roll about z
         if (yaw != 0.0f) {
             plMat4 yaw_xform = pl_mat4_rotate_vec3(yaw, (plVec3){0.0f, 1.0f, 0.0f});
             sphere_transform = pl_mul_mat4t(&sphere_transform, &yaw_xform);
@@ -4714,7 +4670,7 @@ static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         }
     }
 
-    // then apply the 2D transform (scale + position) - applied after rotation
+    // apply placement after attitude
     sphere_transform = pl_mul_mat4t(&transform, &sphere_transform);
 
     // get fill color
@@ -4726,7 +4682,7 @@ static void _render_sphere(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
     };
     uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
 
-    // create sphere geometry definition - sphere is built at origin, transform handles positioning
+    // keep sphere geometry origin-centered for later placement
     plSphere sphere_def = {
         .tCenter = (plVec3){0.0f, 0.0f, 0.0f},
         .fRadius = radius};
@@ -4771,9 +4727,13 @@ static void _render_stencil(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *r
     dc_app_draw_stencil_end(ctx);
 }
 
+//~ planet overlays
+
 static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNode *node, DcAppDrawPlanetViewHandle draw_view) {
     DcAppNodePlanetBreadcrumbs *breadcrumbs = &node->planet_breadcrumbs;
     DcAppPlanetDefinition *def = dc_app_display_model_get_planet_definition(renderer->scene, breadcrumbs->planet_def_index);
+
+    //- process edge-triggered clearing
 
     if (breadcrumbs->clear != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
         DcAppValue *clear_value = dc_app_variable_registry_get_value(renderer->lookup, breadcrumbs->clear);
@@ -4789,6 +4749,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppDisplayRuntim
         enabled = dc_app_variable_registry_get_value(renderer->lookup, breadcrumbs->enabled)->value_boolean;
     }
     if (!enabled) return;
+
+    //- resolve the current point in cartesian space
 
     plVec3d point = {0};
     bool have_point = false;
@@ -4821,6 +4783,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppDisplayRuntim
     }
     if (!have_point || !isfinite(point.x) || !isfinite(point.y) || !isfinite(point.z)) return;
 
+    //- admit spaced points and trim the retained trail
+
     float point_spacing = breadcrumbs->point_spacing != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED
                               ? (float)dc_app_variable_registry_get_value(renderer->lookup, breadcrumbs->point_spacing)->value_double
                               : 1.0f;
@@ -4851,6 +4815,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppDisplayRuntim
 
     point_count = sbcount(breadcrumbs->sb_points);
     if (point_count < 2) return;
+
+    //- resolve the trail stroke and submit it
 
     float line_width = breadcrumbs->line_width != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED
                            ? (float)dc_app_variable_registry_get_value(renderer->lookup, breadcrumbs->line_width)->value_double
@@ -5014,7 +4980,7 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
 
     DcAppPlanetDefinition *def = dc_app_display_model_get_planet_definition(renderer->scene, node->planet_line.planet_def_index);
 
-    // determine point count
+    //- resolve point count
     uint32_t count = node->planet_line.is_dynamic
                          ? (uint32_t)sbcount(node->planet_line.sb_points_dynamic)
                          : (uint32_t)sbcount(node->planet_line.sb_points_static);
@@ -5035,7 +5001,7 @@ static void _render_planet_line(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         lc[2] = node->planet_line.line_color.b != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_line.line_color.b)->value_double : 1.0f;
         lc[3] = node->planet_line.line_color.a != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_line.line_color.a)->value_double : 1.0f;
     }
-    // convert to 3D
+    // convert to three dimensions
     DcAppVec3d *pts3d = (DcAppVec3d *)malloc(sizeof(DcAppVec3d) * count);
     if (!pts3d) return;
 
@@ -5132,7 +5098,7 @@ static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeCon
 
     DcAppPlanetDefinition *def = dc_app_display_model_get_planet_definition(renderer->scene, node->planet_polygon.planet_def_index);
 
-    // determine point count
+    //- resolve point count
     uint32_t count = node->planet_polygon.is_dynamic
                          ? (uint32_t)sbcount(node->planet_polygon.sb_points_dynamic)
                          : (uint32_t)sbcount(node->planet_polygon.sb_points_static);
@@ -5145,7 +5111,7 @@ static void _render_planet_polygon(DcAppDrawContext *ctx, DcAppDisplayRuntimeCon
                            ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_polygon.line_width)->value_double
                            : 1.0f;
 
-    // convert to 3D
+    // convert to three dimensions
     DcAppVec3d *pts3d = (DcAppVec3d *)malloc(sizeof(DcAppVec3d) * count);
     if (!pts3d) return;
 
@@ -5427,6 +5393,8 @@ static void _render_planet_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     }
 }
 
+//~ planet views
+
 static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
@@ -5441,7 +5409,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     plPlanet *planet = dc_app_planet_pl(def->handle);
     if (!planet) return;
 
-    // boolean checks
+    //- validate visibility
     bool use_dimension[2] = {
         node->planet_view.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->planet_view.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -5449,15 +5417,15 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     bool use_pivot_position = (node->planet_view.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->planet_view.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->planet_view.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->planet_view.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
 
-    // get dimensions
+    //- resolve dimensions
     float dimension[2] = {
         use_dimension[0] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_view.dimension.x)->value_double : parent_dimensions->x,
         use_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_view.dimension.y)->value_double : parent_dimensions->y};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
+    // rotate around the pivot
     {
         if (use_rotation && use_pivot_position) {
 
@@ -5526,7 +5494,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         }
     }
 
-    // xform local alignment
+    // apply local alignment
     {
         DcAppDrawAlignmentType local_aligns[2] = {
             node->planet_view.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->planet_view.local_align.x)->value_integer,
@@ -5568,7 +5536,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
-    // xform position
+    // apply position
     {
         bool use_position[2] = {
             node->planet_view.position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
@@ -5627,7 +5595,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
-    // xform local rotation
+    // apply local rotation
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
@@ -5678,7 +5646,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         }
     }
 
-    // parent transform
+    // compose with the parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     if (!node->planet_view.handle ||
@@ -5737,7 +5705,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     bool use_ortho = (node->planet_view.orthographic != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED &&
                       dc_app_variable_registry_get_value(renderer->lookup, node->planet_view.orthographic)->value_boolean);
 
-    // Bound the view so its queued planet work finishes before the next sibling.
+    // bound queued planet work to this sibling
     DcAppDrawScope scope = dc_app_draw_scope_begin(ctx);
     dc_app_draw_context_push(ctx, (plVec2){0.0f, 0.0f}, (plVec2){dimension[0], dimension[1]}, &transform);
     DcAppDrawPlanetViewHandle draw_view = NULL;
@@ -5787,7 +5755,7 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
         view_added = true;
     }
 
-    // submits xml planet overlays before the queued planet view is rendered.
+    // submit xml overlays before rendering the queued planet view
     if (view_added) {
         DcAppNodeIndex child_index = node->planet_view.child;
         while (child_index != NODE_INDEX_UNDEFINED) {
@@ -5816,13 +5784,15 @@ static void _render_planet_view(DcAppDrawContext *ctx, DcAppDisplayRuntimeContex
     dc_app_draw_scope_end(ctx, scope);
 }
 
+//~ text
+
 static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
     _DcAppRenderFrame parent_frame = _get_current_frame(ctx);
     plVec2 *parent_position = &parent_frame.position;
     plVec2 *parent_dimensions = &parent_frame.dimensions;
     plMat4 *parent_transform = &parent_frame.transform;
 
-    // expand text, honoring legacy UpdateRate by caching variable expansion
+    // cache variable expansion at the legacy update rate
     bool should_update_text = true;
     if (node->text.update_rate != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
         double current_time = dc_utils_time_get();
@@ -5844,7 +5814,7 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
             // value
             DcAppValueType format_type = node->text.sb_format_types[ii];
             char *format = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
-            char val_str[256] = {0}; // assume text won't be that long..
+            char val_str[256] = {0}; // assume expanded values fit this buffer
             if (node->text.sb_vals[ii] == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED) {
                 val_str[0] = '\0'; // empty string for undefined variable
             } else {
@@ -5925,7 +5895,7 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         total_dimensions.y += dimensions[ii].y;
     }
 
-    // boolean checks
+    //- validate visibility
     bool use_rotation = node->text.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
     bool use_pivot_position = (node->text.pivot_position.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED && node->text.pivot_position.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->text.pivot_parent_align.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED || node->text.pivot_parent_align.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED);
@@ -5956,8 +5926,7 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         };
     }
 
-    // iterate over each string
-    // TODO this has some redundant transforms.....clean this up!
+    // todo collapse redundant per-line transforms
     for (int ii = 0; ii < num_lines; ii++) {
 
         // transform
@@ -5967,18 +5936,16 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         {
             if (use_rotation && use_pivot_position) {
 
-                // get pivot XY, rotation
+                // resolve pivot and rotation
                 float pivot_position[2] = {
                     (float)dc_app_variable_registry_get_value(renderer->lookup, node->text.pivot_position.x)->value_double,
                     (float)dc_app_variable_registry_get_value(renderer->lookup, node->text.pivot_position.y)->value_double};
                 float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->text.rotation)->value_double);
 
-                // compute matrices
                 plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
                 plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
                 plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-                // apply transform
                 transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
                 transform = pl_mul_mat4t(&transform, &rotate_xform);
                 transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -6037,12 +6004,10 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
 
         // xform local alignment
         {
-            // get alignment
             DcAppDrawAlignmentType local_aligns[2] = {
                 node->text.local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->text.local_align.x)->value_integer,
                 node->text.local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->text.local_align.y)->value_integer};
 
-            // compute offsets
             float trans_align_offsets[2] = {0, 0};
             switch (local_aligns[0]) {
                 case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -6080,10 +6045,8 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
 
             trans_align_offsets[1] -= dimensions[ii].y * ii;
 
-            // compute matrix
             plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
         }
 
@@ -6151,12 +6114,11 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         {
             if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-                // get alignment
                 DcAppDrawAlignmentType local_pivot_aligns[2] = {
                     node->text.pivot_local_align.x == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->text.pivot_local_align.x)->value_integer,
                     node->text.pivot_local_align.y == DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED : (DcAppDrawAlignmentType)dc_app_variable_registry_get_value(renderer->lookup, node->text.pivot_local_align.y)->value_integer};
 
-                // get pivot XY, rotation
+                // resolve pivot and rotation
                 float pivot_position[2] = {0, 0};
                 switch (local_pivot_aligns[0]) {
                     case DC_APP_DRAW_ALIGNMENT_TYPE_UNDEFINED:
@@ -6190,12 +6152,10 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
                 }
                 float rotation = pl_radiansf((float)dc_app_variable_registry_get_value(renderer->lookup, node->text.rotation)->value_double);
 
-                // compute matrices
                 plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
                 plMat4 rotate_xform = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
                 plMat4 trans_to_origin_xform = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-                // apply transform
                 transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
                 transform = pl_mul_mat4t(&transform, &rotate_xform);
                 transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -6208,7 +6168,7 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
             transform = pl_mul_mat4t(&transform, &shear_xform);
         }
 
-        // PL specific fixes
+        // pilotlight coordinate fixes
         {
             // move from top-left reference to bottom-left
             plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, total_dimensions.y, 0.0f);
@@ -6216,7 +6176,6 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
             // flip over the y axis
             plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
 
-            // apply transforms
             transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
             transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
         }
@@ -6224,7 +6183,7 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
         // parent transform
         transform = pl_mul_mat4t(parent_transform, &transform);
 
-        // convert to 3D matrix
+        // convert to a three dimensional matrix
         plMat3 transform3 = (plMat3){0};
         transform3.x11 = transform.x11;
         transform3.x12 = transform.x12;
@@ -6281,14 +6240,16 @@ static void _render_text(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *rend
     }
 }
 
+//~ window
+
 static void _render_window(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *renderer, DcAppNodeIndex node_index, DcAppNode *node) {
 
-    // TODO move this code to only the resize() function
+    // todo move window transforms into resize handling
 
     // current dimensions
     const DcAppDrawArea *area = dc_app_draw_get_area(ctx);
 
-    // boolean checks
+    //- validate visibility
     bool use_virtual_dimension[2] = {
         node->window.virtual_dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED,
         node->window.virtual_dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED};
@@ -6301,37 +6262,31 @@ static void _render_window(DcAppDrawContext *ctx, DcAppDisplayRuntimeContext *re
         use_virtual_dimension[1] ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->window.virtual_dimension.y)->value_double
                                  : (node->window.init_dimension.y > 0.0f ? node->window.init_dimension.y : dimension[1])};
 
-    // transform
+    //- build local transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // PL xform translate Y from negative to positive range
+    // translate pilotlight y into the positive range
     {
-        // compute matrix
         plMat4 trans_pl_matrix = pl_mat4_translate_xyz(0.0f, dimension[1], 0.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_pl_matrix);
     }
 
-    // PL xform flip y axis
+    // flip the pilotlight y axis
     {
-        // compute matrix
         plMat4 scale_pl_matrix = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &scale_pl_matrix);
     }
 
     // xform scale from virtual to real dimensions,
     {
-        // compute matrix
         plMat4 scale_matrix = pl_mat4_scale_xyz(dimension[0] / virtual_dimension[0], dimension[1] / virtual_dimension[1], 1.0f);
 
-        // apply transform
         transform = pl_mul_mat4t(&transform, &scale_matrix);
     }
 
-    // draw children
+    //- render children
     plVec2 position_vec2 = (plVec2){0.0f, 0.0f};
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
     dc_app_draw_context_push(ctx, position_vec2, virtual_dimensions_vec2, &transform);

@@ -10,33 +10,35 @@
 #include <errno.h>
 #include <sys/shm.h>
 
-// Shared memory structure - must match writer's layout
+//~ shared layout
+
+// keep this header synchronized with the writer
 typedef struct {
-    uint32_t writing;         // writer is currently writing
-    uint32_t reading;         // reader is currently reading
-    uint64_t buffercount;     // incremented each write
+    uint32_t writing;         // writer owns the buffer
+    uint32_t reading;         // reader owns the buffer
+    uint64_t buffercount;     // incremented for each write
     uint32_t width;           // frame width
     uint32_t height;          // frame height
-    uint32_t bufferrequested; // reader requests new buffer
+    uint32_t bufferrequested; // reader requests another frame
 } _ShmemHeader;
 
-#define _SHM_HEADER_SIZE 1024 // safe size for shmget
+#define _SHM_HEADER_SIZE 1024 // safe header size for shmget
 
 struct DcPsShmemSource {
     DcPsShmemContext *context;
 
-    // config
+    // source configuration
     char *filepath;
 
-    // shared memory
+    // shared memory mapping
     _ShmemHeader *shm;
 
-    // state
+    // stream state
     bool connected;
     bool has_new_data;
     uint64_t buffercount;
 
-    // reconnect
+    // reconnect tracking
     uint32_t stale_frames;
 
     // latest frame
@@ -47,18 +49,21 @@ struct DcPsShmemSource {
 };
 
 struct DcPsShmemContext {
-    // Sources are separate allocations so registry growth cannot invalidate their addresses.
+    // separate allocations keep source addresses stable
     DcPsShmemSource **sb_sources;
 };
 
 #define _MAX_SOURCES 10
-#define _STALE_THRESHOLD 300 // frames without new data before reconnect (~5s at 60fps)
+#define _STALE_THRESHOLD 300 // stale frames before reconnecting
 
-// static functions
+//~ internal declarations
+
 static int _try_attach_shm(DcPsShmemSource *ctx);
 static int _read_frame(DcPsShmemSource *ctx);
 static void _detach_shm(DcPsShmemSource *ctx);
 static void _source_cleanup(DcPsShmemSource *ctx);
+
+//~ public api
 
 DcPsShmemContext *dc_ps_shmem_context_create(void) {
     DcPsShmemContext *context = calloc(1, sizeof(DcPsShmemContext));
@@ -77,12 +82,12 @@ void dc_ps_shmem_update(DcPsShmemContext *context) {
 
         ctx->has_new_data = false;
 
-        // try to attach if not yet connected
+        // attach sources that are not mapped yet
         if (!ctx->shm) {
             _try_attach_shm(ctx);
         }
 
-        // read if connected
+        // read from attached sources
         if (ctx->shm) {
             _read_frame(ctx);
         }
@@ -172,7 +177,7 @@ void dc_ps_shmem_get_data(DcPsShmemSource *source, unsigned char *out_data, size
         return;
     }
 
-    size_t frame_size = (size_t)ctx->width * ctx->height * 4; // RGBA
+    size_t frame_size = (size_t)ctx->width * ctx->height * 4; // rgba
 
     if (out_data_size < frame_size) {
         DC_LOG_ERROR("Shmem", "dc_ps_shmem_get_data(): output buffer too small");
@@ -196,33 +201,31 @@ uint32_t dc_ps_shmem_get_height(DcPsShmemSource *source) {
     return source ? source->height : 0;
 }
 
-// ----------------------------------------------------------------------------
-// Static functions
-// ----------------------------------------------------------------------------
+//~ internal helpers
 
 static int _try_attach_shm(DcPsShmemSource *ctx) {
-    // Check if file exists
+    // wait for the writer backing file
     FILE *fp = fopen(ctx->filepath, "r");
     if (!fp) {
-        return -1; // file doesn't exist yet
+        return -1; // writer is not ready yet
     }
     fclose(fp);
 
-    // Generate shared memory key from filepath
+    // derive the shared memory key from the file path
     key_t key = ftok(ctx->filepath, 'R');
     if (key == -1) {
         DC_LOG_ERROR("Shmem", "ftok failed: %s", strerror(errno));
         return -1;
     }
 
-    // Get shared memory segment
+    // resolve the shared memory segment
     int shmid = shmget(key, _SHM_HEADER_SIZE, IPC_CREAT | 0777);
     if (shmid < 0) {
         DC_LOG_ERROR("Shmem", "shmget failed: %s", strerror(errno));
         return -1;
     }
 
-    // Attach to shared memory
+    // attach the writer header
     ctx->shm = (_ShmemHeader *)shmat(shmid, NULL, 0);
     if (ctx->shm == (void *)-1) {
         DC_LOG_ERROR("Shmem", "shmat failed: %s", strerror(errno));
@@ -248,28 +251,28 @@ static int _read_frame(DcPsShmemSource *ctx) {
 
     ctx->connected = true;
 
-    // Don't read while writer is writing
+    // yield while the writer owns the buffer
     if (ctx->shm->writing) {
         return 0;
     }
 
-    // Signal that we want data and are reading
+    // claim the reader side
     memcpy(&ctx->shm->bufferrequested, &on, 4);
     memcpy(&ctx->shm->reading, &on, 4);
 
-    // Check if new frame available
+    // read only when the writer publishes a new frame
     if (ctx->buffercount != ctx->shm->buffercount) {
         ctx->buffercount = ctx->shm->buffercount;
         ctx->stale_frames = 0;
         ctx->width = ctx->shm->width;
         ctx->height = ctx->shm->height;
 
-        // Read pixel data from file
+        // read pixel data from the backing file
         FILE *fp = fopen(ctx->filepath, "r");
         if (fp) {
-            size_t nbytes = (size_t)ctx->width * ctx->height * 4; // RGBA
+            size_t nbytes = (size_t)ctx->width * ctx->height * 4; // rgba
 
-            // Reallocate if needed
+            // grow the frame buffer when needed
             if (nbytes > ctx->alloc_size) {
                 void *new_pixels = realloc(ctx->pixels, nbytes);
                 if (!new_pixels) {
@@ -298,7 +301,7 @@ static int _read_frame(DcPsShmemSource *ctx) {
         }
     }
 
-    // Signal done reading
+    // release the reader side
     memcpy(&ctx->shm->reading, &off, 4);
 
     return ctx->has_new_data ? 1 : 0;
@@ -312,6 +315,6 @@ static void _source_cleanup(DcPsShmemSource *ctx) {
 
 #else
 
-typedef int _dc_ps_shmem_c_unused; // !_WIN32
+typedef int _dc_ps_shmem_c_unused; // non-windows implementation sentinel
 
-#endif // !_WIN32
+#endif // non-windows implementation

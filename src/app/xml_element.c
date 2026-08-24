@@ -6,6 +6,8 @@
 
 #include <libxml/parser.h>
 
+//~ element name conversion
+
 const char *dc_app_xml_element_type_to_string(DcAppXmlElementType type) {
     switch (type) {
         case DC_APP_XML_ELEMENT_TYPE_ARC:

@@ -9,6 +9,8 @@
 #include <string.h>
 #include <time.h>
 
+//~ types and constants
+
 typedef enum {
     _CONNECTION_STATE_UNKNOWN = 0,
     _CONNECTION_STATE_DISCONNECTED,
@@ -30,27 +32,28 @@ struct DcPsMjpegServer {
     _ConnectionState state;
     bool has_new_data;
 
-    // internal timeout
+    // reconnect timing
     time_t timeout_begin;
 
-    // curl handle
+    // curl transfer
     CURL *easy_handle;
 
-    // internal stretchy buffer
+    // incoming bytes
     unsigned char *sb_buffer;
 
-    // latest data
+    // latest complete frame
     unsigned char *sb_latest_frame;
     size_t latest_frame_size;
 };
 
 struct DcPsMjpegContext {
     CURLM *multi_handle;
-    // Servers are separate allocations because callers and libcurl need stable addresses.
+    // separate allocations keep callback addresses stable
     DcPsMjpegServer **sb_servers;
 };
 
-// static functions
+//~ internal declarations
+
 static void _mjpeg_connect(DcPsMjpegServer *server);
 static _ConnectionState _get_connection_state(CURL *easy_handle);
 static void _mjpeg_server_cleanup(DcPsMjpegServer *server);
@@ -58,8 +61,10 @@ static size_t _mjpeg_write_callback(char *ptr, size_t size, size_t nmemb, void *
 static void *_memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len);
 static void *_memrmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len);
 
+//~ public api
+
 DcPsMjpegContext *dc_ps_mjpeg_context_create(void) {
-    // init curl
+    // initialize curl ownership
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
         DC_LOG_ERROR("MJPEG", "Failed to initialize libcurl");
         return NULL;
@@ -78,7 +83,7 @@ DcPsMjpegContext *dc_ps_mjpeg_context_create(void) {
         return NULL;
     }
 
-    // allocate stretchy buffers
+    // reserve the initial server registry
     sbgrow(context->sb_servers, _MAX_CONNECTIONS, sizeof(*context->sb_servers));
 
     return context;
@@ -87,24 +92,23 @@ DcPsMjpegContext *dc_ps_mjpeg_context_create(void) {
 void dc_ps_mjpeg_update(DcPsMjpegContext *context) {
     if (!context || !context->multi_handle) return;
 
-    // for each server
+    //- refresh server state
     for (int ii = 0; ii < sbcount(context->sb_servers); ii++) {
         DcPsMjpegServer *server = context->sb_servers[ii];
         if (!server) continue;
 
-        // clear new data indicator
+        // clear frame-local state
         server->has_new_data = false;
         server->latest_frame_size = 0;
 
-        // libcurl keeps callback pointers. Refresh them after an app dylib reload
-        // before libcurl can invoke code from the previous dylib.
+        // refresh callback pointers after app reloads
         if (server->easy_handle) {
             curl_easy_setopt(server->easy_handle, CURLOPT_WRITEFUNCTION, _mjpeg_write_callback);
             curl_easy_setopt(server->easy_handle, CURLOPT_WRITEDATA, server);
             curl_easy_setopt(server->easy_handle, CURLOPT_PRIVATE, server);
         }
 
-        // check for reconnections
+        // reconnect when the retry delay expires
         if (server->state == _CONNECTION_STATE_DISCONNECTED || server->state == _CONNECTION_STATE_CONNECTING) {
             if (time(NULL) - server->timeout_begin >= server->timeout_s) {
                 _mjpeg_connect(server);
@@ -112,17 +116,17 @@ void dc_ps_mjpeg_update(DcPsMjpegContext *context) {
         }
     }
 
-    // perform reads
+    //- drive active transfers
     int still_running;
     curl_multi_perform(context->multi_handle, &still_running);
 
-    // Check for completed transfers
+    //- handle completed transfers
     CURLMsg *msg;
     int msgs_left;
     while ((msg = curl_multi_info_read(context->multi_handle, &msgs_left))) {
         if (msg->msg == CURLMSG_DONE) {
 
-            // get handles
+            // recover the owning server
             CURL *handle = msg->easy_handle;
             CURLcode result = msg->data.result;
             DcPsMjpegServer *server = NULL;
@@ -132,15 +136,14 @@ void dc_ps_mjpeg_update(DcPsMjpegContext *context) {
             switch (result) {
 
                 case (CURLE_OK): {
-                    // for MJPEG streams, a completed transfer means the server
-                    // closed the connection (the stream is supposed to be continuous)
+                    // a completed mjpeg transfer means the stream ended
                     DC_LOG_WARN("MJPEG", "[%s] Stream ended, will reconnect", server->url);
                     server->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
 
                 case CURLE_OPERATION_TIMEDOUT: {
-                    // reconnect immediately
+                    // reconnect immediately after transfer timeout
                     _mjpeg_connect(server);
                     break;
                 }
@@ -176,7 +179,7 @@ void dc_ps_mjpeg_update(DcPsMjpegContext *context) {
 void dc_ps_mjpeg_context_destroy(DcPsMjpegContext *context) {
     if (!context) return;
 
-    // cleanup each server
+    // release each stable server allocation
     for (int ii = 0; ii < sbcount(context->sb_servers); ii++) {
         DcPsMjpegServer *server = context->sb_servers[ii];
         if (!server) continue;
@@ -194,12 +197,12 @@ void dc_ps_mjpeg_context_destroy(DcPsMjpegContext *context) {
 DcPsMjpegServer *dc_ps_mjpeg_add_server(DcPsMjpegContext *context, const char *url, int timeout_s) {
     if (!context) return NULL;
 
-    // check url
+    // reject urls that cannot fit the fixed buffer
     if (strlen(url) > _MAX_URL_LENGTH - 1) {
         DC_LOG_ERROR("MJPEG", "dc_pixelstream_mjpeg_create(): Length of URL exceeds maximum length");
     }
 
-    // create context
+    // create the stable server allocation
     DcPsMjpegServer *server = (DcPsMjpegServer *)malloc(sizeof(DcPsMjpegServer));
     if (!server) return NULL;
     memset(server, 0, sizeof(DcPsMjpegServer));
@@ -268,6 +271,8 @@ void dc_ps_mjpeg_get_server_data(DcPsMjpegServer *server, unsigned char *out_dat
     *out_size = server->latest_frame_size;
 }
 
+//~ internal helpers
+
 static size_t _mjpeg_write_callback(char *ptr, size_t size, size_t nmemb, void *void_context) {
 
     DcPsMjpegServer *server = (DcPsMjpegServer *)void_context;
@@ -275,34 +280,34 @@ static size_t _mjpeg_write_callback(char *ptr, size_t size, size_t nmemb, void *
     size_t total_size = size * nmemb;
     if (total_size > 0) {
 
-        // copy data
+        // append incoming bytes
         sbpushn(server->sb_buffer, ptr, (int)total_size);
 
-        // set states
+        // mark the stream live after receiving data
         server->state = _CONNECTION_STATE_CONNECTED;
 
-        // Try to find JPEG frame boundaries
+        //- extract the latest complete jpeg frame
         unsigned char *end_addr = _memrmem(server->sb_buffer, sbcount(server->sb_buffer), "\xFF\xD9", 2);
         if (end_addr) {
 
-            // size of buffer up to end_addr
+            // limit the start search to this frame ending
             size_t upto_size = end_addr - server->sb_buffer;
 
-            // get start address, process
+            // find the matching frame start
             unsigned char *start_addr = _memmem(server->sb_buffer, upto_size, "\xFF\xD8", 2);
             if (start_addr) {
 
-                // get size of jpeg
+                // measure the complete jpeg
                 size_t jpeg_size = end_addr - start_addr + 2;
 
-                // save to output
+                // publish the complete frame
                 sbclear(server->sb_latest_frame);
                 sbpushn(server->sb_latest_frame, start_addr, (int)jpeg_size);
 
-                // clear internal buffer up to end_addr + 2
+                // discard bytes through the frame ending
                 sbshiftn(server->sb_buffer, (int)(upto_size + 2));
 
-                // raise flag
+                // signal new frame data
                 server->has_new_data = true;
                 server->latest_frame_size = jpeg_size;
             }
@@ -317,55 +322,55 @@ static void _mjpeg_connect(DcPsMjpegServer *server) {
     DcPsMjpegContext *context = server->context;
     if (!context || !context->multi_handle) return;
 
-    // remove old handle
+    // replace any prior transfer
     if (server->easy_handle) {
         curl_multi_remove_handle(context->multi_handle, server->easy_handle);
         curl_easy_cleanup(server->easy_handle);
     }
 
-    // create new handle
+    // create the next transfer
     server->easy_handle = curl_easy_init();
     if (!server->easy_handle) {
         server->state = _CONNECTION_STATE_DISCONNECTED;
         return;
     }
 
-    // self-explanatory
+    // configure the source url
     curl_easy_setopt(server->easy_handle, CURLOPT_URL, server->url);
 
-    // callback + struct used in parameter
+    // route incoming bytes to this server
     curl_easy_setopt(server->easy_handle, CURLOPT_WRITEFUNCTION, _mjpeg_write_callback);
     curl_easy_setopt(server->easy_handle, CURLOPT_WRITEDATA, server);
 
-    // non blocking
+    // leave transfer timing to the multi handle
     curl_easy_setopt(server->easy_handle, CURLOPT_TIMEOUT, 0L);
 
-    // boilerplate, more or less
+    // tune the streaming buffer
     curl_easy_setopt(server->easy_handle, CURLOPT_BUFFERSIZE, 512000L);
     curl_easy_setopt(server->easy_handle, CURLOPT_NOPROGRESS, 1L);
 
-    // kernel level cleanups (really just boilerplate)
+    // keep idle tcp streams alive
     curl_easy_setopt(server->easy_handle, CURLOPT_TCP_KEEPALIVE, 1L);
     curl_easy_setopt(server->easy_handle, CURLOPT_TCP_KEEPIDLE, 30L);
     curl_easy_setopt(server->easy_handle, CURLOPT_TCP_KEEPINTVL, 15L);
 
-    // timeout in n seconds if under 10 bytes
+    // detect stalled streams by low throughput
     curl_easy_setopt(server->easy_handle, CURLOPT_LOW_SPEED_LIMIT, 10L);
     curl_easy_setopt(server->easy_handle, CURLOPT_LOW_SPEED_TIME, (long)server->timeout_s);
 
-    // hand our handle back on DONE messages without searching
+    // retain server ownership on completion messages
     curl_easy_setopt(server->easy_handle, CURLOPT_PRIVATE, server);
 
-    // add to multi
+    // schedule the transfer
     curl_multi_add_handle(context->multi_handle, server->easy_handle);
 
-    // set new states
+    // begin the reconnect deadline
     server->state = _CONNECTION_STATE_CONNECTING;
     server->timeout_begin = time(NULL);
     DC_LOG_INFO("MJPEG", "[%s] Attempting to connect...", server->url);
 }
 
-// does not account for timeouts
+// report transport state without retry timing
 static _ConnectionState _get_connection_state(CURL *easy_handle) {
     curl_socket_t curl_socket_state = CURL_SOCKET_BAD;
     if (curl_easy_getinfo(easy_handle, CURLINFO_ACTIVESOCKET, &curl_socket_state) != CURLE_OK) {
@@ -378,19 +383,19 @@ static _ConnectionState _get_connection_state(CURL *easy_handle) {
 }
 
 static void _mjpeg_server_cleanup(DcPsMjpegServer *server) {
-    // remove old handle
+    // release the active transfer
     if (server->easy_handle) {
         curl_multi_remove_handle(server->context->multi_handle, server->easy_handle);
         curl_easy_cleanup(server->easy_handle);
         server->easy_handle = NULL;
     }
 
-    // free memory
+    // release stream buffers
     sbfree(server->sb_buffer);
     sbfree(server->sb_latest_frame);
 }
 
-// memmem() not part of the C standard
+// provide the non-standard forward byte search locally
 static void *_memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len) {
     if (needle_len == 0 || haystack_len < needle_len)
         return NULL;

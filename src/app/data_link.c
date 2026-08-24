@@ -11,6 +11,8 @@
 
 #include <string.h>
 
+//~ connection state
+
 typedef struct _DcAppTrickTxBinding {
     DcAppVariableRegistryVariableIndex dcapp_var_index;
     DcTrickVarIndex trick_var_index;
@@ -58,10 +60,14 @@ struct DcAppDataLinkContext {
     DcAppEdgeConnection *sb_edges;
 };
 
+//~ extension interfaces
+
 static const plMemoryI *_ext_memory = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+
+//~ lifecycle
 
 void dc_app_data_link_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
@@ -79,7 +85,7 @@ DcAppDataLinkContext *dc_app_data_link_context_create(void) {
 void dc_app_data_link_context_destroy(DcAppDataLinkContext *data_link) {
     if (!data_link) return;
 
-    // cleanup trick contexts
+    //- release trick connections
     for (int i = 0; i < sbcount(data_link->sb_tricks); i++) {
         DcAppTrickConnection *draw_ctx = &data_link->sb_tricks[i];
         sbfree(draw_ctx->sb_tx_var_contexts);
@@ -87,7 +93,7 @@ void dc_app_data_link_context_destroy(DcAppDataLinkContext *data_link) {
         dc_trick_cleanup(draw_ctx->trick);
     }
 
-    // cleanup edge contexts
+    //- release edge connections
     for (int i = 0; i < sbcount(data_link->sb_edges); i++) {
         DcAppEdgeConnection *draw_ctx = &data_link->sb_edges[i];
         sbfree(draw_ctx->sb_tx_var_contexts);
@@ -98,6 +104,8 @@ void dc_app_data_link_context_destroy(DcAppDataLinkContext *data_link) {
     sbfree(data_link->sb_edges);
     PL_FREE(data_link);
 }
+
+//~ edge bindings
 
 void dc_app_data_link_add_edge(DcAppDataLinkContext *data_link, const char *host, int port, float data_rate, DcAppVariableRegistryVariableIndex connected_var_index) {
     if (!data_link) return;
@@ -128,6 +136,8 @@ void dc_app_data_link_add_edge_tx(DcAppDataLinkContext *data_link, const char *c
     if (initial_value) var.prev_value = *initial_value;
     sbpush(connection->sb_tx_var_contexts, var);
 }
+
+//~ trick bindings
 
 void dc_app_data_link_add_trick(DcAppDataLinkContext *data_link, const char *host, int port, float data_rate, DcAppVariableRegistryVariableIndex connected_var_index) {
     if (!data_link) return;
@@ -163,15 +173,17 @@ void dc_app_data_link_add_trick_tx(DcAppDataLinkContext *data_link, const char *
     sbpush(connection->sb_tx_var_contexts, var);
 }
 
+//~ connection updates
+
 void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegistryContext *lookup) {
     if (!data_link || !lookup) return;
 
-    // send trick data
+    //- sync trick connections
     for (int ii = 0; ii < sbcount(data_link->sb_tricks); ii++) {
         DcAppTrickConnection *trick_context = &data_link->sb_tricks[ii];
         DcTrick *trick = trick_context->trick;
 
-        // On (re)connect, force every tx var to initialize the sim, including zero values.
+        // initialize every transmit value after reconnecting
         bool is_trick_connected = dc_trick_is_connected(trick);
         if (is_trick_connected && !trick_context->was_connected) {
             for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
@@ -180,7 +192,7 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
         }
         trick_context->was_connected = is_trick_connected;
 
-        // add tx commands to buffer
+        // queue changed transmit values
         if (is_trick_connected) {
             for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
                 DcAppTrickTxBinding *tx_var_context = &trick_context->sb_tx_var_contexts[jj];
@@ -190,8 +202,7 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
                 DcAppValue *prev_value = &tx_var_context->prev_value;
                 uint64_t write_sequence = dc_app_variable_registry_get_variable_write_sequence(lookup, tx_var_context->dcapp_var_index);
 
-                // Explicit Sets are commands: preserve legacy force-write behavior even
-                // when this client's cached value is already the requested value.
+                // explicit sets remain commands even when the cached value matches
                 if (tx_var_context->force_send ||
                     write_sequence != tx_var_context->last_write_sequence ||
                     !dc_app_value_is_equal(curr_value, prev_value)) {
@@ -203,10 +214,10 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
             }
         }
 
-        // send the updated buffer, receive the new data, update the connection status
+        // flush the transport
         dc_trick_update(trick);
 
-        // update connected variable if defined
+        // publish connection state
         if (trick_context->connected_var_index != DC_APP_VARIABLE_REGISTRY_VARIABLE_INDEX_UNDEFINED) {
             DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index(lookup, trick_context->connected_var_index);
             DcAppValue *value = dc_app_variable_registry_get_value(lookup, value_index);
@@ -229,7 +240,7 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
             }
         }
 
-        // receive the new data
+        // apply received values
         if (dc_trick_has_new_data(trick) && dc_trick_is_connected(trick)) {
             char rx_buffer[256];
             for (int jj = 0; jj < sbcount(trick_context->sb_rx_var_contexts); jj++) {
@@ -241,12 +252,12 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
         }
     }
 
-    // send edge data
+    //- sync edge connections
     for (int ii = 0; ii < sbcount(data_link->sb_edges); ii++) {
         DcAppEdgeConnection *edge_context = &data_link->sb_edges[ii];
         DcEdge *edge = edge_context->edge;
 
-        // On (re)connect, force every tx var to initialize the scene, including zero values.
+        // initialize every transmit value after reconnecting
         bool is_connected = dc_edge_is_connected(edge);
         if (is_connected && !edge_context->was_connected) {
             for (int jj = 0; jj < sbcount(edge_context->sb_tx_var_contexts); jj++) {
@@ -255,7 +266,7 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
         }
         edge_context->was_connected = is_connected;
 
-        // add tx commands to buffer
+        // queue changed transmit values
         if (is_connected) {
             for (int jj = 0; jj < sbcount(edge_context->sb_tx_var_contexts); jj++) {
                 DcAppEdgeTxBinding *tx_var_context = &edge_context->sb_tx_var_contexts[jj];
@@ -276,10 +287,10 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
             }
         }
 
-        // send the updated buffer, receive the new data, update the connection status
+        // flush the transport
         dc_edge_update(edge);
 
-        // update connected variable if defined
+        // publish connection state
         if (edge_context->connected_var_index != DC_APP_VARIABLE_REGISTRY_VARIABLE_INDEX_UNDEFINED) {
             DcAppVariableRegistryValueIndex value_index = dc_app_variable_registry_get_variable_value_index(lookup, edge_context->connected_var_index);
             DcAppValue *value = dc_app_variable_registry_get_value(lookup, value_index);
@@ -302,7 +313,7 @@ void dc_app_data_link_update(DcAppDataLinkContext *data_link, DcAppVariableRegis
             }
         }
 
-        // receive the new data
+        // apply received values
         if (dc_edge_has_new_data(edge) && dc_edge_is_connected(edge)) {
             char rx_buffer[256];
             for (int jj = 0; jj < sbcount(edge_context->sb_rx_var_contexts); jj++) {

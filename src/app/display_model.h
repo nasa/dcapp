@@ -5,11 +5,15 @@
 
 #include <stdint.h>
 
+//~ types
+
 typedef struct _plApiRegistryI plApiRegistryI;
 typedef struct DcAppNode DcAppNode;
 typedef struct DcAppPlanetDefinition DcAppPlanetDefinition;
 typedef struct DcAppDisplayModelContext DcAppDisplayModelContext;
 struct DcAppVariableRegistryContext;
+
+//~ lifecycle
 
 void dc_app_display_model_init(plApiRegistryI *api_registry);
 
@@ -18,10 +22,14 @@ void dc_app_display_model_context_destroy(DcAppDisplayModelContext *model);
 
 struct DcAppVariableRegistryContext *dc_app_display_model_get_variable_registry(DcAppDisplayModelContext *model);
 
+//~ nodes
+
 DcAppNodeIndex dc_app_display_model_add_node(DcAppDisplayModelContext *model, const DcAppNode *node);
-// The returned pointer remains valid only until another node is added.
+// the returned pointer remains valid only until another node is added
 DcAppNode *dc_app_display_model_get_node(DcAppDisplayModelContext *model, DcAppNodeIndex index);
 int dc_app_display_model_get_node_count(const DcAppDisplayModelContext *model);
+
+//~ planets
 
 DcAppPlanetDefinition *dc_app_display_model_add_planet_definition(
     DcAppDisplayModelContext *model,
@@ -38,6 +46,8 @@ uint32_t dc_app_display_model_get_planet_view_node_count(const DcAppDisplayModel
 DcAppNodeIndex dc_app_display_model_get_planet_view_node(
     const DcAppDisplayModelContext *model,
     uint32_t index);
+
+//~ window
 
 void dc_app_display_model_set_window(DcAppDisplayModelContext *model, DcAppNodeIndex index);
 DcAppNodeIndex dc_app_display_model_get_window(const DcAppDisplayModelContext *model);

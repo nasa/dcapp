@@ -10,8 +10,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+//~ handles
+
 typedef struct DcAppDrawContext DcAppDrawContext;
-// This handle is borrowed and valid only within its current draw scope.
+// this handle is borrowed and valid only within its current draw scope
 typedef struct DcAppDrawPlanetView *DcAppDrawPlanetViewHandle;
 typedef struct DcAppStroke DcAppStroke;
 typedef struct DcAppTextStyle DcAppTextStyle;
@@ -23,6 +25,8 @@ typedef struct DcAppDrawFuncArg DcAppDrawFuncArg;
 typedef struct DcAppDrawFuncArgs DcAppDrawFuncArgs;
 typedef struct DcAppDrawApi DcAppDrawApi;
 typedef struct DcAppMouseApi DcAppMouseApi;
+
+//~ draw data
 
 struct DcAppStroke {
     DcAppVec4 color;
@@ -63,7 +67,7 @@ struct DcAppDrawArea {
     float transform[16];
 };
 
-// Every draw call that accepts this output clears it before validating inputs.
+// every draw call that accepts this output clears it before validating inputs
 struct DcAppDrawResult {
     DcAppDrawArea area;
 };
@@ -76,17 +80,19 @@ struct DcAppDrawFuncArg {
     bool value_boolean;
 };
 
-// The values are borrowed for the duration of the DrawFunction callback.
+// values are borrowed for the duration of the draw function callback
 struct DcAppDrawFuncArgs {
     uint32_t count;
     const DcAppDrawFuncArg *values;
 };
 
+//~ draw api
+
 struct DcAppDrawApi {
-    // Current draw area.
+    //- current draw area
     const DcAppDrawArea *(*get_area)(DcAppDrawContext *draw_ctx);
 
-    // Basic draw functions.
+    //- basic primitives
     void (*line)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppStroke stroke);
     void (*polyline)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke);
     void (*polygon)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke);
@@ -109,7 +115,7 @@ struct DcAppDrawApi {
     DcAppVec2 (*text_size)(DcAppDrawContext *draw_ctx, const char *text, DcAppTextStyle style);
     void (*text)(DcAppDrawContext *draw_ctx, DcAppVec2 position, const char *text, DcAppTextStyle style);
 
-    // Extended draw functions with placement and result metadata.
+    //- placed primitives
     void (*line_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*polyline_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*polygon_ex)(DcAppDrawContext *draw_ctx, const DcAppVec2 *points, uint32_t point_count, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
@@ -131,20 +137,20 @@ struct DcAppDrawApi {
     void (*ellipse_filled_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
     void (*text_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 position, const char *text, DcAppTextStyle style, DcAppPlacement placement, DcAppDrawResult *result);
 
-    // Container helpers.
+    //- containers
     bool (*container_push)(DcAppDrawContext *draw_ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec2 virtual_size);
     bool (*container_push_ex)(DcAppDrawContext *draw_ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec2 virtual_size, DcAppPlacement placement, DcAppDrawResult *result);
     bool (*container_push_area)(DcAppDrawContext *draw_ctx, const DcAppDrawArea *area);
     void (*container_pop)(DcAppDrawContext *draw_ctx);
 
-    // Stencil helpers.
+    //- stencils
     bool (*stencil_begin)(DcAppDrawContext *draw_ctx);
     void (*stencil_add)(DcAppDrawContext *draw_ctx);
     void (*stencil_remove)(DcAppDrawContext *draw_ctx);
     void (*stencil_draw)(DcAppDrawContext *draw_ctx);
     void (*stencil_end)(DcAppDrawContext *draw_ctx);
 
-    // draws planet views and overlays through dcapp handles.
+    //- planet views and overlays
     DcAppDrawPlanetViewHandle (*planet_view_geodetic)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
     DcAppDrawPlanetViewHandle (*planet_view_cartesian)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, DcAppVec3d camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
     bool (*planet_container_push_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, DcAppPlanetLocalTransform transform);
@@ -171,29 +177,31 @@ struct DcAppDrawApi {
     void (*planet_geojson)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppPlanetGeojsonHandle geojson, DcAppPlanetGeojsonStyle style);
 };
 
+//~ mouse api
+
 struct DcAppMouseApi {
-    // Basic mouse hit registration.
+    //- basic hit registration
     void (*rect)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 position, DcAppVec2 size);
     void (*circle)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 center, float radius);
     void (*ellipse)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 center, DcAppVec2 radius);
     void (*polygon)(DcAppDrawContext *draw_ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position);
 
-    // Extended mouse hit registration with placement.
+    //- placed hit registration
     void (*rect_ex)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
     void (*circle_ex)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
     void (*ellipse_ex)(DcAppDrawContext *draw_ctx, const char *id, DcAppVec2 center, DcAppVec2 radius, DcAppPlacement placement);
     void (*polygon_ex)(DcAppDrawContext *draw_ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
 
-    // Target events resolved after the previous frame's hit registration.
+    //- resolved target events
     bool (*hovered)(DcAppDrawContext *draw_ctx, const char *id);
     bool (*pressed)(DcAppDrawContext *draw_ctx, const char *id);
-    // Captured press ended, possibly outside the target.
+    // captured press ended possibly outside the target
     bool (*released)(DcAppDrawContext *draw_ctx, const char *id);
     bool (*active)(DcAppDrawContext *draw_ctx, const char *id);
-    // Captured press ended while the pointer was over the target.
+    // captured press ended while the pointer was over the target
     bool (*clicked)(DcAppDrawContext *draw_ctx, const char *id);
 
-    // Current-frame mouse input in the draw context's local space.
+    //- current frame input in local space
     bool (*down)(DcAppDrawContext *draw_ctx);
     const DcAppMouse *(*get_state)(DcAppDrawContext *draw_ctx);
 };

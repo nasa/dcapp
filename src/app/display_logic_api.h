@@ -1,6 +1,8 @@
 #ifndef DC_APP_DISPLAY_LOGIC_API_H
 #define DC_APP_DISPLAY_LOGIC_API_H
 
+//~ api types
+
 typedef struct DcAppContext DcAppContext;
 typedef struct DcAppDrawApi DcAppDrawApi;
 typedef struct DcAppMouseApi DcAppMouseApi;
@@ -12,6 +14,8 @@ typedef struct DcAppDisplayLogicApi {
 } DcAppDisplayLogicApi;
 
 typedef struct DcAppDisplayLogicInit DcAppDisplayLogicInit;
+
+//~ initialization
 
 struct DcAppDisplayLogicInit {
     DcAppContext *app_ctx;

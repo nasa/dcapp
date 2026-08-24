@@ -20,17 +20,19 @@
 #include <string.h>
 #include <stdlib.h>
 
-// style utils
+//~ indices and flags
+
+//- style indices
 typedef int _StyleIndex;
 static const _StyleIndex _STYLE_INDEX_UNDEFINED = 0;
 static const _StyleIndex _STYLE_INDEX_DEFAULT = 1;
 
-// const utils
+//- constant indices
 typedef int _ConstIndex;
 static const _ConstIndex _CONST_INDEX_UNDEFINED = 0;
 #define _CONST_FIRST_INDEX 1
 
-// Warning suppression flags (used by SuppressWarnings attribute on DCAPP element)
+// warning suppression from the root suppresswarnings attribute
 enum {
     _SUPPRESS_NONE = 0,
     _SUPPRESS_MISSING_CONSTANT = 1 << 0,
@@ -38,6 +40,8 @@ enum {
     _SUPPRESS_MISSING_STYLE = 1 << 2,
     _SUPPRESS_STYLE_OVERRIDE = 1 << 3,
 };
+
+//~ internal state
 
 typedef struct __ElemStyle {
     xmlNodePtr xml_nodes[DC_APP_XML_ELEMENT_TYPE__COUNT];
@@ -50,15 +54,15 @@ typedef struct __Constant {
 
 typedef struct __ConfigContext {
 
-    // warning suppression
+    //- warning suppression
     unsigned int suppress_warnings;
 
-    // constants
+    //- constants
     char *sb_const_names;
     int *sb_const_name_offsets;
     _Constant *sb_consts;
 
-    // styles
+    //- styles
     char *sb_style_names;
     int *sb_style_name_offsets;
     _ElemStyle *sb_styles;
@@ -68,18 +72,20 @@ typedef struct __ConfigContext {
 struct DcAppXmlPreprocessorContext {
     _XmlPreprocessorPassContext context;
 
-    // xml pointer
+    //- xml document
     xmlDocPtr xml_doc;
     bool xml_doc_is_cleaned;
 
-    // filepaths
+    //- paths
     char *dcapp_dir_path;
     char *config_file_path;
     char *config_dir_path;
     char *cache_dir_path;
 };
 
-// constant functions
+//~ forward declarations
+
+//- constant helpers
 static void _register_const_by_name(_XmlPreprocessorPassContext *context, const char *name, const char *new_value, bool is_immutable);
 static const char *_get_const_by_name(_XmlPreprocessorPassContext *context, const char *name);
 static void _dereference_constants(_XmlPreprocessorPassContext *context, const char *in, char *out, size_t out_size);
@@ -88,13 +94,13 @@ static void _set_const(_XmlPreprocessorPassContext *context, _ConstIndex index, 
 static void _add_const(_XmlPreprocessorPassContext *context, const char *name, const char *value, bool is_immutable);
 static void _add_const_int(_XmlPreprocessorPassContext *context, const char *name, int value_int, bool is_immutable);
 
-// style functions
+//- style helpers
 static _StyleIndex _get_style_index(_XmlPreprocessorPassContext *context, const char *name);
 static void _add_style(_XmlPreprocessorPassContext *context, const char *name, DcAppXmlElementType elem_type, xmlNodePtr xml_node);
 static xmlChar *_get_style_attr(_XmlPreprocessorPassContext *context, int style_index, DcAppXmlElementType elem_type, const char *name);
 static xmlChar *_get_style_content(_XmlPreprocessorPassContext *context, int style_index, DcAppXmlElementType elem_type);
 
-// xml utils
+//- xml helpers
 static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePtr node, char *directory);
 static void _dereference_node_attrs_and_content(_XmlPreprocessorPassContext *context, xmlNodePtr node);
 static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
@@ -102,17 +108,18 @@ static void _save_to_file(DcAppXmlPreprocessorContext *config, const char *filep
 static void _write_indent(FILE *f, int depth);
 static void _write_xml_node(FILE *f, xmlNodePtr node, int depth);
 
-// arg utils
+//- argument helpers
 static char *_unquote(const char *str);
+
+//~ preprocessor lifecycle
 
 DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *config_path, char **args, int arg_count) {
     DcAppXmlPreprocessorContext *config = (DcAppXmlPreprocessorContext *)malloc(sizeof(DcAppXmlPreprocessorContext));
 
-    // get current working directory
+    //- resolve configuration paths
     char cwd[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_get_cwd(cwd, DC_UTILS_FILEPATH_BUFFER_SIZE);
 
-    // get canonical config file path
     config->config_file_path = (char *)malloc(DC_UTILS_FILEPATH_BUFFER_SIZE);
     if (dc_utils_is_relative_path(config_path)) {
         char abs_config_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -122,55 +129,52 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
         dc_utils_canonicalize_path(config_path, config->config_file_path, DC_UTILS_FILEPATH_BUFFER_SIZE);
     }
 
-    // get config file dir
     config->config_dir_path = (char *)malloc(DC_UTILS_FILEPATH_BUFFER_SIZE);
     dc_utils_get_directory(config->config_file_path, config->config_dir_path, DC_UTILS_FILEPATH_BUFFER_SIZE);
 
-    // get exe dir
+    //- resolve application directories
     char exe_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_get_exe_path(exe_path, sizeof(exe_path));
     char exe_dir[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_get_directory(exe_path, exe_dir, sizeof(exe_dir));
 
-    // get dcapp home
     char dcapp_dir_path_abs[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_join_paths(exe_dir, "../..", dcapp_dir_path_abs, DC_UTILS_FILEPATH_BUFFER_SIZE);
     config->dcapp_dir_path = (char *)malloc(DC_UTILS_FILEPATH_BUFFER_SIZE);
     dc_utils_canonicalize_path(dcapp_dir_path_abs, config->dcapp_dir_path, DC_UTILS_FILEPATH_BUFFER_SIZE);
     dc_utils_create_directory(config->dcapp_dir_path);
 
-    // get + create cache dir
     config->cache_dir_path = (char *)malloc(DC_UTILS_FILEPATH_BUFFER_SIZE);
     dc_utils_join_paths(config->dcapp_dir_path, "cache", config->cache_dir_path, DC_UTILS_FILEPATH_BUFFER_SIZE);
     dc_utils_create_directory(config->cache_dir_path);
 
-    // get XML doc
+    //- load the source xml document
     config->xml_doc = xmlReadFile(config->config_file_path, "UTF-8", XML_PARSE_NOBLANKS);
     if (!config->xml_doc) {
         DC_LOG_ERROR("Config", "dc_app_xml_preprocessor_context_create: unable to read config file '%s'", config->config_file_path);
     }
     config->xml_doc_is_cleaned = false;
 
-    // create internal context
+    //- initialize style and constant registries
     _XmlPreprocessorPassContext context = {};
 
-    // reserve index 0 as undefined
+    // reserve style index zero as undefined
     sbresize(context.sb_styles, 1);
     sbresize(context.sb_style_name_offsets, 1);
     sbresize(context.sb_style_names, 1);
 
-    // reserve index 1 for default style
+    // reserve style index one for defaults
     sbpush(context.sb_style_name_offsets, sbcount(context.sb_style_names));
     sbpushn(context.sb_style_names, "default", (int)(strlen("default") + 1));
     _ElemStyle default_style = {};
     sbpush(context.sb_styles, default_style);
 
-    // reserve index 0 as undefined for constants
+    // reserve constant index zero as undefined
     sbresize(context.sb_consts, 1);
     sbresize(context.sb_const_name_offsets, 1);
     sbresize(context.sb_const_names, 1);
 
-    // add default constants
+    //- register built-in constants
     _add_const_int(&context, "_align_left_", DC_APP_DRAW_ALIGNMENT_TYPE_LEFT, true);
     _add_const_int(&context, "_align_center_", DC_APP_DRAW_ALIGNMENT_TYPE_CENTER, true);
     _add_const_int(&context, "_align_right_", DC_APP_DRAW_ALIGNMENT_TYPE_RIGHT, true);
@@ -218,7 +222,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const_int(&context, "_variable_integer_", DC_APP_VALUE_TYPE_INTEGER, true);
     _add_const_int(&context, "_variable_double_", DC_APP_VALUE_TYPE_DOUBLE, true);
     _add_const_int(&context, "_variable_boolean_", DC_APP_VALUE_TYPE_BOOLEAN, true);
-    // Reds & Pinks
+    //- red and pink constants
     _add_const(&context, "_color_red_", "1.0 0.0 0.0", false);
     _add_const(&context, "_color_crimson_", "0.86 0.08 0.24", false);
     _add_const(&context, "_color_maroon_", "0.5 0.0 0.0", false);
@@ -239,7 +243,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_wine_", "0.45 0.18 0.22", false);
     _add_const(&context, "_color_raspberry_", "0.89 0.04 0.36", false);
     _add_const(&context, "_color_dark_red_", "0.55 0.0 0.0", false);
-    // Oranges
+    //- orange constants
     _add_const(&context, "_color_orange_", "1.0 0.5 0.0", false);
     _add_const(&context, "_color_tangerine_", "1.0 0.6 0.0", false);
     _add_const(&context, "_color_pumpkin_", "1.0 0.46 0.1", false);
@@ -252,7 +256,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_dark_orange_", "1.0 0.55 0.0", false);
     _add_const(&context, "_color_mango_", "1.0 0.51 0.26", false);
     _add_const(&context, "_color_persimmon_", "0.93 0.35 0.0", false);
-    // Yellows
+    //- yellow constants
     _add_const(&context, "_color_yellow_", "1.0 1.0 0.0", false);
     _add_const(&context, "_color_lemon_", "1.0 1.0 0.31", false);
     _add_const(&context, "_color_mustard_", "1.0 0.86 0.35", false);
@@ -266,7 +270,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_saffron_", "0.96 0.77 0.19", false);
     _add_const(&context, "_color_golden_rod_", "0.85 0.65 0.13", false);
     _add_const(&context, "_color_canary_", "1.0 0.94 0.0", false);
-    // Greens
+    //- green constants
     _add_const(&context, "_color_green_", "0.0 1.0 0.0", false);
     _add_const(&context, "_color_lime_", "0.75 1.0 0.0", false);
     _add_const(&context, "_color_olive_", "0.5 0.5 0.0", false);
@@ -286,7 +290,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_pine_", "0.06 0.32 0.21", false);
     _add_const(&context, "_color_fern_", "0.44 0.64 0.26", false);
     _add_const(&context, "_color_neon_green_", "0.22 1.0 0.08", false);
-    // Blues
+    //- blue constants
     _add_const(&context, "_color_blue_", "0.0 0.0 1.0", false);
     _add_const(&context, "_color_navy_", "0.0 0.0 0.5", false);
     _add_const(&context, "_color_sky_blue_", "0.53 0.81 0.92", false);
@@ -307,7 +311,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_aquamarine_", "0.5 1.0 0.83", false);
     _add_const(&context, "_color_electric_blue_", "0.49 0.98 1.0", false);
     _add_const(&context, "_color_periwinkle_", "0.8 0.8 1.0", false);
-    // Purples & Violets
+    //- purple and violet constants
     _add_const(&context, "_color_purple_", "0.5 0.0 0.5", false);
     _add_const(&context, "_color_indigo_", "0.29 0.0 0.51", false);
     _add_const(&context, "_color_lavender_", "0.9 0.9 0.98", false);
@@ -322,7 +326,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_lilac_", "0.78 0.64 0.78", false);
     _add_const(&context, "_color_grape_", "0.44 0.18 0.66", false);
     _add_const(&context, "_color_royal_purple_", "0.47 0.32 0.66", false);
-    // Browns
+    //- brown constants
     _add_const(&context, "_color_brown_", "0.6 0.4 0.2", false);
     _add_const(&context, "_color_chocolate_", "0.82 0.41 0.12", false);
     _add_const(&context, "_color_saddle_brown_", "0.55 0.27 0.07", false);
@@ -341,7 +345,7 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_sienna_", "0.63 0.32 0.18", false);
     _add_const(&context, "_color_cinnamon_", "0.69 0.4 0.24", false);
     _add_const(&context, "_color_sandy_brown_", "0.96 0.64 0.38", false);
-    // Neutrals & Grays
+    //- neutral and gray constants
     _add_const(&context, "_color_white_", "1.0 1.0 1.0", false);
     _add_const(&context, "_color_black_", "0.0 0.0 0.0", false);
     _add_const(&context, "_color_gray_", "0.5 0.5 0.5", false);
@@ -364,39 +368,34 @@ DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *
     _add_const(&context, "_color_graphite_", "0.29 0.29 0.29", false);
     _add_const(&context, "_color_iron_", "0.32 0.34 0.36", false);
     _add_const(&context, "_color_steel_", "0.5 0.5 0.55", false);
-    // Stencil
+    //- stencil constants
     _add_const(&context, "_stencil_color_", "0 0 0 1", false);
 
-    // process input arguments
-    // TODO get rid of all the heap allocation..
+    // todo avoid temporary heap allocations for command line constants
     for (int ii = 0; ii < arg_count; ii++) {
 
-        // get eq sign
+        // split each name and value at the first equals sign
         const char *eq_addr = strchr(args[ii], '=');
         if (!eq_addr) {
             DC_LOG_WARN("Config", "dc_app_xml_preprocessor_context_create(): input argument '%s' has no value set; ignoring", args[ii]);
             continue;
         }
 
-        // extract the argument name (before '=')
         size_t name_len = eq_addr - args[ii];
         char *name_part = strndup(args[ii], name_len);
 
-        // extract the value (after '=')
         const char *value_part = eq_addr + 1;
 
-        // unquote both parts
+        // remove matching outer quotes
         char *arg_name = _unquote(name_part);
         char *arg_value = _unquote(value_part);
 
-        // dereference constants in the value (e.g., mycolor=#_color_red_ -> mycolor=1.0 0.0 0.0)
+        // expand constants before registration
         char arg_value_dereferenced[DC_APP_VALUE_STRING_BUFFER_SIZE];
         _dereference_constants(&context, arg_value, arg_value_dereferenced, sizeof(arg_value_dereferenced));
 
-        // register
         _register_const_by_name(&context, arg_name, arg_value_dereferenced, true);
 
-        // free memory
         free(name_part);
         free(arg_name);
         free(arg_value);
@@ -418,7 +417,7 @@ void dc_app_xml_preprocessor_context_destroy(DcAppXmlPreprocessorContext *config
     sbfree(context->sb_style_name_offsets);
     sbfree(context->sb_style_names);
 
-    // free style xml nodes
+    // release cloned style nodes
     for (int ii = _STYLE_INDEX_DEFAULT; ii < sbcount(context->sb_styles); ii++) {
         for (int jj = 0; jj < DC_APP_XML_ELEMENT_TYPE__COUNT; jj++) {
             if (context->sb_styles[ii].xml_nodes[jj]) {
@@ -437,28 +436,29 @@ void dc_app_xml_preprocessor_context_destroy(DcAppXmlPreprocessorContext *config
     free(config);
 }
 
+//~ preprocessing
+
 void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
 
     _XmlPreprocessorPassContext *context = &config->context;
 
-    // get root element
+    //- validate the root element
     xmlNodePtr node = xmlDocGetRootElement(config->xml_doc);
     if (node == NULL) {
         DC_LOG_ERROR("Config", "dc_app_xml_preprocessor_preprocess(): unable to get root element of config file");
     }
 
-    // verify root node is valid
     if (dc_app_xml_element_type_from_xml_node(node) != DC_APP_XML_ELEMENT_TYPE_DCAPP) {
         DC_LOG_ERROR("Config", "dc_app_xml_preprocessor_preprocess(): configuration root element is not DCAPP");
     }
 
-    // parse SuppressWarnings attribute from DCAPP element
+    //- read warning suppression options
     xmlChar *suppress_warnings_attr = xmlGetProp(node, BAD_CAST "SuppressWarnings");
     if (suppress_warnings_attr) {
         unsigned int suppress_flags = 0;
         char *token = strtok((char *)suppress_warnings_attr, ",");
         while (token) {
-            // trim whitespace
+            // trim surrounding spaces from each option
             while (*token == ' ')
                 token++;
             char *end = token + strlen(token) - 1;
@@ -466,7 +466,7 @@ void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
                 *end-- = '\0';
 
             if (strcmp(token, "all") == 0) {
-                suppress_flags = ~0u; // all bits set
+                suppress_flags = ~0u; // suppress every warning class
             } else if (strcmp(token, "missing-constants") == 0) {
                 suppress_flags |= _SUPPRESS_MISSING_CONSTANT;
             } else if (strcmp(token, "missing-variables") == 0) {
@@ -483,7 +483,7 @@ void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
         context->suppress_warnings = suppress_flags;
     }
 
-    // clean XML file
+    //- preprocess the tree in place
     _preprocess_xml_node(context, node, config->config_dir_path);
     config->xml_doc_is_cleaned = true;
 }
@@ -518,10 +518,12 @@ void dc_app_xml_preprocessor_export_environment(const DcAppXmlPreprocessorContex
     dc_utils_set_env("DCAPP_HOME", dcapp_home, 1);
     dc_utils_set_env("DCAPP_DISPLAY_HOME", display_home, 1);
 
-    // Legacy aliases retained for existing displays and logic modules.
+    // keep legacy aliases for existing displays and logic modules
     dc_utils_set_env("dcappHome", dcapp_home, 1);
     dc_utils_set_env("dcappDisplayHome", display_home, 1);
 }
+
+//~ preprocessor results
 
 const char *dc_app_xml_preprocessor_directory(const DcAppXmlPreprocessorContext *config) {
     return config->config_dir_path;
@@ -539,15 +541,15 @@ bool dc_app_xml_preprocessor_suppresses_missing_variable(const DcAppXmlPreproces
     return (config->context.suppress_warnings & _SUPPRESS_MISSING_VARIABLE) != 0;
 }
 
-// Helper function to splice a node's children into its parent and free the wrapper node.
-// This is the common "Dummy pattern" used by Dummy, Include, and StaticIf.
-// The caller is responsible for processing children (preferrably before calling this).
+//~ tree preprocessing
+
+// splice processed children into the wrapper's parent before freeing it
 static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
     if (node->children) {
         xmlNodePtr first_child = node->children;
         xmlNodePtr last_child = node->last;
 
-        // update parent
+        //- reconnect the parent and siblings
         if (node->parent) {
             if (node->parent->children == node) {
                 node->parent->children = first_child;
@@ -557,7 +559,6 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
             }
         }
 
-        // update siblings
         if (node->prev) {
             node->prev->next = first_child;
         }
@@ -565,7 +566,7 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
             node->next->prev = last_child;
         }
 
-        // propagate _Directory to children that don't already have one
+        // propagate inherited directories to newly exposed children
         xmlChar *dir_attr = xmlGetProp(node, BAD_CAST "_Directory");
         if (dir_attr) {
             for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
@@ -576,14 +577,14 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
             xmlFree(dir_attr);
         }
 
-        // update children
+        // point every child at its new parent
         for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
             curr_child->parent = node->parent;
         }
         first_child->prev = node->prev;
         last_child->next = node->next;
 
-        // unlink node
+        // detach the empty wrapper
         node->children = NULL;
         node->last = NULL;
         node->parent = NULL;
@@ -593,25 +594,25 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
         xmlUnlinkNode(node);
     }
 
-    // free wrapper node
+    // release the detached wrapper
     xmlFreeNode(node);
 }
 
 static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePtr node, char *directory) {
 
-    // remove if not an element
+    // discard unsupported node kinds
     if (node->type != XML_ELEMENT_NODE && node->type != XML_TEXT_NODE && node->type != XML_ATTRIBUTE_NODE) {
         xmlUnlinkNode(node);
         xmlFreeNode(node);
         return;
     }
 
-    // only process nodes
+    // leave text and attributes to their owning element
     if (node->type != XML_ELEMENT_NODE) {
         return;
     }
 
-    // check for _Directory attribute and use it if present
+    // inherit an include's source directory
     char directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
     xmlChar *dir_attr = xmlGetProp(node, BAD_CAST "_Directory");
     if (dir_attr) {
@@ -621,13 +622,13 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
         xmlFree(dir_attr);
     }
 
-    // get element type
+    // identify the element before applying defaults
     DcAppXmlElementType elem_type = dc_app_xml_element_type_from_xml_node(node);
 
-    // dereference attributes/content
+    // expand constants in attributes and content
     _dereference_node_attrs_and_content(context, node);
 
-    // load style attributes, if it exists
+    //- merge explicitly selected style attributes
     {
         xmlChar *style_name = xmlGetProp(node, BAD_CAST "Style");
         if (style_name) {
@@ -659,7 +660,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
         }
     }
 
-    // load default attributes
+    //- fill missing default attributes
     xmlNodePtr style_xml_node = context->sb_styles[_STYLE_INDEX_DEFAULT].xml_nodes[elem_type];
     if (style_xml_node) {
         for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
@@ -674,8 +675,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
         }
     }
 
-    // expand AlignX/AlignY shorthand to LocalAlign + ParentAlign
-    // (individual attributes take precedence if already set)
+    //- expand alignment shorthand without replacing explicit attributes
     {
         xmlChar *align_x = xmlGetProp(node, BAD_CAST "AlignX");
         if (align_x) {
@@ -702,7 +702,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
         }
     }
 
-    // processing before targeting children
+    //- process structural elements before descending
     switch (elem_type) {
 
         case DC_APP_XML_ELEMENT_TYPE_CONSTANT: {
@@ -721,9 +721,8 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 strncpy(cleaned_value, (const char *)value, DC_APP_VALUE_STRING_BUFFER_SIZE - 1);
                 cleaned_value[DC_APP_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(value);
-                // dc_utils_trim_whitespace_inplace(cleaned_value);
                 if (cleaned_value[0] == '\0') {
-                    // DC_LOG_WARN("Config", "_preprocess_xml_node(): Empty content in <Constant> definition");
+                    // preserve empty constant values
                 }
             } else {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): Node content missing in <Constant> definition");
@@ -739,15 +738,15 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
 
             _register_const_by_name(context, cleaned_name, cleaned_value, is_immutable);
 
-            // remove the Constant node from the tree
+            // remove the registered constant declaration
             xmlUnlinkNode(node);
             xmlFreeNode(node);
             return;
         }
 
-        // remove "Dummy" level, keep children
+        //- unwrap dummy elements
         case DC_APP_XML_ELEMENT_TYPE_DUMMY: {
-            // process children first
+            // preprocess children before exposing them to the parent
             xmlNodePtr child = node->children;
             while (child) {
                 xmlNodePtr child_next = child->next;
@@ -755,21 +754,20 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 child = child_next;
             }
 
-            // splice children into parent and free wrapper
             _splice_children_into_parent_and_free_wrapper(node);
             return;
         }
 
         case DC_APP_XML_ELEMENT_TYPE_INCLUDE: {
 
-            // check if include is optional
+            //- resolve the include path
             xmlChar *optional_str = xmlGetProp(node, BAD_CAST "Optional");
             int optional = optional_str ? dc_utils_string_to_boolean((const char *)optional_str) : 0;
             if (optional_str) {
                 xmlFree(optional_str);
             }
 
-            // get include file name
+            // prefer text content for the include filename
             xmlChar *filepath = xmlNodeGetContent(node);
             char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             bool has_filepath = false;
@@ -781,7 +779,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 has_filepath = (cleaned_filepath[0] != '\0');
             }
             if (!has_filepath) {
-                // fallback to File attribute
+                // fall back to the file attribute
                 xmlChar *file_attr = xmlGetProp(node, BAD_CAST "File");
                 if (file_attr) {
                     strncpy(cleaned_filepath, (const char *)file_attr, sizeof(cleaned_filepath) - 1);
@@ -796,7 +794,6 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 cleaned_filepath[0] = '\0';
             }
 
-            // get absolute path
             char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (dc_utils_is_relative_path(cleaned_filepath)) {
                 dc_utils_join_paths(directory, cleaned_filepath, absolute_path, sizeof(absolute_path));
@@ -805,10 +802,10 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
             }
 
-            // check if file exists when optional
+            // stop early when the source file is unavailable
             if (!dc_utils_file_exists(absolute_path)) {
                 if (optional) {
-                    // file doesn't exist and include is optional, skip it
+                    // log and omit optional includes
                     DC_LOG_INFO("Config", "_preprocess_xml_node(): Optional include file '%s' not found, skipping", absolute_path);
                 } else {
                     DC_LOG_ERROR("Config", "_preprocess_xml_node(): mandatory include file '%s' not found", absolute_path);
@@ -818,53 +815,47 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 return;
             }
 
-            // get canonical path
+            //- load and adopt the included tree
             char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             dc_utils_canonicalize_path(absolute_path, canon_filepath, sizeof(canon_filepath));
 
-            // get canonical directory from filepath
             char include_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
             dc_utils_get_directory(canon_filepath, include_directory, sizeof(include_directory));
 
-            // read XML file
             xmlDocPtr sub_doc = xmlReadFile(canon_filepath, NULL, XML_PARSE_NOBLANKS);
             if (!sub_doc) {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): Unable to read config file %s", canon_filepath);
             }
 
-            // get root element
             xmlNodePtr sub_node = xmlDocGetRootElement(sub_doc);
             if (!sub_node) {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): Unable to get root element of config file %s", canon_filepath);
             }
 
-            // copy loaded content (keep root element)
+            // copy the included root into the owning document
             xmlNodePtr new_node = xmlDocCopyNode(sub_node, node->doc, 1);
 
-            // add _Directory attribute to root element
+            // preserve the include directory for nested relative paths
             xmlSetProp(new_node, BAD_CAST "_Directory", BAD_CAST include_directory);
 
-            // free old child (text node with filename)
+            // replace the filename text with the included root
             xmlNodePtr old_child = node->children;
             if (old_child) {
                 xmlUnlinkNode(old_child);
                 xmlFreeNode(old_child);
             }
 
-            // set root element as the only child of Include node
             node->children = new_node;
             node->last = new_node;
             new_node->parent = node;
             new_node->next = NULL;
             new_node->prev = NULL;
 
-            // free loaded document
             xmlFreeDoc(sub_doc);
 
-            // process root element (which will process its children)
+            // preprocess the adopted subtree before unwrapping it
             _preprocess_xml_node(context, new_node, include_directory);
 
-            // splice children (the root element) into parent and free Include wrapper
             _splice_children_into_parent_and_free_wrapper(node);
             return;
         }
@@ -872,7 +863,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
         case DC_APP_XML_ELEMENT_TYPE_DEFAULT:
         case DC_APP_XML_ELEMENT_TYPE_STYLE: {
 
-            // get style name
+            //- register style templates
             char style_name[DC_APP_VALUE_STRING_BUFFER_SIZE];
             if (elem_type == DC_APP_XML_ELEMENT_TYPE_DEFAULT) {
                 strcpy(style_name, "default");
@@ -886,27 +877,23 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 xmlFree(raw_style_name);
             }
 
-            // clean children, add styles
+            // clone each child as a type-specific style template
             xmlNodePtr child = node->children;
             while (child) {
 
                 xmlNodePtr child_next = child->next;
 
-                // clone child node
-                xmlNodePtr orphan_child = xmlCopyNode(child, 1); // shallow: no children
+                xmlNodePtr orphan_child = xmlCopyNode(child, 1); // recursive template copy
 
-                // dereference constants
                 _dereference_node_attrs_and_content(context, orphan_child);
 
-                // add to styles
                 DcAppXmlElementType child_type = dc_app_xml_element_type_from_xml_node(orphan_child);
                 _add_style(context, style_name, child_type, orphan_child);
 
-                // increment
                 child = child_next;
             }
 
-            // remove style node
+            // remove the source declaration after registration
             xmlUnlinkNode(node);
             xmlFreeNode(node);
 
@@ -914,7 +901,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
         }
 
         case DC_APP_XML_ELEMENT_TYPE_IF: {
-            // Wrap implicit true children in <True> blocks (for both static and runtime)
+            //- normalize implicit true branches
             xmlNodePtr wrapper = NULL;
             xmlNodePtr child = node->children;
             while (child) {
@@ -935,14 +922,14 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                 child = next;
             }
 
-            // Check if this is a static if (<If Static="true">)
+            // detect compile-time conditions from attributes and values
             bool is_static = false;
             xmlChar *static_attr = xmlGetProp(node, BAD_CAST "Static");
             if (static_attr) {
                 is_static = dc_utils_string_to_boolean((const char *)static_attr);
                 xmlFree(static_attr);
             } else {
-                // auto-detect static: if no values reference runtime variables (@), treat as static
+                // infer static evaluation when no runtime variables are referenced
                 xmlChar *v1 = xmlGetProp(node, BAD_CAST "Value");
                 if (!v1) v1 = xmlGetProp(node, BAD_CAST "Value1");
                 xmlChar *v2 = xmlGetProp(node, BAD_CAST "Value2");
@@ -959,8 +946,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
             }
 
             if (is_static) {
-                // ===== STATIC IF PROCESSING =====
-                // Parse Operation (already dereferenced by _dereference_node_attrs_and_content)
+                //- evaluate the already expanded static condition
                 xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operator");
                 int cond_type = DC_APP_CONDITIONAL_TYPE_TRUE;
                 if (raw_operation) {
@@ -968,7 +954,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     xmlFree(raw_operation);
                 }
 
-                // Parse Value1 (already dereferenced)
+                // read the required first value
                 xmlChar *raw_value1 = xmlGetProp(node, BAD_CAST "Value");
                 if (!raw_value1) {
                     raw_value1 = xmlGetProp(node, BAD_CAST "Value1");
@@ -980,10 +966,10 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     return;
                 }
 
-                // Parse Value2 (optional, already dereferenced)
+                // read the optional second value
                 xmlChar *raw_value2 = xmlGetProp(node, BAD_CAST "Value2");
 
-                // Copy to stack buffers and free xmlChar* immediately
+                // copy values before releasing xml storage
                 char value1_buf[256];
                 char value2_buf[256];
                 strncpy(value1_buf, (const char *)raw_value1, sizeof(value1_buf) - 1);
@@ -999,7 +985,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     xmlFree(raw_value2);
                 }
 
-                // Check for runtime variables (not allowed in static If)
+                // reject runtime variables in static conditions
                 if (value1[0] == '@') {
                     DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: Value1 '%s' uses runtime variable (@), only constants (#) are allowed", value1);
                     xmlUnlinkNode(node);
@@ -1013,15 +999,15 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     return;
                 }
 
-                // Evaluate the condition
+                // evaluate according to the inferred value type
                 bool result = false;
                 if (value2) {
-                    // Two-value comparison - determine type from value1
+                    // infer comparison type from the first value
                     bool is_double = dc_utils_string_is_double(value1);
                     bool is_bool = !is_double && dc_utils_string_is_boolean(value1);
 
                     if (is_double) {
-                        // Numeric comparison (handles both integers and doubles)
+                        // compare numeric values as doubles
                         if (!dc_utils_string_is_double(value2)) {
                             DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: Value1 is numeric but Value2 '%s' is not", value2);
                             xmlUnlinkNode(node);
@@ -1056,7 +1042,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                                 break;
                         }
                     } else if (is_bool) {
-                        // Boolean comparison
+                        // compare boolean values
                         int bool1 = dc_utils_string_to_boolean(value1);
                         int bool2 = dc_utils_string_to_boolean(value2);
 
@@ -1080,7 +1066,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                                 break;
                         }
                     } else {
-                        // String comparison
+                        // compare string values
                         switch (cond_type) {
                             case DC_APP_CONDITIONAL_TYPE_EQ:
                                 result = (strcmp(value1, value2) == 0);
@@ -1102,7 +1088,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                         }
                     }
                 } else {
-                    // Single value boolean evaluation
+                    // evaluate a lone value as boolean
                     bool bool_val = dc_utils_string_to_boolean(value1);
                     switch (cond_type) {
                         case DC_APP_CONDITIONAL_TYPE_TRUE:
@@ -1117,7 +1103,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     }
                 }
 
-                // Remove non-matching branch (True or False) WITHOUT processing
+                // discard the unmatched branch without processing it
                 DcAppXmlElementType keep_type = result ? DC_APP_XML_ELEMENT_TYPE_TRUE : DC_APP_XML_ELEMENT_TYPE_FALSE;
                 child = node->children;
                 while (child) {
@@ -1132,7 +1118,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     child = next;
                 }
 
-                // Process surviving children (constants get registered here)
+                // process the surviving branch so its constants are registered
                 child = node->children;
                 while (child) {
                     xmlNodePtr child_next = child->next;
@@ -1140,7 +1126,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     child = child_next;
                 }
 
-                // Unwrap True/False wrappers
+                // unwrap the surviving branch
                 child = node->children;
                 while (child) {
                     xmlNodePtr next = child->next;
@@ -1153,13 +1139,12 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     child = next;
                 }
 
-                // Splice If's remaining children into parent
+                // replace the if node with its selected children
                 _splice_children_into_parent_and_free_wrapper(node);
                 return;
             }
 
-            // ===== RUNTIME IF PROCESSING =====
-            // Implicit children already wrapped above, nothing more to do
+            // leave runtime conditions wrapped for node parsing
             break;
         }
 
@@ -1167,10 +1152,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
             break;
     }
 
-    // save to file
-    // xmlSaveFormatFile("/data/nreagan/dcapp-pl/cache/xml.log", node->doc, 1);
-
-    // clean children
+    // descend through ordinary element children
     xmlNodePtr child = node->children;
     while (child) {
         xmlNodePtr child_next = child->next;
@@ -1179,7 +1161,9 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
     }
 }
 
-// Custom XML formatter without libxml2's depth limit (127 levels max)
+//~ xml output
+
+// custom writer avoids libxml2's depth limit
 static void _write_indent(FILE *f, int depth) {
     for (int i = 0; i < depth; i++) {
         fprintf(f, "  ");
@@ -1194,7 +1178,7 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
             _write_indent(f, depth);
             fprintf(f, "<%s", node->name);
 
-            // Write attributes
+            // write attributes in source order
             xmlAttrPtr attr = node->properties;
             while (attr) {
                 xmlChar *value = xmlGetProp(node, attr->name);
@@ -1205,9 +1189,8 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
                 attr = attr->next;
             }
 
-            // Check if element has children
             if (node->children) {
-                // Check if only child is text (no sub-elements)
+                // detect text-only elements for inline output
                 bool has_element_children = false;
                 xmlNodePtr child = node->children;
                 while (child) {
@@ -1228,7 +1211,7 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
                     _write_indent(f, depth);
                     fprintf(f, "</%s>\n", node->name);
                 } else {
-                    // Text-only content - write inline
+                    // keep text-only content inline
                     fprintf(f, ">");
                     child = node->children;
                     while (child) {
@@ -1240,13 +1223,13 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
                     fprintf(f, "</%s>\n", node->name);
                 }
             } else {
-                // Self-closing tag
+                // emit empty elements as self-closing tags
                 fprintf(f, "/>\n");
             }
             break;
         }
         case XML_TEXT_NODE:
-            // Text nodes handled inline with parent element
+            // text nodes are emitted with their parent
             break;
         case XML_COMMENT_NODE:
             _write_indent(f, depth);
@@ -1261,15 +1244,16 @@ static void _save_to_file(DcAppXmlPreprocessorContext *config, const char *filep
     FILE *f = fopen(filepath, "w");
     if (!f) return;
 
-    // Write XML declaration
+    // write the xml declaration before the tree
     fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
-    // Write document tree
     xmlNodePtr root = xmlDocGetRootElement(config->xml_doc);
     _write_xml_node(f, root, 0);
 
     fclose(f);
 }
+
+//~ constant expansion
 
 static _ConstIndex _get_const_index(_XmlPreprocessorPassContext *context, const char *name) {
 
@@ -1282,29 +1266,26 @@ static _ConstIndex _get_const_index(_XmlPreprocessorPassContext *context, const 
     return _CONST_INDEX_UNDEFINED;
 }
 
-// sets an existing constant
 static void _set_const(_XmlPreprocessorPassContext *context, _ConstIndex index, const char *new_value) {
 
-    // set const value at index
+    // replace the existing stretchy string
     char **addr = &(context->sb_consts[index].val);
     sbclear(*addr);
     sbpushn(*addr, new_value, (int)(strlen(new_value) + 1));
 }
 
-// adds a new constant
 static void _add_const(_XmlPreprocessorPassContext *context, const char *name, const char *value, bool is_immutable) {
 
-    // add const name to buffer
+    // store the lookup name in stable offset form
     sbpush(context->sb_const_name_offsets, sbcount(context->sb_const_names));
     sbpushn(context->sb_const_names, name, (int)(strlen(name) + 1));
 
-    // set const to value
+    // copy the value into independently owned storage
     _Constant constant;
     constant.val = NULL;
     sbpushn(constant.val, value, (int)(strlen(value) + 1));
     constant.is_immutable = is_immutable;
 
-    // register
     sbpush(context->sb_consts, constant);
 }
 
@@ -1314,7 +1295,6 @@ static void _add_const_int(_XmlPreprocessorPassContext *context, const char *nam
     _add_const(context, name, value_str, is_immutable);
 }
 
-// set a consts value
 static void _register_const_by_name(_XmlPreprocessorPassContext *context, const char *name, const char *new_value, bool is_immutable) {
     _ConstIndex const_index = _get_const_index(context, name);
     if (const_index == _CONST_INDEX_UNDEFINED) {
@@ -1328,12 +1308,11 @@ static void _register_const_by_name(_XmlPreprocessorPassContext *context, const 
     }
 }
 
-// get a consts value
 static const char *_get_const_by_name(_XmlPreprocessorPassContext *context, const char *name) {
     _ConstIndex const_index = _get_const_index(context, name);
     if (const_index == _CONST_INDEX_UNDEFINED) {
         if (context->suppress_warnings & _SUPPRESS_MISSING_CONSTANT) {
-            return ""; // silently expand to nothing
+            return ""; // expand suppressed missing constants to nothing
         }
         DC_LOG_WARN("Config", "_get_const_by_name(): constant '%s' does not exist", name);
         return NULL;
@@ -1342,37 +1321,35 @@ static const char *_get_const_by_name(_XmlPreprocessorPassContext *context, cons
     }
 }
 
-// expand a string using consts
 static void _dereference_constants(_XmlPreprocessorPassContext *context, const char *in, char *out, size_t out_size) {
 
-    // return string if no '$'/'#'
+    // fast path strings without references
     if (dc_utils_str_find_first_of(in, "#$") == -1) {
         strncpy(out, in, out_size - 1);
         out[out_size - 1] = '\0';
         return;
     }
 
-    // iterate through each character
+    // scan and expand references into the caller buffer
     size_t in_length = strlen(in);
     int out_index = 0;
     for (int in_index = 0; in_index < in_length && out_index < out_size - 1; in_index++) {
 
-        // skip backslash-escaped # and $
+        // preserve escaped reference markers
         if (in[in_index] == '\\' && in_index + 1 < in_length && (in[in_index + 1] == '#' || in[in_index + 1] == '$')) {
             out[out_index++] = in[++in_index];
             continue;
         }
 
-        // if a character is a constant '#' or env variable '$', recursively
-        // expand the values within.
+        // expand constant and environment references recursively
         if (in[in_index] == '#' || in[in_index] == '$') {
-            // error if ending on a #/$
+            // reject a trailing reference marker
             if (in_index + 1 >= in_length) {
                 DC_LOG_ERROR("Config", "_dereference_constants(): Cannot have string ending on an unescaped #/$: '%s'", in);
                 return;
             }
 
-            // find ending index for constant/env variable reference (account for both non-squigglied and squigglied references)
+            // find the end of braced or bare references
             size_t subtext_start_index;
             size_t subtext_length;
             size_t subtext_length_with_symbols;
@@ -1405,7 +1382,7 @@ static void _dereference_constants(_XmlPreprocessorPassContext *context, const c
                 if (subtext_end_index == -1) {
                     subtext_end_index = (int)in_length;
                 } else {
-                    subtext_end_index += in_index; // Convert from relative to absolute position
+                    subtext_end_index += in_index; // convert from relative to absolute position
                 }
 
                 subtext_start_index = in_index + 1;
@@ -1413,7 +1390,7 @@ static void _dereference_constants(_XmlPreprocessorPassContext *context, const c
                 subtext_length_with_symbols = subtext_length;
             }
 
-            // get substring, ensure no strange values within
+            // reject nested runtime variables inside references
             char subtext[DC_APP_VALUE_STRING_BUFFER_SIZE];
             strncpy(subtext, &in[subtext_start_index], subtext_length);
             subtext[subtext_length] = '\0';
@@ -1422,11 +1399,11 @@ static void _dereference_constants(_XmlPreprocessorPassContext *context, const c
                 return;
             }
 
-            // recursion to clean the inner text
+            // recursively expand the reference name
             char subtext_cleaned[DC_APP_VALUE_STRING_BUFFER_SIZE];
             _dereference_constants(context, subtext, subtext_cleaned, sizeof(subtext_cleaned));
 
-            // if constant, pull value from list of constants. otherwise use the environment
+            // resolve constants from the registry and variables from the environment
             if (in[in_index] == '#') {
                 const char *const_value = _get_const_by_name(context, subtext_cleaned);
                 if (const_value) {
@@ -1443,7 +1420,7 @@ static void _dereference_constants(_XmlPreprocessorPassContext *context, const c
                 }
             }
 
-            // increment in_index by the cleaned amount
+            // advance past the full source reference
             in_index += (int)subtext_length_with_symbols;
         } else {
             out[out_index++] = in[in_index];
@@ -1454,6 +1431,8 @@ static void _dereference_constants(_XmlPreprocessorPassContext *context, const c
         out[out_index] = '\0';
     }
 }
+
+//~ style resolution
 
 static _StyleIndex _get_style_index(_XmlPreprocessorPassContext *context, const char *name) {
     if (name) {
@@ -1472,7 +1451,7 @@ static void _add_style(_XmlPreprocessorPassContext *context, const char *name, D
 
         _StyleIndex style_index = _get_style_index(context, name);
 
-        // create new style if it doesn't exist
+        // create the named style on first use
         if (style_index == _STYLE_INDEX_UNDEFINED) {
             sbpush(context->sb_style_name_offsets, sbcount(context->sb_style_names));
             sbpushn(context->sb_style_names, name, (int)(strlen(name) + 1));
@@ -1481,7 +1460,7 @@ static void _add_style(_XmlPreprocessorPassContext *context, const char *name, D
             style_index = sbcount(context->sb_styles) - 1;
         }
 
-        // update style
+        // replace the template for this element type
         _ElemStyle *style = &(context->sb_styles[style_index]);
         if (style->xml_nodes[elem_type] != NULL) {
             if (!(context->suppress_warnings & _SUPPRESS_STYLE_OVERRIDE)) {
@@ -1515,9 +1494,11 @@ static xmlChar *_get_style_content(_XmlPreprocessorPassContext *context, int sty
     return NULL;
 }
 
+//~ node expansion
+
 static void _dereference_node_attrs_and_content(_XmlPreprocessorPassContext *context, xmlNodePtr node) {
 
-    // expands constants on each attribute
+    // expand every attribute value
     xmlAttrPtr attr = node->properties;
     while (attr) {
         xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
@@ -1530,7 +1511,7 @@ static void _dereference_node_attrs_and_content(_XmlPreprocessorPassContext *con
         attr = attr->next;
     }
 
-    // expand constants in text content
+    // expand direct text children
     xmlNodePtr child = node->children;
     while (child) {
         if (child->type == XML_TEXT_NODE) {
@@ -1546,7 +1527,9 @@ static void _dereference_node_attrs_and_content(_XmlPreprocessorPassContext *con
     }
 }
 
-// must be freed!
+//~ argument parsing
+
+// caller owns the returned string
 static char *_unquote(const char *str) {
     if (!str) {
         return NULL;

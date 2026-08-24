@@ -38,6 +38,8 @@
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
+//~ types and state
+
 typedef enum _SnapshotCrs {
     SNAPSHOT_CRS_UNDEFINED,
     SNAPSHOT_CRS_GEODETIC,
@@ -51,42 +53,42 @@ typedef enum _SnapshotAttitudeFrame {
 } _SnapshotAttitudeFrame;
 
 typedef struct AppData {
-    // CLI inputs
+    // command line inputs
     const char *planet_data;
     const char *output;
     const char *vertex_shader;
     const char *fragment_shader;
 
-    // Camera interpretation
+    // camera interpretation
     _SnapshotCrs crs;
     _SnapshotAttitudeFrame attitude_frame;
 
-    // Camera position and attitude
+    // camera position and attitude
     double lat, lon, elevation;
     double x, y, z;
     float roll, pitch, yaw;
     float fov;
 
-    // Output image
+    // output image
     uint32_t width;
     uint32_t height;
 
-    // Window and renderer state
+    // window and renderer state
     plWindow *window;
     plPlanet *planet;
     plPlanetView *view;
     plPlanetProcessInfo process_info;
 
-    // GPU readback target
+    // gpu readback target
     plBufferHandle readback_buffer;
     size_t readback_size;
 
-    // Capture state
+    // capture state
     uint32_t frame;
     uint32_t idle_frame_count;
     bool done;
 
-    // Cleanup guards
+    // cleanup guards
     bool starter_initialized;
     bool planet_initialized;
     bool resource_initialized;
@@ -106,20 +108,21 @@ static const plVfsI *_ext_vfs = NULL;
 static const plMemoryI *_ext_memory = NULL;
 static const dcDrawBackendI *_ext_dc_draw_backend = NULL;
 
+//~ declarations
+
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app);
 PL_EXPORT void pl_app_shutdown(AppData *app);
 PL_EXPORT void pl_app_resize(plWindow *window, AppData *app);
 PL_EXPORT void pl_app_update(AppData *app);
 
-// Init and setup
 static void _show_help(void);
 static bool _load_planet_data(AppData *app);
-
-// Argument parsing
 static bool _parse_args(int argc, char **argv, AppData *app);
 
+//~ application entry points
+
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
-    // Hot reload: refresh API pointers, keep existing app data.
+    // refresh api pointers while preserving hot-reloaded state
     if (app) {
         _ext_ioi = pl_get_api_latest(api_registry, plIOI);
         _ext_windows = pl_get_api_latest(api_registry, plWindowI);
@@ -135,7 +138,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
         return app;
     }
 
-    // Load only the extensions this utility needs.
+    //- load extensions and api tables
+
+    // load only the extensions needed for capture
     const plExtensionRegistryI *registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
     registry->load("pl_unity_ext", NULL, NULL, true);
     registry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
@@ -144,7 +149,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
     registry->load("pl_planet_processor_ext", NULL, NULL, true);
     registry->load("pl_planet_ext", NULL, NULL, true);
 
-    // Cache extension APIs.
+    // cache extension api tables
     _ext_ioi = pl_get_api_latest(api_registry, plIOI);
     _ext_windows = pl_get_api_latest(api_registry, plWindowI);
     _ext_gfx = pl_get_api_latest(api_registry, plGraphicsI);
@@ -162,19 +167,23 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
         return NULL;
     memset(app, 0, sizeof(AppData));
 
-    // Parse all snapshot settings before creating GPU resources.
+    //- validate capture settings
+
+    // parse settings before creating gpu resources
     plIO *io = _ext_ioi->get_io();
     if (!_parse_args(io->iArgc - 3, io->apArgv + 3, app)) {
         io->bRunning = false;
         return app;
     }
 
-    // Mount shader search paths used by planet shaders.
+    //- initialize rendering
+
+    // mount planet shader search paths
     _ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
     _ext_vfs->mount_directory("/shaders", "../shaders", PL_VFS_MOUNT_FLAGS_NONE);
     _ext_vfs->mount_directory("/shader-temp", "../shader-temp", PL_VFS_MOUNT_FLAGS_NONE);
 
-    // Create the render window at the requested snapshot size.
+    // create the window at the capture size
     plWindowDesc window_desc = {
         .pcTitle = "dcapp planet snapshot",
         .iXPos = 100,
@@ -185,7 +194,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
     _ext_windows->create(window_desc, &app->window);
     _ext_windows->show(app->window);
 
-    // Initialize Pilotlight graphics, then override shader options.
+    // initialize pilotlight graphics and snapshot shaders
     plStarterInit starter_init = {
         .tFlags = (PL_STARTER_FLAGS_ALL_EXTENSIONS & ~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_VSYNC_OFF,
         .ptWindow = app->window,
@@ -205,7 +214,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
 
     _ext_starter->finalize();
 
-    // Planet overlays use dcDraw inside the planet's offscreen render pass.
+    // initialize dc draw for offscreen planet overlays
     plDevice *device = _ext_starter->get_device();
     const dcDrawI *draw = pl_get_api_latest(api_registry, dcDrawI);
     dcDrawInit draw_init = {0};
@@ -213,7 +222,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
     _ext_dc_draw_backend->initialize(device);
     app->draw_initialized = true;
 
-    // Planet rendering depends on resource and planet extension state.
+    // initialize resource ownership before planet rendering
     plResourceManagerInit resource_init = {.ptDevice = device};
     _ext_resource->initialize(resource_init);
     app->resource_initialized = true;
@@ -226,7 +235,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
         return app;
     }
 
-    // Create the planet, its offscreen view, and the CPU readback buffer.
+    //- create capture resources
+
+    // create the planet and offscreen view
     plPlanetInit snapshot_planet_init = {
         .dRadius = app->process_info.tGeodeticModel.sphere.dRadius,
         .tLoadFlags = PL_PLANET_LOAD_FLAGS_NONE,
@@ -257,6 +268,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, AppData *app) {
     _ext_planet->set_view_runtime_options(app->view, view_opts);
 
     app->readback_size = (size_t)app->width * (size_t)app->height * 4;
+    // allocate host-visible snapshot storage
     const plBufferDesc readback_desc = {
         .tUsage = PL_BUFFER_USAGE_STAGING,
         .szByteSize = app->readback_size,
@@ -289,7 +301,9 @@ PL_EXPORT void pl_app_update(AppData *app) {
     plCamera camera = {0};
     double radius = app->process_info.tGeodeticModel.sphere.dRadius;
 
-    // Build the snapshot camera from the requested CRS and attitude frame.
+    //- build the snapshot camera
+
+    // interpret position and attitude in the requested crs
     camera.tType = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
     camera.fFieldOfView = pl_radiansf(app->fov);
     camera.fAspectRatio = (app->height > 0) ? (float)app->width / (float)app->height : 1.0f;
@@ -303,7 +317,7 @@ PL_EXPORT void pl_app_update(AppData *app) {
         _ext_camera->set_pitch_yaw(&camera, pl_radiansf(app->pitch), pl_radiansf(app->yaw));
         camera.fRoll = pl_radiansf(app->roll);
     } else {
-        // Local-NED: yaw about down, pitch about right, roll about boresight.
+        // apply local-ned yaw about down pitch about right and roll about boresight
         double lat_rad = dc_utils_degrees_to_radians(app->lat);
         double lon_rad = dc_utils_degrees_to_radians(app->lon);
         DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
@@ -332,10 +346,10 @@ PL_EXPORT void pl_app_update(AppData *app) {
         camera.fRoll = dc_geo_signed_angle_around_axis(camera._tUpVec, desired_up, forward);
     }
 
-    // Camera update applies attitude and builds the perspective projection.
+    // finalize attitude and projection state
     _ext_camera->update(&camera);
 
-    // Render one frame and watch tile streaming settle.
+    //- render until streaming settles
     plCommandBuffer *cmd = _ext_starter->get_command_buffer();
     _ext_planet->prepare(app->planet, cmd);
     _ext_planet->render_view(app->view, &camera, cmd, (plVec2){(float)app->width, (float)app->height});
@@ -349,7 +363,9 @@ PL_EXPORT void pl_app_update(AppData *app) {
     _ext_starter->submit_command_buffer(cmd);
     _ext_starter->end_frame();
 
-    // Capture after the visible view has stopped requesting new chunks.
+    //- capture the settled view
+
+    // wait until the visible view stops requesting chunks
     if (app->idle_frame_count >= SNAPSHOT_SETTLE_IDLE_FRAMES) {
         _ext_gfx->flush_device(_ext_starter->get_device());
         plCommandBuffer *copy_cmd = _ext_starter->get_temporary_command_buffer();
@@ -393,6 +409,8 @@ PL_EXPORT void pl_app_shutdown(AppData *app) {
         return;
 
     plDevice *device = (app->starter_initialized && _ext_starter) ? _ext_starter->get_device() : NULL;
+    //- release capture resources
+
     if (device && _ext_gfx)
         _ext_gfx->flush_device(device);
 
@@ -408,6 +426,8 @@ PL_EXPORT void pl_app_shutdown(AppData *app) {
         PL_FREE(app->process_info.atTiles);
         app->process_info.atTiles = NULL;
     }
+
+    //- release extension state
 
     if (app->planet_initialized && _ext_planet)
         _ext_planet->cleanup();
@@ -459,14 +479,18 @@ static void _show_help(void) {
     printf("  -h, --help               Show this help\n");
 }
 
+//~ argument parsing
+
 static bool _parse_args(int argc, char **argv, AppData *app) {
-    // Defaults
+    //- collect raw options
+
+    // apply defaults before parsing overrides
     memset(app, 0, sizeof(*app));
     app->width = 1024;
     app->height = 1024;
     app->fov = 60.0f;
 
-    // First pass: collect raw option strings.
+    // defer conversion until all option relationships are known
     const char *planet_data = NULL;
     const char *output = NULL;
     const char *vertex_shader = NULL;
@@ -532,7 +556,7 @@ static bool _parse_args(int argc, char **argv, AppData *app) {
         }
     }
 
-    // Required global inputs and enum values.
+    //- validate modes and required inputs
     if (!planet_data || !output || !crs || !attitude_frame) {
         fprintf(stderr, "Error: --planet-data, --crs, --attitude-frame, and --output are required\n");
         _show_help();
@@ -555,7 +579,7 @@ static bool _parse_args(int argc, char **argv, AppData *app) {
         return false;
     }
 
-    // CRS-specific required and forbidden parameters.
+    // enforce crs-specific position and attitude options
     if (app->crs == SNAPSHOT_CRS_GEODETIC) {
         if (app->attitude_frame != SNAPSHOT_ATTITUDE_FRAME_LOCAL_NED) {
             fprintf(stderr, "Error: geodetic CRS currently requires --attitude-frame local-ned\n");
@@ -584,7 +608,9 @@ static bool _parse_args(int argc, char **argv, AppData *app) {
         }
     }
 
-    // Validate numeric text before converting into app data.
+    //- convert validated values
+
+    // validate numeric text before conversion
     if ((lat && !dc_utils_string_is_double(lat)) ||
         (lon && !dc_utils_string_is_double(lon)) ||
         (elevation && !dc_utils_string_is_double(elevation)) ||
@@ -603,7 +629,7 @@ static bool _parse_args(int argc, char **argv, AppData *app) {
         return false;
     }
 
-    // Commit validated parameters to the app.
+    // commit validated parameters to application state
     app->planet_data = planet_data;
     app->output = output;
     app->vertex_shader = vertex_shader;
@@ -635,7 +661,7 @@ static bool _parse_args(int argc, char **argv, AppData *app) {
     }
     if (fov) app->fov = (float)dc_utils_string_to_double(fov);
 
-    // Output image sanity checks.
+    // validate final image dimensions and field of view
     if (app->width == 0 || app->height == 0) {
         fprintf(stderr, "Error: --width and --height must be greater than zero\n");
         return false;
@@ -648,7 +674,11 @@ static bool _parse_args(int argc, char **argv, AppData *app) {
     return true;
 }
 
+//~ planet metadata loading
+
 static bool _load_planet_data(AppData *app) {
+    //- parse and validate metadata
+
     char *json_text = dc_utils_load_text_file(app->planet_data);
     if (!json_text) {
         fprintf(stderr, "Error: failed to load planet data: %s\n", app->planet_data);
@@ -689,7 +719,9 @@ static bool _load_planet_data(AppData *app) {
         return false;
     }
 
-    // Fill the extension's process-info block from the chunk metadata.
+    //- configure planet processing
+
+    // fill the process block from chunk metadata
     plPlanetProcessInfo *info = &app->process_info;
     memset(info, 0, sizeof(*info));
     info->tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
@@ -699,8 +731,7 @@ static bool _load_planet_data(AppData *app) {
     info->tProjection.tPolarStereo.dFalseEasting = 0.0;
     info->tProjection.tPolarStereo.dFalseNorthing = 0.0;
     plJsonObject *projection_obj = pl_json_member(root, "projection");
-    // Pre-projection .planet.json files omitted this block and stored tile centers
-    // as legacy lat/lon values instead of explicit projected CRS meters.
+    // metadata without projection stores legacy latitude and longitude centers
     bool legacy_projected_origin = projection_obj == NULL;
     if (projection_obj) {
         char projection_type[64] = {0};
@@ -745,7 +776,9 @@ static bool _load_planet_data(AppData *app) {
         return false;
     }
 
-    // Resolve per-tile origins and chunk files.
+    //- resolve tile records
+
+    // resolve origins and chunk paths relative to the metadata file
     char json_dir[DC_UTILS_FILEPATH_BUFFER_SIZE];
     dc_utils_get_directory(app->planet_data, json_dir, sizeof(json_dir));
 
@@ -754,7 +787,7 @@ static bool _load_planet_data(AppData *app) {
         plPlanetProcessTileInfo *tile = &info->atTiles[i];
         memset(tile, 0, sizeof(*tile));
 
-        // resolve tile origin
+        // resolve the projected tile origin
         if (pl_json_member_exist(tile_obj, "originX") && pl_json_member_exist(tile_obj, "originY")) {
             tile->dOriginX = pl_json_double_member(tile_obj, "originX", 0.0);
             tile->dOriginY = pl_json_double_member(tile_obj, "originY", 0.0);
@@ -772,8 +805,7 @@ static bool _load_planet_data(AppData *app) {
             plVec3d geodetic_in = {lat, lon, 0.0};
             plVec2d polar_out;
             if (legacy_projected_origin) {
-                // The mirrored-longitude helper already reproduces the original
-                // legacy tile convention; the user-overlay Y flip does not apply here.
+                // preserve the legacy tile longitude without the overlay y flip
                 dc_geo_user_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
             } else {
                 dc_geo_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
@@ -787,7 +819,7 @@ static bool _load_planet_data(AppData *app) {
         tile->dMinHeight = min_height;
         tile->iTreeDepth = tree_depth;
 
-        // resolve chunk file path
+        // resolve the chunk file path
         char chunk_file[256] = {0};
         pl_json_string_member(tile_obj, "file", chunk_file, sizeof(chunk_file));
         if (!chunk_file[0]) {

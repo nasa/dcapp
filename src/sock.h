@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+//~ types
+
 typedef enum {
     DC_SOCK_RESULT_SUCCESS = 0,
     DC_SOCK_RESULT_FAIL,
@@ -30,13 +32,26 @@ typedef struct DcSock DcSock;
 extern "C" {
 #endif
 
+//~ api
+
+//- lifecycle and resolution
+
 DcSock *dc_sock_create(DcSockFlags flags);
 DcSockResult dc_sock_host_to_ip(const char *host, char *out);
+
+//- connection state
+
 DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port);
 void dc_sock_close(DcSock *sock);
 DcSockState dc_sock_connection_status(DcSock *sock);
+
+//- io
+
 DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sent_size);
 DcSockResult dc_sock_receive(DcSock *sock, char *out, size_t out_size, int *receive_size);
+
+//- socket options and write shutdown
+
 DcSockResult dc_sock_set_blocking(DcSock *sock);
 DcSockResult dc_sock_set_recv_timeout(DcSock *sock, int timeout_ms);
 DcSockResult dc_sock_shutdown_write(DcSock *sock);

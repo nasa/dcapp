@@ -1,6 +1,8 @@
 #ifndef DC_APP_DISPLAY_RUNTIME_H
 #define DC_APP_DISPLAY_RUNTIME_H
 
+//~ types
+
 typedef struct _plApiRegistryI plApiRegistryI;
 typedef struct DcAppDisplayRuntimeContext DcAppDisplayRuntimeContext;
 
@@ -12,6 +14,8 @@ struct DcAppPixelstreamContext;
 struct DcAppPlanetContext;
 struct DcAppDisplayModelContext;
 struct DcAppTextureContext;
+
+//~ lifecycle
 
 void dc_app_display_runtime_init(plApiRegistryI *api_registry);
 
@@ -25,12 +29,14 @@ DcAppDisplayRuntimeContext *dc_app_display_runtime_context_create(
     struct DcAppDisplayLogicContext *display_logic);
 void dc_app_display_runtime_context_destroy(DcAppDisplayRuntimeContext *runtime);
 
-// Creates runtime planet resources after XML parsing has completed.
+//~ frame processing
+
+// creates runtime planet resources after xml parsing has completed
 void dc_app_display_runtime_initialize_planets(DcAppDisplayRuntimeContext *runtime);
-// Applies variable-driven planet state before each render pass.
+// applies variable-driven planet state before each render pass
 void dc_app_display_runtime_update_planets(DcAppDisplayRuntimeContext *runtime);
 void dc_app_display_runtime_render(DcAppDisplayRuntimeContext *runtime, struct DcAppDrawContext *draw_ctx);
-// Applies deferred Set operations after traversal so siblings see the original values.
+// applies deferred set operations after traversal so siblings see the original values
 void dc_app_display_runtime_flush_deferred_sets(DcAppDisplayRuntimeContext *runtime);
 
 #endif

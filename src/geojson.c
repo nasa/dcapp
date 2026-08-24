@@ -11,9 +11,7 @@
 
 #define DC_GEOJSON_TAG "GeoJSON"
 
-//-----------------------------------------------------------------------------
-// internal types
-//-----------------------------------------------------------------------------
+//~ types and declarations
 
 struct DcGeojson {
     DcGeojsonFeature *sb_features;
@@ -29,12 +27,11 @@ static bool _parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out
 static void _free_feature(DcGeojsonFeature *feat);
 static bool _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom);
 
-//-----------------------------------------------------------------------------
-// public api
-//-----------------------------------------------------------------------------
+//~ public api
 
 DcGeojson *
 dc_geojson_load(const char *filepath) {
+    //- load and parse the document
     char *json_str = dc_utils_load_text_file(filepath);
     if (!json_str) {
         DC_LOG_ERROR(DC_GEOJSON_TAG, "failed to load file: %s", filepath);
@@ -48,6 +45,7 @@ dc_geojson_load(const char *filepath) {
         return NULL;
     }
 
+    //- allocate document storage
     DcGeojson *gj = (DcGeojson *)malloc(sizeof(DcGeojson));
     if (!gj) {
         DC_LOG_ERROR(DC_GEOJSON_TAG, "allocation failed");
@@ -57,6 +55,7 @@ dc_geojson_load(const char *filepath) {
     }
     memset(gj, 0, sizeof(DcGeojson));
 
+    //- decode the root shape
     char type_buf[64] = {0};
     pl_json_string_member(root, "type", type_buf, sizeof(type_buf));
 
@@ -93,11 +92,12 @@ dc_geojson_load(const char *filepath) {
             ok = false;
         }
     } else {
-        // bare geometry
+        // treat the root as a bare geometry
         DcGeojsonFeature *feat = _push_feature(gj);
         ok = _parse_geometry(feat, root);
     }
 
+    //- release parser storage
     pl_unload_json(&root);
     free(json_str);
 
@@ -130,9 +130,7 @@ dc_geojson_feature(DcGeojson *geojson, uint32_t index) {
     return &geojson->sb_features[index];
 }
 
-//-----------------------------------------------------------------------------
-// internal helpers
-//-----------------------------------------------------------------------------
+//~ internal helpers
 
 static uint32_t
 _json_array_count(plJsonObject *array) {
@@ -142,8 +140,7 @@ _json_array_count(plJsonObject *array) {
     return count;
 }
 
-// pl_json_member_by_name uses strncmp with the child's name length,
-// so "stroke-opacity" matches "stroke". This does an exact match.
+// require an exact name match where the json helper accepts prefixes
 static plJsonObject *
 _json_member(plJsonObject *json, const char *name) {
     if (!json) return NULL;
@@ -194,7 +191,7 @@ static void
 _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style) {
     if (!properties) return;
 
-    // stroke color
+    //- stroke
     char stroke_buf[32] = {0};
     pl_json_string_member(properties, "stroke", stroke_buf, sizeof(stroke_buf));
     if (stroke_buf[0] != '\0') {
@@ -204,13 +201,13 @@ _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style) {
         }
     }
 
-    // stroke-width
+    // read the optional stroke width
     if (pl_json_member(properties, "stroke-width")) {
         style->stroke_width = (float)pl_json_double_member(properties, "stroke-width", 1.0);
         style->has_stroke_width = true;
     }
 
-    // fill color
+    //- fill
     char fill_buf[32] = {0};
     pl_json_string_member(properties, "fill", fill_buf, sizeof(fill_buf));
     if (fill_buf[0] != '\0') {
@@ -221,9 +218,7 @@ _parse_style_properties(plJsonObject *properties, DcGeojsonStyle *style) {
     }
 }
 
-//-----------------------------------------------------------------------------
-// coordinate parsing
-//-----------------------------------------------------------------------------
+//~ coordinate parsing
 
 static bool
 _parse_coord_array(plJsonObject *coord_array, uint32_t coord_count, DcGeojsonCoordArray *out) {
@@ -270,9 +265,7 @@ _parse_point_coords(plJsonObject *geom, DcGeojsonPosition *point_out) {
     return true;
 }
 
-//-----------------------------------------------------------------------------
-// feature cleanup
-//-----------------------------------------------------------------------------
+//~ feature cleanup
 
 static void
 _free_feature(DcGeojsonFeature *feat) {
@@ -318,15 +311,14 @@ _free_feature(DcGeojsonFeature *feat) {
     }
 }
 
-//-----------------------------------------------------------------------------
-// geometry parsing
-//-----------------------------------------------------------------------------
+//~ geometry parsing
 
 static bool
 _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
     char type_buf[64] = {0};
     pl_json_string_member(geom, "type", type_buf, sizeof(type_buf));
 
+    //- direct coordinate arrays
     if (strcmp(type_buf, "Point") == 0) {
         feat->type = DC_GEOJSON_FEATURE_POINT;
         return _parse_point_coords(geom, &feat->geom.point.position);
@@ -345,6 +337,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
         feat->type = DC_GEOJSON_FEATURE_LINE_STRING;
         return _parse_coord_array(coords, coord_count, &feat->geom.line_string);
     } else if (strcmp(type_buf, "MultiLineString") == 0) {
+        //- nested line strings
         uint32_t line_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &line_count);
         if (!coords) return false;
@@ -365,6 +358,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
         }
         return true;
     } else if (strcmp(type_buf, "Polygon") == 0) {
+        //- polygon rings
         uint32_t ring_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &ring_count);
         if (!coords) return false;
@@ -385,6 +379,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
         }
         return true;
     } else if (strcmp(type_buf, "MultiPolygon") == 0) {
+        //- nested polygons
         uint32_t poly_count = 0;
         plJsonObject *coords = pl_json_array_member(geom, "coordinates", &poly_count);
         if (!coords) return false;
@@ -417,6 +412,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
         }
         return true;
     } else if (strcmp(type_buf, "GeometryCollection") == 0) {
+        //- recursive collections
         uint32_t geom_count = 0;
         plJsonObject *geometries = pl_json_array_member(geom, "geometries", &geom_count);
         if (!geometries) return false;
@@ -437,6 +433,7 @@ _parse_geometry(DcGeojsonFeature *feat, plJsonObject *geom) {
         return true;
     }
 
+    // keep unsupported geometry from rejecting the document
     DC_LOG_WARN(DC_GEOJSON_TAG, "unsupported geometry type: %s", type_buf);
     return true;
 }

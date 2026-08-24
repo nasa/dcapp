@@ -1,30 +1,6 @@
-/*
-   dcapp_planet_chunkgen.c
+//~ planet chunk generator
 
-   Pilotlight app that converts a GeoTIFF DEM into .chu chunk files
-   for the planet rendering pipeline.
-
-   Usage:
-     pilot_light -a dcapp-planet-chunkgen <input_dem> <output_dir> [options]
-*/
-
-/*
-Index of this file:
-// [SECTION] includes
-// [SECTION] structs
-// [SECTION] forward declarations
-// [SECTION] extension globals
-// [SECTION] pl_app_load
-// [SECTION] pl_app_update
-// [SECTION] pl_app_shutdown
-// [SECTION] helpers
-// [SECTION] GDAL helpers
-// [SECTION] stereographic projection
-*/
-
-//-----------------------------------------------------------------------------
-// [SECTION] includes
-//-----------------------------------------------------------------------------
+// convert geotiff elevation rasters into planet chunk files
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,9 +23,7 @@ Index of this file:
 #define PL_JSON_IMPLEMENTATION
 #include "pl_json.h"
 
-//-----------------------------------------------------------------------------
-// [SECTION] structs
-//-----------------------------------------------------------------------------
+//~ types
 
 typedef struct _DcPlanetDemInfo {
     uint32_t width;
@@ -61,9 +35,7 @@ typedef struct _DcPlanetDemInfo {
     plProjectionParams projection;
 } DcPlanetDemInfo;
 
-//-----------------------------------------------------------------------------
-// [SECTION] forward declarations
-//-----------------------------------------------------------------------------
+//~ declarations
 
 static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info);
 static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
@@ -74,29 +46,25 @@ static void _show_help(void);
 static char *_get_stem(const char *path, char *buf, size_t buf_size);
 static void _pixel_to_projected_meters(const DcPlanetDemInfo *info, double pixel_x, double pixel_y, double *out_x, double *out_y);
 
-//-----------------------------------------------------------------------------
-// [SECTION] extension globals
-//-----------------------------------------------------------------------------
+//~ extension apis
 
 static const plIOI *_ext_ioi = NULL;
 static const plPlanetProcessorI *_ext_planet_processor = NULL;
 
-//-----------------------------------------------------------------------------
-// [SECTION] pl_app_load
-//-----------------------------------------------------------------------------
+//~ application entry points
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     if (app_data)
         return app_data;
 
-    // load extensions
+    //- load extensions and api tables
     const plExtensionRegistryI *extension_registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
     extension_registry->load("pl_planet_processor_ext", NULL, NULL, true);
 
-    // fetch APIs
+    // fetch required api tables
     _ext_ioi = pl_get_api_latest(api_registry, plIOI);
     _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
     if (!_ext_planet_processor) {
@@ -106,12 +74,12 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         return NULL;
     }
 
-    // get args (argv[0]=pilot_light, argv[1]=-a, argv[2]=dcapp-planet-chunkgen, argv[3]+=app args)
+    // expose only application arguments
     plIO *io = _ext_ioi->get_io();
     int argc = io->iArgc - 3;
     char **argv = io->apArgv + 3;
 
-    //---- parse arguments ----
+    //- parse arguments
 
     const char *input_dem = NULL;
     const char *output_dir = NULL;
@@ -163,7 +131,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         }
     }
 
-    //---- validate ----
+    //- validate inputs
 
     if (!input_dem || !output_dir) {
         fprintf(stderr, "Error: input_dem and output_dir are required\n");
@@ -181,14 +149,14 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     GDALAllRegister();
     CPLSetConfigOption("GDAL_PAM_ENABLED", "NO");
 
-    // derive prefix
+    // derive the output prefix from the input name
     char prefix_buf[256];
     if (!prefix) {
         _get_stem(input_dem, prefix_buf, sizeof(prefix_buf));
         prefix = prefix_buf;
     }
 
-    //---- get DEM properties ----
+    //- inspect the source dem
 
     printf("========================================\n");
     printf("dcapp-planet-chunkgen\n");
@@ -201,7 +169,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         return NULL;
     }
 
-    // use DEM radius if not overridden
+    // use the dem radius when none is supplied
     if (radius <= 0.0) {
         if (dem_info.radius > 0.0) {
             radius = dem_info.radius;
@@ -226,7 +194,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     if (dem_info.band_scale != 1.0)
         printf("DEM band scale: %.6f\n", dem_info.band_scale);
 
-    // auto-detect meters per pixel from DEM pixel scale
+    // derive meters per pixel from the dem scale
     if (meters_per_pixel <= 0.0) {
         if (dem_info.pixel_scale > 0.0) {
             meters_per_pixel = dem_info.pixel_scale;
@@ -238,7 +206,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         }
     }
 
-    // auto-detect elevation range
+    // measure an unspecified elevation range
     if (isnan(min_height) || isnan(max_height)) {
         printf("Computing min/max elevation...\n");
         double detected_min = 0.0, detected_max = 0.0;
@@ -246,8 +214,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             io->bRunning = false;
             return NULL;
         }
-        // GDALComputeRasterStatistics returns raw pixel values;
-        // apply GDAL's band scale to convert to terrain meters.
+        // apply the gdal band scale to raw raster statistics
         if (isnan(min_height))
             min_height = detected_min * dem_info.band_scale;
         if (isnan(max_height))
@@ -256,12 +223,12 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     printf("Elevation range: %.2f to %.2f m\n", min_height, max_height);
 
-    // default max_base_error from meters per pixel if not specified
+    // derive the base error from pixel scale when unspecified
     if (max_base_error <= 0.0f)
         max_base_error = 0.15f * (float)meters_per_pixel;
     printf("Max base error: %.2f\n", max_base_error);
 
-    //---- compute tile grid ----
+    //- compute the tile grid
 
     uint32_t cols = (dem_info.width + tile_size - 1) / tile_size;
     uint32_t rows = (dem_info.height + tile_size - 1) / tile_size;
@@ -279,11 +246,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     printf("Prefix: %s\n", prefix);
     printf("========================================\n\n");
 
-    //---- create output directory ----
+    //- allocate tile metadata
+
+    // create the output directory
 
     dc_utils_create_directory(output_dir);
 
-    //---- setup tile info ----
+    // initialize processor tile records
 
     plPlanetProcessTileInfo *tiles = calloc(tile_count, sizeof(plPlanetProcessTileInfo));
     if (!tiles) {
@@ -326,13 +295,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             tiles[idx].dOriginX = tile_center_x;
             tiles[idx].dOriginY = tile_center_y;
 
-            // file paths (real filesystem paths)
+            // store real filesystem paths for processor input and output
             snprintf(tiles[idx].acHeightMapFile, 256, "%s/%s_%u_%u.png", output_dir, prefix, col, row);
             snprintf(tiles[idx].acOutputFile, 256, "%s/%s_%u_%u.chu", output_dir, prefix, col, row);
         }
     }
 
-    //---- write metadata ----
+    //- write planet metadata
 
     printf("[Step 1/%d] Writing metadata...\n", 3);
 
@@ -395,9 +364,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
     free(json_buf);
 
-    //---- tile DEM with GDAL ----
+    //- write intermediate height tiles
 
-    // convert meter heights back to raw DEM values for -scale
+    // convert meter heights back to raw dem values for scaling
     double raw_min_h = min_height / dem_info.band_scale;
     double raw_max_h = max_height / dem_info.band_scale;
 
@@ -426,7 +395,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         }
     }
 
-    //---- process chunks ----
+    //- process planet chunks
 
     for (uint32_t i = 0; i < tile_count; i++)
         remove(tiles[i].acOutputFile);
@@ -435,7 +404,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     _ext_planet_processor->process(&planet_info);
 
-    //---- cleanup ----
+    //- remove intermediate data
 
     if (!keep_tiles) {
         printf("Cleaning up intermediate PNGs...\n");
@@ -454,24 +423,14 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     return NULL;
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] pl_app_update
-//-----------------------------------------------------------------------------
-
 PL_EXPORT void pl_app_update(void *app_data) {
     plIO *io = _ext_ioi->get_io();
     io->bRunning = false;
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] pl_app_shutdown
-//-----------------------------------------------------------------------------
-
 PL_EXPORT void pl_app_shutdown(void *app_data) {}
 
-//-----------------------------------------------------------------------------
-// [SECTION] helpers
-//-----------------------------------------------------------------------------
+//~ command line helpers
 
 static void _show_help(void) {
     printf("dcapp-planet-chunkgen - Convert GeoTIFF DEM to planet chunk files\n\n");
@@ -503,9 +462,7 @@ static char *_get_stem(const char *path, char *buf, size_t buf_size) {
     return buf;
 }
 
-//-----------------------------------------------------------------------------
-// [SECTION] GDAL helpers
-//-----------------------------------------------------------------------------
+//~ gdal helpers
 
 static bool _almost_zero(double v) {
     return fabs(v) < 1.0e-12;
@@ -524,6 +481,8 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
     info->projection.tPolarStereo.dLongitudeOfOrigin = 0.0;
     info->projection.tPolarStereo.dScaleFactor = 1.0;
 
+    //- open and validate the source raster
+
     GDALDatasetH ds = GDALOpen(dem_path, GA_ReadOnly);
     if (!ds) {
         fprintf(stderr, "Error: GDALOpen failed for: %s\n", dem_path);
@@ -538,7 +497,9 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
         return false;
     }
 
-    // get linear unit conversion factor (to meters)
+    //- resolve the spatial reference
+
+    // convert projected units to meters
     double to_meters = 1.0;
     OGRSpatialReferenceH srs = GDALGetSpatialRef(ds);
     if (!srs) {
@@ -566,6 +527,8 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
         GDALClose(ds);
         return false;
     }
+
+    //- read polar stereographic parameters
 
     OGRErr proj_err = OGRERR_NONE;
     double lat_origin = OSRGetProjParm(srs, SRS_PP_LATITUDE_OF_ORIGIN, -90.0, &proj_err);
@@ -605,6 +568,8 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
     info->projection.tPolarStereo.dFalseEasting = OSRGetProjParm(srs, SRS_PP_FALSE_EASTING, 0.0, NULL) * to_meters;
     info->projection.tPolarStereo.dFalseNorthing = OSRGetProjParm(srs, SRS_PP_FALSE_NORTHING, 0.0, NULL) * to_meters;
 
+    //- validate the geotransform
+
     double gt[6] = {0};
     if (GDALGetGeoTransform(ds, gt) != CE_None) {
         fprintf(stderr, "Error: DEM is missing a geotransform\n");
@@ -634,8 +599,9 @@ static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
     }
     info->pixel_scale = pixel_scale_x;
 
-    // raster band scale/offset for elevation unit conversion
-    // real_value = offset + raw_pixel * scale
+    //- read elevation unit scaling
+
+    // real values are raw pixels multiplied by the band scale
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
     if (band) {
         int bHasScale = 0;
@@ -693,6 +659,8 @@ static bool _write_height_tile(const char *input, const char *output, uint32_t s
         return false;
     }
 
+    //- read source samples
+
     GDALDatasetH src_ds = GDALOpen(input, GA_ReadOnly);
     if (!src_ds) {
         fprintf(stderr, "Error: GDALOpen failed for: %s\n", input);
@@ -742,6 +710,8 @@ static bool _write_height_tile(const char *input, const char *output, uint32_t s
         }
     }
     free(raw_data);
+
+    //- write the scaled png tile
 
     GDALDriverH mem_driver = GDALGetDriverByName("MEM");
     GDALDriverH png_driver = GDALGetDriverByName("PNG");

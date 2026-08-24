@@ -12,13 +12,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-// unique pixelstream source (shared across nodes with the same key)
+//~ internal types
+
+// each source is shared by nodes with the same key
 typedef struct _DcAppPixelstreamSource {
     DcAppPixelstreamType type;
     DcAppTextureId texture;
     bool is_connected;
 
-    // frame data (fetched once per frame by the source, not per-node)
+    // decoded once per frame for every node using this source
     unsigned char *frame;
     int frame_width;
     int frame_height;
@@ -40,17 +42,21 @@ struct DcAppPixelstreamContext {
     DcPsMjpegContext *mjpeg;
     DcPsShmemContext *shmem;
 
-    // pixelstream sources (unique, deduplicated by source key during XML parse)
+    // sources deduplicated by key during xml parsing
     _DcAppPixelstreamSource *sb_sources;
     char *sb_source_keys;       // stretchy buffer of null-terminated key strings
     int *sb_source_key_offsets; // offset into sb_source_keys for each source
 };
+
+//~ extension interfaces
 
 static const plMemoryI *_ext_memory = NULL;
 static const plImageI *_ext_image = NULL;
 
 #define PL_ALLOC(x) _ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+
+//~ pixelstream lifecycle
 
 void dc_app_pixelstream_init(plApiRegistryI *api_registry) {
     _ext_memory = pl_get_api_latest(api_registry, plMemoryI);
@@ -72,7 +78,7 @@ DcAppPixelstreamContext *dc_app_pixelstream_context_create(DcAppTextureContext *
 void dc_app_pixelstream_context_destroy(DcAppPixelstreamContext *pixelstreams) {
     if (!pixelstreams) return;
 
-    // cleanup pixelstream sources
+    //- release source-owned frame data
     for (int i = 0; i < sbcount(pixelstreams->sb_sources); i++) {
         _DcAppPixelstreamSource *src = &pixelstreams->sb_sources[i];
         if (src->type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
@@ -93,18 +99,20 @@ void dc_app_pixelstream_context_destroy(DcAppPixelstreamContext *pixelstreams) {
     sbfree(pixelstreams->sb_source_keys);
     sbfree(pixelstreams->sb_source_key_offsets);
 
-    // cleanup pixelstream global contexts
+    //- release transport contexts
     dc_ps_mjpeg_context_destroy(pixelstreams->mjpeg);
     dc_ps_shmem_context_destroy(pixelstreams->shmem);
     PL_FREE(pixelstreams);
 }
+
+//~ source registry
 
 DcAppPixelstreamSourceIndex dc_app_pixelstream_find(DcAppPixelstreamContext *pixelstreams, DcAppPixelstreamType type, const char *source_key) {
     if (!pixelstreams) return DC_APP_PIXELSTREAM_SOURCE_INDEX_UNDEFINED;
 
     const char *key = source_key ? source_key : "";
 
-    // check existing sources
+    // match both transport and source key
     for (int ii = 0; ii < sbcount(pixelstreams->sb_sources); ii++) {
         const char *existing_key = &pixelstreams->sb_source_keys[pixelstreams->sb_source_key_offsets[ii]];
         if (pixelstreams->sb_sources[ii].type == type && strcmp(existing_key, key) == 0) {
@@ -119,7 +127,7 @@ DcAppPixelstreamSourceIndex dc_app_pixelstream_add(DcAppPixelstreamContext *pixe
 
     const char *key = source_key ? source_key : "";
 
-    // create new source if not found
+    //- initialize the shared source record
     _DcAppPixelstreamSource src = {0};
     src.type = type;
     src.frame = NULL;
@@ -127,7 +135,7 @@ DcAppPixelstreamSourceIndex dc_app_pixelstream_add(DcAppPixelstreamContext *pixe
     src.frame_height = 0;
     src.is_connected = false;
 
-    // create GPU texture
+    // allocate a stable gpu texture before transport setup
     src.texture = (DcAppTextureId)dc_app_texture_create(
         pixelstreams->textures,
         DC_APP_PIXELSTREAM_MAX_WIDTH,
@@ -135,7 +143,7 @@ DcAppPixelstreamSourceIndex dc_app_pixelstream_add(DcAppPixelstreamContext *pixe
         "pixelstream",
         true);
 
-    // create source
+    //- connect the requested transport
     switch (type) {
         case DC_APP_PIXELSTREAM_TYPE_SHMEM:
             src.shmem.source = dc_ps_shmem_add_source(pixelstreams->shmem, key);
@@ -150,11 +158,10 @@ DcAppPixelstreamSourceIndex dc_app_pixelstream_add(DcAppPixelstreamContext *pixe
             break;
     }
 
-    // store key
+    // preserve the lookup key alongside the source
     sbpush(pixelstreams->sb_source_key_offsets, sbcount(pixelstreams->sb_source_keys));
     sbpushn(pixelstreams->sb_source_keys, key, (int)strlen(key) + 1);
 
-    // store source
     sbpush(pixelstreams->sb_sources, src);
     return sbcount(pixelstreams->sb_sources) - 1;
 }
@@ -175,12 +182,16 @@ int dc_app_pixelstream_get_count(const DcAppPixelstreamContext *pixelstreams) {
     return pixelstreams ? sbcount(pixelstreams->sb_sources) : 0;
 }
 
+//~ frame updates
+
 void dc_app_pixelstream_update(DcAppPixelstreamContext *pixelstreams) {
     if (!pixelstreams) return;
 
+    //- update transport state
     dc_ps_mjpeg_update(pixelstreams->mjpeg);
     dc_ps_shmem_update(pixelstreams->shmem);
 
+    //- decode newly available frames
     for (int ii = 0; ii < sbcount(pixelstreams->sb_sources); ii++) {
         _DcAppPixelstreamSource *src = &pixelstreams->sb_sources[ii];
 
@@ -242,7 +253,7 @@ void dc_app_pixelstream_update(DcAppPixelstreamContext *pixelstreams) {
                 break;
         }
 
-        // upload to GPU if we have frame data
+        // upload the most recent connected frame
         if (src->frame && src->is_connected) {
             dc_app_texture_update_rgba(
                 pixelstreams->textures,

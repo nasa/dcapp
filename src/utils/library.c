@@ -12,6 +12,8 @@
 
 #define _DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE 512
 
+//~ private state
+
 struct _DcLibrary {
 #ifdef _WIN32
     HMODULE handle;
@@ -23,6 +25,8 @@ struct _DcLibrary {
 static char _dc_utils_library_last_error_buffer[_DC_UTILS_LIBRARY_ERROR_BUFFER_SIZE];
 
 static void _dc_utils_library_capture_error(const char *fallback);
+
+//~ public functions
 
 DcLibrary *dc_utils_library_load(const char *path) {
     if (!path || !path[0]) {
@@ -89,6 +93,8 @@ void dc_utils_library_close(DcLibrary *lib) {
 const char *dc_utils_library_last_error(void) {
     return _dc_utils_library_last_error_buffer;
 }
+
+//~ private functions
 
 static void _dc_utils_library_capture_error(const char *fallback) {
 #ifdef _WIN32
