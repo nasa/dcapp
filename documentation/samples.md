@@ -24,8 +24,8 @@ built first:
 ./scripts/build.sh -c release
 ```
 
-Logic samples: **drawfunction1**, **drawfunction2**, **drawfunction3**,
-**drawfunction4**, **lissajous**, **planet**, and **ptz**.
+Logic samples: **api-test**, **drawfunction1**, **drawfunction2**,
+**drawfunction3**, **drawfunction4**, **lissajous**, **planet**, and **ptz**.
 
 External-service samples:
 
@@ -61,6 +61,7 @@ These samples demonstrate where C logic is a better fit than static XML.
 
 | Sample | Focus |
 |--------|-------|
+| api-test | Manually run generated Logic API test display |
 | drawfunction1 | Small hybrid XML/C DrawFunction examples |
 | drawfunction2 | DrawFunction C API reference grid |
 | drawfunction3 | XML controls changing a C-generated starfield |

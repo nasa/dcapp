@@ -61,12 +61,15 @@ mkdir -p "../../samples/drawfunction1/logic"
 mkdir -p "../../samples/planet/logic"
 mkdir -p "../../samples/drawfunction4/logic"
 mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/api-test/logic"
 
 # create lock file(s)
 echo LOCKING > "../../samples/ptz/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
+rm -f ../../samples/api-test/logic/logic.so
+rm -f ../../samples/api-test/logic/logic_*.so
 rm -f ../../samples/drawfunction1/logic/logic.so
 rm -f ../../samples/drawfunction1/logic/logic_*.so
 rm -f ../../samples/drawfunction2/logic/logic.so
@@ -81,6 +84,42 @@ rm -f ../../samples/planet/logic/logic.so
 rm -f ../../samples/planet/logic/logic_*.so
 rm -f ../../samples/ptz/logic/logic.so
 rm -f ../../samples/ptz/logic/logic_*.so
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../../pilotlight/out/dcapp-genheader ../../samples/api-test/api-test.xml || exit 1
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
+PL_LINKER_FLAGS="-ldl -lm "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../samples/api-test/logic/logic.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: api-test${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/api-test/logic/liblogic.so"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -355,12 +394,15 @@ mkdir -p "../../samples/drawfunction1/logic"
 mkdir -p "../../samples/planet/logic"
 mkdir -p "../../samples/drawfunction4/logic"
 mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/api-test/logic"
 
 # create lock file(s)
 echo LOCKING > "../../samples/ptz/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
+rm -f ../../samples/api-test/logic/logic.so
+rm -f ../../samples/api-test/logic/logic_*.so
 rm -f ../../samples/drawfunction1/logic/logic.so
 rm -f ../../samples/drawfunction1/logic/logic_*.so
 rm -f ../../samples/drawfunction2/logic/logic.so
@@ -375,6 +417,42 @@ rm -f ../../samples/planet/logic/logic.so
 rm -f ../../samples/planet/logic/logic_*.so
 rm -f ../../samples/ptz/logic/logic.so
 rm -f ../../samples/ptz/logic/logic_*.so
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../../pilotlight/out/dcapp-genheader ../../samples/api-test/api-test.xml || exit 1
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
+PL_LINKER_FLAGS="-ldl -lm "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../samples/api-test/logic/logic.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: api-test${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/api-test/logic/liblogic.so"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

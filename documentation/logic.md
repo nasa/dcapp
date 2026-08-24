@@ -388,6 +388,7 @@ the corresponding platform-specific artifact paths when those are needed.
 
 | Sample | Pattern |
 |--------|---------|
+| `samples/api-test` | Manually run generated API and callback test display |
 | `samples/drawfunction1` | XML owns cards and labels; C draws focused pieces |
 | `samples/drawfunction2` | C API reference gallery |
 | `samples/drawfunction3` | Hybrid XML/C procedural panel |

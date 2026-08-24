@@ -63,12 +63,15 @@ mkdir -p "../../samples/drawfunction1/logic"
 mkdir -p "../../samples/planet/logic"
 mkdir -p "../../samples/drawfunction4/logic"
 mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/api-test/logic"
 
 # create lock file(s)
 echo LOCKING > "../../samples/ptz/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
+rm -f ../../samples/api-test/logic/logic.dylib
+rm -f ../../samples/api-test/logic/logic_*.dylib
 rm -f ../../samples/drawfunction1/logic/logic.dylib
 rm -f ../../samples/drawfunction1/logic/logic_*.dylib
 rm -f ../../samples/drawfunction2/logic/logic.dylib
@@ -83,6 +86,50 @@ rm -f ../../samples/planet/logic/logic.dylib
 rm -f ../../samples/planet/logic/logic_*.dylib
 rm -f ../../samples/ptz/logic/logic.dylib
 rm -f ../../samples/ptz/logic/logic_*.dylib
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../../pilotlight/out/dcapp-genheader ../../samples/api-test/api-test.xml || exit 1
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES=""
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC -DNDEBUG "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../samples/api-test/logic/logic.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: api-test${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../../samples/api-test/logic/liblogic.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ../../pilotlight/out/dcapp-genheader ../../samples/drawfunction1/drawfunction1.xml || exit 1
@@ -412,12 +459,15 @@ mkdir -p "../../samples/drawfunction1/logic"
 mkdir -p "../../samples/planet/logic"
 mkdir -p "../../samples/drawfunction4/logic"
 mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/api-test/logic"
 
 # create lock file(s)
 echo LOCKING > "../../samples/ptz/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
+rm -f ../../samples/api-test/logic/logic.dylib
+rm -f ../../samples/api-test/logic/logic_*.dylib
 rm -f ../../samples/drawfunction1/logic/logic.dylib
 rm -f ../../samples/drawfunction1/logic/logic_*.dylib
 rm -f ../../samples/drawfunction2/logic/logic.dylib
@@ -432,6 +482,50 @@ rm -f ../../samples/planet/logic/logic.dylib
 rm -f ../../samples/planet/logic/logic_*.dylib
 rm -f ../../samples/ptz/logic/logic.dylib
 rm -f ../../samples/ptz/logic/logic_*.dylib
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../../pilotlight/out/dcapp-genheader ../../samples/api-test/api-test.xml || exit 1
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES=""
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../samples/api-test/logic/logic.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: api-test${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../../samples/api-test/logic/liblogic.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ../../pilotlight/out/dcapp-genheader ../../samples/drawfunction1/drawfunction1.xml || exit 1

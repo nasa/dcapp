@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!--
+        One self-checking display for the generated logic API. The normal
+        sample build runs dcapp-genheader before compiling logic/logic.c.
+    -->
+    <Variable Type="#_variable_string_" InitialValue="generated string">API_TEST_STRING</Variable>
+    <Variable Type="#_variable_string_" InitialValue="waiting for first frame">API_TEST_STATUS</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="7">API_TEST_INTEGER</Variable>
+    <Variable Type="#_variable_double_" InitialValue="2.5">API_TEST_DOUBLE</Variable>
+    <Variable Type="#_variable_boolean_" InitialValue="true">API_TEST_BOOLEAN</Variable>
+    <Variable Type="#_variable_double_" InitialValue="9.25">_API_TEST_LEADING_UNDERSCORE</Variable>
+
+    <Logic File="logic/logic.so"/>
+
+    <Window Title="dcapp API Test" X="30" Y="30" Width="960" Height="680"
+        VirtualWidth="960" VirtualHeight="680" UpdateRate="60">
+        <Panel VirtualWidth="960" VirtualHeight="680" BackgroundColor="0.035 0.042 0.052 1">
+            <Text X="32" Y="640" Size="28" FillColor="0.88 0.96 1 1">dcapp API Test</Text>
+            <Text X="32" Y="612" Size="12" FillColor="0.52 0.64 0.74 1">One generated header, one logic file, and four plainly visible smoke-test groups.</Text>
+
+            <!-- 1. Generated variables and the ordinary Function callback. -->
+            <Container X="32" Y="348" Width="432" Height="236" VirtualWidth="432" VirtualHeight="236">
+                <Rectangle Width="432" Height="236" Rounded="10" FillColor="0.075 0.095 0.115 1" LineColor="0.20 0.38 0.50 1"/>
+                <Text X="20" Y="202" Size="18" FillColor="0.76 0.92 1 1">1. Bindings + callbacks</Text>
+                <Text X="20" Y="174" Size="11" FillColor="0.54 0.68 0.78 1">All four generated pointer types and user_data are asserted in C.</Text>
+                <Text X="20" Y="132" Size="13" FillColor="0.84 0.90 0.94 1">String: @API_TEST_STRING</Text>
+                <Text X="20" Y="104" Size="13" FillColor="0.84 0.90 0.94 1">Integer: @API_TEST_INTEGER(%d)</Text>
+                <Text X="20" Y="76" Size="13" FillColor="0.84 0.90 0.94 1">Double: @API_TEST_DOUBLE(%.1f)</Text>
+                <Text X="20" Y="38" Size="12" FillColor="0.42 0.88 0.58 1">@API_TEST_STATUS</Text>
+                <Function Name="api_test_function"/>
+            </Container>
+
+            <!-- 2. Representative primitive, placement, container, and stencil calls. -->
+            <Container X="496" Y="348" Width="432" Height="236" VirtualWidth="432" VirtualHeight="236">
+                <Rectangle Width="432" Height="236" Rounded="10" FillColor="0.095 0.080 0.115 1" LineColor="0.42 0.30 0.54 1"/>
+                <Text X="20" Y="202" Size="18" FillColor="0.92 0.84 1 1">2. Drawing</Text>
+                <Text X="20" Y="174" Size="11" FillColor="0.68 0.58 0.76 1">Primitives, placement, result areas, containers, text, and stencil.</Text>
+                <DrawFunction Name="draw_api_test_graphics">
+                    <Arg Type="#_variable_string_" Value="@API_TEST_STRING"/>
+                    <Arg Type="#_variable_integer_" Value="@API_TEST_INTEGER"/>
+                    <Arg Type="#_variable_double_" Value="@API_TEST_DOUBLE"/>
+                    <Arg Type="#_variable_boolean_" Value="@API_TEST_BOOLEAN"/>
+                </DrawFunction>
+            </Container>
+
+            <!-- 3. Texture loading plus every mouse registration/query shape. -->
+            <Container X="32" Y="80" Width="432" Height="236" VirtualWidth="432" VirtualHeight="236">
+                <Rectangle Width="432" Height="236" Rounded="10" FillColor="0.070 0.110 0.090 1" LineColor="0.24 0.50 0.34 1"/>
+                <Text X="20" Y="202" Size="18" FillColor="0.80 1 0.86 1">3. Texture + mouse</Text>
+                <Text X="20" Y="174" Size="11" FillColor="0.52 0.72 0.58 1">Loads a real image, draws it, and registers/query-checks mouse targets.</Text>
+                <DrawFunction Name="draw_api_test_resources"/>
+            </Container>
+
+            <!-- 4. Planet table wiring and data-only breadcrumbs need no terrain dataset. -->
+            <Container X="496" Y="80" Width="432" Height="236" VirtualWidth="432" VirtualHeight="236">
+                <Rectangle Width="432" Height="236" Rounded="10" FillColor="0.105 0.090 0.065 1" LineColor="0.50 0.40 0.22 1"/>
+                <Text X="20" Y="202" Size="18" FillColor="1 0.92 0.72 1">4. Planet contract</Text>
+                <Text X="20" Y="174" Size="11" FillColor="0.72 0.64 0.48 1">Checks every planet entry and runs cartesian breadcrumbs without terrain.</Text>
+                <DrawFunction Name="draw_api_test_planet"/>
+            </Container>
+
+            <Text X="480" Y="42" Size="11" FillColor="0.50 0.58 0.64 1" LocalAlignX="#_align_center_">Close normally after the panels render; shutdown prints PASS or reports a failed assertion.</Text>
+        </Panel>
+    </Window>
+</DCAPP>

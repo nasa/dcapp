@@ -193,11 +193,17 @@ samples:
 ./bin/dcapp-validate.sh samples/includes/includes.xml --preprocessed cache/includes.preprocessed.xml
 ```
 
-For logic API or generated-header changes, regenerate an affected logic sample,
-build its logic library, and compare the public and internal function-table
-field order. Compile the generated header as C++ as well when changing shared
-types or inline helpers. `scripts/check-logic-api.sh` performs these checks and
-is run by the top-level build.
+For logic API or generated-header changes, update `samples/api-test`, then run
+the normal build so its header is regenerated and its logic library is compiled.
+Manually run the resulting display when graphics are available:
+
+```bash
+./bin/dcapp.sh samples/api-test/api-test.xml
+```
+
+Let the visible panels render, then close the display normally so its shutdown
+checks run. The sample is the readable inventory of supported Logic API entry
+points. Keep its declarations and calls current whenever the public API changes.
 
 For planet changes, run the relevant planet tool or sample that exercises the
 changed path, such as `dcapp-planet-chunkgen`, `dcapp-planet-snapshot`, or a

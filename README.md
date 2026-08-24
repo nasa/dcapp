@@ -52,7 +52,8 @@ bin\dcapp.bat samples\welcome\welcome.xml
 Start with `samples/welcome/welcome.xml`, then browse focused samples such as
 `primitives`, `styles`, `includes`, `conditionals`, `buttons`, `events`,
 `slider`, `stencil`, `drawfunction1` through `drawfunction4`, `trick`,
-`pixelstream-mjpeg`, and `planet`.
+`pixelstream-mjpeg`, and `planet`. `api-test` is the manually run generated
+Logic API test display.
 
 ## Credits
 

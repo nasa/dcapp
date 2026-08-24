@@ -362,17 +362,6 @@ task_entries = [
     },
 ]
 
-# The generated API fixture uses a POSIX shell runner. It remains part of the
-# normal Unix build and is also exposed separately for quick iteration.
-if plat != "Windows":
-    task_entries.append({
-        "label": "check generated logic API",
-        "type": "shell",
-        "command": "${workspaceFolder}/scripts/check-logic-api.sh",
-        "group": "test",
-        "problemMatcher": "$gcc",
-    })
-
 tasks = {
     "version": "2.0.0",
     "tasks": task_entries,

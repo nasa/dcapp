@@ -159,6 +159,7 @@ Good first samples:
 | `buttons`, `events`, `slider` | Interaction |
 | `stencil`, `blink` | Display effects |
 | `drawfunction1` through `drawfunction4` | C procedural drawing |
+| `api-test` | Manually run generated Logic API test display |
 | `trick` | Trick Variable Server integration |
 | `pixelstream-mjpeg` | MJPEG video stream |
 | `planet` | Planet terrain rendering |

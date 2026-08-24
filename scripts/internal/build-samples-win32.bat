@@ -66,9 +66,13 @@
 
 @if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
 
+@if not exist "../../samples/api-test/logic" @mkdir "../../samples/api-test/logic"
+
 :: create lock file(s)
 @echo LOCKING > "../../samples/ptz/logic/lock.tmp"
 
+@if exist "../../samples/api-test/logic/logic.dll" del "..\..\samples\api-test\logic\logic.dll"
+@if exist "../../samples/api-test/logic/logic_*.pdb" del "..\..\samples\api-test\logic\logic_*.pdb"
 @if exist "../../samples/drawfunction1/logic/logic.dll" del "..\..\samples\drawfunction1\logic\logic.dll"
 @if exist "../../samples/drawfunction1/logic/logic_*.pdb" del "..\..\samples\drawfunction1\logic\logic_*.pdb"
 @if exist "../../samples/drawfunction2/logic/logic.dll" del "..\..\samples\drawfunction2\logic\logic.dll"
@@ -83,6 +87,39 @@
 @if exist "../../samples/planet/logic/logic_*.pdb" del "..\..\samples\planet\logic\logic_*.pdb"
 @if exist "../../samples/ptz/logic/logic.dll" del "..\..\samples\ptz\logic\logic.dll"
 @if exist "../../samples/ptz/logic/logic_*.pdb" del "..\..\samples\ptz\logic\logic_*.pdb"
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/api-test/api-test.xml || exit /b 1
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+@set PL_SOURCES="../../samples/api-test/logic/logic.c"
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: api-test[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/api-test/logic/logic.dll" -Fo"../../samples/api-test/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/api-test/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanuprelease
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_api-test
+
+@del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -327,6 +364,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/ptz/logic/logic.dll" -Fo".
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../../samples/ptz/logic/lock.tmp" del "..\..\samples\ptz\logic\lock.tmp"
@@ -356,9 +394,13 @@ goto ExitLabel
 
 @if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
 
+@if not exist "../../samples/api-test/logic" @mkdir "../../samples/api-test/logic"
+
 :: create lock file(s)
 @echo LOCKING > "../../samples/ptz/logic/lock.tmp"
 
+@if exist "../../samples/api-test/logic/logic.dll" del "..\..\samples\api-test\logic\logic.dll"
+@if exist "../../samples/api-test/logic/logic_*.pdb" del "..\..\samples\api-test\logic\logic_*.pdb"
 @if exist "../../samples/drawfunction1/logic/logic.dll" del "..\..\samples\drawfunction1\logic\logic.dll"
 @if exist "../../samples/drawfunction1/logic/logic_*.pdb" del "..\..\samples\drawfunction1\logic\logic_*.pdb"
 @if exist "../../samples/drawfunction2/logic/logic.dll" del "..\..\samples\drawfunction2\logic\logic.dll"
@@ -373,6 +415,39 @@ goto ExitLabel
 @if exist "../../samples/planet/logic/logic_*.pdb" del "..\..\samples\planet\logic\logic_*.pdb"
 @if exist "../../samples/ptz/logic/logic.dll" del "..\..\samples\ptz\logic\logic.dll"
 @if exist "../../samples/ptz/logic/logic_*.pdb" del "..\..\samples\ptz\logic\logic_*.pdb"
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/api-test/api-test.xml || exit /b 1
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+@set PL_SOURCES="../../samples/api-test/logic/logic.c"
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: api-test[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/api-test/logic/logic.dll" -Fo"../../samples/api-test/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/api-test/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanupdebug
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_api-test
+
+@del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -617,6 +692,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/ptz/logic/logic.dll" -Fo".
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../../samples/ptz/logic/lock.tmp" del "..\..\samples\ptz\logic\lock.tmp"
