@@ -11,8 +11,10 @@ import os
 import sys
 import platform as plat
 
+
 def fwd(path):
     return path.replace("\\", "/")
+
 
 # default pilotlight location (absolute)
 file_dir_rel = os.path.dirname(__file__)
@@ -34,6 +36,21 @@ import build.core as pl
 import build.backend_win32 as win32
 import build.backend_linux as linux
 import build.backend_macos as apple
+
+
+def normalize_generated_text(path, line_ending):
+    with open(path, "r", newline="") as source:
+        text = source.read()
+
+    has_final_newline = text.endswith(("\r", "\n"))
+    lines = [line.rstrip(" \t") for line in text.splitlines()]
+    normalized = line_ending.join(lines)
+    if has_final_newline:
+        normalized += line_ending
+
+    with open(path, "w", newline="") as output:
+        output.write(normalized)
+
 
 # -----------------------------------------------------------------------------
 # [SECTION] project
@@ -57,7 +74,9 @@ for entry in sorted(os.listdir(samples_dir)):
     full_path = samples_dir + "/" + entry
     if os.path.isdir(full_path):
         logic_path = os.path.join(full_path, "logic")
-        if os.path.isdir(logic_path):
+        sample_xml = os.path.join(full_path, entry + ".xml")
+        logic_source = os.path.join(logic_path, "logic.c")
+        if os.path.isfile(sample_xml) and os.path.isfile(logic_source):
             abs_path = os.path.abspath(full_path)
             sample_dirs_abs.append(abs_path)
 sample_dirs_rel = [fwd(os.path.relpath(dir_abs, build_script_out_dir_abs)) for dir_abs in sample_dirs_abs]
@@ -240,3 +259,7 @@ out_script_linux = build_script_out_dir_abs + "/" + "build-samples-linux.sh"
 win32.generate_build(out_script_win32)
 apple.generate_build(out_script_macos)
 linux.generate_build(out_script_linux)
+
+normalize_generated_text(out_script_win32, "\r\n")
+normalize_generated_text(out_script_macos, "\n")
+normalize_generated_text(out_script_linux, "\n")

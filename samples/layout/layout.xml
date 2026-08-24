@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">ANGLE</Variable>
+
+    <Window Title="Layout and Transforms" X="30" Y="30" Width="960" Height="700">
+        <Default>
+            <Text Size="12" FillColor="0.82 0.86 0.9"/>
+        </Default>
+
+        <Style Name="Frame">
+            <Rectangle FillColor="0.09 0.11 0.15" LineColor="0.25 0.34 0.43" LineWidth="1"/>
+        </Style>
+        <Style Name="Heading">
+            <Text Size="14" FillColor="0.35 0.78 1"/>
+        </Style>
+        <Style Name="Caption">
+            <Text Size="10" FillColor="0.52 0.6 0.68"/>
+        </Style>
+        <Style Name="Guide">
+            <Line LineColor="0.2 0.3 0.38" LineWidth="1"/>
+        </Style>
+        <Style Name="Well">
+            <Rectangle FillColor="0.07 0.09 0.12"/>
+        </Style>
+        <Style Name="Pivot">
+            <Ellipse Radius="4" FillColor="1 0.85 0.2"/>
+        </Style>
+
+        <Panel VirtualWidth="960" VirtualHeight="700" BackgroundColor="0.045 0.055 0.075">
+            <Set Variable="ANGLE" Operator="#_set_add_">0.7</Set>
+            <If Value1="@ANGLE" Operator="#_if_gt_" Value2="360">
+                <Set Variable="ANGLE" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <Text X="40" Y="660" Size="24" FillColor="0.92 0.96 1">Layout and transforms</Text>
+            <Text X="920" Y="665" LocalAlignX="#_align_right_" Style="Caption">virtual space, anchors, and pivots</Text>
+
+            <!-- This 520x300 viewport is authored in a 1040x600 coordinate system. -->
+            <Container X="40" Y="330" Width="520" Height="300" VirtualWidth="1040" VirtualHeight="600">
+                <Rectangle Style="Frame" Width="1040" Height="600"/>
+                <Text X="32" Y="548" Style="Heading">Scaled viewport</Text>
+                <Text X="32" Y="510" Style="Caption">520 x 300 physical / 1040 x 600 virtual</Text>
+
+                <Line Style="Guide">
+                    <Vertex X="520" Y="40"/>
+                    <Vertex X="520" Y="560"/>
+                </Line>
+                <Line Style="Guide">
+                    <Vertex X="40" Y="300"/>
+                    <Vertex X="1000" Y="300"/>
+                </Line>
+
+                <!-- Children of a nested container use its local origin. -->
+                <Container X="80" Y="90" Width="360" Height="250">
+                    <Rectangle Width="360" Height="250" FillColor="0.12 0.17 0.22" LineColor="0.32 0.48 0.6" LineWidth="2"/>
+                    <Text X="20" Y="210" Style="Caption">nested container</Text>
+                    <Ellipse X="70" Y="70" Radius="14" FillColor="0.2 0.75 0.95"/>
+                    <Text X="96" Y="64" Style="Caption">local (70, 70)</Text>
+                </Container>
+
+                <Rectangle X="680" Y="120" Width="250" Height="150" FillColor="0.15 0.25 0.2" LineColor="0.3 0.68 0.48" LineWidth="2"/>
+                <Text X="805" Y="195" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="0.55 0.95 0.7">virtual coordinates</Text>
+
+                <Text X="20" Y="20" Style="Caption">0, 0</Text>
+                <Text X="1020" Y="580" LocalAlignX="#_align_right_" LocalAlignY="#_align_top_" Style="Caption">1040, 600</Text>
+            </Container>
+
+            <Container X="590" Y="330" Width="330" Height="300">
+                <Rectangle Style="Frame" Width="330" Height="300"/>
+                <Text X="24" Y="260" Style="Heading">Parent + local anchors</Text>
+                <Text X="24" Y="238" Style="Caption">ParentAlign chooses a point on the parent.</Text>
+                <Text X="24" Y="221" Style="Caption">LocalAlign chooses the element anchor.</Text>
+
+                <Container X="30" Y="28" Width="270" Height="175">
+                    <Rectangle Style="Well" Width="270" Height="175" LineColor="0.22 0.28 0.34" LineWidth="1"/>
+
+                    <Rectangle Width="72" Height="32"
+                        ParentAlignX="#_align_left_" ParentAlignY="#_align_bottom_"
+                        LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
+                        FillColor="0.82 0.34 0.3"/>
+
+                    <Rectangle Width="72" Height="32"
+                        ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        FillColor="0.25 0.72 0.48"/>
+
+                    <Rectangle Width="72" Height="32"
+                        ParentAlignX="#_align_right_" ParentAlignY="#_align_top_"
+                        LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
+                        FillColor="0.25 0.52 0.86"/>
+
+                    <Text X="10" Y="10" Style="Caption">left / bottom</Text>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="9" FillColor="1 1 1">center / middle</Text>
+                    <Text X="-10" Y="-10"
+                        ParentAlignX="#_align_right_" ParentAlignY="#_align_top_"
+                        LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
+                        Style="Caption">right / top</Text>
+                </Container>
+            </Container>
+
+            <Container X="40" Y="55" Width="880" Height="245">
+                <Rectangle Style="Frame" Width="880" Height="245"/>
+                <Text X="24" Y="205" Style="Heading">Three pivot choices</Text>
+                <Text X="24" Y="183" Style="Caption">The yellow mark is the point used by Rotation.</Text>
+
+                <Container X="35" Y="25" Width="245" Height="135">
+                    <Rectangle Style="Well" Width="245" Height="135"/>
+                    <Ellipse Style="Pivot" X="122" Y="72"/>
+                    <Rectangle X="122" Y="72" Width="130" Height="10"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
+                        Rotation="@ANGLE" FillColor="0.3 0.78 0.94"/>
+                    <Text X="122" Y="14" LocalAlignX="#_align_center_" Style="Caption">element center</Text>
+                </Container>
+
+                <Container X="318" Y="25" Width="245" Height="135">
+                    <Rectangle Style="Well" Width="245" Height="135"/>
+                    <Ellipse Style="Pivot" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"/>
+                    <Rectangle X="168" Y="68" Width="52" Height="14"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        PivotParentAlignX="#_align_center_" PivotParentAlignY="#_align_middle_"
+                        Rotation="@ANGLE" FillColor="0.38 0.82 0.5"/>
+                    <Text X="122" Y="14" LocalAlignX="#_align_center_" Style="Caption">parent center</Text>
+                </Container>
+
+                <Container X="600" Y="25" Width="245" Height="135">
+                    <Rectangle Style="Well" Width="245" Height="135"/>
+                    <Ellipse Style="Pivot" X="72" Y="68"/>
+                    <Rectangle X="155" Y="68" Width="52" Height="14"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        PivotX="72" PivotY="68"
+                        Rotation="@ANGLE" FillColor="0.88 0.43 0.38"/>
+                    <Text X="122" Y="14" LocalAlignX="#_align_center_" Style="Caption">explicit 72, 68</Text>
+                </Container>
+            </Container>
+        </Panel>
+    </Window>
+</DCAPP>

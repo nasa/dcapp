@@ -2440,8 +2440,8 @@ static DcAppNodeIndex _process_xml_node_pixelstream(DcAppDisplayBuilderContext *
     {
         xmlChar *raw_key = NULL;
         if (ps_type == DC_APP_PIXELSTREAM_TYPE_SHMEM) {
-            raw_key = xmlGetProp(xml_node, BAD_CAST "SharedMemoryKey");
-            if (!raw_key) raw_key = xmlGetProp(xml_node, BAD_CAST "File");
+            raw_key = xmlGetProp(xml_node, BAD_CAST "File");
+            if (!raw_key) raw_key = xmlGetProp(xml_node, BAD_CAST "SharedMemoryKey");
             if (!raw_key) raw_key = xmlGetProp(xml_node, BAD_CAST "URL");
         } else if (ps_type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
             raw_key = xmlGetProp(xml_node, BAD_CAST "URL");
@@ -2463,7 +2463,7 @@ static DcAppNodeIndex _process_xml_node_pixelstream(DcAppDisplayBuilderContext *
         }
         if (source_key[0] == '\0') {
             if (ps_type == DC_APP_PIXELSTREAM_TYPE_SHMEM)
-                DC_LOG_ERROR("PixelStream", "Missing 'SharedMemoryKey' or 'File' attribute for shmem type");
+                DC_LOG_ERROR("PixelStream", "Missing 'File' attribute for shmem type");
             else if (ps_type == DC_APP_PIXELSTREAM_TYPE_MJPEG)
                 DC_LOG_ERROR("PixelStream", "Missing 'URL' attribute for mjpeg type");
         }

@@ -3,10 +3,6 @@
 
 #define RIPPLE_COUNT 8
 
-// DrawFunction 4 is the "full procedural panel" version. Unlike drawfunction1
-// and drawfunction3, the XML only creates a Panel; this file owns the visual
-// state, animation, mouse input, and generated primitive counts.
-
 typedef struct Ripple {
     float x;
     float y;
@@ -21,14 +17,11 @@ static Ripple g_ripples[RIPPLE_COUNT];
 void display_init(DcAppContext *app_ctx, void **user_data) {
     (void)user_data;
     (void)app_ctx;
-    // Static globals start zeroed, so there is nothing to initialize here.
 }
 
 void display_draw(DcAppContext *app_ctx, void *user_data) {
     (void)user_data;
     (void)app_ctx;
-    // This logic callback runs at the Window UpdateRate. It advances the sample's
-    // animation clock and ages out old click ripples.
     g_time += 1.0f / 60.0f;
     for (int i = 0; i < RIPPLE_COUNT; i++) {
         if (!g_ripples[i].active) continue;
@@ -42,7 +35,6 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
 void display_close(DcAppContext *app_ctx, void *user_data) {
     (void)user_data;
     (void)app_ctx;
-    // No persistent resources to release.
 }
 
 void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
@@ -50,13 +42,7 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
     (void)args;
     if (!dc_draw || !dc_mouse) return;
 
-    // The XML for this sample only creates a Panel and calls this function.
-    // The changing primitive count, animation, and click interaction all live
-    // here in C, where loops and state are cheap.
-    //
-    // Register the whole panel as a mouse target. The event query uses dcapp's
-    // resolved topmost target, so XML and DrawFunction hit regions compete in
-    // the same mouse event system.
+    // XML and DrawFunction hit regions share the same topmost-target rules.
     dc_mouse->rect(draw_ctx, "ripple_panel", (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f});
     if (dc_mouse->pressed(draw_ctx, "ripple_panel")) {
         const DcMouse *mouse = dc_mouse->get_state(draw_ctx);
@@ -78,11 +64,7 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
                                                                                        .a = 1.0f,
                                                                                    });
 
-    // ---------------------------------------------------------------------
-    // Generated Square Field
-    // ---------------------------------------------------------------------
-    // The grid is intentionally not XML. The cell count, colors, sizes, and
-    // ripple response are all products of loops and math.
+    // Square field.
     const int cols = 40;
     const int rows = 23;
     const float left = 54.0f;
@@ -98,8 +80,6 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
             float v = 0.5f + 0.5f * sinf(nx * 14.0f + g_time * 1.6f + sinf(ny * 9.0f - g_time));
             float hit = 0.0f;
 
-            // Each active click ripple contributes brightness and size to
-            // cells near its expanding wavefront.
             for (int i = 0; i < RIPPLE_COUNT; i++) {
                 if (!g_ripples[i].active) continue;
                 float dx = cx - g_ripples[i].x;
@@ -127,8 +107,6 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
         }
     }
 
-    // Draw the ripple rings after the square field so the user can see where
-    // each click is propagating from.
     for (int i = 0; i < RIPPLE_COUNT; i++) {
         if (!g_ripples[i].active) continue;
         float life = 1.0f - g_ripples[i].age / 1.45f;
@@ -144,12 +122,7 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
         dc_draw->circle(draw_ctx, (DcVec2){g_ripples[i].x, g_ripples[i].y}, g_ripples[i].age * 260.0f, ring);
     }
 
-    // ---------------------------------------------------------------------
-    // Signal Analyzer Strip
-    // ---------------------------------------------------------------------
-    // The container moves the local origin to the strip. The stencil clips the
-    // generated bars to the same rounded shape, which is exactly the kind of
-    // thing that is awkward to express compactly in XML.
+    // Signal strip, clipped to the rounded container.
     if (dc_draw->container_push(draw_ctx, (DcVec2){54.0f, 24.0f}, (DcVec2){792.0f, 70.0f}, (DcVec2){792.0f, 70.0f})) {
         dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcVec4){
                                                                                                         .r = 0.070f,
@@ -163,8 +136,6 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
             dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, dc_stencil_color());
 
             dc_draw->stencil_draw(draw_ctx);
-            // Ninety-six bars are generated from a formula. This keeps the XML
-            // tiny while still drawing a dense, data-display-like element.
             for (int i = 0; i < 96; i++) {
                 float u = (float)i / 95.0f;
                 float h = 10.0f + 36.0f * (0.5f + 0.5f * sinf(u * 28.0f + g_time * 3.0f));

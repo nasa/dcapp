@@ -6,9 +6,6 @@
 #define FIELD_TOP 600.0f
 #define FIELD_HEIGHT (FIELD_TOP - FIELD_BOTTOM)
 
-// DrawFunction 3 shows the hybrid pattern at scale. XML owns the stable count
-// controls. C owns a generated star list and draws as many stars as requested.
-
 typedef struct Star {
     float x;
     float y;
@@ -75,10 +72,6 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
         }
     }
 
-    dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcVec4){.r = 0.10f, .g = 0.11f, .b = 0.13f, .a = 0.62f});
-    dc_draw->rounded_rect(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcStroke){.color = (DcVec4){.r = 0.44f, .g = 0.50f, .b = 0.58f, .a = 0.28f}, .width = 1.0f});
-    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 557.0f}, "C-generated starfield", (DcTextStyle){.size = 18.0f, .color = (DcVec4){.r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 1.0f}}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
-    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 535.0f}, "Each star is just position, speed, size, and color.", (DcTextStyle){.size = 10.0f, .color = (DcVec4){.r = 0.68f, .g = 0.76f, .b = 0.84f, .a = 1.0f}}, (DcPlacement){.local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE}, NULL);
 }
 
 static float rand_unit(void) {

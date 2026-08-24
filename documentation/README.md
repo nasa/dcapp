@@ -1,10 +1,5 @@
-# dcapp Documentation
+# Documentation
 
-Start with:
-
-- [Getting Started](getting-started.md) for installation, building, running
-  displays, and the basic user-side workflow.
-- [Documentation Index](index.md) for the full topic map.
-
-This directory is intentionally flat. Topic docs live here directly rather than
-inside nested documentation directories.
+[Getting Started](getting-started.md) covers dependencies, builds, and running
+a display. The [documentation index](index.md) links to the authoring,
+integration, and project internals references.

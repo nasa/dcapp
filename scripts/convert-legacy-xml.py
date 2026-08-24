@@ -115,7 +115,7 @@ COMMENT_OUT_ATTRIBUTES = {
 # Elements to comment out with TODO markers
 # Maps element name -> (marker, message)
 COMMENT_OUT_ELEMENTS = {
-    'ADI': ('TODO(deprecated)', 'Use TexturedSphere instead of ADI'),
+    'ADI': ('TODO(deprecated)', 'Use Sphere with an Image attribute instead of ADI'),
     'Animation': ('TODO(migration)', 'Animation not yet supported'),
     'CAN': ('TODO(deprecated)', 'CAN hardware interface not yet supported'),
     'Hagstrom': ('TODO(deprecated)', 'Hagstrom bezel keyboard not yet supported'),

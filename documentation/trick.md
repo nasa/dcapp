@@ -1,17 +1,7 @@
 # TrickIO
 
-`TrickIO` connects dcapp variables to a running Trick simulation through the
-Trick Variable Server.
-
-Use `TrickIO` when dcapp is acting as a live display or control panel for a
-Trick simulation. It lets XML and logic read simulation values as normal dcapp
-variables, and optionally send command variables back to Trick when they change.
-
-If the data is only display-local state, keep it as a dcapp variable. If the
-value belongs to the simulation or must command the simulation, map it through
-`TrickFrom` or `TrickTo`.
-
-## XML Shape
+`TrickIO` maps dcapp variables to a Trick Variable Server. `TrickFrom` receives
+simulation values; `TrickTo` sends a dcapp variable when its value changes.
 
 ```xml
 <Variable Type="#_variable_double_">posX</Variable>
@@ -27,34 +17,32 @@ value belongs to the simulation or must command the simulation, map it through
 </TrickIO>
 ```
 
-`TrickFrom` receives values from Trick into dcapp variables. `TrickTo` sends
-dcapp variable changes back to Trick. The text content of each `TrickVariable`
-is the dcapp variable name.
+The text inside `TrickVariable` is the dcapp variable name. It does not use the
+`@` prefix.
 
 ## Attributes
 
 | Element | Attribute | Meaning |
 |---------|-----------|---------|
-| `TrickIO` | `Host` | Trick Variable Server host |
-| `TrickIO` | `Port` | Trick Variable Server port |
-| `TrickIO` | `DataRate` | Update period in seconds |
+| `TrickIO` | `Host` | Required Trick Variable Server host |
+| `TrickIO` | `Port` | Required Trick Variable Server port |
+| `TrickIO` | `DataRate` | Update period in seconds; defaults to `0.1` |
 | `TrickIO` | `ConnectedVariable` | Optional dcapp boolean updated with connection status |
 | `TrickVariable` | `Name` | Trick variable path |
 | `TrickVariable` | `Units` | Optional Trick unit conversion string |
 
-## Sample
+## Running the sample
 
-Run the Trick simulation first:
+Build and run the Trick simulation first:
 
 ```bash
 cd samples/trick/sim
+trick-CP
 ./S_main_*.exe RUN_test/input.py
 ```
 
-Then run the display:
+From the repository root in a second terminal, run the display:
 
 ```bash
 ./bin/dcapp.sh samples/trick/trick.xml
 ```
-
-See also [integration.md](integration.md) for the cross-protocol overview.

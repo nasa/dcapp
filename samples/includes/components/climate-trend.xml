@@ -1,0 +1,55 @@
+<Dummy>
+    <Container X="40" Y="80" Width="540" Height="430">
+        <Rectangle Style="Card" Width="540" Height="430"/>
+        <Text X="24" Y="392" Style="Label">AIR TEMPERATURE · LAST 24 HOURS</Text>
+        <Text X="516" Y="392" LocalAlignX="#_align_right_" Style="Label" FillColor="#Leaf">IN RANGE</Text>
+
+        <Rectangle X="54" Y="86" Width="438" Height="270" FillColor="#Inset"/>
+        <Rectangle X="54" Y="175" Width="438" Height="72" FillColor="0.18 0.35 0.17 0.42"/>
+
+        <Line Style="Grid">
+            <Vertex X="54" Y="121"/>
+            <Vertex X="492" Y="121"/>
+        </Line>
+        <Line Style="Grid">
+            <Vertex X="54" Y="193"/>
+            <Vertex X="492" Y="193"/>
+        </Line>
+        <Line Style="Grid">
+            <Vertex X="54" Y="265"/>
+            <Vertex X="492" Y="265"/>
+        </Line>
+        <Line Style="Grid">
+            <Vertex X="54" Y="337"/>
+            <Vertex X="492" Y="337"/>
+        </Line>
+
+        <Text X="44" Y="116" LocalAlignX="#_align_right_" Style="Label">16</Text>
+        <Text X="44" Y="188" LocalAlignX="#_align_right_" Style="Label">20</Text>
+        <Text X="44" Y="260" LocalAlignX="#_align_right_" Style="Label">24</Text>
+        <Text X="44" Y="332" LocalAlignX="#_align_right_" Style="Label">28</Text>
+
+        <Text X="54" Y="64" Style="Label">00:00</Text>
+        <Text X="164" Y="64" Style="Label">06:00</Text>
+        <Text X="273" Y="64" LocalAlignX="#_align_center_" Style="Label">12:00</Text>
+        <Text X="382" Y="64" LocalAlignX="#_align_center_" Style="Label">18:00</Text>
+        <Text X="492" Y="64" LocalAlignX="#_align_right_" Style="Label">NOW</Text>
+
+        <Line Style="Temperature">
+            <Vertex X="54" Y="170"/>
+            <Vertex X="109" Y="151"/>
+            <Vertex X="164" Y="143"/>
+            <Vertex X="218" Y="179"/>
+            <Vertex X="273" Y="232"/>
+            <Vertex X="328" Y="286"/>
+            <Vertex X="382" Y="275"/>
+            <Vertex X="437" Y="238"/>
+            <Vertex X="492" Y="242"/>
+        </Line>
+        <Ellipse X="492" Y="242" Radius="5" FillColor="#Sun"/>
+
+        <Text X="54" Y="28" Style="Label">MIN 17.2 C</Text>
+        <Text X="273" Y="28" LocalAlignX="#_align_center_" Style="Label">AVG 21.6 C</Text>
+        <Text X="492" Y="28" LocalAlignX="#_align_right_" Style="Label">MAX 26.4 C</Text>
+    </Container>
+</Dummy>

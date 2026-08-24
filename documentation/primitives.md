@@ -1,12 +1,8 @@
-# dcapp XML Reference
+# XML element reference
 
-This is the element reference for dcapp XML. Use it when you already know what
-kind of display behavior you want and need the exact element, attribute, or
-child-node shape.
-
----
-
-## Document Structure
+This page lists the elements accepted by a dcapp display. Detailed behavior
+for buttons, events, variables, integrations, and planet rendering is linked
+from the relevant entry.
 
 ```xml
 <DCAPP>
@@ -16,38 +12,19 @@ child-node shape.
 </DCAPP>
 ```
 
----
+`Window` owns the application window. `Panel` and `Container` establish local
+coordinate spaces. Drawing elements, interaction, and logic live below them;
+declarations such as `Variable`, `TrickIO`, `EdgeIO`, `Logic`, and `Planet`
+live directly under `DCAPP`.
 
-## How To Choose Elements
-
-Most displays are a mix of these layers:
-
-- `Window` owns the real application window and frame/update cadence.
-- `Panel` and `Container` organize coordinate spaces so child elements can be
-  authored in useful local units instead of raw window pixels.
-- Drawing primitives such as `Rectangle`, `Ellipse`, `Line`, `Polygon`, `Text`,
-  `Image`, and `PixelStream` render visible content.
-- `Variable`, `Set`, and `If` make the XML dynamic without requiring C logic.
-- `Button` and mouse event children add interaction.
-- `Logic`, `Function`, and `DrawFunction` connect XML to C/C++ when behavior is
-  easier to express in code.
-- `Planet` and `PlanetView` are for chunked terrain and planet overlays.
-
-Prefer XML elements for stable layout, simple state, and direct bindings.
-Reach for C logic when the behavior needs algorithms, persistent private state,
-custom drawing, or integration code that would make XML hard to read.
-
----
-
-## Root Elements
+## Root elements
 
 ### `<DCAPP>`
 
-The root element that wraps the entire display definition. Contains `<Window>`,
-`<Variable>`, `<Constant>`, `<Style>`, `<TrickIO>`, `<EdgeIO>`,
-`<PixelStream>` sources, `<Planet>`, and `<Logic>` elements.
-
----
+The root element that wraps the entire display definition. After preprocessing,
+its children may be `<Window>`, `<Variable>`, `<TrickIO>`, `<EdgeIO>`,
+`<Planet>`, and `<Logic>`. Authoring declarations such as `<Constant>` and
+`<Style>` also begin here but disappear before runtime validation.
 
 ### `<Window>`
 
@@ -65,49 +42,42 @@ Defines the application window.
 | `UpdateRate` | — | number/var | No | Fixed logic updates per second; rendering still syncs to the display |
 | `Fullscreen` | — | boolean | No | Start the window in fullscreen mode |
 
-**Example:**
 ```xml
 <Window Title="Flight Display" Width="1920" Height="1080" VirtualWidth="1920" VirtualHeight="1080" UpdateRate="60" Fullscreen="false">
     ...
 </Window>
 ```
 
----
-
-## Data Elements
+## Data elements
 
 ### `<Variable>`
 
-Declares a runtime variable that can be referenced and modified.
+Declares a runtime variable. See [Variables](variables.md) for text expansion,
+`Set` operators, and external bindings.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Type` | string | No | Data type constant: `#_variable_string_`, `#_variable_integer_`, `#_variable_double_` (default: string) |
+| `Type` | string | No | `#_variable_string_`, `#_variable_integer_`, `#_variable_double_`, or `#_variable_boolean_` (default: string) |
 | `InitialValue` | string | No | Initial value (default: empty string) |
 
-**Content:** Variable name
+The element content is the variable name.
 
-**Example:**
 ```xml
 <Variable Type="#_variable_double_" InitialValue="0.0">altitude</Variable>
 <Variable Type="#_variable_string_" InitialValue="OFF">systemStatus</Variable>
 ```
 
----
-
 ### `<Constant>`
 
-Declares a constant value (processed at parse time, currently ignored at runtime).
-
----
+Declares a value substituted during XML preprocessing. See
+[Constants](constants.md) for its attributes and the built-in constants.
 
 ### `<Style>`
 
-Defines reusable styles (currently ignored at runtime).
+Defines a reusable style. Styles are handled during preprocessing rather than
+as runtime display nodes.
 
----
-
-## Layout Elements
+## Layout elements
 
 ### `<Container>`
 
@@ -133,9 +103,8 @@ coordinate system, or share an interaction region.
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 
-**Note:** Pivot position and pivot alignment are mutually exclusive. Use one pair or the other.
-
----
+Pivot position and pivot alignment are mutually exclusive. Use one pair or the
+other.
 
 ### `<Panel>`
 
@@ -149,22 +118,22 @@ not the full transform and interaction behavior of a container.
 | `VirtualDimensionY` | `VirtualHeight` | number/var | No | Virtual coordinate height |
 | `BackgroundColor` | — | color | No | Panel background fill color |
 
----
-
 ### `<Include>`
 
-Includes content from another XML file.
-Use includes to split repeated or bulky XML into focused files. Included
-content keeps its own `_Directory` context, so relative paths inside the include
-can stay local to that file.
+Includes another XML file. Put the path in the element content; the `File`
+attribute remains as a fallback. Included content keeps its own `_Directory`
+context, so relative paths remain local to the included file.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `File` | string | **Yes** | Path to XML file to include |
+| `File` | string | No | Path used when the element content is empty |
+| `Optional` | boolean | No | Skip a missing file instead of reporting an error. Defaults to false. |
 
----
+```xml
+<Include Optional="true">includes/debug.xml</Include>
+```
 
-## Drawing Primitives
+## Drawing primitives
 
 ### `<Rectangle>`
 
@@ -191,20 +160,17 @@ Draws a rectangle.
 | `LinePattern` | — | integer/var | No | 8-bit dash pattern for the outline, such as `0xFF` solid or `0xAA` dashed |
 | `Rounded` | — | boolean/var | No | Round corners (radius = 10% of smaller dimension) |
 
-**Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
-
----
+Mouse event elements may be nested here: `<MousePressed>`, `<MouseReleased>`,
+`<MouseActive>`, `<MouseInactive>`, and `<MouseHovered>`.
 
 ### `<Circle>` *(Deprecated)*
 
-**Deprecated:** Use `<Arc>` for line-only circles or `<Ellipse>` for filled circles.
+Deprecated. Use `<Arc>` for line-only circles or `<Ellipse>` for filled circles.
 
 The legacy conversion script (`scripts/convert-legacy-xml.py`) automatically converts:
 - `<Circle>` with `Angle` and `FillColor` → `<Ellipse>` (pie/wedge shape)
 - `<Circle>` with `Angle` only → `<Arc>` (line-only arc)
 - `<Circle>` in `<Style>` → both `<Arc>` and `<Ellipse>` styles
-
----
 
 ### `<Arc>`
 
@@ -221,7 +187,7 @@ Draws an arc (partial circle outline). Arc is a **line-only** element and does n
 | `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
 | `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
 | `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees (0° = top, clockwise) |
+| `Rotation` | `Rotate` | number/var | No | Rotation in degrees, applied to the whole arc |
 | `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
@@ -230,18 +196,16 @@ Draws an arc (partial circle outline). Arc is a **line-only** element and does n
 | `LineWidth` | — | number/var | No | Line width |
 | `LinePattern` | — | integer/var | No | 8-bit dash pattern, such as `0xFF` solid or `0xAA` dashed |
 
-**Note:** Arc starts drawing from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
+An arc starts on the positive X axis (3 o'clock) and proceeds counterclockwise.
+Use `Rotation` to change the starting position.
 
-**Example:**
 ```xml
-<!-- 90-degree arc starting from top -->
+<!-- 90-degree arc starting at 3 o'clock -->
 <Arc X="100" Y="100" Radius="50" Angle="90" LineColor="1,1,1,1" LineWidth="2"/>
 
-<!-- Arc rotated to start from the right (3 o'clock) -->
+<!-- Rotated to start at 12 o'clock -->
 <Arc X="200" Y="100" Radius="50" Angle="90" Rotation="90" LineColor="0,1,0,1"/>
 ```
-
----
 
 ### `<Ellipse>`
 
@@ -260,7 +224,7 @@ Draws a filled ellipse or pie/wedge shape.
 | `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
 | `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
 | `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees (0° = top, clockwise) |
+| `Rotation` | `Rotate` | number/var | No | Rotation in degrees, applied to the whole ellipse |
 | `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
@@ -270,11 +234,13 @@ Draws a filled ellipse or pie/wedge shape.
 | `LineWidth` | — | number/var | No | Border width |
 | `LinePattern` | — | integer/var | No | 8-bit dash pattern for the outline, such as `0xFF` solid or `0xAA` dashed |
 
-**Note:** When `Angle` is less than 360, Ellipse draws a pie/wedge shape (filled sector). The wedge starts from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
+When `Angle` is less than 360, `Ellipse` draws a filled wedge. It starts on
+the positive X axis (3 o'clock) and proceeds counterclockwise. Use `Rotation`
+to change the starting position.
 
-**Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
+Mouse event elements may be nested here: `<MousePressed>`, `<MouseReleased>`,
+`<MouseActive>`, `<MouseInactive>`, and `<MouseHovered>`.
 
-**Example:**
 ```xml
 <!-- Full ellipse -->
 <Ellipse X="100" Y="100" RadiusX="80" RadiusY="50" FillColor="0,0,1,1"/>
@@ -282,11 +248,9 @@ Draws a filled ellipse or pie/wedge shape.
 <!-- Pie wedge (quarter circle) -->
 <Ellipse X="200" Y="100" Radius="50" Angle="90" FillColor="1,0,0,1"/>
 
-<!-- Pie wedge rotated to start from right side -->
+<!-- Pie wedge rotated to start at 12 o'clock -->
 <Ellipse X="300" Y="100" Radius="50" Angle="90" Rotation="90" FillColor="0,1,0,1"/>
 ```
-
----
 
 ### `<Sphere>`
 
@@ -314,7 +278,6 @@ Draws a 3D sphere with optional texture mapping and internal rotation. Useful fo
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 
-**Example:**
 ```xml
 <!-- ADI ball driven by vehicle attitude -->
 <Sphere X="200" Y="200" Radius="100"
@@ -324,8 +287,6 @@ Draws a 3D sphere with optional texture mapping and internal rotation. Useful fo
 <!-- Simple colored sphere -->
 <Sphere X="400" Y="300" Radius="50" FillColor="0.3 0.3 0.8 1"/>
 ```
-
----
 
 ### `<Line>`
 
@@ -342,9 +303,7 @@ Draws a polyline through a series of vertices.
 | `LineWidth` | — | number/var | No | Line width |
 | `LinePattern` | — | integer/var | No | 8-bit dash pattern, such as `0xFF` solid or `0xAA` dashed |
 
-**Children:** `<Vertex>` elements defining the line points
-
----
+Add one `<Vertex>` child for each point in the line.
 
 ### `<Polygon>`
 
@@ -363,12 +322,11 @@ Draws a filled or outlined polygon.
 | `LinePattern` | — | integer/var | No | 8-bit dash pattern for the outline, such as `0xFF` solid or `0xAA` dashed |
 | `Rounded` | — | boolean/var | No | Round corners (radius = 10% of bounding box's smaller dimension) |
 
-**Children:** `<Vertex>` elements, `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`
+Add `<Vertex>` children for the polygon points. Mouse event elements may also
+be nested here.
 
 Filled polygons must be convex with vertices in perimeter order. Outlined
 polygons do not have that convexity restriction.
-
----
 
 ### `<Vertex>`
 
@@ -379,7 +337,6 @@ Defines a point for `<Line>` or `<Polygon>` elements.
 | `PositionX` | `X` | number/var | **Yes** | X coordinate |
 | `PositionY` | `Y` | number/var | **Yes** | Y coordinate |
 
-**Example:**
 ```xml
 <Polygon FillColor="1,0,0,1">
     <Vertex X="0" Y="0"/>
@@ -388,9 +345,7 @@ Defines a point for `<Line>` or `<Polygon>` elements.
 </Polygon>
 ```
 
----
-
-## Media Elements
+## Media elements
 
 ### `<Image>`
 
@@ -413,9 +368,8 @@ Displays an image file.
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 
-**Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
-
----
+Mouse event elements may be nested here: `<MousePressed>`, `<MouseReleased>`,
+`<MouseActive>`, `<MouseInactive>`, and `<MouseHovered>`.
 
 ### `<PixelStream>`
 
@@ -423,11 +377,11 @@ Displays streaming video content. Standard positioning/alignment attributes appl
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
-| `Type` | `Protocol` | integer | **Yes** | `#_pixelstream_shmem_` or `#_pixelstream_mjpeg_` |
+| `Type` | — | integer | **Yes** | `#_pixelstream_shmem_` or `#_pixelstream_mjpeg_` |
 | `URL` | — | string | Required for MJPEG | Stream URL |
-| `Timeout` | — | integer | No | Connection timeout in seconds (default: 5) |
-
----
+| `File` | `SharedMemoryKey` | string | Required for shared memory | Backing-file path used for the System V shared-memory key and RGBA data |
+| `Timeout` | — | integer | No | MJPEG connection timeout in seconds (default: 5) |
+| `TestPattern` | — | string | No | Fallback image path |
 
 ### `<Text>`
 
@@ -458,14 +412,16 @@ Displays text with variable interpolation.
 | `NegateY` | — | boolean/var | No | Flip text vertically |
 | `UpdateRate` | — | number/var | No | Minimum seconds between variable-expansion refreshes |
 
-**Content:** Text string with variable interpolation
+The element content is the displayed text.
 
-**Variable Interpolation:**
+Variable interpolation:
+
 - `@variableName` - Insert variable value
 - `@{variableName}` - Insert variable with braces (for adjacent text)
 - `@variableName(%format)` - Format specifier (e.g., `@altitude(%.1f)`)
 
-**Escape Sequences:**
+Escapes:
+
 - `\n` - Newline
 - `\t` - Tab
 - `\\` - Backslash
@@ -473,22 +429,19 @@ Displays text with variable interpolation.
 - `\"` - Quote
 - `\'` - Single quote
 
-**Example:**
 ```xml
 <Text X="100" Y="50" Size="24" FillColor="1,1,1,1">
     Altitude: @altitude(%.0f) ft
 </Text>
 ```
 
----
-
-## Interactive Elements
+## Interactive elements
 
 ### `<Button>`
 
 Creates an interactive button with multiple visual states. See [Buttons](buttons.md) for the full reference including value/variable inheritance, visual states, and examples.
 
-### Mouse Events
+### Mouse events
 
 Mouse event children (`<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`, `<MouseMotion>`) can be added to `<Rectangle>`, `<Ellipse>`, `<Image>`, `<Polygon>`, `<PixelStream>`, or `<Button>`. See [Mouse Events](mouse-events.md) for details.
 
@@ -500,9 +453,7 @@ Wraps child elements in a flashing container with configurable frequency, duty c
 
 Defines a stencil mask region for clipping child content. Contains `<StencilAdd>`, `<StencilRemove>`, and `<StencilDraw>` children. See [Stencil](stencil.md) for the full reference.
 
----
-
-## Logic Elements
+## Logic elements
 
 ### `<If>`
 
@@ -515,7 +466,7 @@ Conditional rendering based on variable comparison.
 | `Value2` | — | string/var | No | Second value to compare |
 | `Static` | — | boolean | No | If "true", evaluates once at parse time (default: false) |
 
-**Operator Constants:**
+Operators:
 
 | Constant | Value | Description |
 |----------|-------|-------------|
@@ -528,12 +479,12 @@ Conditional rendering based on variable comparison.
 | `#_if_lte_` | 7 | Less than or equal |
 | `#_if_gte_` | 8 | Greater than or equal |
 
-**Children:**
+The element accepts:
+
 - `<True>` - Content shown when condition is true
 - `<False>` - Content shown when condition is false
 - Direct children (without `<True>` wrapper) are treated as `<True>` content
 
-**Example:**
 ```xml
 <If Value="@altitude" Value2="1000" Operator="#_if_gt_">
     <True>
@@ -545,37 +496,20 @@ Conditional rendering based on variable comparison.
 </If>
 ```
 
----
+### `<If Static="true">` (parse-time conditional)
 
-### `<If Static="true">` (Parse-Time Conditional)
+With `Static="true"`, `If` is evaluated once while the XML is parsed. The
+matching branch is inserted directly into its parent and no runtime conditional
+node is created. This replaces the deprecated `StaticIf` element.
 
-When `Static="true"` is set on an `<If>` element, it evaluates once during XML parsing and includes only the matching branch's children. This replaces the deprecated `<StaticIf>` element.
+Static conditions accept constants and literals, but not runtime `@` variable
+references. They can select declarations as well as visible elements:
 
-**How it works:**
-- Unlike runtime `<If>`, which evaluates every frame during rendering, `<If Static="true">` evaluates once during XML parsing
-- The matching branch's children are "spliced" directly into the parent, as if the `<If>` never existed
-- No conditional node is created in the scene graph
-- Useful for conditional variable registration, TrickIO setup, or build-time configuration
-- **Important:** When `Static="true"`, `Value`/`Value1` and `Value2` cannot use runtime variables (`@`). Only constants (`#`) and literal values are allowed.
-
-**Example:**
 ```xml
-<!-- Conditionally register debug variables -->
 <If Static="true" Value="#debugMode" Value2="1" Operator="#_if_eq_">
     <Variable Type="#_variable_double_" InitialValue="0">debugCounter</Variable>
     <Variable Type="#_variable_string_" InitialValue="">debugMessage</Variable>
 </If>
-
-<!-- Conditionally include TrickVariables -->
-<TrickIO Host="localhost" Port="7000">
-    <TrickFrom>
-        <TrickVariable Name="rocket.altitude">altitude</TrickVariable>
-        <If Static="true" Value="#useAdvancedTelemetry" Value2="1" Operator="#_if_eq_">
-            <TrickVariable Name="rocket.fuel_temp">fuelTemp</TrickVariable>
-            <TrickVariable Name="rocket.chamber_pressure">chamberPressure</TrickVariable>
-        </If>
-    </TrickFrom>
-</TrickIO>
 ```
 
 ### `<Set>`
@@ -587,17 +521,14 @@ Sets a variable to a value using an operator. See [Variables — Set Operators](
 | `Variable` | string | **Yes** | Variable name to set |
 | `Operator` | integer | No | Operation type (default: `#_set_equal_`) |
 
-**Content:** Value or expression to assign
+The element content is the value or expression to assign.
 
-**Example:**
 ```xml
 <Set Variable="counter" Operator="#_set_add_">1</Set>  <!-- counter += 1 -->
 <Set Variable="status">ACTIVE</Set>                    <!-- status = "ACTIVE" -->
 ```
 
----
-
-## External Integration
+## External integration
 
 ### `<Logic>`
 
@@ -610,15 +541,15 @@ Loads custom C logic from a shared library.
 `Logic` is a declaration and must be a direct child of `<DCAPP>`. Its position
 among the root children does not matter.
 
-**Expected Functions in Library:**
+The library exports:
+
 - `display_pre_init(const DcInit *init)` - Auto-generated by the `dcapp.h` header; the user does not implement this
 - `display_init(DcAppContext *app_ctx, void **user_data)` - Called at startup (user-implemented)
 - `display_draw(DcAppContext *app_ctx, void *user_data)` - Called once per render by default, or at the fixed `Window` `UpdateRate` when that attribute is set (user-implemented)
 - `display_close(DcAppContext *app_ctx, void *user_data)` - Called at shutdown (user-implemented)
 
-**Cross-Platform:** dcapp automatically tries `.so`, `.dylib`, and `.dll` extensions, so the same XML works on Linux, macOS, and Windows.
-
----
+dcapp tries `.so`, `.dylib`, and `.dll` extensions, so the same XML works on
+Linux, macOS, and Windows.
 
 ### `<Function>`
 
@@ -633,14 +564,11 @@ The function must have the signature `void function_name(DcAppContext *app_ctx, 
 `Function` must be inside the `<Window>` render tree, optionally nested in a
 panel, container, conditional branch, or event element.
 
-**Example:**
 ```xml
 <Function Name="on_button_click"/>
 ```
 
 See the [Logic Files documentation](logic.md) for details on using `<Function>` with buttons and conditionals.
-
----
 
 ### `<DrawFunction>`
 
@@ -657,7 +585,7 @@ The function must have this signature:
 void function_name(DcDrawContext *ctx, const DcDrawFuncArgs *args, void *user_data);
 ```
 
-**Children:** Optional `<Arg>` elements.
+Optional `<Arg>` children pass values to the callback.
 
 `DrawFunction` must be inside the `<Window>` render tree.
 
@@ -670,7 +598,6 @@ Passes a typed value into a parent `<DrawFunction>`.
 | `Type` | integer | **Yes** | Value type, such as `#_variable_string_`, `#_variable_integer_`, `#_variable_double_`, or `#_variable_boolean_` |
 | `Value` | string/var | **Yes** | Literal, constant, or variable-backed value passed to the draw callback |
 
-**Example:**
 ```xml
 <DrawFunction Name="draw_widget">
     <Arg Type="#_variable_string_" Value="primary"/>
@@ -678,38 +605,33 @@ Passes a typed value into a parent `<DrawFunction>`.
 </DrawFunction>
 ```
 
-See the [Logic Files documentation](logic.md#drawfunction-api) for the DrawFunction C API.
-
----
+See [Logic files](logic.md#drawfunction) for the `DrawFunction` C API.
 
 ### `<TrickIO>`, `<EdgeIO>`, `<PixelStream>`
 
 See [Integration](integration.md) for full documentation on TrickIO, EdgeIO, and PixelStream elements.
 
----
-
-## Planet Elements
+## Planet elements
 
 ### `<Planet>`
 
 Top-level resource definition for 3D planetary terrain. Defines the planet's data files, up to five texture overlays, and shader overrides. Multiple `<PlanetView>` elements can reference the same `<Planet>` by name.
 
-**Parent:** `<DCAPP>` (top-level only)
+Place `Planet` directly under `<DCAPP>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Name` | string | **Yes** | Unique name used by `<PlanetView>` to reference this planet |
 | `ShaderIndex` | integer/var | No | Active shader index (selects from child `<PlanetShader>` elements) |
 
-**Children:** `<PlanetData>`, `<PlanetShader>`, `<PlanetTexture>`
-
----
+Its children are `<PlanetData>`, `<PlanetShader>`, and `<PlanetTexture>`.
 
 ### `<PlanetView>`
 
 Renders a view of a named planet. Supports geodetic camera positions with local-NED attitude and cartesian camera positions with cartesian-RPY attitude. Multiple views can reference the same planet.
 
-**Parent:** `<Window>`, `<Panel>`, `<Container>`, or any drawable parent
+Place `PlanetView` under `<Window>`, `<Panel>`, `<Container>`, or another
+drawable parent.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
@@ -742,7 +664,7 @@ Renders a view of a named planet. Supports geodetic camera positions with local-
 | `CameraYaw` | — | number/var | No | Camera yaw angle in the selected attitude frame |
 | `CameraOrthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 
-**Children:** `<PlanetBreadcrumbs>`, `<PlanetContainer>`, `<PlanetEllipse>`,
+Its children are `<PlanetBreadcrumbs>`, `<PlanetContainer>`, `<PlanetEllipse>`,
 `<PlanetGeoJSON>`, `<PlanetImage>`, `<PlanetLine>`, `<PlanetPolygon>`,
 `<PlanetSphere>`, and `<PlanetText>`
 
@@ -756,13 +678,11 @@ on the planet definition.
 |-----------|------|----------|-------------|
 | `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
----
-
 ### `<PlanetBreadcrumbs>`
 
 Records and draws a live breadcrumb trail from input position variables. The sampled position is independent of the `<PlanetView>` camera.
 
-**Parent:** `<PlanetView>`
+Place `PlanetBreadcrumbs` under `<PlanetView>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -780,16 +700,12 @@ Records and draws a live breadcrumb trail from input position variables. The sam
 | `LineWidth` | number/var | No | Line width in logical display pixels |
 | `LinePattern` | integer/var | No | 8-bit dash pattern, such as `0xF0` dashed. Defaults to solid. |
 
-Example:
-
 ```xml
 <PlanetBreadcrumbs Latitude="@VehicleLat" Longitude="@VehicleLon"
     HeightAboveTerrain="500" PointSpacing="25" MaxPoints="2000"
     Clear="@ClearTrail" Enabled="@ShowTrail"
     LineColor="1 0 0 0.5" LineWidth="2" LinePattern="0xF0"/>
 ```
-
----
 
 ### `<PlanetData>`
 
@@ -798,8 +714,6 @@ Specifies a planet terrain JSON file containing chunked heightmap data. Child of
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `File` | string | **Yes** | Path to `.planet.json` file |
-
----
 
 ### `<PlanetShader>`
 
@@ -810,8 +724,6 @@ Registers a custom shader for the planet, selectable at runtime via the parent `
 | `Index` | integer | **Yes** | Shader index (matched against `ShaderIndex`) |
 | `VertexShader` | string | No | Path to custom vertex shader (`.vert`) |
 | `FragmentShader` | string | No | Path to custom fragment shader (`.frag`) |
-
----
 
 ### `<PlanetTexture>`
 
@@ -830,139 +742,71 @@ Configures a texture overlay on the planet surface. A planet accepts up to five 
 
 Disabled overlays release their texture resources and therefore their texture VRAM. A `FireRefresh` change while disabled is recorded but does not load the overlay; the current values are used when it is enabled again.
 
----
+## Positioning and alignment
 
-## Positioning and Alignment
+`LocalAlignX` and `LocalAlignY` choose the anchor on the element itself.
+`ParentAlignX` and `ParentAlignY` choose the anchor on its parent. `X` and `Y`
+are offsets from that parent anchor:
 
-### How Alignment and Position Work Together
-
-The alignment system has two separate concepts:
-
-- **LocalAlign** - The anchor point on the element itself (where on the element is "the position")
-- **ParentAlign** - The anchor point in the parent container (where in the parent to position)
-
-**Position Calculation:**
-```
-final_position = parent_anchor + offset
+```text
+final position = parent anchor + offset
 ```
 
-Where:
-- `parent_anchor` is determined by `ParentAlignX`/`ParentAlignY` (LEFT=0, CENTER=width/2, RIGHT=width, etc.)
-- `offset` is the `X`/`Y` value
-
-**Examples in an 800x600 parent:**
+In an 800-by-600 parent:
 
 ```xml
-<!-- Absolute positioning: X=100 means 100 pixels from left edge -->
+<!-- 100 from the left edge -->
 <Text X="100" Y="50" LocalAlignX="#_align_center_">Hello</Text>
 
-<!-- Offset from center: X=10 means 10 pixels right of center (400+10=410) -->
+<!-- 10 right of center: 400 + 10 = 410 -->
 <Text ParentAlignX="#_align_center_" X="10" LocalAlignX="#_align_center_">Hello</Text>
 
-<!-- Offset from right edge: X=-20 means 20 pixels left of right edge (800-20=780) -->
+<!-- 20 left of the right edge: 800 - 20 = 780 -->
 <Text ParentAlignX="#_align_right_" X="-20" LocalAlignX="#_align_right_">Hello</Text>
 
-<!-- Centered (no offset): element centered in parent -->
+<!-- Centered with no offset -->
 <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
       LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Hello</Text>
 ```
 
-**Common Pitfall - Defaults with ParentAlign:**
-
-If a `<Default>` sets `ParentAlignX`, any X values on child elements become offsets from that anchor, not absolute positions:
+If a `Default` sets `ParentAlignX`, every child `X` becomes an offset from that
+anchor. Leave `ParentAlignX` out when the child values are intended to be
+absolute:
 
 ```xml
-<!-- WRONG: Buttons end up offset from center instead of at absolute X positions -->
 <Default>
     <Button ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
 </Default>
-<Button X="10">...</Button>   <!-- Ends up at center+10, not X=10! -->
+<Button X="10">...</Button>   <!-- center + 10 -->
 
-<!-- CORRECT: Remove ParentAlignX from Default when using absolute positions -->
 <Default>
     <Button LocalAlignX="#_align_center_"/>
 </Default>
-<Button X="10">...</Button>   <!-- Correctly at X=10 -->
+<Button X="10">...</Button>   <!-- absolute X = 10 -->
 ```
 
-**Special Cases:**
-
-- **Arc, Ellipse, and Sphere** elements default to center-aligned (`LocalAlignX="#_align_center_"`, `LocalAlignY="#_align_middle_"`) since their natural anchor is their center
-- **Container, Panel, Window, and Button** reset the parent_position to {0,0} for their children, so children position relative to the container's top-left corner
-
-**Example:**
-```xml
-<Text X="100" Y="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
-    Centered Text
-</Text>
-```
+- `Arc`, `Ellipse`, and `Sphere` default to center/middle local alignment.
+- `Container`, `Panel`, `Window`, and `Button` give their children a new origin
+  at the container's top-left corner.
 
 See [Constants](constants.md) for the full built-in constants reference.
 
-### Color Format
+### Color format
 
 Colors are specified as comma-separated or space-separated RGBA values, each from 0.0 to 1.0:
 ```
 "R,G,B,A"   or   "R G B A"
 ```
 
-**Examples:**
+Some common values:
+
 - `"1,0,0,1"` - Red (fully opaque)
 - `"0 1 0 0.5"` - Green (50% transparent)
 - `"0.2,0.2,0.2,1"` - Dark gray
 
-### Variable References
+### Variable references
 
 Attributes marked as `number/var` can contain:
+
 - A literal number: `100`, `3.14`
 - A variable reference: `@variableName`
-
----
-
-## Complete Example
-
-```xml
-<DCAPP>
-    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
-    <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
-    <Variable Type="#_variable_string_" InitialValue="OFF">engineStatus</Variable>
-
-    <Window Title="Flight Display" Width="800" Height="600" VirtualWidth="800" VirtualHeight="600">
-        
-        <!-- Background -->
-        <Rectangle Width="800" Height="600" FillColor="0.1,0.1,0.2,1"/>
-        
-        <!-- Altitude Display -->
-        <Container X="50" Y="50" Width="200" Height="100">
-            <Rectangle FillColor="0,0,0,0.7" Width="200" Height="100"/>
-            <Text X="100" Y="70" Size="16" FillColor="1,1,1,1" LocalAlignX="#_align_center_">ALTITUDE</Text>
-            <Text X="100" Y="30" Size="32" FillColor="0,1,0,1" LocalAlignX="#_align_center_">@altitude(%.0f) ft</Text>
-        </Container>
-        
-        <!-- Engine Control Button -->
-        <Button X="350" Y="500" Width="100" Height="50" 
-                Variable="engineStatus" On="ON" Off="OFF" Type="#_button_toggle_">
-            <ButtonIndicatorOn>
-                <Rectangle FillColor="0,0.6,0,1" Width="100" Height="50"/>
-                <Text X="50" Y="25" Size="18" FillColor="1,1,1,1" 
-                      LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">ENGINE ON</Text>
-            </ButtonIndicatorOn>
-            <ButtonIndicatorOff>
-                <Rectangle FillColor="0.5,0,0,1" Width="100" Height="50"/>
-                <Text X="50" Y="25" Size="18" FillColor="1,1,1,1" 
-                      LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">ENGINE OFF</Text>
-            </ButtonIndicatorOff>
-        </Button>
-        
-        <!-- Altitude Warning -->
-        <If Value="@altitude" Value2="10000" Operator="#_if_gt_">
-            <True>
-                <Text X="400" Y="300" Size="48" FillColor="1,0,0,1" LocalAlignX="#_align_center_">
-                    ⚠ HIGH ALTITUDE
-                </Text>
-            </True>
-        </If>
-        
-    </Window>
-</DCAPP>
-```

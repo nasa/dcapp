@@ -1,17 +1,7 @@
 # EdgeIO
 
-`EdgeIO` connects dcapp variables to an Edge RCS server. The shape mirrors
-`TrickIO`, but variables are identified by Edge command strings instead of
-Trick variable paths.
-
-Use `EdgeIO` when the display needs to exchange command/value data with an Edge
-server. The dcapp side still works with normal variables; the Edge mapping is
-only the bridge between those variables and Edge command strings.
-
-Use `EdgeFrom` for values the server owns and dcapp displays. Use `EdgeTo` for
-values dcapp owns or edits and the server should receive.
-
-## XML Shape
+`EdgeIO` maps dcapp variables to Edge RCS command strings. `EdgeFrom` receives
+values from the server; `EdgeTo` sends a dcapp variable when its value changes.
 
 ```xml
 <Variable Type="#_variable_double_">temperature</Variable>
@@ -27,9 +17,8 @@ values dcapp owns or edits and the server should receive.
 </EdgeIO>
 ```
 
-`EdgeFrom` receives command values into dcapp variables. `EdgeTo` sends dcapp
-variables when their values change. The text content of each `EdgeVariable` is
-the dcapp variable name.
+The text inside `EdgeVariable` is the dcapp variable name. It does not use the
+`@` prefix.
 
 ## Attributes
 
@@ -41,7 +30,5 @@ the dcapp variable name.
 | `EdgeIO` | `ConnectedVariable` | Optional dcapp boolean updated with connection status |
 | `EdgeVariable` | `Command` | Edge command string |
 
-See also [integration.md](integration.md) for the cross-protocol overview.
-
-Note: the runtime has defaults for `Host` and `Port`, but the validator still
+The runtime has defaults for `Host` and `Port`, but the validator still
 warns when they are omitted. Set them explicitly in checked-in displays.

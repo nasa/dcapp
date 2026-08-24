@@ -52,41 +52,29 @@
 :release
 
 :: create output directories
-@if not exist "../../samples/drawfunction2/logic" @mkdir "../../samples/drawfunction2/logic"
-
-@if not exist "../../samples/ptz/logic" @mkdir "../../samples/ptz/logic"
-
-@if not exist "../../samples/drawfunction3/logic" @mkdir "../../samples/drawfunction3/logic"
-
-@if not exist "../../samples/drawfunction1/logic" @mkdir "../../samples/drawfunction1/logic"
-
 @if not exist "../../samples/planet/logic" @mkdir "../../samples/planet/logic"
-
-@if not exist "../../samples/drawfunction4/logic" @mkdir "../../samples/drawfunction4/logic"
 
 @if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
 
 @if not exist "../../samples/api-test/logic" @mkdir "../../samples/api-test/logic"
 
+@if not exist "../../samples/starfield/logic" @mkdir "../../samples/starfield/logic"
+
+@if not exist "../../samples/procedural-panel/logic" @mkdir "../../samples/procedural-panel/logic"
+
 :: create lock file(s)
-@echo LOCKING > "../../samples/ptz/logic/lock.tmp"
+@echo LOCKING > "../../samples/starfield/logic/lock.tmp"
 
 @if exist "../../samples/api-test/logic/logic.dll" del "..\..\samples\api-test\logic\logic.dll"
 @if exist "../../samples/api-test/logic/logic_*.pdb" del "..\..\samples\api-test\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction1/logic/logic.dll" del "..\..\samples\drawfunction1\logic\logic.dll"
-@if exist "../../samples/drawfunction1/logic/logic_*.pdb" del "..\..\samples\drawfunction1\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction2/logic/logic.dll" del "..\..\samples\drawfunction2\logic\logic.dll"
-@if exist "../../samples/drawfunction2/logic/logic_*.pdb" del "..\..\samples\drawfunction2\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction3/logic/logic.dll" del "..\..\samples\drawfunction3\logic\logic.dll"
-@if exist "../../samples/drawfunction3/logic/logic_*.pdb" del "..\..\samples\drawfunction3\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction4/logic/logic.dll" del "..\..\samples\drawfunction4\logic\logic.dll"
-@if exist "../../samples/drawfunction4/logic/logic_*.pdb" del "..\..\samples\drawfunction4\logic\logic_*.pdb"
 @if exist "../../samples/lissajous/logic/logic.dll" del "..\..\samples\lissajous\logic\logic.dll"
 @if exist "../../samples/lissajous/logic/logic_*.pdb" del "..\..\samples\lissajous\logic\logic_*.pdb"
 @if exist "../../samples/planet/logic/logic.dll" del "..\..\samples\planet\logic\logic.dll"
 @if exist "../../samples/planet/logic/logic_*.pdb" del "..\..\samples\planet\logic\logic_*.pdb"
-@if exist "../../samples/ptz/logic/logic.dll" del "..\..\samples\ptz\logic\logic.dll"
-@if exist "../../samples/ptz/logic/logic_*.pdb" del "..\..\samples\ptz\logic\logic_*.pdb"
+@if exist "../../samples/procedural-panel/logic/logic.dll" del "..\..\samples\procedural-panel\logic\logic.dll"
+@if exist "../../samples/procedural-panel/logic/logic_*.pdb" del "..\..\samples\procedural-panel\logic\logic_*.pdb"
+@if exist "../../samples/starfield/logic/logic.dll" del "..\..\samples\starfield\logic\logic.dll"
+@if exist "../../samples/starfield/logic/logic_*.pdb" del "..\..\samples\starfield\logic\logic_*.pdb"
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -120,138 +108,6 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/api-test/logic/logic.dll" 
 :Exit_api-test
 
 @del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction1/drawfunction1.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction1/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction1[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction1/logic/logic.dll" -Fo"../../samples/drawfunction1/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction1/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanuprelease
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction1
-
-@del "..\..\samples\drawfunction1\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction2 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction2/drawfunction2.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction2/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction2[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction2/logic/logic.dll" -Fo"../../samples/drawfunction2/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction2/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanuprelease
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction2
-
-@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction3 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction3/drawfunction3.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction3/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction3[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction3/logic/logic.dll" -Fo"../../samples/drawfunction3/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction3/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanuprelease
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction3
-
-@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction4 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction4/drawfunction4.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction4/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction4[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction4/logic/logic.dll" -Fo"../../samples/drawfunction4/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction4/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanuprelease
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction4
-
-@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -319,20 +175,20 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/planet/logic/logic.dll" -F
 
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
 
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ptz | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+::~~~~~~~~~~~~~~~~~~~~~~~~~~ procedural-panel | release ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/ptz/ptz.xml || exit /b 1
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/procedural-panel/procedural-panel.xml || exit /b 1
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/ptz/logic/logic.c"
+@set PL_SOURCES="../../samples/procedural-panel/logic/logic.c"
 
 :: run compiler (and linker)
 @echo.
-@echo [1m[93mStep: ptz[0m
+@echo [1m[93mStep: procedural-panel[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/ptz/logic/logic.dll" -Fo"../../samples/ptz/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/ptz/logic/logic_%random%.pdb"
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/procedural-panel/logic/logic.dll" -Fo"../../samples/procedural-panel/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/procedural-panel/logic/logic_%random%.pdb"
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -348,26 +204,56 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/ptz/logic/logic.dll" -Fo".
 @echo [36mResult: [0m %PL_RESULT%
 @echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
 
-:Exit_ptz
+:Exit_procedural-panel
 
-@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\procedural-panel\logic\*.obj"  > nul 2> nul
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ starfield | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/starfield/starfield.xml || exit /b 1
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+@set PL_SOURCES="../../samples/starfield/logic/logic.c"
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: starfield[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/starfield/logic/logic.dll" -Fo"../../samples/starfield/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/starfield/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanuprelease
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_starfield
+
+@del "..\..\samples\starfield\logic\*.obj"  > nul 2> nul
 
 :Cleanuprelease
 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
-@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction1\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\starfield\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\procedural-panel\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
-@if exist "../../samples/ptz/logic/lock.tmp" del "..\..\samples\ptz\logic\lock.tmp"
+@if exist "../../samples/starfield/logic/lock.tmp" del "..\..\samples\starfield\logic\lock.tmp"
 
 :: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :: end of release configuration
@@ -380,41 +266,29 @@ goto ExitLabel
 :debug
 
 :: create output directories
-@if not exist "../../samples/drawfunction2/logic" @mkdir "../../samples/drawfunction2/logic"
-
-@if not exist "../../samples/ptz/logic" @mkdir "../../samples/ptz/logic"
-
-@if not exist "../../samples/drawfunction3/logic" @mkdir "../../samples/drawfunction3/logic"
-
-@if not exist "../../samples/drawfunction1/logic" @mkdir "../../samples/drawfunction1/logic"
-
 @if not exist "../../samples/planet/logic" @mkdir "../../samples/planet/logic"
-
-@if not exist "../../samples/drawfunction4/logic" @mkdir "../../samples/drawfunction4/logic"
 
 @if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
 
 @if not exist "../../samples/api-test/logic" @mkdir "../../samples/api-test/logic"
 
+@if not exist "../../samples/starfield/logic" @mkdir "../../samples/starfield/logic"
+
+@if not exist "../../samples/procedural-panel/logic" @mkdir "../../samples/procedural-panel/logic"
+
 :: create lock file(s)
-@echo LOCKING > "../../samples/ptz/logic/lock.tmp"
+@echo LOCKING > "../../samples/starfield/logic/lock.tmp"
 
 @if exist "../../samples/api-test/logic/logic.dll" del "..\..\samples\api-test\logic\logic.dll"
 @if exist "../../samples/api-test/logic/logic_*.pdb" del "..\..\samples\api-test\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction1/logic/logic.dll" del "..\..\samples\drawfunction1\logic\logic.dll"
-@if exist "../../samples/drawfunction1/logic/logic_*.pdb" del "..\..\samples\drawfunction1\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction2/logic/logic.dll" del "..\..\samples\drawfunction2\logic\logic.dll"
-@if exist "../../samples/drawfunction2/logic/logic_*.pdb" del "..\..\samples\drawfunction2\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction3/logic/logic.dll" del "..\..\samples\drawfunction3\logic\logic.dll"
-@if exist "../../samples/drawfunction3/logic/logic_*.pdb" del "..\..\samples\drawfunction3\logic\logic_*.pdb"
-@if exist "../../samples/drawfunction4/logic/logic.dll" del "..\..\samples\drawfunction4\logic\logic.dll"
-@if exist "../../samples/drawfunction4/logic/logic_*.pdb" del "..\..\samples\drawfunction4\logic\logic_*.pdb"
 @if exist "../../samples/lissajous/logic/logic.dll" del "..\..\samples\lissajous\logic\logic.dll"
 @if exist "../../samples/lissajous/logic/logic_*.pdb" del "..\..\samples\lissajous\logic\logic_*.pdb"
 @if exist "../../samples/planet/logic/logic.dll" del "..\..\samples\planet\logic\logic.dll"
 @if exist "../../samples/planet/logic/logic_*.pdb" del "..\..\samples\planet\logic\logic_*.pdb"
-@if exist "../../samples/ptz/logic/logic.dll" del "..\..\samples\ptz\logic\logic.dll"
-@if exist "../../samples/ptz/logic/logic_*.pdb" del "..\..\samples\ptz\logic\logic_*.pdb"
+@if exist "../../samples/procedural-panel/logic/logic.dll" del "..\..\samples\procedural-panel\logic\logic.dll"
+@if exist "../../samples/procedural-panel/logic/logic_*.pdb" del "..\..\samples\procedural-panel\logic\logic_*.pdb"
+@if exist "../../samples/starfield/logic/logic.dll" del "..\..\samples\starfield\logic\logic.dll"
+@if exist "../../samples/starfield/logic/logic_*.pdb" del "..\..\samples\starfield\logic\logic_*.pdb"
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -448,138 +322,6 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/api-test/logic/logic.dll" 
 :Exit_api-test
 
 @del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction1/drawfunction1.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction1/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction1[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction1/logic/logic.dll" -Fo"../../samples/drawfunction1/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction1/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanupdebug
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction1
-
-@del "..\..\samples\drawfunction1\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction2 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction2/drawfunction2.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction2/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction2[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction2/logic/logic.dll" -Fo"../../samples/drawfunction2/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction2/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanupdebug
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction2
-
-@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction3 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction3/drawfunction3.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction3/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction3[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction3/logic/logic.dll" -Fo"../../samples/drawfunction3/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction3/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanupdebug
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction3
-
-@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
-
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction4 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction4/drawfunction4.xml || exit /b 1
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/drawfunction4/logic/logic.c"
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: drawfunction4[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction4/logic/logic.dll" -Fo"../../samples/drawfunction4/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction4/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanupdebug
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_drawfunction4
-
-@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -647,20 +389,20 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/planet/logic/logic.dll" -F
 
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
 
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ptz | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~ procedural-panel | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-"../../pilotlight/out/dcapp-genheader.exe" ../../samples/ptz/ptz.xml || exit /b 1
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/procedural-panel/procedural-panel.xml || exit /b 1
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
-@set PL_SOURCES="../../samples/ptz/logic/logic.c"
+@set PL_SOURCES="../../samples/procedural-panel/logic/logic.c"
 
 :: run compiler (and linker)
 @echo.
-@echo [1m[93mStep: ptz[0m
+@echo [1m[93mStep: procedural-panel[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/ptz/logic/logic.dll" -Fo"../../samples/ptz/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/ptz/logic/logic_%random%.pdb"
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/procedural-panel/logic/logic.dll" -Fo"../../samples/procedural-panel/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/procedural-panel/logic/logic_%random%.pdb"
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -676,26 +418,56 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/ptz/logic/logic.dll" -Fo".
 @echo [36mResult: [0m %PL_RESULT%
 @echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
 
-:Exit_ptz
+:Exit_procedural-panel
 
-@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\procedural-panel\logic\*.obj"  > nul 2> nul
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ starfield | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/starfield/starfield.xml || exit /b 1
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+@set PL_SOURCES="../../samples/starfield/logic/logic.c"
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: starfield[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/starfield/logic/logic.dll" -Fo"../../samples/starfield/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/starfield/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanupdebug
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_starfield
+
+@del "..\..\samples\starfield\logic\*.obj"  > nul 2> nul
 
 :Cleanupdebug
 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
-@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction1\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\api-test\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\starfield\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\procedural-panel\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
-@if exist "../../samples/ptz/logic/lock.tmp" del "..\..\samples\ptz\logic\lock.tmp"
+@if exist "../../samples/starfield/logic/lock.tmp" del "..\..\samples\starfield\logic\lock.tmp"
 
 :: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :: end of debug configuration

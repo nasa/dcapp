@@ -1,25 +1,17 @@
-# Logic Files
+# Logic files
 
-Logic files are optional shared libraries loaded by `<Logic File="..."/>`.
-Use XML for stable layout and simple interaction. Use C/C++ logic for
-procedural drawing, state machines, calculations, IO, or behavior that would be
-awkward to express in XML.
+Logic files are shared libraries loaded by `<Logic File="..."/>`. They are
+useful for calculations, state machines, custom I/O, and procedural drawing;
+layout and simple presentation state usually remain easier to follow in XML.
 
-Use logic when the display needs behavior rather than just structure. Good fits
-include algorithms, filtered values, reusable procedural drawing, custom IO, and
-state that would make the XML hard to understand.
-
-Keep simple presentation rules in XML. A color change, a button state, a
-conditional label, or a direct variable assignment usually belongs in XML.
-
-## XML Hook
+## XML declaration
 
 ```xml
 <DCAPP>
     <Variable Type="#_variable_double_" InitialValue="0">PHASE</Variable>
     <Logic File="logic/logic.so"/>
 
-    <Window Title="Logic Demo" Width="900" Height="600" UpdateRate="60">
+    <Window Title="Logic" Width="900" Height="600" UpdateRate="60">
         <Panel VirtualWidth="900" VirtualHeight="600">
             <DrawFunction Name="draw_panel">
                 <Arg Type="#_variable_double_" Value="@PHASE"/>
@@ -39,7 +31,7 @@ Only one `<Logic>` library may be loaded per display.
 root children is irrelevant. dcapp loads the declaration before it resolves
 callbacks in the window render tree.
 
-## Generated Header
+## Generated header
 
 Generate the display-specific logic header:
 
@@ -57,17 +49,9 @@ This writes `path/to/logic/dcapp.h`. The header contains:
 
 Do not edit `logic/dcapp.h`; regenerate it when XML variables change.
 
-The generated file deliberately contains only the short logic-facing names,
-such as `DcVec2`, `DcStroke`, and `DcDrawApi`. It does not expose dcapp's
-internal `DcApp*` headers or aliases. The public declarations are maintained
-explicitly in `apps/dcapp_genheader.c`, so changing an internal API requires
-updating the generated contract in the same change.
-
-The generated header exists so the logic library and XML stay coupled by the
-display definition, not by hand-written declarations. If an XML variable is
-renamed or its type changes, regenerating the header updates the C pointer
-declarations and catches stale code at compile time. The same applies to
-`Function` and `DrawFunction` names and signatures.
+The generated file contains the logic-facing API (`DcVec2`, `DcStroke`,
+`DcDrawApi`, and related declarations), not dcapp's internal `DcApp*` headers.
+Its public declarations are maintained in `apps/dcapp_genheader.c`.
 
 The generated declarations use C linkage in C++ and carry the platform export
 annotation needed by dynamically loaded callbacks. Include `dcapp.h` before
@@ -104,34 +88,13 @@ void display_close(DcAppContext *app_ctx, void *user_data) {
 once per frame by default, or at the fixed `Window UpdateRate` cadence when
 `UpdateRate` is set. `display_close` runs during cleanup.
 
-## Why `user_data` Exists
+## Per-display state
 
-`user_data` is the logic library's private per-display state pointer. dcapp does
-not know what type it points to; it only stores the pointer and passes it back to
-your callbacks.
-
-Use it when logic needs state that should live longer than one callback, but
-does not belong in XML as a display variable. Common examples are:
-
-- cached calculations or filter history
-- loaded resources owned by the logic library
-- protocol/client handles
-- state machines with internal fields
-- small structs that organize several related runtime values
-
-The usual flow is:
-
-1. Allocate or assign the state in `display_init` through `void **user_data`.
-2. Read it in `display_draw`, `Function`, or `DrawFunction` callbacks through
-   `void *user_data`.
-3. Release it in `display_close`.
-
-This avoids forcing private implementation details into XML variables, and it
-also avoids relying on file-scope globals when a display can keep the state
-attached to the dcapp runtime that loaded the logic library.
-
-Use XML variables for values the display should bind, render, set, transmit, or
-inspect. Use `user_data` for private C/C++ state that supports that behavior.
+`user_data` belongs to the logic library. Assign it through `void **user_data`
+in `display_init`, use it in later callbacks, and release it in
+`display_close`. Keep values that XML binds, renders, sets, or transmits as XML
+variables; use `user_data` for private state such as filter history, client
+handles, or cached resources.
 
 Example:
 
@@ -161,9 +124,7 @@ void display_close(DcAppContext *app_ctx, void *user_data) {
 }
 ```
 
-`app_ctx` and `user_data` serve different purposes. `app_ctx` is dcapp's runtime
-context; pass it back to dcapp APIs when they require it. `user_data` is your
-logic library's own state.
+`app_ctx` is dcapp's runtime context and is passed back to APIs that require it.
 
 For additional source files compiled into the same logic library:
 
@@ -207,7 +168,7 @@ Variables can also be looked up by name:
 double *phase = (double *)dc_app->get_variable(app_ctx, "PHASE");
 ```
 
-## `Function` Element
+## `Function`
 
 `<Function Name="...">` calls a symbol in the loaded logic library. Without
 `FireCall`, it runs whenever the node is drawn. With `FireCall`, it runs when
@@ -218,10 +179,8 @@ tree. It may be nested in a panel, container, conditional branch, or event
 element. A root-level `Function` is invalid because root declarations are not
 rendered.
 
-Use `Function` for event-like work that is triggered from XML but easier to
-write in C, such as resetting several variables, sending a command, or advancing
-a state machine. Use `display_draw` for regular per-update logic. Use
-`DrawFunction` when the C code needs to emit drawing commands.
+Use `Function` for work triggered from the render tree. Use `display_draw` for
+regular per-update logic and `DrawFunction` for drawing commands.
 
 ```xml
 <MousePressed>
@@ -237,7 +196,7 @@ void reset_phase(DcAppContext *app_ctx, void *user_data) {
 }
 ```
 
-## DrawFunction API
+## `DrawFunction`
 
 `<DrawFunction Name="...">` calls a C drawing callback during XML drawing. It
 receives the current XML coordinate context, an optional typed argument list,
@@ -246,10 +205,7 @@ and `user_data`.
 Like `Function`, `DrawFunction` must appear somewhere inside the `<Window>`
 render tree.
 
-Use `DrawFunction` when XML should own placement and surrounding layout, but C
-should generate the visual content. This is useful for plots, custom gauges,
-procedural shapes, dense repeated geometry, or drawing that depends on
-calculated intermediate state.
+XML still owns the callback's placement and surrounding layout.
 
 ```xml
 <DrawFunction Name="draw_wave">
@@ -301,13 +257,11 @@ interactive targets every frame with stable IDs.
 the current frame's mouse input; `get_state()` reports its position in the
 current draw context's local space.
 
-See the DrawFunction samples for concrete API usage.
-
 Planet overlays are drawn through `dc_draw`, including geodetic/cartesian
 spheres, lines, polygons, images, text, ellipses, and loaded GeoJSON. See
 [Planet Rendering](planet.md) for coordinate and style semantics.
 
-## Building Logic
+## Building
 
 The top-level build scripts regenerate headers and build all bundled sample
 logic libraries:
@@ -332,7 +286,7 @@ cl /LD logic\logic.c /Fe:logic\logic.dll
 The generated `dcapp.h` declarations export the lifecycle callbacks and all
 callbacks named by XML `Function` and `DrawFunction` elements.
 
-### Submodule Make Integration
+### Submodule Make targets
 
 When dcapp is a submodule, its top-level `Makefile` provides stable target names
 on macOS, Linux, and Windows:
@@ -384,20 +338,17 @@ dcapp rebuild even if the regenerated header has identical contents. The
 `print-genheader`, `print-validator`, and `print-dcapp-library` targets report
 the corresponding platform-specific artifact paths when those are needed.
 
-## Samples
+## Relevant samples
 
 | Sample | Pattern |
 |--------|---------|
 | `samples/api-test` | Manually run generated API and callback test display |
-| `samples/drawfunction1` | XML owns cards and labels; C draws focused pieces |
-| `samples/drawfunction2` | C API reference gallery |
-| `samples/drawfunction3` | Hybrid XML/C procedural panel |
-| `samples/drawfunction4` | Full procedural panel with C mouse hit regions |
+| `samples/starfield` | XML layout with procedural C drawing |
+| `samples/procedural-panel` | Procedural panel with C mouse hit regions |
 | `samples/lissajous` | C-updated variables and drawing |
-| `samples/ptz` | Logic-backed controls |
 | `samples/planet` | Logic-created planet/view interop |
 
-## Troubleshooting
+## Load and build failures
 
 - If variables are missing, regenerate `logic/dcapp.h`.
 - If a symbol is missing, check that the function name in XML exactly matches

@@ -15,6 +15,7 @@ void display_draw(DcAppContext *app_ctx, void *user_data) {
     (void)user_data;
     (void)app_ctx;
     g_phase += 0.025f;
+    *CurveSpan = *Amplitude * 2.0;
 }
 
 void display_close(DcAppContext *app_ctx, void *user_data) {
@@ -27,11 +28,12 @@ void draw_lissajous(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *u
     (void)args;
     if (!dc_draw) return;
 
+    float amplitude = (float)*Amplitude;
     DcVec2 points[POINT_COUNT];
     for (int i = 0; i < POINT_COUNT; i++) {
         float t = ((float)i / (float)(POINT_COUNT - 1)) * PI * 2.0f;
-        points[i].x = 400.0f + sinf(t * 3.0f + g_phase) * 300.0f;
-        points[i].y = 380.0f + sinf(t * 4.0f) * 300.0f;
+        points[i].x = 400.0f + sinf(t * 3.0f + g_phase) * amplitude;
+        points[i].y = 380.0f + sinf(t * 4.0f) * amplitude;
     }
 
     dc_draw->line(draw_ctx, (DcVec2){100.0f, 380.0f}, (DcVec2){700.0f, 380.0f}, (DcStroke){.color = (DcVec4){.r = 0.18f, .g = 0.28f, .b = 0.34f, .a = 1.0f}, .width = 1.0f});

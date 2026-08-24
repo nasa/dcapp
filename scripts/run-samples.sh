@@ -52,7 +52,6 @@ run_with_timeout() {
 
 pass_count=0
 fail_count=0
-skip_count=0
 sample_count=0
 
 for sample_dir in "$DCAPP_HOME"/samples/*; do
@@ -78,12 +77,6 @@ for sample_dir in "$DCAPP_HOME"/samples/*; do
         sample_name="$(basename "$sample_dir")"
         rel_path="${sample_xml#"$DCAPP_HOME"/}"
 
-        if [ "$sample_name" = "bad-sample" ]; then
-            echo "[SKIP] $rel_path (intentional invalid sample)"
-            skip_count=$((skip_count + 1))
-            continue
-        fi
-
         echo "[RUN ] $rel_path"
         run_with_timeout "$TIMEOUT_SECONDS" "$DCAPP_HOME/bin/dcapp.sh" "$sample_xml"
         status=$?
@@ -102,7 +95,7 @@ for sample_dir in "$DCAPP_HOME"/samples/*; do
     done
 done
 
-echo "Summary: $pass_count passed, $fail_count failed, $skip_count skipped."
+echo "Summary: $pass_count passed, $fail_count failed."
 
 if [ "$fail_count" -ne 0 ]; then
     exit 1

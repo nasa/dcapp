@@ -1,80 +1,39 @@
-# dcapp Documentation Index
+# Documentation
 
-Use [Getting Started](getting-started.md) first if you are installing dcapp,
-running samples, or trying to understand the display workflow from the user
-side. This page is the detailed map.
+For installation, builds, and the first run, see
+[Getting Started](getting-started.md).
 
-## XML And Display Authoring
+## Display authoring
 
-| Topic | File |
-|-------|------|
-| XML elements and layout primitives | [primitives.md](primitives.md) |
-| Runtime variables, text interpolation, and `Set` operators | [variables.md](variables.md) |
-| Parse-time constants and built-in constant groups | [constants.md](constants.md) |
-| Coordinate system, panel space, and planet/cartesian frames | [coordinate-frame.md](coordinate-frame.md) |
-| Button behavior and visual states | [buttons.md](buttons.md) |
-| Mouse event children and slider patterns | [mouse-events.md](mouse-events.md) |
-| Blink wrapper | [blink.md](blink.md) |
-| Stencil clipping | [stencil.md](stencil.md) |
-| Runnable sample map | [samples.md](samples.md) |
+| Topic | Reference |
+|-------|-----------|
+| Elements, layout, and drawing primitives | [Primitives](primitives.md) |
+| Runtime values, interpolation, and `Set` | [Variables](variables.md) |
+| Parse-time constants | [Constants](constants.md) |
+| Panel and planet coordinate systems | [Coordinate frames](coordinate-frame.md) |
+| Button states | [Buttons](buttons.md) |
+| Mouse events and slider patterns | [Mouse events](mouse-events.md) |
+| Blinking content | [Blink](blink.md) |
+| Clipping | [Stencil](stencil.md) |
+| Bundled displays | [Samples](samples.md) |
 
-## Logic And Procedural Drawing
+## Logic and data
 
-| Topic | File |
-|-------|------|
-| C/C++ logic libraries, generated `logic/dcapp.h`, lifecycle callbacks | [logic.md](logic.md) |
-| `Function` callbacks from XML | [logic.md#function-element](logic.md#function-element) |
-| `DrawFunction` procedural drawing API | [logic.md#drawfunction-api](logic.md#drawfunction-api) |
+| Topic | Reference |
+|-------|-----------|
+| C/C++ libraries, callbacks, and procedural drawing | [Logic](logic.md) |
+| Trick Variable Server | [Trick](trick.md) |
+| Edge command mapping | [Edge](edge.md) |
+| MJPEG and shared-memory streams | [PixelStream](pixelstream.md) |
+| How external data reaches XML variables | [Integration](integration.md) |
+| Terrain, overlays, and planet tools | [Planet](planet.md) |
 
-## External Data And Streams
+## Project
 
-| Topic | File |
-|-------|------|
-| Trick Variable Server mapping | [trick.md](trick.md) |
-| Edge command mapping | [edge.md](edge.md) |
-| MJPEG and shared-memory pixel streams | [pixelstream.md](pixelstream.md) |
-| Integration overview | [integration.md](integration.md) |
-
-## Planet Rendering
-
-| Topic | File |
-|-------|------|
-| Planet terrain XML, chunk generation, snapshots, overlays | [planet.md](planet.md) |
-| Planet coordinate frames | [coordinate-frame.md](coordinate-frame.md) |
-
-## Project Internals
-
-| Topic | File |
-|-------|------|
-| Runtime architecture and PilotLight integration | [architecture.md](architecture.md) |
-| Coding style and change checklists | [coding-style.md](coding-style.md) |
-
-## Migration And History
-
-| Topic | File |
-|-------|------|
-| Legacy XML and logic migration | [migration.md](migration.md) |
-| Searchable breaking-change notes | [breaking-changes.md](breaking-changes.md) |
-| Full project history | [../CHANGELOG.md](../CHANGELOG.md) |
-
-## Current XML Surface
-
-The parser recognizes these XML element names:
-
-`Arc`, `Arg`, `Blink`, `Button`, `ButtonDisabled`, `ButtonEnabled`,
-`ButtonIndicatorOff`, `ButtonIndicatorOn`, `ButtonPressed`, `ButtonReleased`,
-`ButtonTransition`, `Constant`, `Container`, `DCAPP`, `Default`, `Dummy`,
-`DrawFunction`, `EdgeFrom`, `EdgeIO`, `EdgeTo`, `EdgeVariable`, `Ellipse`,
-`False`, `Function`, `If`, `Image`, `Include`, `Line`, `Logic`, `MouseActive`,
-`MouseHovered`, `MouseInactive`, `MouseMotion`, `MousePressed`,
-`MouseReleased`, `Panel`, `PixelStream`, `Planet`, `PlanetBreadcrumbs`,
-`PlanetContainer`, `PlanetData`, `PlanetEllipse`, `PlanetGeoJSON`,
-`PlanetImage`, `PlanetLine`, `PlanetPolygon`, `PlanetShader`, `PlanetSphere`,
-`PlanetText`, `PlanetTexture`, `PlanetView`,
-`Polygon`, `Rectangle`, `Set`, `Sphere`, `Stencil`, `StencilAdd`,
-`StencilDraw`, `StencilRemove`, `Style`, `Text`, `TrickFrom`, `TrickIO`,
-`TrickTo`, `TrickVariable`, `True`, `Variable`, `Vertex`, and `Window`.
-
-Preprocessing removes or expands several of those before validation/rendering:
-`Constant`, `Default`, `Style`, `Include`, and `Dummy` do not remain as runtime
-draw nodes. Static `If` branches are also resolved at load time.
+| Topic | Reference |
+|-------|-----------|
+| Runtime layout and ownership | [Architecture](architecture.md) |
+| Code conventions and change checks | [Coding style](coding-style.md) |
+| Updating legacy XML and logic | [Migration](migration.md) |
+| Compatibility notes | [Breaking changes](breaking-changes.md) |
+| Release history | [Changelog](../CHANGELOG.md) |

@@ -23,12 +23,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "if (!(Test-Path $exe)) { Write-Host \"Missing $exe. Run scripts\build.bat first.\"; exit 1 }" ^
   "$samples = Get-ChildItem -Path $samplesDir -Directory | ForEach-Object { Get-ChildItem -Path $_.FullName -Filter '*.xml' -File } | Sort-Object FullName;" ^
   "if ($samples.Count -eq 0) { Write-Host 'No samples found.'; exit 1 }" ^
-  "$pass = 0; $fail = 0; $skip = 0;" ^
+  "$pass = 0; $fail = 0;" ^
   "Write-Host \"Running $($samples.Count) sample XML files with ${timeoutSeconds}s timeout each.\"; Write-Host '';" ^
   "foreach ($sample in $samples) {" ^
-  "  $sampleName = Split-Path $sample.DirectoryName -Leaf;" ^
   "  $rel = $sample.FullName.Substring($homeDir.Length).TrimStart('\', '/');" ^
-  "  if ($sampleName -eq 'bad-sample') { Write-Host \"[SKIP] $rel (intentional invalid sample)\"; $skip++; continue }" ^
   "  Write-Host \"[RUN ] $rel\";" ^
   "  $proc = Start-Process -FilePath $exe -WorkingDirectory $runDir -ArgumentList @('-a', 'dcapp', $sample.FullName) -PassThru;" ^
   "  $completed = $proc.WaitForExit([int][Math]::Ceiling($timeoutSeconds * 1000));" ^
@@ -42,7 +40,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "  }" ^
   "  Write-Host '';" ^
   "}" ^
-  "Write-Host \"Summary: $pass passed, $fail failed, $skip skipped.\";" ^
+  "Write-Host \"Summary: $pass passed, $fail failed.\";" ^
   "if ($fail -ne 0) { exit 1 }"
 
 exit /b %ERRORLEVEL%

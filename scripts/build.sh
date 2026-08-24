@@ -90,13 +90,10 @@ else
 fi
 DCAPP_SAMPLE_OUTPUTS=(
     "$DCAPP_HOME/samples/api-test/logic/liblogic.$SAMPLE_LIB_EXT"
-    "$DCAPP_HOME/samples/drawfunction1/logic/liblogic.$SAMPLE_LIB_EXT"
-    "$DCAPP_HOME/samples/drawfunction2/logic/liblogic.$SAMPLE_LIB_EXT"
-    "$DCAPP_HOME/samples/drawfunction3/logic/liblogic.$SAMPLE_LIB_EXT"
-    "$DCAPP_HOME/samples/drawfunction4/logic/liblogic.$SAMPLE_LIB_EXT"
     "$DCAPP_HOME/samples/lissajous/logic/liblogic.$SAMPLE_LIB_EXT"
     "$DCAPP_HOME/samples/planet/logic/liblogic.$SAMPLE_LIB_EXT"
-    "$DCAPP_HOME/samples/ptz/logic/liblogic.$SAMPLE_LIB_EXT"
+    "$DCAPP_HOME/samples/procedural-panel/logic/liblogic.$SAMPLE_LIB_EXT"
+    "$DCAPP_HOME/samples/starfield/logic/liblogic.$SAMPLE_LIB_EXT"
 )
 
 all_outputs_exist() {

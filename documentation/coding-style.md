@@ -1,222 +1,161 @@
-# dcapp Coding Style
+# Coding Style
 
-This page records the style and maintenance rules that keep dcapp changes
-consistent. It is not a full C style guide. It focuses on the habits that
-matter for this codebase.
+This file covers project-specific conventions. Match the surrounding file for
+formatting details not mentioned here.
 
-## General Style
+## Names and scope
 
-- Use C-style `snake_case` for functions and local variables.
-- Types declared in headers use `Dc...` names and tags without a leading
-  underscore. Reserve leading underscores for file-local types and helpers in
-  implementation files, or for private struct members.
-- Internal helper functions commonly use a leading underscore, such as
-  `_process_xml_node_logic`.
-- Keep comments useful and short. Prefer comments that explain ordering,
-  ownership, coordinate assumptions, or non-obvious behavior.
-- Keep files ASCII unless the existing file already needs another encoding.
+- Use `snake_case` for functions and local variables.
+- Header-visible types use `Dc...` names and tags without a leading
+  underscore. File-local types and helpers may use a leading underscore.
+- Cross-file identifiers under `src/app` carry the owner name:
+  `DcAppDisplayModel...`, `dc_app_display_model_...`,
+  `DC_APP_DISPLAY_MODEL_...`.
+- Opaque subsystem state types end in `Context`.
+- Qualify module-owned scalar and index types, such as
+  `DcAppDrawAlignmentType` and `DcAppVariableRegistryVariableIndex`.
+- Spell out ownership-bearing words such as `Variable`, `Value`,
+  `Element`, and `Alignment`. Keep established initialisms such as `API`,
+  `ID`, `XML`, and `CRS`.
+- Keep file-local names short. Full owner prefixes are for cross-file
+  contracts.
+- The generated logic API is a separate public contract. Do not mechanically
+  rename its shorter `Dc...` identifiers to match internal `DcApp...` names.
+- Comments should explain ownership, ordering, coordinate assumptions, or
+  behavior that is not clear from the code.
+- Keep files ASCII unless a file already requires another encoding.
 
-## Public Naming And Ownership
+## Header boundaries
 
-Cross-file names in `src/app` are deliberately verbose. C has no native
-namespace, so a public name should identify the subsystem that owns its
-contract without requiring the reader to find its declaration first.
+- A `*_types.h` contains only enums and typedefs for basic scalar,
+  index, or ID types.
+- Put opaque-type typedefs in the API header that owns them. A header that only
+  borrows a pointer should forward-declare the struct or union tag.
+- Do not include a full API header solely to obtain an opaque pointer type.
+  Implementation files should include every API they call.
+- A struct or union used by value requires its complete definition.
+- Complete value structs belong to their owning API. Shared foundational values
+  may have a dedicated header such as `app/vector.h`.
+- Do not use `*_types.h` as an aggregate for configuration, DTOs, model
+  structs, or unrelated declarations.
 
-- Derive the owner prefix from the module name: `display_model` uses
-  `DcAppDisplayModel...`, `dc_app_display_model_...`, and
-  `DC_APP_DISPLAY_MODEL_...`; `variable_registry` follows the same pattern.
-- End opaque subsystem-state types in `Context`, such as
-  `DcAppDisplayRuntimeContext` and `DcAppVariableRegistryContext`.
-- Qualify module-owned scalar and index types too. For example, use
-  `DcAppDrawAlignmentType`, `DcAppVariableRegistryVariableIndex`, and
-  `DcAppVariableRegistryValueIndex`.
-- Spell out ownership-bearing words such as `Variable`, `Value`, `Element`,
-  and `Alignment`. Retain established technical initialisms such as `API`,
-  `ID`, `XML`, and `CRS` where the surrounding API already uses them.
-- Keep file-local types, static helpers, parameters, and local variables
-  concise; the full owner prefix is for cross-file interfaces.
-- Do not rename the generated logic API mechanically. Its curated `Dc...`
-  names are a separate public contract even when the internal `DcApp...`
-  counterpart is more explicit.
+## Memory, APIs, and arrays
 
-## Header Boundaries
+Implementation files cache PilotLight and dcapp extension APIs in file-local
+`_ext_*` pointers. Refresh those pointers from the module's `*_init`
+function.
 
-- Use a focused `*_types.h` only for enums and typedefs of basic scalar,
-  index, or ID types. Do not collect unrelated declarations in an aggregate
-  type header.
-- Do not put struct or union forward declarations, opaque pointer aliases,
-  complete structs, configuration, DTOs, or model types in `*_types.h`.
-- Put an opaque type's typedef in its owning API header. Headers that only
-  borrow a pointer should forward-declare its struct or union tag locally.
-- Do not include a module's full API header from another header just to obtain
-  its types. Implementation files should directly include the APIs they call.
-- If a header uses a non-basic struct or union by value, include the header
-  that owns its complete definition; a forward declaration is not sufficient.
-- Complete value structs belong in their owning API header. Foundational values
-  that are intentionally shared by value may own a real focused header such as
-  `app/vector.h`.
+Use `PL_ALLOC`, `PL_REALLOC`, and `PL_FREE` in runtime code already using
+PilotLight's tracked allocator. Plain C allocations must be released through
+the matching plain C path.
 
-## PilotLight APIs
+dcapp uses both `utils/stb_sb.h` arrays and PilotLight stretchy buffers. Match
+the local module. Keep movable buffers private to their context and expose
+stable IDs or separately allocated handles. Node and texture index `0` is
+reserved as undefined.
 
-Each implementation file stores the PilotLight and dcapp extension APIs it uses
-in file-local `_ext_*` pointers and refreshes them through its `*_init`
-function. Follow that pattern when adding integration with an extension.
+State kept across an application-library reload belongs in a heap-owned
+context, not a file-static registry.
 
-Use PilotLight memory helpers in app/runtime code that already depends on
-PilotLight memory tracking:
+## XML changes
 
-- `PL_ALLOC`
-- `PL_REALLOC`
-- `PL_FREE`
+An XML element change usually touches:
 
-Do not mix ownership casually. If a subsystem allocates with ordinary C
-allocation, free it the same way. If it allocates through PilotLight tracked
-memory, release it through the matching PilotLight path.
+1. `src/app/xml_element_types.h`, `src/app/xml_element.h`, and the name mapping
+   in `src/app/xml_element.c`;
+2. `src/app/node.h`, if the element survives preprocessing;
+3. parsing in `src/app/display_builder.c`;
+4. resolution in `src/app/display_runtime.c`, if it affects the display;
+5. attributes and child rules in `apps/dcapp_validate.c`;
+6. the relevant documentation and, for user-facing behavior, a sample;
+7. `scripts/convert-legacy-xml.py`, only when legacy conversion changes.
 
-## Dynamic Arrays
+`Constant`, `Default`, `Style`, `Include`, and `Dummy` are authoring
+elements and disappear during preprocessing. Document that distinction for
+new preprocessing-only elements.
 
-dcapp uses stretchy-buffer arrays in several places. Existing app code often
-uses the `sb*` macros from `utils/stb_sb.h`, such as `sbpush`, `sbcount`, and
-`sbfree`. Some extension code uses PilotLight stretchy-buffer helpers. Match
-the local file.
+Resource paths resolve relative to the XML file that declares them. Preserve
+`_Directory` propagation when adding path attributes so included images,
+fonts, logic, shaders, and data do not depend on the process working
+directory. Prefer the helpers in `src/utils/file.*`.
 
-Index `0` is commonly reserved as undefined for runtime node and texture
-handles. Preserve that convention when adding indexed runtime arrays.
+## Values and variables
 
-## XML Changes
+`DcAppValue` is the runtime value representation. Code that reads or writes
+XML values should:
 
-When adding or changing an XML element, update the full surface area in the same
-change:
+- preserve the value type when possible;
+- use the existing refresh helpers when a string form must stay synchronized;
+- use `src/app/variable_registry.c` instead of open-coding registry access;
+- keep `Set` behavior and logic variable pointers consistent.
 
-1. Add or change the element enum in `src/app/xml_element_types.h` and its name
-   mapping in `src/app/xml_element.c`.
-2. Add or change the runtime node data in `src/app/node.h` if the element
-   survives preprocessing.
-3. Parse the element in `src/app/display_builder.c`.
-4. Resolve it in `src/app/display_runtime.c` if it affects runtime display.
-5. Validate allowed attributes/children in `apps/dcapp_validate.c`.
-6. Update documentation in `documentation/`.
-7. Add or update a sample when the behavior is user-facing.
-8. Update `scripts/convert-legacy-xml.py` only if the change affects legacy XML
-   migration.
+## Logic API changes
 
-If an element is only an authoring helper, make that clear in the docs. Examples
-include `Constant`, `Default`, `Style`, `Include`, and `Dummy`; they are
-preprocessed away before runtime drawing.
+Update the contract and its consumers in one change:
 
-## XML Paths
+1. edit the owning contract in `src/app/draw_api.h`,
+   `src/app/texture_api.h`, `src/app/planet_api.h`, or
+   `src/app/display_logic_api.h`;
+2. update the owning implementation in `src/app/draw.c`,
+   `src/app/texture.c`, `src/app/planet.c`, or the relevant subsystem;
+3. update the short-name public declarations in `apps/dcapp_genheader.c`;
+4. update `samples/api-test`, any affected examples, and
+   [Logic](logic.md).
 
-Resource paths in XML should resolve relative to the display file or included
-file that declared them. Preserve `_Directory` handling when adding new path
-attributes. Included XML must be able to carry local image, font, logic, shader,
-and data paths without depending on the process working directory.
+Public generated structs and function-table fields must stay in the same order
+as their internal counterparts. Logic libraries use the generated
+`logic/dcapp.h` API and must not depend on private `_AppData` state.
 
-Use existing file/path helpers from `src/utils/file.*` where possible.
+The same boundary applies inside the app: `_AppData` remains private to
+`apps/dcapp.c`; subsystems receive opaque contexts, stable IDs, and narrow
+APIs.
 
-## Values And Variables
+## Drawing changes
 
-`DcAppValue` is the central runtime value representation. When adding behavior that
-reads or writes XML values:
+Keep each part in its existing layer:
 
-- Preserve the value type when possible.
-- Call the existing refresh/update helpers when a string representation needs to
-  stay in sync.
-- Use variable-registry helpers from `src/app/variable_registry.c` instead of
-  open-coding variable access.
-- Keep `Set` behavior and logic variable pointers consistent.
+- XML semantics, layout, and ordered dispatch:
+  `src/app/display_runtime.c`
+- drawing helpers, batches, transforms, stencils, and hit registration:
+  `src/app/draw.c`
+- immediate-mode list storage: `extensions/dc_draw_ext.*`
+- GPU submission: `extensions/dc_draw_backend_ext.*`
 
-## Logic API Changes
+Check 2D/3D batch order, inherited transforms, mouse hit registration, shader
+and stencil state, and planet coordinates where applicable.
 
-Logic API changes touch generated code, runtime code, docs, and samples. Update
-them together:
+## External I/O changes
 
-1. The contract owned by `src/app/draw_api.h`, `src/app/texture_api.h`,
-   `src/app/planet_api.h`, or the small aggregate in
-   `src/app/display_logic_api.h`.
-2. Implementations in `src/app/draw.c`, `src/app/texture.c`,
-   `src/app/planet.c`, or another owning runtime file.
-3. The explicitly curated short-name public contract and display-specific
-   declarations in `apps/dcapp_genheader.c`. Keep every public struct and
-   function-table field in the same order as its internal counterpart.
-4. Relevant samples under `samples/`.
-5. [logic.md](logic.md).
+Protocol code stays outside the XML parser:
 
-Logic libraries should not depend on private `_AppData` internals. Expose
-needed behavior through the generated `logic/dcapp.h` API surface instead.
+- Trick: `src/trick.c`
+- Edge: `src/edge.c`
+- streams: `src/pixelstream/`
+- XML mappings and frame updates: app contexts
 
-Runtime subsystems follow the same boundary internally: the private `_AppData`
-composition root exists only in `dcapp.c`. Give each subsystem an opaque
-context, keep its movable buffers private, and expose focused functions or
-stable IDs to other implementation files.
+If an external library keeps a callback into the app library, refresh it before
+the library can call it after reload. In XML mappings, `From` means external
+source to dcapp variable; `To` means dcapp variable to external target.
 
-## Drawing Changes
+## Checks
 
-Use the existing split:
-
-- XML node semantics, layout resolution, and XML-ordered dispatch to the draw
-  API belong in `src/app/display_runtime.c`.
-- Reusable draw API helpers and draw batching belong in `src/app/draw.c`.
-- Raw draw list storage belongs in `extensions/dc_draw_ext.*`.
-- GPU submission belongs in `extensions/dc_draw_backend_ext.*`.
-
-When adding draw behavior, think about:
-
-- 2D vs 3D draw batch ordering.
-- Transform inheritance from parent nodes.
-- Mouse hit registration if the new primitive is interactive.
-- Shader overrides and stencil state.
-- Planet-view drawing if the primitive can appear in planet coordinates.
-
-## External IO Changes
-
-Keep IO protocol code separate from XML parsing:
-
-- Trick protocol behavior belongs in `src/trick.c`.
-- Edge protocol behavior belongs in `src/edge.c`.
-- PixelStream protocol behavior belongs under `src/pixelstream/`.
-- XML mapping and runtime contexts belong in the app parser/frame loop.
-
-State retained across app-library reloads must live in a heap-owned context,
-not a file-static registry. If an external library retains a callback into the
-app library, refresh that callback before it can run after reload.
-
-When adding an IO mapping, document the direction clearly: `From` means external
-source to dcapp variable, and `To` means dcapp variable to the external target.
-
-## Tests And Checks
-
-For documentation or XML behavior changes, at minimum run validation on affected
-samples:
+Validate affected displays after documentation or XML changes. Use
+`--preprocessed` when the change affects authoring elements:
 
 ```bash
 ./bin/dcapp-validate.sh samples/welcome/welcome.xml --preprocessed cache/welcome.preprocessed.xml
 ./bin/dcapp-validate.sh samples/includes/includes.xml --preprocessed cache/includes.preprocessed.xml
 ```
 
-For logic API or generated-header changes, update `samples/api-test`, then run
-the normal build so its header is regenerated and its logic library is compiled.
-Manually run the resulting display when graphics are available:
+For generated-header or logic API changes, rebuild `samples/api-test`, run it
+when graphics are available, and close it normally so shutdown checks run:
 
 ```bash
 ./bin/dcapp.sh samples/api-test/api-test.xml
 ```
 
-Let the visible panels render, then close the display normally so its shutdown
-checks run. The sample is the readable inventory of supported Logic API entry
-points. Keep its declarations and calls current whenever the public API changes.
+For planet work, run the sample or tool that covers the changed path:
+`dcapp-planet-chunkgen`, `dcapp-planet-snapshot`, or a planet XML display.
 
-For planet changes, run the relevant planet tool or sample that exercises the
-changed path, such as `dcapp-planet-chunkgen`, `dcapp-planet-snapshot`, or a
-planet XML sample.
-
-## Documentation Rule
-
-Documentation should stay explicit, but not padded. Prefer:
-
-- A short getting-started path for users.
-- An index that names every major topic.
-- Focused topic pages for details that someone would search for directly.
-
-Do not hide narrow topics inside broad names. Trick, Edge, PixelStream, logic,
-coordinate frames, planet rendering, migration, and architecture should remain
-findable by name.
+Documentation should state the rule once, show one useful example, and link to
+the owning reference for details. Keep narrow topics findable by name.
