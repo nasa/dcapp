@@ -82,6 +82,7 @@ struct DcAppPlanetGeojson {
 //~ forward declarations
 
 static void _planet_ensure_initialized(DcAppPlanetContext *planet_ctx);
+static bool _planet_chunk_file_is_valid(const char *path);
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin);
 static void _planet_free_process_info(plPlanetProcessInfo *info);
 static bool _planet_file_path_to_vfs(DcAppPlanetContext *planet_ctx, const char *path, char *out, size_t out_size);
@@ -710,6 +711,36 @@ static DcAppPlanetViewHandle _planet_create_view(DcAppPlanetContext *planet_ctx,
 
 //- process metadata
 
+static bool _planet_chunk_file_is_valid(const char *path) {
+    FILE *file = fopen(path, "rb");
+    if (!file) return false;
+
+    plVersion version = {0};
+    int tree_depth = 0;
+    uint32_t chunk_count = 0;
+    bool valid = fread(&version.uMajor, sizeof(version.uMajor), 1, file) == 1 &&
+                 fread(&version.uMinor, sizeof(version.uMinor), 1, file) == 1 &&
+                 fread(&version.uPatch, sizeof(version.uPatch), 1, file) == 1 &&
+                 fread(&tree_depth, sizeof(tree_depth), 1, file) == 1;
+
+    if (valid && version.uMinor > 2) {
+        double max_error;
+        plPlanetProcessingFlags flags;
+        valid = fread(&max_error, sizeof(max_error), 1, file) == 1 &&
+                fread(&chunk_count, sizeof(chunk_count), 1, file) == 1 &&
+                fread(&flags, sizeof(flags), 1, file) == 1;
+    } else if (valid) {
+        float max_error;
+        valid = fread(&max_error, sizeof(max_error), 1, file) == 1 &&
+                fread(&chunk_count, sizeof(chunk_count), 1, file) == 1;
+    }
+
+    fclose(file);
+    plVersion supported = plPlanetProcessorI_version;
+    return valid && version.uMajor <= supported.uMajor && version.uMinor <= supported.uMinor &&
+           tree_depth > 0 && chunk_count > 0;
+}
+
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin) {
     // load and parse the metadata document
     char *json_str = dc_utils_load_text_file(json_path);
@@ -866,6 +897,13 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
             dc_utils_join_paths(json_dir, chunk_file, abs_chunk_path, sizeof(abs_chunk_path));
         else
             strncpy(abs_chunk_path, chunk_file, sizeof(abs_chunk_path) - 1);
+        if (strlen(abs_chunk_path) >= sizeof(((plPlanetChunkFile *)0)->acFile) ||
+            !_planet_chunk_file_is_valid(abs_chunk_path)) {
+            DC_LOG_ERROR("Planet", "Planet chunk is missing or invalid: %s", abs_chunk_path);
+            pl_unload_json(&root);
+            free(json_str);
+            return false;
+        }
         strncpy(tile->acOutputFile, abs_chunk_path, sizeof(tile->acOutputFile) - 1);
     }
 

@@ -18,7 +18,7 @@ extern "C" {
 DcAppXmlPreprocessorContext *dc_app_xml_preprocessor_context_create(const char *config_path, char **args, int arg_count);
 void dc_app_xml_preprocessor_context_destroy(DcAppXmlPreprocessorContext *preprocessor);
 // expand the configuration in place while retaining ownership of the xml tree
-void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *preprocessor);
+bool dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *preprocessor);
 void dc_app_xml_preprocessor_save_preprocessed(DcAppXmlPreprocessorContext *preprocessor, const char *output_path);
 void dc_app_xml_preprocessor_export_environment(const DcAppXmlPreprocessorContext *preprocessor);
 

@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     dc_app_xml_preprocessor_export_environment(config);
 
     // expand includes, constants, and static conditions
-    dc_app_xml_preprocessor_preprocess(config);
+    if (!dc_app_xml_preprocessor_preprocess(config)) return 1;
 
     // save the expanded xml when requested
     dc_app_xml_preprocessor_save_preprocessed(config, preprocessed_output);

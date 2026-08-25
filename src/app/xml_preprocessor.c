@@ -54,6 +54,8 @@ typedef struct __Constant {
 
 typedef struct __ConfigContext {
 
+    bool failed;
+
     //- warning suppression
     unsigned int suppress_warnings;
 
@@ -438,7 +440,9 @@ void dc_app_xml_preprocessor_context_destroy(DcAppXmlPreprocessorContext *config
 
 //~ preprocessing
 
-void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
+bool dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
+
+    if (!config || !config->xml_doc) return false;
 
     _XmlPreprocessorPassContext *context = &config->context;
 
@@ -446,10 +450,12 @@ void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
     xmlNodePtr node = xmlDocGetRootElement(config->xml_doc);
     if (node == NULL) {
         DC_LOG_ERROR("Config", "dc_app_xml_preprocessor_preprocess(): unable to get root element of config file");
+        return false;
     }
 
     if (dc_app_xml_element_type_from_xml_node(node) != DC_APP_XML_ELEMENT_TYPE_DCAPP) {
         DC_LOG_ERROR("Config", "dc_app_xml_preprocessor_preprocess(): configuration root element is not DCAPP");
+        return false;
     }
 
     //- read warning suppression options
@@ -485,7 +491,8 @@ void dc_app_xml_preprocessor_preprocess(DcAppXmlPreprocessorContext *config) {
 
     //- preprocess the tree in place
     _preprocess_xml_node(context, node, config->config_dir_path);
-    config->xml_doc_is_cleaned = true;
+    config->xml_doc_is_cleaned = !context->failed;
+    return !context->failed;
 }
 
 void dc_app_xml_preprocessor_save_preprocessed(DcAppXmlPreprocessorContext *config, const char *output_name) {
@@ -791,7 +798,10 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
             }
             if (!has_filepath) {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): File path missing in <Include> definition");
-                cleaned_filepath[0] = '\0';
+                context->failed = true;
+                xmlUnlinkNode(node);
+                xmlFreeNode(node);
+                return;
             }
 
             char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -809,6 +819,7 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
                     DC_LOG_INFO("Config", "_preprocess_xml_node(): Optional include file '%s' not found, skipping", absolute_path);
                 } else {
                     DC_LOG_ERROR("Config", "_preprocess_xml_node(): mandatory include file '%s' not found", absolute_path);
+                    context->failed = true;
                 }
                 xmlUnlinkNode(node);
                 xmlFreeNode(node);
@@ -825,11 +836,16 @@ static void _preprocess_xml_node(_XmlPreprocessorPassContext *context, xmlNodePt
             xmlDocPtr sub_doc = xmlReadFile(canon_filepath, NULL, XML_PARSE_NOBLANKS);
             if (!sub_doc) {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): Unable to read config file %s", canon_filepath);
+                context->failed = true;
+                return;
             }
 
             xmlNodePtr sub_node = xmlDocGetRootElement(sub_doc);
             if (!sub_node) {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): Unable to get root element of config file %s", canon_filepath);
+                context->failed = true;
+                xmlFreeDoc(sub_doc);
+                return;
             }
 
             // copy the included root into the owning document

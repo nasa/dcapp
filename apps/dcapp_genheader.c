@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     // export the same path roots used by the runtime
     dc_app_xml_preprocessor_export_environment(config);
 
-    dc_app_xml_preprocessor_preprocess(config);
+    if (!dc_app_xml_preprocessor_preprocess(config)) return 1;
     dc_app_variable_registry_set_suppress_missing_variable(
         lookup,
         dc_app_xml_preprocessor_suppresses_missing_variable(config));

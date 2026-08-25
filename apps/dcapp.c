@@ -185,7 +185,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     if (_ext_io->iArgc < 4) {
         DC_LOG_ERROR("App", "Missing dcapp config file");
         PL_FREE(app_data);
-        return NULL;
+        exit(EXIT_FAILURE);
     }
 
     // find the preprocessed output before collecting constants
@@ -220,20 +220,23 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     }
     free(const_args);
 
+    // export path roots before expanding xml paths
+    dc_app_xml_preprocessor_export_environment(app_data->config);
+    if (!dc_app_xml_preprocessor_preprocess(app_data->config)) {
+        dc_app_xml_preprocessor_context_destroy(app_data->config);
+        PL_FREE(app_data);
+        exit(EXIT_FAILURE);
+    }
+
     // create model-side subsystem contexts
     app_data->scene = dc_app_display_model_context_create();
     app_data->planets = dc_app_planet_context_create(dc_app_xml_preprocessor_directory(app_data->config));
     app_data->logic = dc_app_display_logic_context_create();
     app_data->data_link = dc_app_data_link_context_create();
 
-    // export path roots before expanding xml paths
-    dc_app_xml_preprocessor_export_environment(app_data->config);
-
     // resolve the shared variable registry
     DcAppVariableRegistryContext *lookup = dc_app_display_model_get_variable_registry(app_data->scene);
 
-    // expand the display xml
-    dc_app_xml_preprocessor_preprocess(app_data->config);
     dc_app_variable_registry_set_suppress_missing_variable(
         lookup,
         dc_app_xml_preprocessor_suppresses_missing_variable(app_data->config));
