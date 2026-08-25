@@ -80,7 +80,7 @@
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/api-test/api-test.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/api-test/logic/logic.c"
 
@@ -113,7 +113,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/api-test/logic/logic.dll" 
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/lissajous/lissajous.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/lissajous/logic/logic.c"
 
@@ -146,7 +146,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/lissajous/logic/logic.dll"
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/planet/planet.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/planet/logic/logic.c"
 
@@ -179,7 +179,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/planet/logic/logic.dll" -F
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/procedural-panel/procedural-panel.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/procedural-panel/logic/logic.c"
 
@@ -212,7 +212,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/procedural-panel/logic/log
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/starfield/starfield.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/starfield/logic/logic.c"
 
@@ -294,7 +294,7 @@ goto ExitLabel
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/api-test/api-test.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/api-test/logic/logic.c"
 
@@ -327,7 +327,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/api-test/logic/logic.dll" 
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/lissajous/lissajous.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/lissajous/logic/logic.c"
 
@@ -360,7 +360,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/lissajous/logic/logic.dll"
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/planet/planet.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/planet/logic/logic.c"
 
@@ -393,7 +393,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/planet/logic/logic.dll" -F
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/procedural-panel/procedural-panel.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/procedural-panel/logic/logic.c"
 
@@ -426,7 +426,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/procedural-panel/logic/log
 
 "../../pilotlight/out/dcapp-genheader.exe" ../../samples/starfield/starfield.xml || exit /b 1
 
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -std:c11 -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
 @set PL_SOURCES="../../samples/starfield/logic/logic.c"
 

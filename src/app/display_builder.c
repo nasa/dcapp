@@ -2224,6 +2224,7 @@ static DcAppNodeIndex _process_xml_node_logic(DcAppDisplayBuilderContext *xml_ct
         // clean filepath
         char cleaned_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_filepath, (const char *)raw_filepath, DC_APP_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned_filepath[sizeof(cleaned_filepath) - 1] = '\0';
         xmlFree(raw_filepath);
         dc_app_display_logic_load(xml_ctx->logic, cleaned_filepath, directory);
     } else {

@@ -88,6 +88,10 @@ with pl.project("samples"):
     # [SECTION] profiles
     # -----------------------------------------------------------------------------
 
+    # Keep C dialect, optimization, and warning settings explicit across compilers.
+    # Only the selected warnings are fatal; toolchain-default warnings remain warnings.
+    # GCC's format truncation/overflow analysis has no Clang/MSVC equivalent.
+
     # win32 or msvc only
     pl.add_profile(
         compiler_filter=["msvc"],
@@ -101,6 +105,7 @@ with pl.project("samples"):
         compiler_flags=[
             "-Zc:preprocessor",
             "-nologo",
+            "-std:c11",
             "-W4",
             "-WX",
             "-wd4201",
@@ -128,7 +133,17 @@ with pl.project("samples"):
         platform_filter=["Linux"], link_directories=["/usr/lib/x86_64-linux-gnu"]
     )
     pl.add_profile(
-        compiler_filter=["gcc"], linker_flags=["-ldl", "-lm"], compiler_flags=["-fPIC"]
+        compiler_filter=["gcc"],
+        linker_flags=["-ldl", "-lm"],
+        compiler_flags=[
+            "-std=gnu11",
+            "-fPIC",
+            "-Werror=shadow",
+            "-Werror=format",
+            "-Werror=format-security",
+            "-Werror=format-truncation",
+            "-Werror=format-overflow",
+        ],
     )
     pl.add_profile(
         compiler_filter=["gcc"],
@@ -138,7 +153,7 @@ with pl.project("samples"):
     pl.add_profile(
         compiler_filter=["gcc"],
         configuration_filter=["release"],
-        compiler_flags=["-DNDEBUG"],
+        compiler_flags=["-O2", "-DNDEBUG"],
     )
 
     # macos or clang only
@@ -156,17 +171,25 @@ with pl.project("samples"):
     pl.add_profile(
         compiler_filter=["clang"],
         linker_flags=["-Wl,-rpath,/usr/local/lib"],
-        compiler_flags=["-fmodules", "-ObjC", "-fPIC"],
+        compiler_flags=[
+            "-std=gnu11",
+            "-fmodules",
+            "-ObjC",
+            "-fPIC",
+            "-Werror=shadow",
+            "-Werror=format",
+            "-Werror=format-security",
+        ],
     )
     pl.add_profile(
         compiler_filter=["clang"],
         configuration_filter=["debug"],
-        compiler_flags=["--debug", "-g"],
+        compiler_flags=["--debug", "-g", "-O0"],
     )
     pl.add_profile(
         compiler_filter=["clang"],
         configuration_filter=["release"],
-        compiler_flags=["-DNDEBUG"],
+        compiler_flags=["-O2", "-DNDEBUG"],
     )
 
     # -----------------------------------------------------------------------------

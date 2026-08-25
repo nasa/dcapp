@@ -296,8 +296,15 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             tiles[idx].dOriginY = tile_center_y;
 
             // store real filesystem paths for processor input and output
-            snprintf(tiles[idx].acHeightMapFile, 256, "%s/%s_%u_%u.png", output_dir, prefix, col, row);
-            snprintf(tiles[idx].acOutputFile, 256, "%s/%s_%u_%u.chu", output_dir, prefix, col, row);
+            int height_path_length = snprintf(tiles[idx].acHeightMapFile, sizeof(tiles[idx].acHeightMapFile), "%s/%s_%u_%u.png", output_dir, prefix, col, row);
+            int output_path_length = snprintf(tiles[idx].acOutputFile, sizeof(tiles[idx].acOutputFile), "%s/%s_%u_%u.chu", output_dir, prefix, col, row);
+            if (height_path_length < 0 || (size_t)height_path_length >= sizeof(tiles[idx].acHeightMapFile) ||
+                output_path_length < 0 || (size_t)output_path_length >= sizeof(tiles[idx].acOutputFile)) {
+                fprintf(stderr, "Error: generated tile path is too long\n");
+                free(tiles);
+                io->bRunning = false;
+                return NULL;
+            }
         }
     }
 

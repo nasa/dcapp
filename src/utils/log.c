@@ -84,7 +84,7 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
     }
 
     //- format timestamp
-    char timestamp[16];
+    char timestamp[64];
 #ifdef _WIN32
     SYSTEMTIME st;
     GetLocalTime(&st);

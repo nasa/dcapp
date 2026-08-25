@@ -4831,8 +4831,8 @@ static void _render_planet_breadcrumbs(DcAppDrawContext *ctx, DcAppDisplayRuntim
     }
     sbclear(renderer->sb_planet_points);
     for (int ii = 0; ii < point_count; ii++) {
-        plVec3d point = breadcrumbs->sb_points[ii];
-        sbpush(renderer->sb_planet_points, ((DcAppVec3d){point.x, point.y, point.z}));
+        plVec3d trail_point = breadcrumbs->sb_points[ii];
+        sbpush(renderer->sb_planet_points, ((DcAppVec3d){trail_point.x, trail_point.y, trail_point.z}));
     }
     dc_app_draw_planet_line_cartesian(
         ctx,

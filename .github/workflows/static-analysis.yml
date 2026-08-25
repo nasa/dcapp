@@ -74,7 +74,8 @@ jobs:
 
           for f in "${FILES[@]}"; do
             echo "=== Checking $f ==="
-            clang -fsyntax-only -std=gnu11 -Werror "$f" "${INCLUDES[@]}"
+            # Match the selected Clang errors in the build generators.
+            clang -fsyntax-only -std=gnu11 -Werror=shadow -Werror=format -Werror=format-security "$f" "${INCLUDES[@]}"
           done
 
   clang-format:

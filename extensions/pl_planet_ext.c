@@ -82,7 +82,7 @@ Index:
 // shader interop
 #include "pl_shader_interop_planet.h"
 
-_Static_assert(sizeof(plGpuDynPlanetData) <= 256, "planet dynamic data exceeds the default GPU allocation size");
+typedef char plGpuDynPlanetDataSizeCheck[(sizeof(plGpuDynPlanetData) <= 256) ? 1 : -1];
 
 //-----------------------------------------------------------------------------
 // [SECTION] defines

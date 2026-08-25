@@ -76,24 +76,24 @@ bool dc_app_display_logic_load(DcAppDisplayLogicContext *logic, const char *path
     }
 
     //- resolve the requested path
-    char abs_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
+    char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
     if (dc_utils_is_relative_path(path)) {
-        dc_utils_join_paths(base_directory, path, abs_filepath, sizeof(abs_filepath));
+        if (dc_utils_join_paths(base_directory, path, abs_filepath, sizeof(abs_filepath)) != 0) return false;
     } else {
+        if (strlen(path) >= sizeof(abs_filepath)) return false;
         strcpy(abs_filepath, path);
     }
 
     //- build platform library candidates
-    char base_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
-    strncpy(base_filepath, abs_filepath, DC_APP_VALUE_STRING_BUFFER_SIZE - 1);
-    base_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+    char base_filepath[sizeof(abs_filepath)];
+    strcpy(base_filepath, abs_filepath);
 
     char *ext = strrchr(base_filepath, '.');
     if (ext && (strcmp(ext, ".so") == 0 || strcmp(ext, ".dylib") == 0 || strcmp(ext, ".dll") == 0)) {
         *ext = '\0';
     }
 
-    char lib_base_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
+    char lib_base_filepath[sizeof(base_filepath) + sizeof("lib") - 1];
     char *slash = strrchr(base_filepath, '/');
     char *backslash = strrchr(base_filepath, '\\');
     char *separator = slash;
@@ -109,7 +109,7 @@ bool dc_app_display_logic_load(DcAppDisplayLogicContext *logic, const char *path
 
     const char *base_filepaths[] = {base_filepath, lib_base_filepath};
     const char *extensions[] = {".so", ".dylib", ".dll"};
-    char try_filepath[DC_APP_VALUE_STRING_BUFFER_SIZE];
+    char try_filepath[sizeof(lib_base_filepath) + sizeof(".dylib") - 1];
 
     for (int base_index = 0; base_index < 2 && !logic->library; base_index++) {
         for (int ext_index = 0; ext_index < 3 && !logic->library; ext_index++) {
