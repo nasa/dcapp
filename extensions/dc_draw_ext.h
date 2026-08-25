@@ -52,7 +52,7 @@ Index of this file:
 
 // dcapp's custom draw API (separate from pilotlight's plDrawI)
 #define dcDrawI_version \
-    { 2, 0, 0 }
+    {2, 0, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes

@@ -23,11 +23,11 @@ typedef uintptr_t _DcSockFd;
 #include <sys/socket.h>
 #include <unistd.h>
 typedef int _DcSockFd;
-#define _DC_SOCK_FD_FAILED ((_DcSockFd)-1)
+#define _DC_SOCK_FD_FAILED ((_DcSockFd) - 1)
 #endif
 
 // reserve a socket before it owns a native descriptor
-#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2) // reserved but not connected
+#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd) - 2) // reserved but not connected
 #define _DC_SOCK_FD_IS_INVALID(fd) ((fd) == _DC_SOCK_FD_FAILED || (fd) == _DC_SOCK_FD_ALLOCATED)
 
 struct DcSock {
@@ -254,7 +254,7 @@ DcSockState dc_sock_connection_status(DcSock *sock) {
 DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sent_size) {
     if (!sock) return DC_SOCK_RESULT_FAIL;
 
-        // suppress sigpipe where the platform supports it
+    // suppress sigpipe where the platform supports it
 #if defined(__linux__)
     int sent = send(sock->sock_fd, in, (int)in_size, MSG_NOSIGNAL);
 #else

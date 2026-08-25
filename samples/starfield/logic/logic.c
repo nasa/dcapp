@@ -71,7 +71,6 @@ void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *
             dc_draw->line(draw_ctx, (DcVec2){star->x, star->y - sparkle}, (DcVec2){star->x, star->y + sparkle}, (DcStroke){.color = star->color, .width = 0.8f});
         }
     }
-
 }
 
 static float rand_unit(void) {
