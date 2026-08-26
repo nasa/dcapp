@@ -17,7 +17,7 @@ typedef struct _plRenderEncoder plRenderEncoder;
 struct DcAppTextureContext;
 
 #ifndef DCAPP_LINE_WIDTH_FACTOR
-#define DCAPP_LINE_WIDTH_FACTOR 1.2f
+#define DCAPP_LINE_WIDTH_FACTOR 1.0f
 #endif
 
 #ifndef DCAPP_DRAW_POINT_COUNT_MAX
