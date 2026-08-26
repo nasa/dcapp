@@ -3,20 +3,23 @@
 
 #include "draw_api.h"
 
+//~ internal targets
+
 typedef uint64_t DcAppDrawTargetId;
 
-// Node drawing uses screen-space input because it resolves its own transforms.
+// node drawing uses screen-space input because it resolves its own transforms
 const DcAppMouse *dc_app_draw_context_get_screen_mouse(DcAppDrawContext *draw_ctx);
 
-// Internal targets share interaction state with logic-registered string IDs,
-// while remaining in a separate identity namespace.
+// internal targets share state with logic-registered string ids in a separate namespace
 void dc_app_draw_mouse_register_target(DcAppDrawContext *draw_ctx, DcAppDrawTargetId target_id);
 bool dc_app_draw_mouse_target_hovered(DcAppDrawContext *draw_ctx, DcAppDrawTargetId target_id);
 bool dc_app_draw_mouse_target_pressed(DcAppDrawContext *draw_ctx, DcAppDrawTargetId target_id);
 bool dc_app_draw_mouse_target_released(DcAppDrawContext *draw_ctx, DcAppDrawTargetId target_id);
 bool dc_app_draw_mouse_target_active(DcAppDrawContext *draw_ctx, DcAppDrawTargetId target_id);
 
-// XML styles track line/fill presence independently from color alpha.
+//~ planet styles
+
+// xml styles track line and fill presence independently from color alpha
 void dc_app_draw_planet_polygon_local_enabled(
     DcAppDrawContext *draw_ctx,
     const DcAppVec2 *points,

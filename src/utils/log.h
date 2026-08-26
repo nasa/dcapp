@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 
-// Log levels
+//~ log levels
+
 typedef enum {
     DC_LOG_LEVEL_DEBUG,
     DC_LOG_LEVEL_INFO,
@@ -13,19 +14,21 @@ typedef enum {
     DC_LOG_LEVEL_ERROR,
 } DcLogLevel;
 
-// Set minimum log level (messages below this level are ignored)
+//~ logging
+
+// ignore messages below the selected level
 void dc_log_set_level(DcLogLevel level);
 
-// Get current log level
 DcLogLevel dc_log_get_level(void);
 
-// Enable/disable colored output (-1 = auto, 0 = off, 1 = on)
+// use a negative value to detect terminal color support
 void dc_log_set_colors(int enabled);
 
-// Internal logging function - use macros below instead
+// direct log entry point used by the convenience macros
 void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...);
 
-// Convenience macros
+//~ convenience macros
+
 #define DC_LOG_DEBUG(tag, fmt, ...) dc_log(DC_LOG_LEVEL_DEBUG, tag, fmt, ##__VA_ARGS__)
 #define DC_LOG_INFO(tag, fmt, ...) dc_log(DC_LOG_LEVEL_INFO, tag, fmt, ##__VA_ARGS__)
 #define DC_LOG_WARN(tag, fmt, ...) dc_log(DC_LOG_LEVEL_WARN, tag, fmt, ##__VA_ARGS__)
@@ -35,4 +38,4 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...);
 }
 #endif
 
-#endif // _DC_UTILS_LOG_
+#endif

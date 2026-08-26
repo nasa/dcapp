@@ -5,11 +5,12 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-// For pl_norm_vec3 and other vector operations
+// include vector operation implementations
 #define PL_MATH_INCLUDE_FUNCTIONS
 #include "pl_math.h"
 
-// Factory functions
+//~ coordinate systems
+
 DcGeoCrsGeodetic dc_geo_create_crs_geodetic(double planet_radius) {
     return (DcGeoCrsGeodetic){.planet_radius = planet_radius};
 }
@@ -25,11 +26,14 @@ DcGeoCrsPolarStereo dc_geo_create_crs_polar_stereographic(double planet_radius, 
         .lon_origin = lon_origin,
         .scale_factor = 1.0,
         .false_easting = 0.0,
-        .false_northing = 0.0
-    };
+        .false_northing = 0.0};
 }
 
-// Coordinate conversions
+//~ coordinate conversions
+
+//- spherical cartesian
+
+// cartesian axes use x at ninety degrees east y north and z at zero longitude
 void dc_geo_geodetic_to_cartesian(const DcGeoCrsGeodetic *from, const DcGeoCrsCartesian *to, const plVec3 *in, plVec3 *out, size_t count) {
     (void)to;
     double planet_radius = from->planet_radius;
@@ -96,6 +100,9 @@ void dc_geo_cartesian_to_geodetic_d(const DcGeoCrsCartesian *from, const DcGeoCr
     }
 }
 
+//- polar stereographic
+
+// select the pole from the latitude origin sign and fall back to unit scale
 void dc_geo_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3 *in, plVec2 *out, size_t count) {
     double planet_radius = from->planet_radius;
     double scale_factor = to->scale_factor > 0.0 ? to->scale_factor : 1.0;
@@ -104,8 +111,8 @@ void dc_geo_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCr
         float lat_rad = in[i].x * (float)M_PI / 180.0f;
         float lon_rad = (in[i].y - (float)to->lon_origin) * (float)M_PI / 180.0f;
         float rho = lat_origin > 0.0
-            ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
-            : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
+                        ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
+                        : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
         out[i].x = (float)to->false_easting + rho * sinf(lon_rad);
         out[i].y = (float)to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cosf(lon_rad);
     }
@@ -119,12 +126,14 @@ void dc_geo_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const DcGeo
         double lat_rad = in[i].x * M_PI / 180.0;
         double lon_rad = (in[i].y - to->lon_origin) * M_PI / 180.0;
         double rho = lat_origin > 0.0
-            ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
-            : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
+                         ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
+                         : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
         out[i].x = to->false_easting + rho * sin(lon_rad);
         out[i].y = to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cos(lon_rad);
     }
 }
+
+//- legacy mirrored longitude
 
 void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3 *in, plVec2 *out, size_t count) {
     double planet_radius = from->planet_radius;
@@ -132,13 +141,12 @@ void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const Dc
     double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         float lat_rad = in[i].x * (float)M_PI / 180.0f;
-        // Legacy user-facing longitude shim. Old planet metadata/overlays used
-        // this mirrored longitude convention before projected CRS origins were explicit.
+        // preserve the legacy mirrored longitude convention
         float lon_deg = 180.0f - in[i].y;
         float lon_rad = (lon_deg - (float)to->lon_origin) * (float)M_PI / 180.0f;
         float rho = lat_origin > 0.0
-            ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
-            : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
+                        ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
+                        : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
         out[i].x = (float)to->false_easting + rho * sinf(lon_rad);
         out[i].y = (float)to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cosf(lon_rad);
     }
@@ -150,19 +158,18 @@ void dc_geo_user_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const 
     double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         double lat_rad = in[i].x * M_PI / 180.0;
-        // Legacy user-facing longitude shim. Old planet metadata/overlays used
-        // this mirrored longitude convention before projected CRS origins were explicit.
+        // preserve the legacy mirrored longitude convention
         double lon_deg = 180.0 - in[i].y;
         double lon_rad = (lon_deg - to->lon_origin) * M_PI / 180.0;
         double rho = lat_origin > 0.0
-            ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
-            : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
+                         ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
+                         : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
         out[i].x = to->false_easting + rho * sin(lon_rad);
         out[i].y = to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cos(lon_rad);
     }
 }
 
-// Attitude frames
+//~ attitude frames
 void dc_geo_get_local_ned_basis(double lat_rad, double lon_rad, plVec3 *out_north, plVec3 *out_east, plVec3 *out_down, plVec3 *out_up) {
     double cos_lat = cos(lat_rad);
     double sin_lat = sin(lat_rad);
@@ -172,32 +179,28 @@ void dc_geo_get_local_ned_basis(double lat_rad, double lon_rad, plVec3 *out_nort
     *out_north = pl_norm_vec3((plVec3){
         (float)(-sin_lat * sin_lon),
         (float)cos_lat,
-        (float)(-sin_lat * cos_lon)
-    });
+        (float)(-sin_lat * cos_lon)});
 
     *out_east = pl_norm_vec3((plVec3){
         (float)cos_lon,
         0.0f,
-        (float)-sin_lon
-    });
+        (float)-sin_lon});
 
     *out_up = pl_norm_vec3((plVec3){
         (float)(cos_lat * sin_lon),
         (float)sin_lat,
-        (float)(cos_lat * cos_lon)
-    });
+        (float)(cos_lat * cos_lon)});
 
     *out_down = pl_mul_vec3_scalarf(*out_up, -1.0f);
 }
 
-// Vector operations
+//~ vector operations
 plVec3 dc_geo_rotate_vector_around_axis(plVec3 v, plVec3 axis, float angle) {
     float cos_angle = cosf(angle);
     float sin_angle = sinf(angle);
     float one_minus_cos = 1.0f - cos_angle;
 
-    // Rodrigues' rotation formula: v_rot = v*cos(θ) + (k×v)*sin(θ) + k(k·v)(1-cos(θ))
-    // where k is the normalized axis
+    // apply rodrigues rotation around the normalized axis
     plVec3 k = pl_norm_vec3(axis);
     float dot_kv = pl_dot_vec3(k, v);
 
@@ -215,7 +218,8 @@ float dc_geo_signed_angle_around_axis(plVec3 from, plVec3 to, plVec3 axis) {
     plVec3 axis_norm = pl_norm_vec3(axis);
 
     float cos_angle = pl_dot_vec3(from_norm, to_norm);
-    cos_angle = (cos_angle < -1.0f) ? -1.0f : (cos_angle > 1.0f) ? 1.0f : cos_angle;
+    cos_angle = (cos_angle < -1.0f) ? -1.0f : (cos_angle > 1.0f) ? 1.0f
+                                                                 : cos_angle;
 
     plVec3 cross = pl_cross_vec3(from_norm, to_norm);
     float sin_angle = pl_dot_vec3(cross, axis_norm);

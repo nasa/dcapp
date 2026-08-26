@@ -1,0 +1,7 @@
+#ifndef DC_APP_VARIABLE_REGISTRY_TYPES_H
+#define DC_APP_VARIABLE_REGISTRY_TYPES_H
+
+typedef int DcAppVariableRegistryVariableIndex;
+typedef int DcAppVariableRegistryValueIndex;
+
+#endif

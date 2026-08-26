@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// Texture IDs stay stable for the context lifetime, and zero is invalid.
+// ids stay stable for the context lifetime with zero reserved as invalid
 typedef int DcAppTextureIndex;
 typedef uint32_t DcAppTextureId;
 

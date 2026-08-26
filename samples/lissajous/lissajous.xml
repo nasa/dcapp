@@ -1,14 +1,42 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <!-- C generates the curve points; XML owns only the shell and labels. -->
+    <Variable Type="#_variable_double_" InitialValue="300">Amplitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="600">CurveSpan</Variable>
+
+    <Default>
+        <Text LocalAlignX="#_align_center_"/>
+    </Default>
+
+    <Style Name="StepControl">
+        <Rectangle Y="18" Width="34" Height="32" Rounded="6"
+            FillColor="0.10 0.16 0.20 1" LineColor="0.28 0.42 0.52 1" LineWidth="1"/>
+        <Text Y="34" LocalAlignY="#_align_middle_" FillColor="0.72 0.86 0.96 1"/>
+    </Style>
+
     <Logic File="logic/logic.so"/>
 
     <Window Title="Lissajous Curve" X="30" Y="30" Width="800" Height="800" VirtualWidth="800" VirtualHeight="800" UpdateRate="60">
         <Panel VirtualWidth="800" VirtualHeight="800" BackgroundColor="0.05 0.05 0.08">
-            <Text X="400" Y="760" LocalAlignX="#_align_center_" Size="22" FillColor="0.80 0.92 1 1">Lissajous Curve</Text>
-            <Text X="400" Y="735" LocalAlignX="#_align_center_" Size="11" FillColor="0.52 0.62 0.72 1">The polyline points are generated in logic.c at a fixed update rate.</Text>
+            <Text X="400" Y="760" Size="22" FillColor="0.80 0.92 1 1">Lissajous Curve</Text>
+            <Text X="400" Y="735" Size="11" FillColor="0.52 0.62 0.72 1">XML sets the amplitude; logic.c writes the derived span.</Text>
 
             <DrawFunction Name="draw_lissajous"/>
+
+            <Text X="400" Y="34" Size="11" FillColor="0.60 0.72 0.82 1">amplitude @Amplitude(%.0f) px / span @CurveSpan(%.0f) px</Text>
+            <Rectangle Style="StepControl" X="650">
+                <MousePressed>
+                    <Set Variable="Amplitude" Operator="#_set_subtract_">20</Set>
+                    <Set Variable="Amplitude" Operator="#_set_max_">140</Set>
+                </MousePressed>
+            </Rectangle>
+            <Text Style="StepControl" X="667" Size="20">-</Text>
+            <Rectangle Style="StepControl" X="698">
+                <MousePressed>
+                    <Set Variable="Amplitude" Operator="#_set_add_">20</Set>
+                    <Set Variable="Amplitude" Operator="#_set_min_">300</Set>
+                </MousePressed>
+            </Rectangle>
+            <Text Style="StepControl" X="715" Size="18">+</Text>
         </Panel>
     </Window>
 </DCAPP>

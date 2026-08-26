@@ -1,63 +1,35 @@
-# dcapp 3D Planet Rendering
+# Planet rendering
 
-A guide to rendering 3D planetary terrain in dcapp using preprocessed heightmap tiles.
+`Planet` defines DEM-backed terrain, textures, and shaders. `PlanetView` draws
+that planet inside a panel. Several views can share one planet and select their
+own camera, projection, shader, and viewport.
 
----
+## Data preparation
 
-## Overview
+Raw DEM data must be converted to dcapp's chunked tile cache before rendering.
 
-dcapp can render 3D planetary terrain from real digital elevation model (DEM) data. The terrain is displayed as a tiled, level-of-detail mesh on a spherical body, with support for custom shaders, texture overlays, and multiple simultaneous viewports.
+### Source data
 
-The system has a two-part architecture:
-
-- **`<Planet>`** -- Defines the terrain data, texture overlays, and shader programs. This element is declared at the top level of your XML, before any `<Window>`.
-- **`<PlanetView>`** -- Renders a viewport into a planet. This element is placed inside a `<Panel>` like any other visual element.
-
-Multiple `<PlanetView>` elements can reference the same `<Planet>` definition, allowing you to show the same terrain from different camera angles, with different projection modes, or at different sizes -- all sharing a single set of terrain data.
-
----
-
-## When To Use Planet Rendering
-
-Use planet rendering when the display needs real terrain geometry, camera
-movement over a spherical body, level-of-detail terrain, or geospatial overlays.
-It is designed for DEM-backed terrain views, not simple decorative globes.
-
-Use `Image` for a static map, `Sphere` for a simple textured globe, and
-`Planet`/`PlanetView` when terrain height, camera frame, streamed chunks, or
-planet overlays matter.
-
----
-
-## Data Preparation
-
-Before dcapp can render a planet, the raw DEM data must be preprocessed into a chunked tile cache. This is a one-time offline step.
-
-### Source Data
-
-The input is a GeoTIFF or PDS-compatible DEM file. For example, the included planet sample uses LOLA's south polar DEM:
-
-- **LDEM_45S_400M** -- Lunar south pole at 400 meters per pixel, available from the MIT LOLA GDR archive.
-
-The repository-level planet data script downloads both the `.IMG` raster and its `.LBL` label file automatically:
+The input is a GeoTIFF or PDS-compatible DEM. The planet sample uses the
+LOLA `LDEM_45S_400M` south-polar DEM at 400 meters per pixel. This script
+downloads its `.IMG` raster and `.LBL` label:
 
 ```bash
 ./scripts/download-planet-data.sh
 ```
 
-This downloads the DEM and writes generated chunks directly under `data/`.
+Generated chunks are written under `data/`.
 
-### The `dcapp-planet-chunkgen` Tool
+### `dcapp-planet-chunkgen`
 
-The `dcapp-planet-chunkgen` command preprocesses a DEM into the chunked tile format that dcapp's planet renderer expects. It reads the raster with GDAL, slices it into square tiles, normalizes elevations to 16-bit PNGs, and then processes each tile into a `.chu` chunk file with a CDLOD quadtree mesh. Rectangular DEM extents are supported as rectangular grids of square tiles; partial edge tiles are padded to the full tile size before processing.
-
-**Usage:**
+`dcapp-planet-chunkgen` reads the raster with GDAL, divides it into square
+tiles, normalizes elevations to 16-bit PNGs, and writes CDLOD quadtree meshes.
+Rectangular extents become a rectangular grid of square tiles; partial edge
+tiles are padded.
 
 ```
 dcapp-planet-chunkgen <input_dem> <output_dir> [options]
 ```
-
-**Options:**
 
 | Option | Default | Description |
 |--------|---------|-------------|
@@ -72,30 +44,33 @@ dcapp-planet-chunkgen <input_dem> <output_dir> [options]
 | `--keep-tiles` | Off | Keep intermediate PNG tiles (not deleted after processing) |
 | `-h`, `--help` | | Show help |
 
-A convenience wrapper script is provided at `./bin/dcapp-planet-chunkgen.sh`, which handles path resolution automatically:
-
 ```bash
 ./bin/dcapp-planet-chunkgen.sh /path/to/LDEM_45S_400M.LBL /path/to/output_dir
 ```
 
 ### Output
 
-The tool produces:
+The tool writes:
 
-1. **`<prefix>.planet.json`** -- A metadata file recording the planet radius, meters per pixel, tile grid dimensions, elevation range, tree depth, projection parameters, and the list of tile files with their projected `originX`/`originY` center positions.
-2. **`<prefix>_<col>_<row>.chu`** -- One chunk file per tile, containing the CDLOD quadtree mesh data.
+- `<prefix>.planet.json` with radius, resolution, grid, elevation range,
+  projection, tree depth, and projected tile centers.
+- `<prefix>_<col>_<row>.chu` with one CDLOD mesh per tile.
 
-The `.planet.json` file is what you reference from the `<PlanetData>` element in your XML.
+Reference the `.planet.json` file from `PlanetData`.
 
-Chunk generation supports north- and south-polar stereographic/UPS-style DEMs with non-rotated, square-pixel geotransforms. The generated metadata stores latitude of origin, central meridian, scale factor, false easting, and false northing so the baked terrain and runtime texture placement use the same projected-meter convention. GDAL band scale metadata is applied to terrain heights. Rotated/skewed geotransforms, arbitrary CRS reprojection, and ellipsoid/geoid terrain baking are intentionally rejected or deferred.
+Chunk generation supports north- and south-polar stereographic/UPS-style DEMs
+with non-rotated, square-pixel geotransforms. Metadata records the latitude of
+origin, central meridian, scale, false easting, and false northing so terrain
+and texture placement use the same projected meters. GDAL band scale metadata
+is applied to heights. Rotated/skewed transforms, arbitrary CRS reprojection,
+and ellipsoid/geoid terrain baking are not supported.
 
----
+## Snapshot utility
 
-## Snapshot Utility
+`dcapp-planet-snapshot` renders preprocessed chunk data to a PNG without XML.
+Its explicit CRS and attitude-frame rules match `PlanetView`.
 
-`dcapp-planet-snapshot` renders a planet directly from preprocessed chunk data and writes a PNG. It does not use XML. `CRS` is explicit, matching `<PlanetView>` camera rules.
-
-**Geodetic camera:**
+Geodetic camera:
 
 ```bash
 ./bin/dcapp-planet-snapshot.sh \
@@ -108,7 +83,7 @@ Chunk generation supports north- and south-polar stereographic/UPS-style DEMs wi
   --output snapshot.png
 ```
 
-**Cartesian camera:**
+Cartesian camera:
 
 ```bash
 ./bin/dcapp-planet-snapshot.sh \
@@ -119,8 +94,6 @@ Chunk generation supports north- and south-polar stereographic/UPS-style DEMs wi
   --roll 0 --pitch -30 --yaw 45 \
   --output snapshot.png
 ```
-
-**Options:**
 
 | Option | Default | Description |
 |--------|---------|-------------|
@@ -139,7 +112,7 @@ Chunk generation supports north- and south-polar stereographic/UPS-style DEMs wi
 
 The snapshot utility renders until the current camera view stops queuing tile loads and the output texture has settled, then captures the stable result. Snapshot LOD tau is fixed at `0.05`.
 
-### Snapshot Position And Attitude Frames
+### Position and attitude frames
 
 `--crs` describes how the camera position is expressed. `--attitude-frame` describes the coordinate frame used for attitude. They are separate because spacecraft position and spacecraft attitude are usually reported in different frames.
 
@@ -155,11 +128,9 @@ With `local-ned`, `--yaw 0 --pitch 0 --roll 0` points the camera along `+D` at n
 
 For Cartesian positions, use `--attitude-frame cartesian-rpy`. The existing `--roll`, `--pitch`, and `--yaw` values are interpreted by the renderer in body-centered Cartesian coordinates.
 
----
+## XML elements
 
-## XML Elements
-
-### Coordinate Reference Systems
+### Coordinate reference systems
 
 Planet positioning can be expressed in one of these coordinate reference systems:
 
@@ -185,11 +156,16 @@ CRS inheritance follows the scene structure:
 - `<PlanetView>` children inherit from their containing `<PlanetView>`.
 - A child can override inherited CRS with its own `CRS` attribute.
 
-For `<PlanetView>`, `CRS` controls which camera attributes are valid. Geodetic views require `CameraLatitude`/`CameraLongitude`/`CameraElevation`; cartesian views require `CameraX`/`CameraY`/`CameraZ` plus `CameraRoll`/`CameraPitch`/`CameraYaw`. Child overlays inherit the view CRS unless they set their own `CRS`.
+For `<PlanetView>`, `CRS` controls which camera attributes are valid. Geodetic
+views require `CameraLatitude`/`CameraLongitude`/`CameraElevation`; cartesian
+views require `CameraX`/`CameraY`/`CameraZ`. Roll, pitch, and yaw are optional
+and default to zero. Child overlays inherit the view CRS unless they set their
+own `CRS`.
 
 ### `<Planet>`
 
-The top-level planet definition. It must be a direct child of `<DCAPP>` and should appear before any `<Window>` element.
+The top-level planet definition. It must be a direct child of `<DCAPP>` and
+must appear before any `<Window>` that references it.
 
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
@@ -206,8 +182,6 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 </Planet>
 ```
 
-**Attributes:**
-
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Name` | string | Yes | A unique name used by `<PlanetView>` elements to reference this planet |
@@ -217,7 +191,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 | `LightDirectionZ` | double/var | No | Z component of the light direction vector. Default -1. Can be variable-driven. |
 | `MeshCacheSize` | integer | No | Combined vertex/index cache size in MiB. Logic uses the same unit in `DcPlanetCreateInfo.mesh_cache_size_mb`. |
 
-**Children:** `<PlanetData>`, `<PlanetTexture>`, `<PlanetShader>`
+Children: `PlanetData`, `PlanetTexture`, and `PlanetShader`.
 
 Logic-created planets can update the same runtime lighting with
 `dc_planet->set_light_direction(planet, direction)`.
@@ -229,8 +203,6 @@ Specifies the preprocessed terrain data for a planet. Must be a child of `<Plane
 ```xml
 <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
 ```
-
-**Attributes:**
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -245,8 +217,6 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
     Latitude="-90" Longitude="180" Enabled="@ShowHazard0"
     FireRefresh="@TextureRefresh"/>
 ```
-
-**Attributes:**
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -292,8 +262,6 @@ Defines a custom GLSL shader program that can be applied to the terrain. Must be
 <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
 ```
 
-**Attributes:**
-
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Index` | integer | Yes | The shader slot number. Index 0 is reserved for the built-in default shader. Custom shaders start at index 1. |
@@ -302,7 +270,7 @@ Defines a custom GLSL shader program that can be applied to the terrain. Must be
 
 ### `<PlanetView>`
 
-Renders a viewport into a planet. This element is placed inside a `<Panel>`, just like any other visual element. It references a `<Planet>` by name.
+Draws a named planet inside a `Panel`.
 
 ```xml
 <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_"
@@ -311,8 +279,6 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
     CameraElevation="@Elevation" CameraYaw="@Heading"
     CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 ```
-
-**Attributes:**
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
@@ -340,6 +306,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `NegateY` | — | boolean | No | Negate the resolved Y position offset |
 | `CameraFOV` | — | number/var | No | Vertical field of view in degrees for perspective rendering and orthographic scale derivation. Defaults to 60. |
 | `CameraOrthographic` | — | integer/var | No | Set to 1 for orthographic projection, 0 for perspective. Can be variable-driven for runtime toggling. |
+| `Flatten` | — | boolean/var | No | Draw terrain on the reference sphere while retaining original terrain positions for fragment shaders. Defaults to false. |
 
 **Geodetic Position + Local-NED Attitude**:
 
@@ -367,65 +334,19 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 
 Use one position CRS and the matching attitude frame on a given `<PlanetView>`. Initially supported pairs are geodetic + local-NED and cartesian + cartesian-RPY. `CameraHeading` is accepted as a legacy alias for geodetic `CameraYaw`.
 
----
+## Camera frames
 
-## Camera Frames
+For geodetic positions, local-NED attitude defines yaw about local down, pitch
+away from nadir, and roll about the boresight. Longitude follows the loaded
+planet data; the lunar sample uses east-positive PDS/IAU longitude.
 
-### Geodetic Position + Local-NED Attitude
+Cartesian positions and cartesian-RPY attitude use the renderer's body-centered
+frame directly. Positions are meters and attitude angles are degrees.
 
-Geodetic position places the camera using latitude, longitude, and elevation. Local-NED attitude interprets roll, pitch, and yaw in the camera's local north/east/down frame. This is the most intuitive frame pair for exploring terrain interactively or setting up views at known geographic locations.
-Longitude follows the loaded planet data's geodetic convention. For the included lunar DEM, use the east-positive PDS/IAU longitude from the source map data; dcapp converts that into the renderer's native Cartesian frame.
+`CameraOrthographic="1"` selects parallel projection for either camera mode;
+the default is perspective.
 
-```xml
-<PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_"
-    X="15" Y="200" Width="450" Height="450"
-    CameraLatitude="@Latitude" CameraLongitude="@Longitude"
-    CameraElevation="@Elevation" CameraYaw="@Heading"/>
-```
-
-- **Latitude/Longitude** place the camera above a specific point on the surface.
-- **Elevation** controls the height above the surface in meters. Higher values zoom out; lower values bring the camera closer to the terrain.
-- **Yaw** rotates the local north/east image basis about the local down vector. Pitch tilts away from nadir, and roll rotates around the camera boresight.
-
-Use geodetic + local-NED when:
-- Building interactive terrain browsers with sliders for lat/lon/elevation
-- Positioning cameras at known geographic features (craters, landing sites)
-- Displaying overhead or oblique views of a specific region
-
-### Cartesian Position + Cartesian-RPY Attitude
-
-Cartesian position places the camera using the renderer-native body-centered Cartesian coordinate system. Cartesian-RPY attitude applies roll, pitch, and yaw in that same cartesian camera frame. This frame pair is typically driven by an external simulation or a logic file that computes camera state.
-
-```xml
-<PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_" AttitudeFrame="#_planet_attitude_frame_cartesian_rpy_"
-    X="535" Y="200" Width="450" Height="450"
-    CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
-    CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"/>
-```
-
-- **X, Y, Z** specify the camera position in the planet's body-centered coordinate frame (meters).
-- **Roll, Pitch, Yaw** specify the camera orientation as Euler angles (degrees).
-
-Use cartesian + cartesian-RPY when:
-- The camera state comes from an external simulation (e.g., a vehicle dynamics model via Trick)
-- You need precise control over orientation that does not map cleanly to heading
-- Implementing chase cameras, cockpit views, or other vehicle-relative perspectives
-
-### Orthographic Projection
-
-Both camera modes support an orthographic projection toggle:
-
-```xml
-<PlanetView ... CameraOrthographic="@UseOrtho"/>
-```
-
-When `CameraOrthographic` is set to 1, the view uses orthographic (parallel) projection instead of the default perspective projection. This is useful for top-down map-style views where you want consistent scale across the viewport.
-
----
-
-## Planet Overlays
-
-`<PlanetView>` supports child elements that render geographic overlays on the terrain surface.
+## Planet overlays
 
 ### `<PlanetContainer>`
 
@@ -574,7 +495,8 @@ Draws a line strip on the terrain surface.
 | `LinePattern` | integer/var | No | 8-bit dash pattern, such as `0xAA` dashed. Defaults to solid. |
 | `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
-**Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
+Children are `Vertex` elements with either `Latitude`/`Longitude` or cartesian
+`X`/`Y`/`Z` attributes.
 
 ### `<PlanetBreadcrumbs>`
 
@@ -710,7 +632,7 @@ Displays text at a geographic location on the terrain surface.
 | `FillColor` | color | No | Text color (RGBA) |
 | `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
-**Content:** Text string with variable interpolation (same syntax as `<Text>`).
+Text content uses the same variable interpolation syntax as `Text`.
 
 As a direct child of `<PlanetContainer>`, `X` and `Y` are required local
 east/north coordinates. The container supplies the geographic frame and
@@ -732,7 +654,8 @@ Draws a filled or outlined polygon on the terrain surface.
 | `LinePattern` | integer/var | No | 8-bit dash pattern for the outline, such as `0xAA` dashed. Defaults to solid. |
 | `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
-**Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
+Children are `Vertex` elements with either `Latitude`/`Longitude` or cartesian
+`X`/`Y`/`Z` attributes.
 
 Filled `<PlanetPolygon>` elements must be convex with vertices in perimeter
 order. Outline-only polygons do not have that convexity restriction.
@@ -825,15 +748,15 @@ the type for screen-space and planet-local coordinates. `DcVec2d`,
 `DcVec3d`, and `DcVec4d` expose the same coordinate, color, UV, and component
 aliases as their float equivalents.
 
----
+## Custom shaders
 
-## Custom Shaders
+Planet shaders use Vulkan-style GLSL 450. Index 0 is the built-in diffuse
+shader; custom shaders use index 1 or higher.
 
-The planet renderer uses GLSL shaders (Vulkan-style, version 450) to control how terrain is drawn. Index 0 is always the built-in default shader, which renders the terrain with simple diffuse lighting. Custom shaders are assigned to index 1 and above.
+### Runtime selection
 
-### Switching Shaders at Runtime
-
-The `ShaderIndex` attribute on `<PlanetView>` controls which shader that view uses. By binding it to a variable, you can switch shaders at runtime. The `<PlanetShader>` definitions on `<Planet>` act as a shared library of available shaders; each view independently selects from that library.
+Each `PlanetView` selects from its planet's `PlanetShader` definitions with
+`ShaderIndex`. The index may be a variable.
 
 ```xml
 <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
@@ -843,14 +766,11 @@ The `ShaderIndex` attribute on `<PlanetView>` controls which shader that view us
     <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
 </Planet>
 
-<!-- Each view can use a different shader -->
 <PlanetView Planet="Moon" ... ShaderIndex="@ActiveShader"/>
 <PlanetView Planet="Moon" ... ShaderIndex="2"/>
 ```
 
-Setting `ShaderIndex` to 0 uses the built-in shader. Setting it to 1 or 2 activates the corresponding custom shader. Different views can use different variables or literal values.
-
-### Fragment Shader Interface
+### Fragment shader interface
 
 Custom fragment shaders receive the following inputs from the vertex stage:
 
@@ -880,41 +800,11 @@ The output is a single `vec4` color:
 layout(location = 0) out vec4 outColor;
 ```
 
-### Example: Elevation Gradient
+The sample shaders are
+[`planet_elevation.frag`](../samples/planet/shaders/planet_elevation.frag) and
+[`planet_slope.frag`](../samples/planet/shaders/planet_slope.frag).
 
-The included `planet_elevation.frag` shader computes elevation above a reference radius and maps it to a six-stop color ramp (deep olive through warm white):
-
-```glsl
-float elevation = length(tShaderIn.tWorldPosition) - 1737400.0;
-float t = clamp((elevation + 8000.0) / 13000.0, 0.0, 1.0);
-
-vec3 c0 = vec3(0.18, 0.30, 0.08);  // deep olive     (lowest basins)
-vec3 c1 = vec3(0.42, 0.52, 0.18);  // sage / moss    (low plains)
-vec3 c2 = vec3(0.76, 0.65, 0.22);  // golden amber   (mid elevation)
-vec3 c3 = vec3(0.72, 0.40, 0.14);  // burnt sienna   (highlands)
-vec3 c4 = vec3(0.45, 0.30, 0.18);  // umber brown    (high ridges)
-vec3 c5 = vec3(0.95, 0.94, 0.90);  // warm white     (peaks)
-```
-
-### Example: Slope Classification
-
-The included `planet_slope.frag` shader classifies terrain by slope angle into three discrete bands:
-
-```glsl
-vec3 radial = normalize(tShaderIn.tWorldPosition);
-float cosAngle = dot(normal, radial);
-float slopeDeg = degrees(acos(clamp(cosAngle, 0.0, 1.0)));
-
-vec3 cFlat     = vec3(0.55, 0.52, 0.48);  // 0-5 deg:  warm stone gray
-vec3 cModerate = vec3(0.85, 0.62, 0.15);  // 5-10 deg: golden amber
-vec3 cSteep    = vec3(0.78, 0.12, 0.10);  // 10+ deg:  deep crimson
-
-vec3 color = cFlat;
-color = mix(color, cModerate, step(5.0, slopeDeg));
-color = mix(color, cSteep,    step(10.0, slopeDeg));
-```
-
-### Flattened Views
+### Flattened views
 
 Use `Flatten="true"` on `<PlanetView>` to render terrain on the reference sphere while still passing the original terrain position to fragment shaders. This means fragment shaders such as `planet_elevation.frag` can still color by real elevation even though the displayed geometry is flat.
 
@@ -924,113 +814,9 @@ Use `Flatten="true"` on `<PlanetView>` to render terrain on the reference sphere
 
 You can still provide a custom vertex shader through `VertexShader`, but flattening no longer needs one.
 
----
-
-## Complete Example
-
-The `samples/planet/planet.xml` sample demonstrates the full planet rendering pipeline. Here is a walkthrough of its key parts.
-
-### Variables
-
-The sample declares slider-driven camera values, independent shader selection for each view, and one enabled variable per hazard map:
-
-```xml
-<Variable Type="#_variable_double_" InitialValue="-58.62">Latitude</Variable>
-<Variable Type="#_variable_double_" InitialValue="345.27">Longitude</Variable>
-<Variable Type="#_variable_double_" InitialValue="2000000">Elevation</Variable>
-<Variable Type="#_variable_double_" InitialValue="0">Heading</Variable>
-
-<Variable Type="#_variable_integer_" InitialValue="1">LeftShader</Variable>
-<Variable Type="#_variable_integer_" InitialValue="2">RightShader</Variable>
-<Variable Type="#_variable_integer_" InitialValue="0">UseOrtho</Variable>
-
-<Variable Type="#_variable_integer_" InitialValue="1">HazardMap0Enabled</Variable>
-<Variable Type="#_variable_integer_" InitialValue="1">HazardMap1Enabled</Variable>
-<Variable Type="#_variable_integer_" InitialValue="1">HazardMap2Enabled</Variable>
-<Variable Type="#_variable_integer_" InitialValue="1">HazardMap3Enabled</Variable>
-<Variable Type="#_variable_integer_" InitialValue="1">HazardMap4Enabled</Variable>
-```
-
-### Logic File
-
-A logic file creates the second planet/view through the public C API so it can be compared with the XML-created view:
-
-```xml
-<Logic File="logic/logic.so"/>
-```
-
-### Planet Definition
-
-The XML planet defines one data source, five same-center texture overlays, and two custom shaders. Each overlay gets its internal slot from this declaration order:
-
-```xml
-<Planet Name="Moon" CRS="#_planet_crs_geodetic_"
-    LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="$DCAPP_HOME/data/LDEM_45S_400M.planet.json"/>
-    <PlanetTexture File="$DCAPP_HOME/assets/circle.png" MetersPerPixel="@TexMpp"
-        Latitude="-58.62" Longitude="345.27"
-        Enabled="@HazardMap0Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="$DCAPP_HOME/assets/square.png" MetersPerPixel="@TexMpp"
-        Latitude="-58.62" Longitude="345.27"
-        Enabled="@HazardMap1Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="$DCAPP_HOME/assets/triangle.png" MetersPerPixel="@TexMpp"
-        Latitude="-58.62" Longitude="345.27"
-        Enabled="@HazardMap2Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="$DCAPP_HOME/assets/ring.png" MetersPerPixel="@TexMpp"
-        Latitude="-58.62" Longitude="345.27"
-        Enabled="@HazardMap3Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetTexture File="$DCAPP_HOME/assets/cross.png" MetersPerPixel="@TexMpp"
-        Latitude="-58.62" Longitude="345.27"
-        Enabled="@HazardMap4Enabled" FireRefresh="@TextureRefresh"/>
-    <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
-    <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
-</Planet>
-```
-
-### Two PlanetViews
-
-The sample renders two side-by-side geodetic viewports. The left view and its overlays are XML-defined. The right view is drawn by the logic module using the public planet API:
-
-```xml
-<PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_"
-    AttitudeFrame="#_planet_attitude_frame_local_ned_"
-    X="15" Y="300" Width="450" Height="450"
-    CameraLatitude="@Latitude" CameraLongitude="@Longitude"
-    CameraElevation="@Elevation" CameraYaw="@Heading"
-    CameraOrthographic="@UseOrtho" ShaderIndex="@LeftShader"/>
-
-<Container X="535" Y="300" Width="450" Height="450"
-    VirtualWidth="450" VirtualHeight="450">
-    <DrawFunction Name="draw_logic_planet_view"/>
-</Container>
-```
-
-Both views consume the same camera variables and display the same area. The
-XML planet and the logic-created planet each demonstrate all five texture
-slots, and the same five toggle variables independently clear or rebuild the
-corresponding slot in both planets.
-They also draw the same doghouse from fixed local points at the moving
-`OrbitLat`/`OrbitLon` anchor: the left view uses `<PlanetContainer>`, while the
-right view uses the matching C push/draw/pop API.
-
-### Interactive Controls
-
-The sample provides sliders for camera and terrain controls, independent shader toggles, a shared texture refresh control, and separate Circle, Square, Triangle, Ring, and Cross hazard-map toggles.
-
-### Running the Sample
+## Running the sample
 
 ```bash
-# 1. Prepare the terrain data (downloads DEM, runs chunkgen)
 ./scripts/download-planet-data.sh
-
-# 2. Run the display
 ./bin/dcapp.sh samples/planet/planet.xml
 ```
-
----
-
-## See Also
-
-- [logic.md](logic.md) -- Writing logic files for custom C/C++ behavior
-- [variables.md](variables.md) -- Declaring and using variables in dcapp XML
-- [Coordinate frame reference](coordinate-frame.md) -- Pilotlight coordinate system and planet terrain projection

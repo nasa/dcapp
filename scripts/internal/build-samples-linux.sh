@@ -54,162 +54,48 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
-mkdir -p "../../samples/drawfunction2/logic"
-mkdir -p "../../samples/ptz/logic"
-mkdir -p "../../samples/drawfunction3/logic"
-mkdir -p "../../samples/drawfunction1/logic"
 mkdir -p "../../samples/planet/logic"
-mkdir -p "../../samples/drawfunction4/logic"
 mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/api-test/logic"
+mkdir -p "../../samples/starfield/logic"
+mkdir -p "../../samples/procedural-panel/logic"
 
 # create lock file(s)
-echo LOCKING > "../../samples/ptz/logic/lock.tmp"
+echo LOCKING > "../../samples/starfield/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
-rm -f ../../samples/drawfunction1/logic/logic.so
-rm -f ../../samples/drawfunction1/logic/logic_*.so
-rm -f ../../samples/drawfunction2/logic/logic.so
-rm -f ../../samples/drawfunction2/logic/logic_*.so
-rm -f ../../samples/drawfunction3/logic/logic.so
-rm -f ../../samples/drawfunction3/logic/logic_*.so
-rm -f ../../samples/drawfunction4/logic/logic.so
-rm -f ../../samples/drawfunction4/logic/logic_*.so
+rm -f ../../samples/api-test/logic/logic.so
+rm -f ../../samples/api-test/logic/logic_*.so
 rm -f ../../samples/lissajous/logic/logic.so
 rm -f ../../samples/lissajous/logic/logic_*.so
 rm -f ../../samples/planet/logic/logic.so
 rm -f ../../samples/planet/logic/logic_*.so
-rm -f ../../samples/ptz/logic/logic.so
-rm -f ../../samples/ptz/logic/logic_*.so
+rm -f ../../samples/procedural-panel/logic/logic.so
+rm -f ../../samples/procedural-panel/logic/logic_*.so
+rm -f ../../samples/starfield/logic/logic.so
+rm -f ../../samples/starfield/logic/logic_*.so
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction1/drawfunction1.xml || exit 1
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction1/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: drawfunction1${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction1/logic/liblogic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction2 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction2/drawfunction2.xml || exit 1
+../../pilotlight/out/dcapp-genheader ../../samples/api-test/api-test.xml || exit 1
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow -O2 -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction2/logic/logic.c "
+PL_SOURCES="../../samples/api-test/logic/logic.c "
 
 # run compiler (and linker)
 echo
-echo ${YELLOW}Step: drawfunction2${NC}
+echo ${YELLOW}Step: api-test${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction2/logic/liblogic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction3 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction3/drawfunction3.xml || exit 1
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction3/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: drawfunction3${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction3/logic/liblogic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction4 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction4/drawfunction4.xml || exit 1
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction4/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: drawfunction4${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction4/logic/liblogic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/api-test/logic/liblogic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -234,7 +120,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow -O2 -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -270,7 +156,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow -O2 -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -298,26 +184,62 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ptz | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~ procedural-panel | release ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../../pilotlight/out/dcapp-genheader ../../samples/ptz/ptz.xml || exit 1
+../../pilotlight/out/dcapp-genheader ../../samples/procedural-panel/procedural-panel.xml || exit 1
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow -O2 -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/ptz/logic/logic.c "
+PL_SOURCES="../../samples/procedural-panel/logic/logic.c "
 
 # run compiler (and linker)
 echo
-echo ${YELLOW}Step: ptz${NC}
+echo ${YELLOW}Step: procedural-panel${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/ptz/logic/liblogic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/procedural-panel/logic/liblogic.so"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ starfield | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../../pilotlight/out/dcapp-genheader ../../samples/starfield/starfield.xml || exit 1
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow -O2 -DNDEBUG "
+PL_LINKER_FLAGS="-ldl -lm "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../samples/starfield/logic/logic.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: starfield${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/starfield/logic/liblogic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -335,7 +257,7 @@ echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 # delete lock file(s)
-rm -f ../../samples/ptz/logic/lock.tmp
+rm -f ../../samples/starfield/logic/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of release
@@ -348,162 +270,48 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
-mkdir -p "../../samples/drawfunction2/logic"
-mkdir -p "../../samples/ptz/logic"
-mkdir -p "../../samples/drawfunction3/logic"
-mkdir -p "../../samples/drawfunction1/logic"
 mkdir -p "../../samples/planet/logic"
-mkdir -p "../../samples/drawfunction4/logic"
 mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/api-test/logic"
+mkdir -p "../../samples/starfield/logic"
+mkdir -p "../../samples/procedural-panel/logic"
 
 # create lock file(s)
-echo LOCKING > "../../samples/ptz/logic/lock.tmp"
+echo LOCKING > "../../samples/starfield/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
-rm -f ../../samples/drawfunction1/logic/logic.so
-rm -f ../../samples/drawfunction1/logic/logic_*.so
-rm -f ../../samples/drawfunction2/logic/logic.so
-rm -f ../../samples/drawfunction2/logic/logic_*.so
-rm -f ../../samples/drawfunction3/logic/logic.so
-rm -f ../../samples/drawfunction3/logic/logic_*.so
-rm -f ../../samples/drawfunction4/logic/logic.so
-rm -f ../../samples/drawfunction4/logic/logic_*.so
+rm -f ../../samples/api-test/logic/logic.so
+rm -f ../../samples/api-test/logic/logic_*.so
 rm -f ../../samples/lissajous/logic/logic.so
 rm -f ../../samples/lissajous/logic/logic_*.so
 rm -f ../../samples/planet/logic/logic.so
 rm -f ../../samples/planet/logic/logic_*.so
-rm -f ../../samples/ptz/logic/logic.so
-rm -f ../../samples/ptz/logic/logic_*.so
+rm -f ../../samples/procedural-panel/logic/logic.so
+rm -f ../../samples/procedural-panel/logic/logic_*.so
+rm -f ../../samples/starfield/logic/logic.so
+rm -f ../../samples/starfield/logic/logic_*.so
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction1 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ api-test | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction1/drawfunction1.xml || exit 1
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction1/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: drawfunction1${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction1/logic/liblogic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction2 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction2/drawfunction2.xml || exit 1
+../../pilotlight/out/dcapp-genheader ../../samples/api-test/api-test.xml || exit 1
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction2/logic/logic.c "
+PL_SOURCES="../../samples/api-test/logic/logic.c "
 
 # run compiler (and linker)
 echo
-echo ${YELLOW}Step: drawfunction2${NC}
+echo ${YELLOW}Step: api-test${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction2/logic/liblogic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction3 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction3/drawfunction3.xml || exit 1
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction3/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: drawfunction3${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction3/logic/liblogic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction4 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../../pilotlight/out/dcapp-genheader ../../samples/drawfunction4/drawfunction4.xml || exit 1
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/drawfunction4/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: drawfunction4${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/drawfunction4/logic/liblogic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/api-test/logic/liblogic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -528,7 +336,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -564,7 +372,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -592,26 +400,62 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ptz | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~ procedural-panel | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../../pilotlight/out/dcapp-genheader ../../samples/ptz/ptz.xml || exit 1
+../../pilotlight/out/dcapp-genheader ../../samples/procedural-panel/procedural-panel.xml || exit 1
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/ptz/logic/logic.c "
+PL_SOURCES="../../samples/procedural-panel/logic/logic.c "
 
 # run compiler (and linker)
 echo
-echo ${YELLOW}Step: ptz${NC}
+echo ${YELLOW}Step: procedural-panel${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/ptz/logic/liblogic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/procedural-panel/logic/liblogic.so"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ starfield | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../../pilotlight/out/dcapp-genheader ../../samples/starfield/starfield.xml || exit 1
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-std=gnu11 -fPIC -Werror=shadow -Werror=format -Werror=format-security -Werror=format-truncation -Werror=format-overflow --debug -g -O0 "
+PL_LINKER_FLAGS="-ldl -lm "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../samples/starfield/logic/logic.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: starfield${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/starfield/logic/liblogic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -629,7 +473,7 @@ echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 # delete lock file(s)
-rm -f ../../samples/ptz/logic/lock.tmp
+rm -f ../../samples/starfield/logic/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of debug

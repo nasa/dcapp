@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+//~ types
+
 typedef enum {
     DC_EDGE_RESULT_SUCCESS = 0,
     DC_EDGE_RESULT_FAIL
@@ -17,23 +19,25 @@ typedef uint32_t DcEdgeVarIndex;
 extern "C" {
 #endif
 
-// initialization
+//~ api
+
+//- initialization
 void dc_edge_init(void);
 
-// lifecycle
+//- lifecycle
 DcEdge *dc_edge_create(const char *host, int port, float data_rate, int timeout_s);
-void    dc_edge_cleanup(DcEdge *edge);
-void    dc_edge_update(DcEdge *edge);
+void dc_edge_cleanup(DcEdge *edge);
+void dc_edge_update(DcEdge *edge);
 
-// state checks
+//- state
 bool dc_edge_is_connected(DcEdge *edge);
 bool dc_edge_has_new_data(DcEdge *edge);
 
-// variable setup
+//- variable registration
 DcEdgeVarIndex dc_edge_add_tx_var(DcEdge *edge, const char *command);
 DcEdgeVarIndex dc_edge_add_rx_var(DcEdge *edge, const char *command);
 
-// variable set/get functions
+//- variable access
 void dc_edge_set_tx_var(DcEdge *edge, DcEdgeVarIndex var, const char *value);
 void dc_edge_get_rx_var_value(DcEdge *edge, DcEdgeVarIndex var_index, char *out);
 

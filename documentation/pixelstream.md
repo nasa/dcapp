@@ -1,17 +1,9 @@
 # PixelStream
 
-`PixelStream` draws live image streams inside a dcapp display. The current XML
-surface supports MJPEG streams and shared-memory streams.
+`PixelStream` is a drawable for MJPEG and shared-memory image streams. It uses
+the normal placement attributes and can contain mouse-event children.
 
-Use `PixelStream` when the content is already an image/video feed, such as a
-camera, renderer output, or shared-memory frame source. Use normal primitives or
-`DrawFunction` when the display should draw the content itself from values.
-
-Pixel streams participate in layout like other drawables, and they can also be
-mouse targets. That makes them useful for camera panes with overlays,
-click-to-select regions, or video-backed controls.
-
-## MJPEG XML Shape
+## MJPEG
 
 ```xml
 <PixelStream Type="#_pixelstream_mjpeg_"
@@ -21,21 +13,34 @@ click-to-select regions, or video-backed controls.
              Width="640" Height="480"/>
 ```
 
+The sample server requires Pillow:
+
+```bash
+python3 -m pip install pillow
+```
+
+Shared-memory streams are available on Linux and macOS. `File` is the backing
+file used to derive the System V shared-memory key and read RGBA frames;
+`SharedMemoryKey` remains available as an alias.
+
+```xml
+<PixelStream Type="#_pixelstream_shmem_"
+             File="/tmp/camera.rgba"
+             Width="640" Height="480"/>
+```
+
 ## Attributes
 
 | Attribute | Meaning |
 |-----------|---------|
-| `Type` | `#_pixelstream_mjpeg_` or `#_pixelstream_shmem_` |
+| `Type` | Required: `#_pixelstream_mjpeg_` or `#_pixelstream_shmem_` |
 | `URL` | MJPEG HTTP endpoint |
-| `Protocol` | Optional protocol hint |
-| `Timeout` | Connection/read timeout |
-| `TestPattern` | Draw a fallback/test pattern |
+| `File`, `SharedMemoryKey` | Shared-memory backing-file path |
+| `Timeout` | MJPEG connection/read timeout in seconds; defaults to `5` |
+| `TestPattern` | Fallback image path; defaults to `assets/testpattern.png` |
 | `X`, `Y`, `Width`, `Height` | Standard drawable placement |
 
-`PixelStream` is also a mouse target, so it can contain the same mouse event
-children as other drawable targets.
-
-## Sample
+## Running the MJPEG sample
 
 Start the test server, then launch the display:
 
@@ -43,5 +48,3 @@ Start the test server, then launch the display:
 python3 samples/pixelstream-mjpeg/server.py
 ./bin/dcapp.sh samples/pixelstream-mjpeg/pixelstream-mjpeg.xml
 ```
-
-See also [integration.md](integration.md) for the cross-protocol overview.

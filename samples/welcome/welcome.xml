@@ -1,14 +1,8 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <!-- DCAPP Welcome Screen - Showcases Framework Features -->
-
-    <!-- ==================== CONSTANTS ==================== -->
+    <!-- Shared dimensions and palette. -->
     <Constant Name="PanelWidth">1200</Constant>
     <Constant Name="PanelHeight">800</Constant>
-    <Constant Name="CenterX">600</Constant>
-    <Constant Name="CenterY">400</Constant>
-
-    <!-- Color palette -->
     <Constant Name="BgDark">0.04 0.04 0.06</Constant>
     <Constant Name="BgMedium">0.08 0.08 0.12</Constant>
     <Constant Name="AccentBlue">0.2 0.6 1</Constant>
@@ -19,21 +13,9 @@
     <Constant Name="TextWhite">0.95 0.95 0.97</Constant>
     <Constant Name="TextDim">0.5 0.5 0.55</Constant>
 
-    <!-- ==================== ANIMATION VARIABLES ==================== -->
-    <Variable Type="#_variable_double_" InitialValue="0">Time</Variable>
+    <!-- Animation state. -->
     <Variable Type="#_variable_double_" InitialValue="0">PulseAngle</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">OrbitAngle</Variable>
-    <Variable Type="#_variable_double_" InitialValue="0">WavePhase</Variable>
-
-    <!-- Computed animation values -->
-    <Variable Type="#_variable_double_">PulseScale</Variable>
-    <Variable Type="#_variable_double_">GlowAlpha</Variable>
-    <Variable Type="#_variable_double_">Orbit1X</Variable>
-    <Variable Type="#_variable_double_">Orbit1Y</Variable>
-    <Variable Type="#_variable_double_">Orbit2X</Variable>
-    <Variable Type="#_variable_double_">Orbit2Y</Variable>
-    <Variable Type="#_variable_double_">Orbit3X</Variable>
-    <Variable Type="#_variable_double_">Orbit3Y</Variable>
 
     <!-- Ring animation -->
     <Variable Type="#_variable_double_" InitialValue="0">Ring1Angle</Variable>
@@ -42,47 +24,28 @@
 
     <!-- Sphere rotation -->
     <Variable Type="#_variable_double_" InitialValue="0">SphereYaw</Variable>
-    <Variable Type="#_variable_double_" InitialValue="15">SpherePitch</Variable>
 
-    <!-- Particle positions (floating elements) -->
-    <Variable Type="#_variable_double_" InitialValue="100">Particle1X</Variable>
+    <!-- Floating particle positions. -->
     <Variable Type="#_variable_double_" InitialValue="600">Particle1Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="1000">Particle2X</Variable>
     <Variable Type="#_variable_double_" InitialValue="200">Particle2Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="200">Particle3X</Variable>
     <Variable Type="#_variable_double_" InitialValue="150">Particle3Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="950">Particle4X</Variable>
     <Variable Type="#_variable_double_" InitialValue="650">Particle4Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="450">Particle5X</Variable>
     <Variable Type="#_variable_double_" InitialValue="400">Particle5Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="750">Particle6X</Variable>
     <Variable Type="#_variable_double_" InitialValue="100">Particle6Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="550">Particle7X</Variable>
     <Variable Type="#_variable_double_" InitialValue="700">Particle7Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="350">Particle8X</Variable>
     <Variable Type="#_variable_double_" InitialValue="300">Particle8Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="850">Particle9X</Variable>
     <Variable Type="#_variable_double_" InitialValue="500">Particle9Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="150">Particle10X</Variable>
     <Variable Type="#_variable_double_" InitialValue="250">Particle10Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="1100">Particle11X</Variable>
     <Variable Type="#_variable_double_" InitialValue="450">Particle11Y</Variable>
-    <Variable Type="#_variable_double_" InitialValue="650">Particle12X</Variable>
     <Variable Type="#_variable_double_" InitialValue="550">Particle12Y</Variable>
 
-    <!-- Demo section states -->
-    <Variable Type="#_variable_integer_" InitialValue="1">ShowPrimitives</Variable>
-    <Variable Type="#_variable_integer_" InitialValue="1">ShowAnimation</Variable>
-    <Variable Type="#_variable_integer_" InitialValue="1">ShowInteractive</Variable>
-
-    <!-- Interactive demo variables -->
+    <!-- Controls. -->
     <Variable Type="#_variable_double_" InitialValue="50">SliderValue</Variable>
     <Variable Type="#_variable_integer_">SliderSelected</Variable>
     <Variable Type="#_variable_double_">SliderColor</Variable>
     <Variable Type="#_variable_integer_" InitialValue="0">ButtonState</Variable>
     <Variable Type="#_variable_integer_" InitialValue="0">ToggleState</Variable>
 
-    <!-- ==================== STYLES ==================== -->
     <Style Name="CardBg">
         <Rectangle FillColor="0.06 0.06 0.09" LineColor="0.15 0.15 0.2" LineWidth="1"/>
     </Style>
@@ -94,22 +57,18 @@
     <Style Name="Label">
         <Text Size="11" FillColor="#TextDim"/>
     </Style>
+    <Style Name="Grid">
+        <Line LineColor="0.08 0.08 0.1" LineWidth="1"/>
+    </Style>
 
-    <!-- ==================== DEFAULTS ==================== -->
     <Default>
         <Text Size="14" FillColor="#TextWhite"/>
     </Default>
 
-    <!-- ==================== WINDOW ==================== -->
-    <Window Title="Welcome to DCAPP" X="30" Y="30" Width="1200" Height="800">
+    <Window Title="Welcome to DCAPP" X="30" Y="30" Width="#PanelWidth" Height="#PanelHeight">
         <Panel VirtualWidth="#PanelWidth" VirtualHeight="#PanelHeight" BackgroundColor="#BgDark">
 
-            <!-- ==================== ANIMATION LOGIC ==================== -->
-
-            <!-- Increment time -->
-            <Set Variable="Time" Operator="#_set_add_">0.016</Set>
-
-            <!-- Pulse animation (0-360 degrees) -->
+            <!-- Animation updates. -->
             <Set Variable="PulseAngle" Operator="#_set_add_">2</Set>
             <If Value1="@PulseAngle" Operator="#_if_gt_" Value2="360">
                 <Set Variable="PulseAngle" Operator="#_set_subtract_">360</Set>
@@ -119,12 +78,6 @@
             <Set Variable="OrbitAngle" Operator="#_set_add_">0.8</Set>
             <If Value1="@OrbitAngle" Operator="#_if_gt_" Value2="360">
                 <Set Variable="OrbitAngle" Operator="#_set_subtract_">360</Set>
-            </If>
-
-            <!-- Wave phase -->
-            <Set Variable="WavePhase" Operator="#_set_add_">3</Set>
-            <If Value1="@WavePhase" Operator="#_if_gt_" Value2="360">
-                <Set Variable="WavePhase" Operator="#_set_subtract_">360</Set>
             </If>
 
             <!-- Ring rotations at different speeds -->
@@ -192,59 +145,56 @@
             <Set Variable="SliderColor">@SliderValue</Set>
             <Set Variable="SliderColor" Operator="#_set_multiply_">0.01</Set>
 
-            <!-- ==================== BACKGROUND EFFECTS ==================== -->
-
-            <!-- Subtle grid pattern -->
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <!-- Background grid and particles. -->
+            <Line Style="Grid">
                 <Vertex X="0" Y="100"/><Vertex X="1200" Y="100"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="0" Y="200"/><Vertex X="1200" Y="200"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="0" Y="300"/><Vertex X="1200" Y="300"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="0" Y="400"/><Vertex X="1200" Y="400"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="0" Y="500"/><Vertex X="1200" Y="500"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="0" Y="600"/><Vertex X="1200" Y="600"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="0" Y="700"/><Vertex X="1200" Y="700"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="200" Y="0"/><Vertex X="200" Y="800"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="400" Y="0"/><Vertex X="400" Y="800"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="600" Y="0"/><Vertex X="600" Y="800"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="800" Y="0"/><Vertex X="800" Y="800"/>
             </Line>
-            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+            <Line Style="Grid">
                 <Vertex X="1000" Y="0"/><Vertex X="1000" Y="800"/>
             </Line>
 
-            <!-- Floating particles (ambient decoration) -->
-            <Ellipse X="@Particle1X" Y="@Particle1Y" Radius="3" FillColor="0.2 0.6 1 0.3"/>
-            <Ellipse X="@Particle2X" Y="@Particle2Y" Radius="2" FillColor="0.6 0.3 0.9 0.4"/>
-            <Ellipse X="@Particle3X" Y="@Particle3Y" Radius="4" FillColor="0.2 0.9 0.9 0.25"/>
-            <Ellipse X="@Particle4X" Y="@Particle4Y" Radius="2" FillColor="0.9 0.3 0.6 0.35"/>
-            <Ellipse X="@Particle5X" Y="@Particle5Y" Radius="3" FillColor="0.3 0.8 0.5 0.3"/>
-            <Ellipse X="@Particle6X" Y="@Particle6Y" Radius="2" FillColor="1 0.5 0.2 0.35"/>
-            <Ellipse X="@Particle7X" Y="@Particle7Y" Radius="4" FillColor="0.2 0.6 1 0.25"/>
-            <Ellipse X="@Particle8X" Y="@Particle8Y" Radius="2" FillColor="0.6 0.3 0.9 0.3"/>
-            <Ellipse X="@Particle9X" Y="@Particle9Y" Radius="3" FillColor="0.9 0.3 0.6 0.28"/>
-            <Ellipse X="@Particle10X" Y="@Particle10Y" Radius="2" FillColor="0.2 0.9 0.9 0.35"/>
-            <Ellipse X="@Particle11X" Y="@Particle11Y" Radius="3" FillColor="0.8 0.6 0.2 0.3"/>
-            <Ellipse X="@Particle12X" Y="@Particle12Y" Radius="2" FillColor="0.5 0.3 0.9 0.32"/>
+            <Ellipse X="100" Y="@Particle1Y" Radius="3" FillColor="0.2 0.6 1 0.3"/>
+            <Ellipse X="1000" Y="@Particle2Y" Radius="2" FillColor="0.6 0.3 0.9 0.4"/>
+            <Ellipse X="200" Y="@Particle3Y" Radius="4" FillColor="0.2 0.9 0.9 0.25"/>
+            <Ellipse X="950" Y="@Particle4Y" Radius="2" FillColor="0.9 0.3 0.6 0.35"/>
+            <Ellipse X="450" Y="@Particle5Y" Radius="3" FillColor="0.3 0.8 0.5 0.3"/>
+            <Ellipse X="750" Y="@Particle6Y" Radius="2" FillColor="1 0.5 0.2 0.35"/>
+            <Ellipse X="550" Y="@Particle7Y" Radius="4" FillColor="0.2 0.6 1 0.25"/>
+            <Ellipse X="350" Y="@Particle8Y" Radius="2" FillColor="0.6 0.3 0.9 0.3"/>
+            <Ellipse X="850" Y="@Particle9Y" Radius="3" FillColor="0.9 0.3 0.6 0.28"/>
+            <Ellipse X="150" Y="@Particle10Y" Radius="2" FillColor="0.2 0.9 0.9 0.35"/>
+            <Ellipse X="1100" Y="@Particle11Y" Radius="3" FillColor="0.8 0.6 0.2 0.3"/>
+            <Ellipse X="650" Y="@Particle12Y" Radius="2" FillColor="0.5 0.3 0.9 0.32"/>
 
             <!-- Corner accents -->
             <Line LineColor="#AccentBlue" LineWidth="2">
@@ -272,15 +222,13 @@
                 <Vertex X="1180" Y="20"/><Vertex X="1150" Y="20"/>
             </Line>
 
-            <!-- ==================== HEADER ==================== -->
-
             <!-- Title with stencil effect -->
             <Stencil>
                 <StencilAdd>
                     <Text X="600" Y="730" LocalAlignX="#_align_center_" Size="56" FillColor="#_stencil_color_">DCAPP</Text>
                 </StencilAdd>
                 <StencilDraw>
-                    <!-- Gradient stripes through the title -->
+                    <!-- Color bands through the title. -->
                     <Rectangle X="200" Y="780" Width="800" Height="15" FillColor="#AccentBlue"/>
                     <Rectangle X="200" Y="765" Width="800" Height="15" FillColor="#AccentCyan"/>
                     <Rectangle X="200" Y="750" Width="800" Height="15" FillColor="0.3 0.8 0.7"/>
@@ -293,12 +241,11 @@
             <!-- Subtitle -->
             <Text X="600" Y="680" LocalAlignX="#_align_center_" Size="14" FillColor="#TextDim">Display &amp; Control Application Framework</Text>
 
-            <!-- Animated underline -->
+            <!-- Header accent -->
             <Rectangle X="600" Y="665" Width="300" Height="2" LocalAlignX="#_align_center_" FillColor="0.15 0.15 0.2"/>
-            <Rectangle X="600" Y="665" Width="100" Height="2" LocalAlignX="#_align_center_" Rotation="@WavePhase" PivotX="600" PivotY="665" FillColor="#AccentBlue"/>
+            <Rectangle X="600" Y="665" Width="100" Height="2" LocalAlignX="#_align_center_" FillColor="#AccentBlue"/>
 
-            <!-- ==================== CENTRAL ANIMATION SHOWCASE ==================== -->
-
+            <!-- Central animation. -->
             <Container X="350" Y="320" Width="500" Height="300">
                 <!-- Outer rotating ring -->
                 <Arc X="250" Y="150" Radius="130" Angle="90" Rotation="@Ring1Angle" LineColor="#AccentBlue" LineWidth="3"/>
@@ -342,11 +289,9 @@
                     Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
             </Container>
 
-            <!-- ==================== FEATURE CARDS ==================== -->
-
             <!-- Card 1: Primitives -->
             <Container X="30" Y="80" Width="220" Height="200">
-                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Rectangle Style="CardBg"/>
                 <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">Primitives</Text>
                 <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentBlue"/>
 
@@ -372,15 +317,15 @@
 
             <!-- Card 2: Animation -->
             <Container X="270" Y="80" Width="220" Height="200">
-                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Rectangle Style="CardBg"/>
                 <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">Animation</Text>
                 <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentCyan"/>
 
                 <!-- Animated elements -->
-                <Arc X="70" Y="100" Radius="35" Angle="@PulseAngle" Rotation="0" LineColor="#AccentCyan" LineWidth="4"/>
+                <Arc X="70" Y="100" Radius="35" Angle="@PulseAngle" LineColor="#AccentCyan" LineWidth="4"/>
                 <Ellipse X="70" Y="100" Radius="20" FillColor="#BgMedium"/>
 
-                <Rectangle X="130" Y="60" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                <Rectangle X="155" Y="100" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     Rotation="@Ring1Angle" FillColor="#AccentPurple" LineColor="#AccentPink" LineWidth="2"/>
 
                 <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Variables, Rotation</Text>
@@ -388,7 +333,7 @@
 
             <!-- Card 3: Interactive -->
             <Container X="30" Y="320" Width="280" Height="180">
-                <Rectangle Style="CardBg" Width="280" Height="180"/>
+                <Rectangle Style="CardBg"/>
                 <Text X="140" Y="160" LocalAlignX="#_align_center_" Style="Heading">Interactive</Text>
                 <Rectangle X="15" Y="155" Width="4" Height="20" FillColor="#AccentPurple"/>
 
@@ -426,7 +371,7 @@
                     </ButtonIndicatorOff>
                 </Button>
 
-                <!-- Momentary button -->
+                <!-- Standard action button -->
                 <Text X="160" Y="80" Style="Label">Click:</Text>
                 <Button Type="#_button_standard_" X="200" Y="80" Width="60" Height="28" Variable="ButtonState"
                     LocalAlignY="#_align_middle_">
@@ -447,11 +392,11 @@
 
             <!-- Card 4: 3D Sphere -->
             <Container X="600" Y="80" Width="220" Height="200">
-                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Rectangle Style="CardBg"/>
                 <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">3D Sphere</Text>
                 <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentOrange"/>
 
-                <!-- Spinning Earth-like sphere -->
+                <!-- Textured moon -->
                 <Sphere
                     X="110"
                     Y="95"
@@ -459,8 +404,7 @@
                     LocalAlignY="#_align_middle_"
                     Radius="65"
                     Image="../../assets/moon.jpg"
-                    Roll="0"
-                    Pitch="@SpherePitch"
+                    Pitch="15"
                     Yaw="@SphereYaw"
                 />
 
@@ -469,7 +413,7 @@
 
             <!-- Card 5: Stencils & Masks -->
             <Container X="950" Y="80" Width="220" Height="200">
-                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Rectangle Style="CardBg"/>
                 <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">Stencils</Text>
                 <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentPink"/>
 
@@ -506,7 +450,7 @@
 
             <!-- Card 6: Text & Styles -->
             <Container X="950" Y="320" Width="220" Height="180">
-                <Rectangle Style="CardBg" Width="220" Height="180"/>
+                <Rectangle Style="CardBg"/>
                 <Text X="110" Y="160" LocalAlignX="#_align_center_" Style="Heading">Typography</Text>
                 <Rectangle X="15" Y="155" Width="4" Height="20" FillColor="#AccentOrange"/>
 
@@ -526,8 +470,6 @@
                 <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Fonts, Styles, Colors</Text>
             </Container>
 
-            <!-- ==================== FOOTER ==================== -->
-
             <Rectangle X="0" Y="0" Width="1200" Height="50" FillColor="0.05 0.05 0.07"/>
             <Line LineColor="0.12 0.12 0.15" LineWidth="1">
                 <Vertex X="0" Y="50"/><Vertex X="1200" Y="50"/>
@@ -544,7 +486,7 @@
 
             <!-- Animated status indicator -->
             <Ellipse X="600" Y="25" Radius="4" FillColor="0.2 0.8 0.4"/>
-            <Arc X="600" Y="25" Radius="8" Angle="@PulseAngle" Rotation="0" LineColor="0.2 0.8 0.4 0.5" LineWidth="1"/>
+            <Arc X="600" Y="25" Radius="8" Angle="@PulseAngle" LineColor="0.2 0.8 0.4 0.5" LineWidth="1"/>
             <Text X="615" Y="25" LocalAlignY="#_align_middle_" Size="10" FillColor="#TextDim">Running</Text>
 
         </Panel>

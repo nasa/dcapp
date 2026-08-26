@@ -4,6 +4,29 @@ CHANGELOG
 All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
+[2.186.0] - 2026-08-23
+----------------------
+
+### Added
+- Added one manually run generated Logic API test display under
+  `samples/api-test`.
+
+### Changed
+- Replaced the standalone generated-header fixtures and structural checker with
+  the API test sample.
+
+### Fixed
+- Fixed the signed stencil-pipeline key comparison that failed Windows builds
+  when MSVC promoted warning C4389 to an error.
+
+[2.185.0] - 2026-08-22
+----------------------
+
+### Changed
+- Renamed the `src/app` preprocessing, element, display, logic, variable,
+  value, and drawing-alignment internals to use explicit owner-qualified names.
+  The generated Logic API remains source- and ABI-compatible.
+
 [2.184.0] - 2026-08-02
 --------------------
 

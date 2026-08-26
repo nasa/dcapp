@@ -1,12 +1,16 @@
 #ifndef DC_APP_NODE_TYPES_H
 #define DC_APP_NODE_TYPES_H
 
+//~ node indices
+
 typedef int DcAppNodeIndex;
 
 enum {
     NODE_INDEX_UNDEFINED = 0,
-    NODE_FIRST_INDEX     = 1,
+    NODE_FIRST_INDEX = 1,
 };
+
+//~ node kinds
 
 typedef enum DcAppNodeType {
     NODE_TYPE_UNDEFINED,
@@ -40,7 +44,7 @@ typedef enum DcAppNodeType {
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
 
-    // state-conditional container nodes (check parent's state_flags)
+    //- state conditional containers
     NODE_TYPE_STATE_BUTTON_ENABLED,
     NODE_TYPE_STATE_BUTTON_DISABLED,
     NODE_TYPE_STATE_BUTTON_INDICATOR_ON,
@@ -58,28 +62,32 @@ typedef enum DcAppNodeType {
     NODE_TYPE__MAX = NODE_TYPE__COUNT - 1,
 } DcAppNodeType;
 
-// State flags that parents set for conditional child nodes to check
+//~ node flags
+
+// parent state exposed to conditional children
 typedef enum DcAppNodeStateFlags {
-    NODE_STATE_FLAG_NONE          = 0,
-    NODE_STATE_FLAG_ENABLED       = 1 << 0,
-    NODE_STATE_FLAG_INDICATOR_ON  = 1 << 1,
+    NODE_STATE_FLAG_NONE = 0,
+    NODE_STATE_FLAG_ENABLED = 1 << 0,
+    NODE_STATE_FLAG_INDICATOR_ON = 1 << 1,
     NODE_STATE_FLAG_TRANSITIONING = 1 << 2,
-    NODE_STATE_FLAG_PRESSED       = 1 << 3,
-    NODE_STATE_FLAG_ACTIVE        = 1 << 4,
-    NODE_STATE_FLAG_HOVERED       = 1 << 5,
-    NODE_STATE_FLAG_RELEASED      = 1 << 6,
-    NODE_STATE_FLAG_TRUE          = 1 << 7,
-    NODE_STATE_FLAG_FALSE         = 1 << 8,
+    NODE_STATE_FLAG_PRESSED = 1 << 3,
+    NODE_STATE_FLAG_ACTIVE = 1 << 4,
+    NODE_STATE_FLAG_HOVERED = 1 << 5,
+    NODE_STATE_FLAG_RELEASED = 1 << 6,
+    NODE_STATE_FLAG_TRUE = 1 << 7,
+    NODE_STATE_FLAG_FALSE = 1 << 8,
 } DcAppNodeStateFlags;
 
-// Config flags set at parse time (never change at runtime)
+// immutable configuration set during parsing
 typedef enum DcAppNodeConfigFlags {
-    NODE_CONFIG_FLAG_NONE               = 0,
-    NODE_CONFIG_FLAG_FILL_ENABLED       = 1 << 0,
-    NODE_CONFIG_FLAG_LINE_ENABLED       = 1 << 1,
+    NODE_CONFIG_FLAG_NONE = 0,
+    NODE_CONFIG_FLAG_FILL_ENABLED = 1 << 0,
+    NODE_CONFIG_FLAG_LINE_ENABLED = 1 << 1,
     NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS = 1 << 2,
     NODE_CONFIG_FLAG_BACKGROUND_ENABLED = 1 << 3,
 } DcAppNodeConfigFlags;
+
+//~ node behavior
 
 typedef enum DcAppButtonType {
     DC_APP_BUTTON_TYPE_UNDEFINED,

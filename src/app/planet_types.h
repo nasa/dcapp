@@ -1,6 +1,8 @@
 #ifndef DC_APP_PLANET_TYPES_H
 #define DC_APP_PLANET_TYPES_H
 
+//~ coordinate systems
+
 typedef enum DcAppPlanetCrs {
     DC_APP_PLANET_CRS_UNDEFINED,
     DC_APP_PLANET_CRS_GEODETIC,
@@ -13,17 +15,21 @@ typedef enum DcAppPlanetAttitudeFrame {
     DC_APP_PLANET_ATTITUDE_FRAME_CARTESIAN_RPY,
 } DcAppPlanetAttitudeFrame;
 
+//~ rendering options
+
 typedef enum DcAppPlanetViewFlags {
-    DC_APP_PLANET_VIEW_FLAGS_NONE        = 0,
-    DC_APP_PLANET_VIEW_FLAGS_WIREFRAME   = 1 << 0,
+    DC_APP_PLANET_VIEW_FLAGS_NONE = 0,
+    DC_APP_PLANET_VIEW_FLAGS_WIREFRAME = 1 << 0,
     DC_APP_PLANET_VIEW_FLAGS_SHOW_LEVELS = 1 << 1,
     DC_APP_PLANET_VIEW_FLAGS_SHOW_ORIGIN = 1 << 2,
     DC_APP_PLANET_VIEW_FLAGS_SHOW_CHUNKS = 1 << 3,
-    DC_APP_PLANET_VIEW_FLAGS_FLATTEN     = 1 << 4,
+    DC_APP_PLANET_VIEW_FLAGS_FLATTEN = 1 << 4,
 } DcAppPlanetViewFlags;
 
+//~ geojson styles
+
 typedef enum DcAppPlanetGeojsonStyleFlags {
-    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_NONE       = 0,
+    DC_APP_PLANET_GEOJSON_STYLE_FLAGS_NONE = 0,
     DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_COLOR = 1 << 0,
     DC_APP_PLANET_GEOJSON_STYLE_FLAGS_FILL_COLOR = 1 << 1,
     DC_APP_PLANET_GEOJSON_STYLE_FLAGS_LINE_WIDTH = 1 << 2,

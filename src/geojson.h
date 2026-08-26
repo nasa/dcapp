@@ -4,9 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//-----------------------------------------------------------------------------
-// types
-//-----------------------------------------------------------------------------
+//~ types
 
 typedef struct DcGeojson DcGeojson;
 
@@ -21,42 +19,49 @@ typedef enum {
     DC_GEOJSON_FEATURE_POLYGON,
 } DcGeojsonFeatureType;
 
+//- coordinate values
+
 typedef struct DcGeojsonPosition {
     double lon;
     double lat;
     double alt;
-    bool   has_alt;
+    bool has_alt;
 } DcGeojsonPosition;
+
+//- styling
 
 typedef struct DcGeojsonColor {
     float r, g, b, a;
-    bool  has_value;
+    bool has_value;
 } DcGeojsonColor;
 
 typedef struct DcGeojsonStyle {
     DcGeojsonColor stroke;
     DcGeojsonColor fill;
-    float          stroke_width;
-    bool           has_stroke_width;
+    float stroke_width;
+    bool has_stroke_width;
 } DcGeojsonStyle;
+
+//- geometry storage
 
 typedef struct DcGeojsonCoordArray {
     DcGeojsonPosition *positions;
-    uint32_t           count;
+    uint32_t count;
 } DcGeojsonCoordArray;
 
 typedef DcGeojsonCoordArray DcGeojsonLineString;
 
 typedef struct DcGeojsonPolygon {
     DcGeojsonCoordArray *rings;
-    uint32_t             ring_count;
+    uint32_t ring_count;
 } DcGeojsonPolygon;
 
 typedef struct DcGeojsonFeature DcGeojsonFeature;
 
+// nested arrays are owned by the document
 struct DcGeojsonFeature {
     DcGeojsonFeatureType type;
-    DcGeojsonStyle       style;
+    DcGeojsonStyle style;
     union {
         struct {
             DcGeojsonPosition position;
@@ -65,31 +70,31 @@ struct DcGeojsonFeature {
         DcGeojsonLineString line_string;
         struct {
             DcGeojsonLineString *line_strings;
-            uint32_t             count;
+            uint32_t count;
         } multi_line_string;
         DcGeojsonPolygon polygon;
         struct {
             DcGeojsonPolygon *polygons;
-            uint32_t          count;
+            uint32_t count;
         } multi_polygon;
         struct {
             DcGeojsonFeature *features;
-            uint32_t          count;
+            uint32_t count;
         } geometry_collection;
     } geom;
 };
 
-//-----------------------------------------------------------------------------
-// api
-//-----------------------------------------------------------------------------
+//~ api
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DcGeojson              *dc_geojson_load(const char *filepath);
-void                    dc_geojson_free(DcGeojson *geojson);
-uint32_t                dc_geojson_feature_count(DcGeojson *geojson);
+DcGeojson *dc_geojson_load(const char *filepath);
+void dc_geojson_free(DcGeojson *geojson);
+uint32_t dc_geojson_feature_count(DcGeojson *geojson);
+
+// returned feature pointers remain valid until the document is freed
 const DcGeojsonFeature *dc_geojson_feature(DcGeojson *geojson, uint32_t index);
 
 #ifdef __cplusplus

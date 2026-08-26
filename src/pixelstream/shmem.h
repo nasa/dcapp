@@ -6,7 +6,7 @@
 #include <stddef.h>
 
 typedef struct DcPsShmemContext DcPsShmemContext;
-typedef struct DcPsShmemSource  DcPsShmemSource;
+typedef struct DcPsShmemSource DcPsShmemSource;
 
 #ifndef _WIN32
 
@@ -14,18 +14,20 @@ typedef struct DcPsShmemSource  DcPsShmemSource;
 extern "C" {
 #endif
 
-DcPsShmemContext *dc_ps_shmem_context_create(void);
-void              dc_ps_shmem_context_destroy(DcPsShmemContext *context);
-void              dc_ps_shmem_update(DcPsShmemContext *context);
+//~ context
 
-// individual sources
+DcPsShmemContext *dc_ps_shmem_context_create(void);
+void dc_ps_shmem_context_destroy(DcPsShmemContext *context);
+void dc_ps_shmem_update(DcPsShmemContext *context);
+
+//~ sources
 DcPsShmemSource *dc_ps_shmem_add_source(DcPsShmemContext *context, const char *filepath);
-void             dc_ps_shmem_remove_source(DcPsShmemSource *source);
-bool             dc_ps_shmem_is_connected(DcPsShmemSource *source);
-bool             dc_ps_shmem_has_new_data(DcPsShmemSource *source);
-void             dc_ps_shmem_get_data(DcPsShmemSource *source, unsigned char *out_data, size_t out_data_size, size_t *out_size);
-uint32_t         dc_ps_shmem_get_width(DcPsShmemSource *source);
-uint32_t         dc_ps_shmem_get_height(DcPsShmemSource *source);
+void dc_ps_shmem_remove_source(DcPsShmemSource *source);
+bool dc_ps_shmem_is_connected(DcPsShmemSource *source);
+bool dc_ps_shmem_has_new_data(DcPsShmemSource *source);
+void dc_ps_shmem_get_data(DcPsShmemSource *source, unsigned char *out_data, size_t out_data_size, size_t *out_size);
+uint32_t dc_ps_shmem_get_width(DcPsShmemSource *source);
+uint32_t dc_ps_shmem_get_height(DcPsShmemSource *source);
 
 #ifdef __cplusplus
 }
@@ -33,7 +35,9 @@ uint32_t         dc_ps_shmem_get_height(DcPsShmemSource *source);
 
 #else
 
-// Shared memory pixel streams are not supported on Windows.
+//~ windows stubs
+
+// shared memory pixel streams are unavailable on windows
 static inline DcPsShmemContext *dc_ps_shmem_context_create(void) {
     return NULL;
 }
@@ -83,6 +87,6 @@ static inline uint32_t dc_ps_shmem_get_height(DcPsShmemSource *source) {
     return 0;
 }
 
-#endif // _WIN32
+#endif // windows branch
 
 #endif

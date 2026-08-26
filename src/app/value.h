@@ -1,78 +1,84 @@
-#ifndef DC_VALUE_H
-#define DC_VALUE_H
+#ifndef DC_APP_VALUE_H
+#define DC_APP_VALUE_H
 
 #include "value_types.h"
 
 #include <stdbool.h>
 
-#define DC_VALUE_STRING_BUFFER_SIZE 256
+#define DC_APP_VALUE_STRING_BUFFER_SIZE 256
 
-// Each value caches every representation while type marks the authoritative field.
-typedef struct DcValue {
-    DcValueType type;
+//~ value storage
 
-    char   value_string[DC_VALUE_STRING_BUFFER_SIZE];
-    int    value_integer;
+// each value caches every representation while type marks the authoritative field
+typedef struct DcAppValue {
+    DcAppValueType type;
+
+    char value_string[DC_APP_VALUE_STRING_BUFFER_SIZE];
+    int value_integer;
     double value_double;
-    bool   value_boolean;
-} DcValue;
+    bool value_boolean;
+} DcAppValue;
 
-typedef struct DcValue2 {
+typedef struct DcAppValue2 {
     union {
-        DcValue x, r, lat;
+        DcAppValue x, r, lat;
     };
     union {
-        DcValue y, g, lon;
+        DcAppValue y, g, lon;
     };
-} DcValue2;
+} DcAppValue2;
 
-typedef struct DcValue3 {
+typedef struct DcAppValue3 {
     union {
-        DcValue x, r, lat;
+        DcAppValue x, r, lat;
     };
     union {
-        DcValue y, g, lon;
+        DcAppValue y, g, lon;
     };
     union {
-        DcValue z, b, ele;
+        DcAppValue z, b, ele;
     };
-} DcValue3;
+} DcAppValue3;
 
-typedef struct DcValue4 {
+typedef struct DcAppValue4 {
     union {
-        DcValue x, r;
+        DcAppValue x, r;
     };
     union {
-        DcValue y, g;
+        DcAppValue y, g;
     };
     union {
-        DcValue z, b;
+        DcAppValue z, b;
     };
     union {
-        DcValue w, a;
+        DcAppValue w, a;
     };
-} DcValue4;
+} DcAppValue4;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DcValue dc_value_create_typed_value_from_string(DcValueType type, const char *value_str);
-DcValue dc_value_create_value_string(const char *value);
-DcValue dc_value_create_value_integer(int value);
-DcValue dc_value_create_value_double(double value);
-DcValue dc_value_create_value_boolean(bool value);
-void    dc_value_refresh(DcValue *value);
-void    dc_value_refresh_from_type(DcValue *value, DcValueType type);
-void    dc_value_set_from_string(DcValue *value, const char *string_value);
-void   *dc_value_get_addr(DcValue *value);
+//~ value creation and conversion
 
-bool dc_value_is_equal(DcValue *value1, DcValue *value2);
-bool dc_value_is_not_equal(DcValue *value1, DcValue *value2);
-bool dc_value_is_greater(DcValue *value1, DcValue *value2);
-bool dc_value_is_greater_or_equal(DcValue *value1, DcValue *value2);
-bool dc_value_is_less(DcValue *value1, DcValue *value2);
-bool dc_value_is_less_or_equal(DcValue *value1, DcValue *value2);
+DcAppValue dc_app_value_create_typed_value_from_string(DcAppValueType type, const char *value_str);
+DcAppValue dc_app_value_create_value_string(const char *value);
+DcAppValue dc_app_value_create_value_integer(int value);
+DcAppValue dc_app_value_create_value_double(double value);
+DcAppValue dc_app_value_create_value_boolean(bool value);
+void dc_app_value_refresh(DcAppValue *value);
+void dc_app_value_refresh_from_type(DcAppValue *value, DcAppValueType type);
+void dc_app_value_set_from_string(DcAppValue *value, const char *string_value);
+void *dc_app_value_get_addr(DcAppValue *value);
+
+//~ value comparisons
+
+bool dc_app_value_is_equal(DcAppValue *value1, DcAppValue *value2);
+bool dc_app_value_is_not_equal(DcAppValue *value1, DcAppValue *value2);
+bool dc_app_value_is_greater(DcAppValue *value1, DcAppValue *value2);
+bool dc_app_value_is_greater_or_equal(DcAppValue *value1, DcAppValue *value2);
+bool dc_app_value_is_less(DcAppValue *value1, DcAppValue *value2);
+bool dc_app_value_is_less_or_equal(DcAppValue *value1, DcAppValue *value2);
 
 #ifdef __cplusplus
 }

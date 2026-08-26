@@ -2,8 +2,8 @@
 
 #include <math.h>
 
-#define DC_DEG_TO_RAD 0.017453292519943295 // M_PI / 180.0
-#define DC_RAD_TO_DEG 57.29577951308232    // 180.0 / M_PI
+#define DC_DEG_TO_RAD 0.017453292519943295 // pi / 180
+#define DC_RAD_TO_DEG 57.29577951308232    // 180 / pi
 
 bool dc_utils_double_equals(double value1, double value2, double precision) {
     return fabs(value1 - value2) < precision;

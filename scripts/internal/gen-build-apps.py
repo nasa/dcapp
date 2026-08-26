@@ -141,6 +141,10 @@ with pl.project("apps"):
     # [SECTION] profiles
     #-----------------------------------------------------------------------------
 
+    # Keep C dialect, optimization, and warning settings explicit across compilers.
+    # Only the selected warnings are fatal; toolchain-default warnings remain warnings.
+    # GCC's format truncation/overflow analysis has no Clang/MSVC equivalent.
+
     # win32 or msvc only
     pl.add_profile(compiler_filter=["msvc"],
                     target_type_filter=[pl.TargetType.DYNAMIC_LIBRARY],
@@ -148,7 +152,7 @@ with pl.project("apps"):
     
     pl.add_profile(compiler_filter=["msvc"],
                     linker_flags=["-incremental:no"],
-                    compiler_flags=["-Zc:preprocessor", "-nologo", "-W4", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115"],
+                    compiler_flags=["-Zc:preprocessor", "-nologo", "-std:c11", "-W4", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115"],
                     link_directories=[vcpkg_rel + "/lib"],
                     include_directories=[vcpkg_rel + "/include"])
     pl.add_profile(compiler_filter=["msvc"],
@@ -163,13 +167,13 @@ with pl.project("apps"):
                     link_directories=["/usr/lib/x86_64-linux-gnu"])
     pl.add_profile(compiler_filter=["gcc"],
                     linker_flags=["-ldl", "-lm"],
-                    compiler_flags=["-fPIC"])
+                    compiler_flags=["-std=gnu11", "-fPIC", "-Werror=shadow", "-Werror=format", "-Werror=format-security", "-Werror=format-truncation", "-Werror=format-overflow"])
     pl.add_profile(compiler_filter=["gcc"],
                     configuration_filter=["debug"],
                     compiler_flags=["--debug", "-g", "-O0"])
     pl.add_profile(compiler_filter=["gcc"],
                     configuration_filter=["release"],
-                    compiler_flags=["-DNDEBUG"])
+                    compiler_flags=["-O2", "-DNDEBUG"])
 
     # macos or clang only
     pl.add_profile(platform_filter=["Darwin"],
@@ -177,13 +181,13 @@ with pl.project("apps"):
                     link_directories=["$(brew --prefix)/lib"])
     pl.add_profile(compiler_filter=["clang"],
                     linker_flags=["-Wl,-rpath,/usr/local/lib"],
-                    compiler_flags=["-fmodules", "-ObjC", "-fPIC"])
+                    compiler_flags=["-std=gnu11", "-fmodules", "-ObjC", "-fPIC", "-Werror=shadow", "-Werror=format", "-Werror=format-security"])
     pl.add_profile(compiler_filter=["clang"],
                     configuration_filter=["debug"],
-                    compiler_flags=["--debug", "-g"])
+                    compiler_flags=["--debug", "-g", "-O0"])
     pl.add_profile(compiler_filter=["clang"],
                     configuration_filter=["release"],
-                    compiler_flags=["-DNDEBUG"])
+                    compiler_flags=["-O2", "-DNDEBUG"])
 
     #-----------------------------------------------------------------------------
     # [SECTION] dcapp extensions
@@ -315,9 +319,9 @@ with pl.project("apps"):
 
         pl.add_source_files(
             *relative_sources(
-                source("src/app/config.c"),
-                source("src/app/elem.c"),
-                source("src/app/lookup.c"),
+                source("src/app/xml_preprocessor.c"),
+                source("src/app/xml_element.c"),
+                source("src/app/variable_registry.c"),
                 source("src/app/value.c"),
                 config_utility_sources,
                 source("apps/dcapp_genheader.c"),
@@ -376,8 +380,8 @@ with pl.project("apps"):
 
         pl.add_source_files(
             *relative_sources(
-                source("src/app/config.c"),
-                source("src/app/elem.c"),
+                source("src/app/xml_preprocessor.c"),
+                source("src/app/xml_element.c"),
                 config_utility_sources,
                 source("apps/dcapp_validate.c"),
             )

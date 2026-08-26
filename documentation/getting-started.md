@@ -1,26 +1,16 @@
 # Getting Started
 
-This page is the short user-side path: install what dcapp needs, build it, run
-samples, and understand what happens when a display starts.
+A dcapp display is an XML file. Loading one runs the following pipeline:
 
-For detailed XML and API references, use [index.md](index.md).
+1. read the file and command-line constant overrides;
+2. apply constants and expand includes, defaults, styles, and static
+   conditionals;
+3. validate the preprocessed XML;
+4. build the runtime display tree;
+5. load the optional C logic library;
+6. open the windows and begin drawing.
 
-## How dcapp Works
-
-A dcapp display is an XML file. At startup dcapp:
-
-1. loads the XML file,
-2. applies parse-time constants and command-line overrides,
-3. expands `<Include>` files,
-4. applies `<Default>` and `<Style>` templates,
-5. resolves static `<If>` branches,
-6. validates the resulting XML,
-7. builds the runtime display tree,
-8. loads optional C logic from `<Logic File="..."/>`,
-9. opens one or more windows and draws each frame.
-
-Runtime variables are declared with `<Variable>` and referenced with `@NAME`.
-Parse-time constants are declared with `<Constant>` and referenced with `#Name`.
+Runtime variables use `@NAME`. Parse-time constants use `#Name`.
 
 ```xml
 <DCAPP>
@@ -36,12 +26,14 @@ Parse-time constants are declared with `<Constant>` and referenced with `#Name`.
 </DCAPP>
 ```
 
+The [documentation index](index.md) links to the full XML and logic references.
+
 ## Requirements
 
 All platforms need Git and the Vulkan SDK.
 
-Linux also needs a compiler plus libxml2, curl, GDAL, and X11/XCB development
-packages. On Debian/Ubuntu:
+On Debian or Ubuntu, install a compiler and the libxml2, curl, GDAL, and
+X11/XCB development packages:
 
 ```bash
 sudo apt install build-essential libxml2-dev libcurl4-openssl-dev libgdal-dev \
@@ -50,20 +42,21 @@ sudo apt install build-essential libxml2-dev libcurl4-openssl-dev libgdal-dev \
     libxinerama-dev libgl-dev libxi-dev
 ```
 
-macOS needs Xcode Command Line Tools and Homebrew packages:
+On macOS, install the Xcode Command Line Tools and the Homebrew dependencies:
 
 ```bash
 xcode-select --install
 brew install libxml2 curl gdal
 ```
 
-Windows needs Visual Studio 2022 with C++ workloads, Vulkan SDK, and vcpkg:
+On Windows, install Visual Studio 2022 with the C++ workloads, the Vulkan SDK,
+and vcpkg, then install the vcpkg dependencies:
 
 ```bat
 C:\vcpkg\vcpkg.exe install
 ```
 
-## Clone And Build
+## Build
 
 ```bash
 git clone --recursive https://github.com/nasa/dcapp.git
@@ -71,49 +64,49 @@ cd dcapp
 ./scripts/build.sh
 ```
 
-If the repo was cloned without submodules:
+For an existing clone without submodules:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-Windows:
-
-```bat
-scripts\build.bat
-```
-
-The default configuration is `release`. Use `-c debug` for debug builds and
-`-f` to force all build stages:
+The default configuration is `release`. `-c debug` selects a debug build and
+`-f` reruns every build stage.
 
 ```bash
 ./scripts/build.sh -c debug
 ./scripts/build.sh -f
 ```
 
-Build outputs live in `pilotlight/out/`; wrapper scripts live in `bin/`.
+On Windows:
 
-## Run Displays
+```bat
+scripts\build.bat
+```
 
-Run the welcome display:
+Build output goes to `pilotlight/out/`. User-facing wrappers are in `bin/`.
+
+## Run a display
+
+With no arguments, dcapp opens the welcome sample:
 
 ```bash
 ./bin/dcapp.sh
 ```
 
-Run a specific display:
+Pass an XML path to open another display:
 
 ```bash
 ./bin/dcapp.sh samples/primitives/primitives.xml
 ```
 
-Pass parse-time constants after the XML path:
+Parse-time constant overrides follow the path:
 
 ```bash
 ./bin/dcapp.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=1
 ```
 
-Windows equivalents:
+Windows uses the same argument order:
 
 ```bat
 bin\dcapp.bat
@@ -122,45 +115,38 @@ bin\dcapp.bat samples\primitives\primitives.xml
 
 ## Validate XML
 
-Use validation before chasing runtime behavior:
-
 ```bash
 ./bin/dcapp-validate.sh samples/includes/includes.xml
 ```
 
-Dump the preprocessed XML when debugging constants, styles, includes, or static
-conditionals:
+Use `--preprocessed` to inspect the XML after constants, styles, includes, and
+static conditionals have been resolved:
 
 ```bash
 ./bin/dcapp-validate.sh samples/includes/includes.xml --preprocessed cache/includes.preprocessed.xml
 ```
 
-## Generate Logic Headers
+## Displays with C logic
 
-Displays with C logic need a generated `logic/dcapp.h`:
+These displays need a generated `logic/dcapp.h`:
 
 ```bash
-./bin/dcapp-genheader.sh samples/drawfunction1/drawfunction1.xml
+./bin/dcapp-genheader.sh samples/starfield/starfield.xml
 ```
 
-The normal build scripts do this automatically for bundled samples.
+The build scripts generate headers automatically for bundled samples. The
+[logic reference](logic.md) covers callbacks and the procedural drawing API.
 
-## Sample Tour
+## Samples
 
-Good first samples:
+- `samples/primitives` covers the basic drawing elements.
+- `samples/layout` covers coordinate spaces, alignment, and pivots.
+- `samples/includes` covers reusable XML, defaults, and named styles.
+- `samples/buttons` covers button behavior and pointer events; `samples/welcome`
+  includes a working slider.
+- `samples/starfield` and `samples/procedural-panel` use C drawing callbacks.
+- `samples/trick`, `samples/pixelstream-mjpeg`, and `samples/planet` cover the
+  larger integrations.
 
-| Sample | Shows |
-|--------|-------|
-| `welcome` | Feature overview |
-| `primitives` | Basic shapes, text, images, arcs, sphere |
-| `styles` | `Default`, `Style`, constants |
-| `includes` | Reusable XML fragments |
-| `conditionals` / `static-if` | Runtime and parse-time `If` |
-| `buttons`, `events`, `slider` | Interaction |
-| `stencil`, `blink` | Display effects |
-| `drawfunction1` through `drawfunction4` | C procedural drawing |
-| `trick` | Trick Variable Server integration |
-| `pixelstream-mjpeg` | MJPEG video stream |
-| `planet` | Planet terrain rendering |
-
-More detail lives in [samples.md](samples.md).
+See [Samples](samples.md) for the complete list. `samples/api-test` is a manual
+integration test for generated logic headers and callbacks.

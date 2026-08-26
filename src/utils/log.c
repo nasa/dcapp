@@ -15,44 +15,27 @@
 #include <sys/time.h>
 #endif
 
-// ANSI color codes
+//~ terminal colors
+
 #define ANSI_RESET "\033[0m"
 #define ANSI_CYAN "\033[36m"
 #define ANSI_GREEN "\033[32m"
 #define ANSI_YELLOW "\033[33m"
 #define ANSI_RED "\033[31m"
 
-// Current minimum log level (messages below this level are ignored)
-static DcLogLevel _dc_log_level          = DC_LOG_LEVEL_INFO;
-static int        _dc_log_colors_enabled = -1; // -1 = auto, 0 = off, 1 = on
+//~ private state
+
+static DcLogLevel _dc_log_level = DC_LOG_LEVEL_INFO;
+static int _dc_log_colors_enabled = -1; // negative selects terminal detection
 
 #ifdef _WIN32
 static int _dc_win_console_initialized = 0;
-
-static void _dc_init_win_console(void) {
-    if (_dc_win_console_initialized) return;
-    _dc_win_console_initialized = 1;
-
-    // Enable ANSI escape sequences on Windows 10+
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
-    DWORD  mode = 0;
-
-    if (hOut != INVALID_HANDLE_VALUE && GetConsoleMode(hOut, &mode)) {
-        SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    }
-    if (hErr != INVALID_HANDLE_VALUE && GetConsoleMode(hErr, &mode)) {
-        SetConsoleMode(hErr, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    }
-}
+static void _dc_init_win_console(void);
 #endif
 
-static int _dc_should_use_colors(FILE *out) {
-    if (_dc_log_colors_enabled == 0) return 0;
-    if (_dc_log_colors_enabled == 1) return 1;
-    // Auto: only colorize if writing to a terminal
-    return isatty(fileno(out));
-}
+static int _dc_should_use_colors(FILE *out);
+
+//~ public functions
 
 void dc_log_set_level(DcLogLevel level) {
     _dc_log_level = level;
@@ -71,7 +54,7 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
 
     const char *level_str;
     const char *color = "";
-    FILE       *out   = stderr;
+    FILE *out = stderr;
 
 #ifdef _WIN32
     _dc_init_win_console();
@@ -80,28 +63,28 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
     switch (level) {
         case DC_LOG_LEVEL_DEBUG:
             level_str = "DEBUG";
-            color     = ANSI_CYAN;
+            color = ANSI_CYAN;
             break;
         case DC_LOG_LEVEL_INFO:
             level_str = "INFO";
-            color     = ANSI_GREEN;
-            out       = stdout;
+            color = ANSI_GREEN;
+            out = stdout;
             break;
         case DC_LOG_LEVEL_WARN:
             level_str = "WARN";
-            color     = ANSI_YELLOW;
+            color = ANSI_YELLOW;
             break;
         case DC_LOG_LEVEL_ERROR:
             level_str = "ERROR";
-            color     = ANSI_RED;
+            color = ANSI_RED;
             break;
         default:
             level_str = "???";
             break;
     }
 
-    // timestamp
-    char timestamp[16];
+    //- format timestamp
+    char timestamp[64];
 #ifdef _WIN32
     SYSTEMTIME st;
     GetLocalTime(&st);
@@ -130,4 +113,32 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
     va_end(args);
 
     fprintf(out, "\n");
+}
+
+//~ private functions
+
+#ifdef _WIN32
+static void _dc_init_win_console(void) {
+    if (_dc_win_console_initialized) return;
+    _dc_win_console_initialized = 1;
+
+    // enable ansi escape sequences on modern windows terminals
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+    DWORD mode = 0;
+
+    if (hOut != INVALID_HANDLE_VALUE && GetConsoleMode(hOut, &mode)) {
+        SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
+    if (hErr != INVALID_HANDLE_VALUE && GetConsoleMode(hErr, &mode)) {
+        SetConsoleMode(hErr, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
+}
+#endif
+
+static int _dc_should_use_colors(FILE *out) {
+    if (_dc_log_colors_enabled == 0) return 0;
+    if (_dc_log_colors_enabled == 1) return 1;
+    // detect color support from the output terminal
+    return isatty(fileno(out));
 }

@@ -74,7 +74,8 @@ jobs:
 
           for f in "${FILES[@]}"; do
             echo "=== Checking $f ==="
-            clang -fsyntax-only -std=gnu11 -Werror "$f" "${INCLUDES[@]}"
+            # Match the selected Clang errors in the build generators.
+            clang -fsyntax-only -std=gnu11 -Werror=shadow -Werror=format -Werror=format-security "$f" "${INCLUDES[@]}"
           done
 
   clang-format:
@@ -83,41 +84,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-format
+          python3 -m pip install clang-format==21.1.8
 
       - name: Check formatting
         run: |
           set -euo pipefail
-          BASE_REF="${{ github.event.pull_request.base.sha || github.event.before }}"
-          if [ -z "$BASE_REF" ] || [[ "$BASE_REF" =~ ^0+$ ]] || ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
-            BASE_REF="HEAD~1"
-          fi
-
           mapfile -d '' FILES < <(
-            git diff --name-only -z --diff-filter=ACMR "$BASE_REF"...HEAD |
+            git ls-files -z -- '*.c' '*.h' '*.cc' '*.cpp' '*.cxx' '*.hh' '*.hpp' '*.hxx' '*.m' '*.mm' |
               while IFS= read -r -d '' f; do
-                case "$f" in
-                  apps/*.c|apps/*.h|extensions/*.c|extensions/*.h|src/*.c|src/*.h|src/*/*.c|src/*/*.h|samples/*.c|samples/*.h|samples/*/logic/*.c|samples/*/logic/*.h|samples/trick/sim/*.c|samples/trick/sim/*.h)
-                    printf '%s\0' "$f"
-                    ;;
-                esac
+                if [ "$f" != "tools/terrain/pl_icons.h" ]; then
+                  printf '%s\0' "$f"
+                fi
               done |
-              sort -z
+              sort -zu
           )
           if [ "${#FILES[@]}" -eq 0 ]; then
-            echo "No changed C/C++ style files to check."
+            echo "No C/C++ style files to check."
             exit 0
           fi
 
-          FORMAT_DIFF="$(git diff -U0 --no-color "$BASE_REF"...HEAD -- "${FILES[@]}" | clang-format-diff -p1 -style=file)"
-          if [ -n "$FORMAT_DIFF" ]; then
-            echo "$FORMAT_DIFF"
-            echo "::error::clang-format would reformat changed lines"
-            exit 1
-          fi
+          clang-format --version
+          echo "Checking ${#FILES[@]} C/C++ source files."
+          clang-format --dry-run --Werror --style=file -- "${FILES[@]}"

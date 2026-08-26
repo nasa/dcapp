@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+//~ buffer metadata
+
 #define sbinitcap 16
 
 typedef struct {
@@ -18,6 +20,8 @@ static inline int sbcount(void *a) {
 static inline int sbcapacity(void *a) {
     return a ? sbheader(a)->sbcap : 0;
 }
+
+//~ buffer operations
 
 #define sbclear(a)                  \
     do {                            \
@@ -45,6 +49,8 @@ static inline void *sbgrow(void *a, int inc, int sz) {
     return (void *)(newhdr + 1);
 }
 
+//- append and remove
+
 #define sbpush(a, v)                                          \
     do {                                                      \
         if (!(a) || sbheader(a)->sbcnt >= sbheader(a)->sbcap) \
@@ -70,6 +76,8 @@ static inline void *sbgrow(void *a, int inc, int sz) {
         else if (a)                           \
             sbheader(a)->sbcnt = 0;           \
     } while (0)
+
+//- shift and resize
 
 #define sbshift(a)                                                           \
     ((a) && sbheader(a)->sbcnt > 0 ? ({                                      \
@@ -98,6 +106,8 @@ static inline void *sbgrow(void *a, int inc, int sz) {
             (a) = sbgrow((a), (n) - sbcapacity(a), sizeof(*(a))); \
         sbheader(a)->sbcnt = (n);                                 \
     } while (0)
+
+//- release
 
 #define sbfree(a)              \
     do {                       \

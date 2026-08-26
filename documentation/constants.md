@@ -1,12 +1,8 @@
-# dcapp Constants
+# Constants
 
-A guide to using built-in and user-defined constants in dcapp displays.
-
----
-
-## Overview
-
-Constants provide named, fixed values that make XML more readable and maintainable. They are resolved at load time — the constant name is substituted with its value before the display runs.
+Constants are named values resolved while the display loads. The preprocessor
+substitutes the value before the runtime display is built, so a constant is not
+a live binding.
 
 Constants are referenced using the `#` prefix:
 
@@ -16,41 +12,20 @@ Constants are referenced using the `#` prefix:
 <If Operator="#_if_gt_" .../>
 ```
 
----
+Use a [variable](variables.md) for a value that must change after the display
+starts.
 
-## When To Use Constants
-
-Use constants for values that are chosen before the display starts:
-
-- colors, spacing, dimensions, and style tokens used in several places
-- file paths and host/port defaults
-- operator/type constants such as `#_button_toggle_` and `#_set_add_`
-- feature flags for static `If` branches
-- deployment-specific values overridden from the command line
-
-Constants are not runtime state. Once preprocessing finishes, the display sees
-the substituted value, not a live binding. Use a [variable](variables.md) when a
-value must change while the display is running.
-
----
-
-## Constant Syntax
-
-### Basic Reference
+## References
 
 ```xml
 <Text LocalAlignX="#_align_center_"/>
 ```
-
-### Braced Reference
 
 Use braces when constants are adjacent to other text or nested:
 
 ```xml
 <Rectangle FillColor="#{myRed},0,0,1"/>
 ```
-
-### Environment Variables
 
 Use `$` to reference environment variables:
 
@@ -65,16 +40,12 @@ dcapp exports two path variables before preprocessing a display:
 
 The legacy `dcappHome` and `dcappDisplayHome` names remain available as aliases.
 
-### Escaping
-
 Use backslash to include literal `#` or `$` characters:
 
 ```xml
 <Text>Cost: \$100</Text>
 <Text>Issue \#42</Text>
 ```
-
----
 
 ## User-Defined Constants
 
@@ -92,8 +63,6 @@ Define your own constants using the `<Constant>` element:
 </DCAPP>
 ```
 
-### Constant Element Attributes
-
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Name` | string | **Yes** | Constant name (used with `#` prefix) |
@@ -101,15 +70,11 @@ Define your own constants using the `<Constant>` element:
 
 **Content:** The constant value
 
-### Immutable Constants
-
 Mark constants as immutable to prevent command-line overrides:
 
 ```xml
 <Constant Name="version" Immutable="true">1.0.0</Constant>
 ```
-
----
 
 ## Command-Line Constant Overrides
 
@@ -119,13 +84,9 @@ Constants can be set or overridden from the command line when launching dcapp:
 ./bin/dcapp.sh myDisplay.xml buttonColor="1,0,0,1" serverHost="192.168.1.100"
 ```
 
-This allows the same display XML to be configured differently at runtime.
+Constants marked `Immutable="true"` cannot be overridden this way.
 
-**Note:** Constants marked with `Immutable="true"` cannot be overridden from the command line.
-
----
-
-## Constants Can Reference Other Constants
+## Recursive references
 
 Constants are resolved recursively, so they can reference each other:
 
@@ -137,17 +98,15 @@ Constants are resolved recursively, so they can reference each other:
 <!-- Resolves to: FillColor="0.8,0.1,0.1,1" -->
 ```
 
----
-
 ## Built-in Constants
 
-dcapp provides many predefined constants for common values.
+These constants are available without a `Constant` declaration.
 
 ### Alignment Constants
 
 Used with `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX` (horizontal) and `LocalAlignY`, `ParentAlignY`, `PivotLocalAlignY` (vertical). See [Positioning and Alignment](primitives.md#positioning-and-alignment) for details.
 
-**Horizontal:**
+Horizontal:
 
 | Constant | Value |
 |----------|-------|
@@ -155,7 +114,7 @@ Used with `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX` (horizontal) and `Lo
 | `#_align_center_` | 2 |
 | `#_align_right_` | 3 |
 
-**Vertical:**
+Vertical:
 
 | Constant | Value |
 |----------|-------|
@@ -175,7 +134,8 @@ See [Buttons](buttons.md) for full usage details.
 
 ### Conditional Constants
 
-Used with the `<If>` element's `Operator` attribute. See [Conditionals](primitives.md#conditional-rendering-if) for details.
+Used with the `<If>` element's `Operator` attribute. See [`If`](primitives.md#if)
+for details.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
@@ -209,11 +169,25 @@ See [PixelStream](pixelstream.md) for usage details.
 | `#_pixelstream_shmem_` | 1 | Shared memory source |
 | `#_pixelstream_mjpeg_` | 2 | MJPEG network stream |
 
----
+### Planet Constants
+
+| Constant | Value |
+|----------|-------|
+| `#_planet_crs_geodetic_` | 1 |
+| `#_planet_crs_cartesian_` | 2 |
+| `#_planet_attitude_frame_local_ned_` | 1 |
+| `#_planet_attitude_frame_cartesian_rpy_` | 2 |
+
+### Stencil Constant
+
+| Constant | Value |
+|----------|-------|
+| `#_stencil_color_` | `0 0 0 1` |
 
 ## Built-in Color Constants
 
-dcapp includes a comprehensive palette of named colors. Color constants use RGB format with values from 0.0 to 1.0 (no alpha - add your own alpha value).
+Color constants contain space-separated RGB values from 0.0 to 1.0. Append an
+alpha component when using one as a color attribute.
 
 ### Reds & Pinks
 
@@ -393,9 +367,7 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_iron_` | 0.32, 0.34, 0.36 |
 | `#_color_steel_` | 0.5, 0.5, 0.55 |
 
-### Using Color Constants
-
-Color constants use space-separated RGB values. Add alpha when using:
+### Using color constants
 
 ```xml
 <!-- Add alpha value (1 = opaque) -->
@@ -406,120 +378,5 @@ Color constants use space-separated RGB values. Add alpha when using:
 <Rectangle FillColor="#alertRed"/>
 ```
 
-**Note:** Color constants are *not* immutable by default, so they can be overridden from the command line or by defining your own constant with the same name.
-
----
-
-## Complete Built-in Constants Reference
-
-| Category | Constant | Value |
-|----------|----------|-------|
-| **Alignment (H)** | `#_align_left_` | 1 |
-| | `#_align_center_` | 2 |
-| | `#_align_right_` | 3 |
-| **Alignment (V)** | `#_align_bottom_` | 4 |
-| | `#_align_middle_` | 5 |
-| | `#_align_top_` | 6 |
-| **Button Type** | `#_button_momentary_` | 1 |
-| | `#_button_standard_` | 2 |
-| | `#_button_toggle_` | 3 |
-| **Conditional** | `#_if_true_` | 1 |
-| | `#_if_false_` | 2 |
-| | `#_if_eq_` | 3 |
-| | `#_if_ne_` | 4 |
-| | `#_if_lt_` | 5 |
-| | `#_if_gt_` | 6 |
-| | `#_if_lte_` | 7 |
-| | `#_if_gte_` | 8 |
-| **Set Operation** | `#_set_equal_` | 1 |
-| | `#_set_add_` | 2 |
-| | `#_set_subtract_` | 3 |
-| | `#_set_multiply_` | 4 |
-| | `#_set_divide_` | 5 |
-| **PixelStream** | `#_pixelstream_shmem_` | 1 |
-| | `#_pixelstream_mjpeg_` | 2 |
-| **Planet CRS** | `#_planet_crs_geodetic_` | 1 |
-| | `#_planet_crs_cartesian_` | 2 |
-| **Planet Attitude Frame** | `#_planet_attitude_frame_local_ned_` | 1 |
-| | `#_planet_attitude_frame_cartesian_rpy_` | 2 |
-| **Stencil** | `#_stencil_color_` | 0 0 0 1 |
-
----
-
-## Examples
-
-### Themed Display with Constants
-
-```xml
-<DCAPP>
-    <!-- Theme colors -->
-    <Constant Name="bgColor">0.1,0.1,0.15,1</Constant>
-    <Constant Name="primaryColor">0.2,0.6,0.9,1</Constant>
-    <Constant Name="dangerColor">0.9,0.2,0.2,1</Constant>
-    <Constant Name="successColor">0.2,0.8,0.3,1</Constant>
-    
-    <!-- Layout -->
-    <Constant Name="margin">20</Constant>
-    <Constant Name="buttonWidth">100</Constant>
-    <Constant Name="buttonHeight">40</Constant>
-    
-    <Window Title="Themed Display" Width="800" Height="600">
-        <Rectangle FillColor="#bgColor" Width="800" Height="600"/>
-        
-        <Rectangle X="#margin" Y="#margin" 
-                   Width="#buttonWidth" Height="#buttonHeight"
-                   FillColor="#primaryColor"/>
-    </Window>
-</DCAPP>
-```
-
-### Configurable Display
-
-```xml
-<DCAPP>
-    <!-- These can be overridden from command line -->
-    <Constant Name="serverHost">localhost</Constant>
-    <Constant Name="serverPort">7000</Constant>
-    <Constant Name="updateRate">0.1</Constant>
-    
-    <!-- This cannot be overridden -->
-    <Constant Name="version" Immutable="true">2.1.0</Constant>
-    
-    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
-    
-    <TrickIO Host="#serverHost" Port="#serverPort" DataRate="#updateRate">
-        <TrickFrom>
-            <TrickVariable Name="vehicle.altitude">altitude</TrickVariable>
-        </TrickFrom>
-    </TrickIO>
-    
-    <Window Title="Display v#version" Width="800" Height="600">
-        <Text X="10" Y="10" Size="12" FillColor="0.5,0.5,0.5,1">
-            Connected to #serverHost:#serverPort
-        </Text>
-    </Window>
-</DCAPP>
-```
-
-Run with custom server:
-```bash
-dcapp display.xml serverHost="192.168.1.50" serverPort="8000"
-```
-
----
-
-## Tips & Best Practices
-
-1. **Use constants for repeated values** — Colors, sizes, and spacing used multiple times should be constants.
-
-2. **Use meaningful names** — `#headerHeight` is clearer than `#h1`.
-
-3. **Group related constants** — Put theme colors together, layout values together, etc.
-
-4. **Use built-in constants** — `Operator="#_if_gt_"` is more readable than `Operator="5"`.
-
-5. **Mark version/config constants as immutable** — Prevent accidental command-line overrides.
-
-6. **Leverage command-line overrides for deployment** — Same XML can work in different environments.
-
-7. **Use environment variables for paths** — `$DCAPP_DISPLAY_HOME` makes display-local includes portable, while `$DCAPP_HOME` addresses shared dcapp assets.
+Built-in color constants are not immutable. They can be overridden from the
+command line or by a user-defined constant with the same name.

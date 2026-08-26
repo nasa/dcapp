@@ -23,7 +23,10 @@
 #include <errno.h>
 #endif
 
-// get absolute path to exe
+//~ path helpers
+
+//- executable and working paths
+
 int dc_utils_get_exe_path(char *buffer, size_t size) {
 
     if (buffer == NULL || size == 0) {
@@ -68,6 +71,8 @@ int dc_utils_get_cwd(char *buffer, size_t size) {
     perror("DCAPP get_current_working_directory()");
     return -1;
 }
+
+//- path composition and classification
 
 int dc_utils_join_paths(const char *dir, const char *rel_path, char *out, size_t out_size) {
     if (!dir || !rel_path || !out) {
@@ -115,7 +120,6 @@ bool dc_utils_is_relative_path(const char *path) {
     return true;
 }
 
-// check if path is absolute
 bool dc_utils_is_absolute_path(const char *path) {
     if (!path || !*path) {
         DC_LOG_ERROR("File", "dc_utils_is_absolute_path(): invalid buffer");
@@ -130,7 +134,6 @@ bool dc_utils_is_absolute_path(const char *path) {
 #endif
 }
 
-// check if path is canonical (no symbolic links, relatives)
 bool dc_utils_is_canonical_path(const char *path) {
     if (!path || !*path) {
         DC_LOG_ERROR("File", "dc_utils_is_canonical_path(): invalid buffer");
@@ -138,7 +141,7 @@ bool dc_utils_is_canonical_path(const char *path) {
     }
 
 #if defined(_WIN32)
-    char  resolved[MAX_PATH];
+    char resolved[MAX_PATH];
     DWORD len = GetFullPathNameA(path, MAX_PATH, resolved, NULL);
     if (len == 0 || len >= MAX_PATH) {
         return 0;
@@ -155,6 +158,8 @@ bool dc_utils_is_canonical_path(const char *path) {
 #endif
 }
 
+//- path normalization and directories
+
 int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size) {
 
     if (path == NULL || out == NULL || out_size == 0) {
@@ -170,8 +175,7 @@ int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size) {
 #endif
 
     if (!fullpath) {
-        // File doesn't exist or path is invalid - copy the input path as-is
-        // so caller has something usable, but return -1 to indicate failure
+        // preserve the input path when canonicalization fails
         strncpy(out, path, out_size - 1);
         out[out_size - 1] = '\0';
         return -1;
@@ -208,7 +212,7 @@ int dc_utils_get_directory(const char *path, char *out, size_t out_size) {
         strncpy(out, path, len);
         out[len] = '\0';
     } else {
-        // No directory separator found; assume current directory
+        // fall back to the current directory
         strncpy(out, ".", out_size - 1);
         out[out_size - 1] = '\0';
     }
@@ -231,6 +235,7 @@ int dc_utils_create_directory(const char *path) {
     }
 #endif
 
+    // treat an existing directory as success
 #if defined(_WIN32) || defined(_WIN64)
     if (errno == EEXIST)
         return 0;
@@ -242,6 +247,8 @@ int dc_utils_create_directory(const char *path) {
     perror("DCAPP dc_utils_create_directory()");
     return -1;
 }
+
+//~ file loading
 
 unsigned char *dc_utils_load_binary_file(const char *path, size_t *out_size) {
     FILE *file = fopen(path, "rb");
@@ -284,7 +291,7 @@ char *dc_utils_load_text_file(const char *path) {
         return NULL;
     }
 
-    size_t read  = fread(buffer, 1, size, file);
+    size_t read = fread(buffer, 1, size, file);
     buffer[read] = '\0';
     fclose(file);
     return buffer;

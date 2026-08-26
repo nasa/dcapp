@@ -130,13 +130,11 @@ if not exist "%PILOTLIGHT_OUT%\dcapp-genheader.exe" set "BUILD_DCAPP=1"
 if not exist "%PILOTLIGHT_OUT%\dcapp-validate.exe" set "BUILD_DCAPP=1"
 if not exist "%PILOTLIGHT_OUT%\dcapp-planet-chunkgen.dll" set "BUILD_DCAPP=1"
 if not exist "%PILOTLIGHT_OUT%\dcapp-planet-snapshot.dll" set "BUILD_DCAPP=1"
-if not exist "%DCAPP_HOME%\samples\drawfunction1\logic\logic.dll" set "BUILD_DCAPP=1"
-if not exist "%DCAPP_HOME%\samples\drawfunction2\logic\logic.dll" set "BUILD_DCAPP=1"
-if not exist "%DCAPP_HOME%\samples\drawfunction3\logic\logic.dll" set "BUILD_DCAPP=1"
-if not exist "%DCAPP_HOME%\samples\drawfunction4\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\api-test\logic\logic.dll" set "BUILD_DCAPP=1"
 if not exist "%DCAPP_HOME%\samples\lissajous\logic\logic.dll" set "BUILD_DCAPP=1"
 if not exist "%DCAPP_HOME%\samples\planet\logic\logic.dll" set "BUILD_DCAPP=1"
-if not exist "%DCAPP_HOME%\samples\ptz\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\procedural-panel\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\starfield\logic\logic.dll" set "BUILD_DCAPP=1"
 
 :: Step 2: Build dcapp apps
 echo.

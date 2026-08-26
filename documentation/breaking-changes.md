@@ -1,310 +1,216 @@
-BREAKING CHANGES
-================
+# Breaking changes
 
-User-facing XML and Logic API changes that display authors may need to account
-for.
+Changes on this page may require edits to display XML or Logic code. For Logic API
+changes, regenerate `logic/dcapp.h` from the display XML and rebuild the whole
+shared library; dcapp does not provide a binary compatibility layer between
+generated-header versions.
 
+## Unreleased
 
-[Unreleased]
-------------
+### 2026-07-28: planet strokes use `DcStroke` and pixel widths
 
-### 2026-07-28 - Planet Stroke API and Screen-Space Widths
+The six Logic outline calls now take one `DcStroke` instead of separate width
+and color arguments:
 
-#### Affected Code
-- Logic code that calls `planet_line_local`, `planet_polygon_local`,
-  `planet_line_geodetic`, `planet_line_cartesian`,
-  `planet_polygon_geodetic`, or `planet_polygon_cartesian`.
-- XML and Logic planet overlays that use meter-scale line widths.
-- GeoJSON points that relied on `LineWidth` or simplestyle `stroke-width` to
-  change marker radius.
+- `planet_line_local` and `planet_polygon_local`
+- `planet_line_geodetic` and `planet_polygon_geodetic`
+- `planet_line_cartesian` and `planet_polygon_cartesian`
 
-#### Changed
-- The six Logic planet line and polygon outline functions now take one
-  `DcStroke` instead of separate line-width and color arguments.
-- Planet outline widths use logical display pixels, remain stable while
-  zooming, and are not affected by planet-container scale.
-- XML `PlanetLine` and `PlanetPolygon` elements now accept `LinePattern`.
-- GeoJSON `LineWidth` and simplestyle `stroke-width` now apply only to line and
-  polygon outlines. Point markers retain their 1000-meter radius.
+Planet outline width is now measured in logical display pixels. It stays stable
+while zooming and is not affected by `PlanetContainer` scale. `PlanetLine` and
+`PlanetPolygon` accept `LinePattern`. GeoJSON `LineWidth` and simplestyle
+`stroke-width` affect line and polygon outlines, not the fixed 1000-meter point
+markers.
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
-- Replace trailing `line_width, color` arguments with
-  `(DcStroke){.color = color, .width = line_width}`. Set `.pattern` when a
-  dashed outline is wanted.
-- Replace meter-scale outline widths with intended pixel widths, such as
-  `2.0f`.
-- Use explicit planet sphere overlays when GeoJSON points need a custom
-  world-space radius.
+Replace trailing `line_width, color` arguments with:
 
-### 2026-07-27 - Logic Mouse Click Semantics
+```c
+(DcStroke){
+    .color = color,
+    .width = 2.0f,
+    .pattern = 0xAA,
+}
+```
 
-#### Affected Code
-- Logic code that relies on `dc_mouse->clicked()` after releasing outside the
-  registered target.
+Use an explicit planet sphere when a GeoJSON point needs a different
+world-space radius.
 
-#### Changed
-- `clicked()` now reports a completed activation only when a target's captured
-  press ends while the pointer is over that target.
-- `released()` continues to report captured releases outside the target.
+### 2026-07-27: mouse click semantics
 
-#### Migration
-- Use `dc_mouse->released()` instead if release outside the target should still
-  trigger the action.
+`dc_mouse->clicked()` now requires the captured press to be released while the
+pointer is over the target. `released()` still reports a captured release after
+the pointer leaves. Code that treated any captured release as a click should
+use `released()`.
 
-### 2026-07-27 - Projected Texture Slot-Zero Setter
+### 2026-07-27: projected slot-zero texture setter
 
-#### Affected Code
-- Logic code that declares or copies the `DcPlanetApi` function table.
+`DcPlanetApi` adds `set_texture_projected()`. It delegates to
+`set_texture_projected_slot()` with slot 0. Code that declares or copies the
+API table must rebuild against a regenerated header.
 
-#### Changed
-- Added `set_texture_projected()` alongside the existing geodetic and
-  cartesian slot-zero texture setters.
-- The new function delegates to `set_texture_projected_slot()` with slot `0`.
+### 2026-07-27: mesh-cache units
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
+`DcPlanetCreateInfo.mesh_cache_size` is now
+`DcPlanetCreateInfo.mesh_cache_size_mb`, measured as the combined vertex/index
+cache size in MiB, matching XML `MeshCacheSize`.
 
-### 2026-07-27 - Logic Planet Mesh-Cache Units
+```c
+// old
+.mesh_cache_size = 128u * 1024u * 1024u,
 
-#### Affected Code
-- Logic code that initializes `DcPlanetCreateInfo.mesh_cache_size`.
+// current
+.mesh_cache_size_mb = 128u,
+```
 
-#### Changed
-- Renamed `mesh_cache_size` to `mesh_cache_size_mb`.
-- The value is now the combined vertex/index cache size in MiB, matching the
-  XML `MeshCacheSize` attribute.
+### 2026-07-27: breadcrumb update results
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
-- Replace byte expressions such as `128u * 1024u * 1024u` with the equivalent
-  MiB value, such as `128u`.
+`update_breadcrumbs_geodetic()` and `update_breadcrumbs_cartesian()` return
+`true` only when they append the supplied position. Invalid arguments,
+mismatched CRS, non-finite coordinates, and positions below the configured
+spacing return `false`. Existing callers may ignore the result.
 
-### 2026-07-27 - Breadcrumb Update Results
+### 2026-07-27: double-precision planet coordinates
 
-#### Affected Code
-- Logic code that declares or copies the `DcPlanetApi` function table.
+Absolute geodetic and cartesian planet positions and point arrays now use
+`DcVec3d`. This includes cartesian cameras, texture centers, overlays,
+breadcrumb inputs, and `DcPlanetBreadcrumbsPoints.points`. The generated header
+also defines `DcVec2d` and `DcVec4d` with the aliases available on their float
+counterparts.
 
-#### Changed
-- `update_breadcrumbs_geodetic()` and `update_breadcrumbs_cartesian()` now
-  return `true` only when the supplied position is appended.
-- They return `false` for invalid arguments, a mismatched breadcrumb CRS,
-  non-finite coordinates, or positions below the configured spacing.
+Replace `DcVec3` with `DcVec3d` for absolute planet positions. Keep `DcVec3`
+for attitude and light direction; `DcVec2` remains the screen-space and
+planet-local type.
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
-- Existing calls may continue to ignore the returned value.
+### 2026-07-27: planet line-width scaling
 
-### 2026-07-27 - Double-Precision Planet Coordinates
+Planet outlines no longer use `DCAPP_LINE_WIDTH_FACTOR`. Remove caller-side
+`* 1.2f` compensation. This factor remains part of 2D drawing.
 
-#### Affected Code
-- Logic code that passes absolute planet positions or point arrays through
-  `dc_draw` or `dc_planet`.
-- Logic code that reads `DcPlanetBreadcrumbsPoints.points`.
+This change preceded the screen-space stroke API above. Current planet outline
+widths should be supplied directly in logical display pixels.
 
-#### Changed
-- Generated Logic headers now define `DcVec2d`, `DcVec3d`, and `DcVec4d` with
-  the same component aliases as their float equivalents.
-- Absolute geodetic and cartesian planet vectors now use `DcVec3d`.
-  `DcVec3` remains the float type for attitude and light direction.
-- Planet coordinate conversions and overlay projection preserve double
-  precision until the float-based planet renderer boundary.
+### 2026-07-27: ellipse draw calls split
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
-- Replace `DcVec3` with `DcVec3d` for planet world positions and point arrays.
-  Do not change `DcVec3` values passed as RPY attitude or light direction.
+`planet_ellipse_geodetic()` and `planet_ellipse_cartesian()` now draw outlines
+only. The matching `planet_ellipse_filled_*()` calls draw fills. Color alpha no
+longer chooses a pass inside one combined call.
 
-### 2026-07-27 - Planet Line-Width Scaling
+To reproduce an XML ellipse with both colors, submit the fill first and the
+outline second.
 
-#### Affected Code
-- Non-container planet XML and GeoJSON outlines.
-- Logic planet line, polygon, and ellipse calls that manually multiplied their
-  line width by `1.2f` to match XML rendering.
+### 2026-07-27: polygon draw calls split
 
-#### Changed
-- Planet outlines no longer use `DCAPP_LINE_WIDTH_FACTOR`; it remains limited
-  to 2D drawing.
-- Non-container planet widths are submitted directly as world-space values.
-  Local-container widths continue to scale only with the container.
+`planet_polygon_local()`, `planet_polygon_geodetic()`, and
+`planet_polygon_cartesian()` now draw outlines only. The
+`planet_convex_polygon_filled_*()` calls draw convex fills. Submit the fill
+first and outline second when both are needed.
 
-#### Migration
-- Pass the intended planet line width directly and remove any caller-side
-  `* 1.2f` compensation.
+### 2026-07-24: generated Logic ABI cleanup
 
-### 2026-07-27 - Planet Ellipse Draw API Split
+Generated headers now expose the curated short-name draw, mouse, texture,
+planet, and initialization contracts. Internal `DcApp*` declarations are no
+longer copied into them.
 
-#### Affected Code
-- Logic code that calls `planet_ellipse_geodetic` or
-  `planet_ellipse_cartesian`.
+Other source changes in this ABI revision:
 
-#### Changed
-- Planet ellipse outline and fill rendering now use separate calls.
-  `planet_ellipse_*` draws only the outline, and
-  `planet_ellipse_filled_*` draws only the fill.
-- A call always submits its requested pass; color alpha no longer selects
-  which pass a combined call performs.
+- `DcInit` is the current six-field initialization aggregate. Its old `size`,
+  `version`, and duplicate direct `get_variable` fields were removed.
+- `dc_planet->clear_texture` takes `(planet, slot)`; the app context argument
+  was removed.
+- Every XML `Function` and `DrawFunction` gets a typed, C-linked, exported
+  declaration. One symbol cannot serve as both callback kinds.
+- `dc_place_default()` was removed. Use `(DcPlacement){0}` or a designated
+  initializer; directional placement helpers remain.
+- `dc_planet_geojson_style_default()` was removed. A zeroed
+  `DcPlanetGeojsonStyle` selects renderer fallbacks.
+- `dc_planet_view_options_default()` was removed. A zeroed
+  `DcPlanetViewOptions` uses the default tau of 0.3.
+- `DCAPP_LOGIC_EXTERN` is the multi-translation-unit macro. The previous
+  spelling remains a compatibility alias.
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
-- Replace each combined ellipse call with a filled call followed by an outline
-  call when both passes are wanted.
+Typical replacements:
 
-### 2026-07-27 - Planet Polygon Draw API Split
+```c
+dc_planet->clear_texture(planet, slot);
 
-#### Affected Code
-- Logic code that calls `planet_polygon_local`, `planet_polygon_geodetic`, or
-  `planet_polygon_cartesian`.
+DcPlacement placement = {0};
+DcPlanetGeojsonStyle style = {0};
+DcPlanetViewOptions options = {0};
+```
 
-#### Changed
-- Planet polygon outline and fill rendering now use separate calls.
-  `planet_polygon_*` draws only the outline, and
-  `planet_convex_polygon_filled_*` draws only the convex fill.
-- A call always submits its requested pass; color alpha no longer selects
-  which pass a combined call performs.
+Define `DCAPP_LOGIC_EXTERN` before `#include "dcapp.h"` in additional Logic
+translation units.
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules.
-- Replace each combined polygon call with a convex-fill call followed by an
-  outline call when both passes are wanted.
+### 2026-07-20: Logic planet texture slots
 
-### 2026-07-24 - Current Generated Logic ABI
+`DcPlanetApi` adds slot-aware geodetic and cartesian setters plus per-slot
+clear. The original setters remain source-compatible and target slot 0. Rebuild
+against the generated header to use slots 1 through 4.
 
-#### Affected Code
-- Logic libraries built from an older generated `logic/dcapp.h`.
-- Logic code that calls `dc_planet->clear_texture`.
-- Logic code that calls the generated `dc_place_*`,
-  `dc_planet_geojson_style_default`, or
-  `dc_planet_view_options_default` convenience functions.
-- Multi-file logic builds that define the old `_DCAPP_LOGIC_EXTERN_` macro.
+### 2026-06-15: callback `user_data`
 
-#### Changed
-- Generated headers now expose only the explicitly curated short-name draw,
-  mouse, texture, planet, and initialization contracts. Internal `DcApp*`
-  declarations are no longer copied into logic headers.
-- `DcInit` is the exact current six-field initialization aggregate. The old
-  `size`, `version`, and duplicate direct `get_variable` fields were removed.
-- `DcPlanetApi.clear_texture` now takes only `(planet, slot)`; the planet handle
-  already identifies the owning resource.
-- Every XML `Function` and `DrawFunction` receives a typed, C-linked exported
-  declaration. One name cannot be used for both callback kinds.
-- The generated placement convenience functions were removed. A zeroed
-  `DcPlacement` is already the default; use a designated initializer when
-  alignment or pivot fields are needed.
-- `dc_planet_geojson_style_default` was removed because a zeroed
-  `DcPlanetGeojsonStyle` already selects the renderer's fallback behavior.
-- `dc_planet_view_options_default` was removed. A non-positive `tau` now
-  selects the renderer's default value of `0.3`.
-- `DCAPP_LOGIC_EXTERN` is the public multi-translation-unit macro. The old
-  spelling remains accepted as a compatibility alias.
+Lifecycle callbacks now have these signatures:
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild the complete logic library.
-- Change `dc_planet->clear_texture(dc_app_ctx, planet, slot)` to
-  `dc_planet->clear_texture(planet, slot)`.
-- Replace `dc_place_default()` with `(DcPlacement){0}`. The directional
-  placement helpers remain available.
-- Replace `dc_planet_geojson_style_default()` with
-  `(DcPlanetGeojsonStyle){0}` before setting any desired fallback flags.
-- Replace `dc_planet_view_options_default()` with
-  `(DcPlanetViewOptions){0}` before setting any desired flags.
-- Define `DCAPP_LOGIC_EXTERN` before including `dcapp.h` in additional logic
-  translation units.
+```c
+void display_init(DcAppContext *app_ctx, void **user_data);
+void display_draw(DcAppContext *app_ctx, void *user_data);
+void display_close(DcAppContext *app_ctx, void *user_data);
+```
 
-### 2026-07-20 - Logic Planet Texture Slots
+`display_init` may assign per-display state through `*user_data`. dcapp passes
+that value to later lifecycle callbacks, `Function` callbacks, and
+`DrawFunction` callbacks.
 
-#### Affected Code
-- Logic modules that want to configure texture slots 1 through 4.
+`Function`:
 
-#### Changed
-- `DcPlanetApi` adds slot-aware geodetic/cartesian texture setters and a
-  per-slot clear function, grouped with the existing texture controls.
+```c
+void name(DcAppContext *app_ctx, void *user_data);
+```
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic modules. The original setters
-  remain source-compatible and continue to target slot 0.
+`DrawFunction`:
 
-### 2026-06-09 - PlanetView CRS Is Required
+```c
+void name(DcDrawContext *draw_ctx,
+          const DcDrawFuncArgs *args,
+          void *user_data);
+```
 
-#### Affected XML
-- Displays with `<PlanetView>` elements that omitted `CRS`.
-- Displays that relied on camera attributes to infer geodetic or cartesian mode.
+### 2026-06-09: `PlanetView CRS` is required
 
-#### Changed
-- `<PlanetView>` no longer inherits or infers CRS.
-- `CRS` is required and must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`.
-- `AttitudeFrame` is now supported and defaults from `CRS` when omitted.
-- Geodetic views require `CameraLatitude`, `CameraLongitude`, and `CameraElevation`.
-- Cartesian views require `CameraX`, `CameraY`, and `CameraZ`.
-- Mixing geodetic and cartesian camera attributes is now invalid.
+`PlanetView` no longer inherits or infers its camera CRS:
 
-#### Migration
-- Add `CRS="#_planet_crs_geodetic_"` to geodetic PlanetViews. Add `AttitudeFrame="#_planet_attitude_frame_local_ned_"` if you want to be explicit.
-- Add `CRS="#_planet_crs_cartesian_"` to cartesian PlanetViews. Add `AttitudeFrame="#_planet_attitude_frame_cartesian_rpy_"` if you want to be explicit.
-- Prefer `CameraYaw` over the legacy `CameraHeading` alias.
-- Remove mismatched camera attributes.
+- Geodetic views set `CRS="#_planet_crs_geodetic_"` and provide
+  `CameraLatitude`, `CameraLongitude`, and `CameraElevation`.
+- Cartesian views set `CRS="#_planet_crs_cartesian_"` and provide `CameraX`,
+  `CameraY`, and `CameraZ`.
+- Geodetic and cartesian camera attributes cannot be mixed.
 
-### 2026-06-15 - Logic Callback User Data ABI
+`AttitudeFrame` defaults to local-NED for geodetic views and cartesian-RPY for
+cartesian views. `CameraHeading` remains a geodetic alias, but `CameraYaw` is
+preferred.
 
-#### Affected Code
-- Logic shared libraries compiled against older generated `logic/dcapp.h` files.
-- User code implementing `display_init`, `display_draw`, `display_close`,
-  `<Function>` callbacks, or `<DrawFunction>` callbacks.
+### 2026-06-04: generated-header initialization
 
-#### Changed
-- `display_init` now receives `DcAppContext *app_ctx` and `void **user_data`.
-  Set `*user_data` there to store app-owned logic state.
-- `display_draw`, `display_close`, `<Function>` callbacks, and
-  `<DrawFunction>` callbacks now receive the stored `void *user_data`.
-- `<Function>` callbacks also receive `DcAppContext *app_ctx`.
-- `<DrawFunction>` callbacks now receive `void *user_data` after the draw
-  context and argument list.
+The generated initialization hook changed from:
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic shared libraries.
-- Update lifecycle callbacks to:
-  `display_init(DcAppContext *app_ctx, void **user_data)`,
-  `display_draw(DcAppContext *app_ctx, void *user_data)`, and
-  `display_close(DcAppContext *app_ctx, void *user_data)`.
-- Update `<Function>` callbacks to
-  `void name(DcAppContext *app_ctx, void *user_data)`.
-- Update `<DrawFunction>` callbacks to
-  `void name(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data)`.
+```c
+display_pre_init(_GetVariableValueAddr);
+```
 
-### 2026-06-04 - Logic Header Initialization ABI
+to:
 
-This section compares the current logic API against the public logic API that
-existed before the DrawFunction logic API work. It intentionally does not list
-short-lived intermediate header or bootstrap shapes from that implementation
-work.
+```c
+void display_pre_init(const DcInit *init);
+```
 
-#### Affected Code
-- Logic shared libraries compiled against an older generated `logic/dcapp.h`.
-- User code that manually declared or called generated logic internals such as
-  `display_pre_init`, `_GetVariableValueAddr`, or `get_pointer`.
+The old `_GetVariableValueAddr` and `get_pointer` lookup path is not part of
+the generated contract. Use:
 
-#### Changed
-- The generated logic initialization hook changed from
-  `display_pre_init(_GetVariableValueAddr)` to
-  `display_pre_init(const DcInit *)`.
-- Generated logic headers replaced the old `_GetVariableValueAddr` /
-  `get_pointer` variable lookup path with `dc_app->get_variable(app_ctx, "VariableName")`.
-- The generated header no longer declares `get_pointer` as the public/manual
-  variable lookup escape hatch. Manual lookups should use `dc_app->get_variable()`.
+```c
+double *value =
+    (double *)dc_app->get_variable(app_ctx, "VariableName");
+```
 
-#### Migration
-- Regenerate `logic/dcapp.h` and rebuild logic shared libraries.
-- If user code called the old generated lookup pointer directly, update it to `dc_app->get_variable(app_ctx, "VariableName")`.
-- Remove user-maintained declarations of `_GetVariableValueAddr` and
-  `get_pointer`; those names are no longer part of the generated header
-  contract.
-- Do not implement `display_pre_init` in user logic code unless you are
-  deliberately replacing generated-header initialization. The generated
-  `logic/dcapp.h` owns that hook.
-- If custom user code really does implement `display_pre_init`, update its
-  signature to `void display_pre_init(const DcInit *init)`.
-
-#### Excluded Intermediate Changes
-- Earlier same-day DrawFunction mouse and texture helper changes are not listed
-  here because they were intermediate implementation states, not migration steps
-  from the previous public logic API.
+Do not implement `display_pre_init` in ordinary Logic code; the generated
+header owns it. Custom replacements must use the current `const DcInit *`
+signature.

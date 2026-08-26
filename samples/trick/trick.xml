@@ -35,23 +35,35 @@
         </TrickFrom>
     </TrickIO>
 
-    <Window Title="Cannonball Trajectory - Trick Demo" Width="900" Height="700" VirtualWidth="900" VirtualHeight="700">
+    <Style Name="ReadoutPanel">
+        <Container Y="10" Height="80"/>
+        <Rectangle Height="80" FillColor="0.1 0.1 0.2 0.9"
+            LineColor="0.3 0.3 0.4" LineWidth="1"/>
+    </Style>
+    <Style Name="ReadoutLabel">
+        <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7"/>
+    </Style>
+    <Style Name="ReadoutValue">
+        <Text X="10" Size="14"/>
+    </Style>
+    <Style Name="CenteredValue">
+        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+            LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+    </Style>
 
-        <!-- Background -->
+    <Window Title="Cannonball Trajectory - Trick" Width="900" Height="700" VirtualWidth="900" VirtualHeight="700">
+
         <Rectangle Width="900" Height="700" FillColor="0.05 0.05 0.15"/>
 
-        <!-- Title - centered horizontally -->
         <Text ParentAlignX="#_align_center_" Y="670" LocalAlignX="#_align_center_" Size="28" FillColor="0.9 0.9 1">Cannonball Trajectory</Text>
-        <Text ParentAlignX="#_align_center_" Y="640" LocalAlignX="#_align_center_" Size="14" FillColor="0.5 0.5 0.6">Trick Variable Server Demo</Text>
+        <Text ParentAlignX="#_align_center_" Y="640" LocalAlignX="#_align_center_" Size="14" FillColor="0.5 0.5 0.6">Trick Variable Server</Text>
 
         <!-- Trajectory visualization area - virtual coords in meters -->
         <!-- Ball travels 221m X, 32m max Y. Container 800x450 = 1.78:1 ratio -->
         <!-- Using 240x135 virtual keeps circles circular (same 1.78:1 ratio) -->
         <Container X="50" Y="100" Width="800" Height="450" VirtualWidth="240" VirtualHeight="135">
-            <!-- Sky fills entire area -->
             <Rectangle Width="240" Height="135" FillColor="0.1 0.15 0.3"/>
 
-            <!-- Ground strip at Y=0 -->
             <Rectangle Width="240" Height="2" FillColor="0.3 0.5 0.3"/>
 
             <!-- Cannon at origin (bottom-left) -->
@@ -67,38 +79,36 @@
         </Container>
 
         <!-- Data Panel - Metric (10Hz update) -->
-        <Container X="50" Y="10" Width="270" Height="80">
-            <Rectangle Width="270" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
-            <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Metric (10Hz)</Text>
-            <Text X="10" Y="40" Size="14" FillColor="0.4 0.9 0.4">X: @posX(%.1f) m   Y: @posY(%.1f) m</Text>
-            <Text X="10" Y="20" Size="14" FillColor="0.4 0.7 0.9">Vx: @velX(%.1f) m/s   Vy: @velY(%.1f) m/s</Text>
+        <Container Style="ReadoutPanel" X="50" Width="270">
+            <Rectangle Style="ReadoutPanel" Width="270"/>
+            <Text Style="ReadoutLabel">Metric (10Hz)</Text>
+            <Text Style="ReadoutValue" Y="40" FillColor="0.4 0.9 0.4">X: @posX(%.1f) m   Y: @posY(%.1f) m</Text>
+            <Text Style="ReadoutValue" Y="20" FillColor="0.4 0.7 0.9">Vx: @velX(%.1f) m/s   Vy: @velY(%.1f) m/s</Text>
         </Container>
 
         <!-- Data Panel - Imperial (1Hz update to test DataRate) -->
-        <Container X="330" Y="10" Width="270" Height="80">
-            <Rectangle Width="270" Height="80" FillColor="0.15 0.1 0.1 0.9" LineColor="0.4 0.3 0.3" LineWidth="1"/>
-            <Text X="10" Y="60" Size="12" FillColor="0.7 0.6 0.6">Imperial (1Hz - slower)</Text>
-            <Text X="10" Y="40" Size="14" FillColor="0.9 0.7 0.4">X: @posX_ft(%.1f) ft   Y: @posY_ft(%.1f) ft</Text>
-            <Text X="10" Y="20" Size="14" FillColor="0.9 0.5 0.4">Vx: @velX_fps(%.1f) ft/s   Vy: @velY_fps(%.1f) ft/s</Text>
+        <Container Style="ReadoutPanel" X="330" Width="270">
+            <Rectangle Style="ReadoutPanel" Width="270" FillColor="0.15 0.1 0.1 0.9" LineColor="0.4 0.3 0.3"/>
+            <Text Style="ReadoutLabel" FillColor="0.7 0.6 0.6">Imperial (1Hz - slower)</Text>
+            <Text Style="ReadoutValue" Y="40" FillColor="0.9 0.7 0.4">X: @posX_ft(%.1f) ft   Y: @posY_ft(%.1f) ft</Text>
+            <Text Style="ReadoutValue" Y="20" FillColor="0.9 0.5 0.4">Vx: @velX_fps(%.1f) ft/s   Vy: @velY_fps(%.1f) ft/s</Text>
         </Container>
 
-        <!-- Time Panel -->
-        <Container X="610" Y="10" Width="130" Height="80">
-            <Rectangle Width="130" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
-            <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Sim Time</Text>
-            <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">@simTime(%.2f) s</Text>
+        <Container Style="ReadoutPanel" X="610" Width="130">
+            <Rectangle Style="ReadoutPanel" Width="130"/>
+            <Text Style="ReadoutLabel">Sim Time</Text>
+            <Text Style="CenteredValue" Size="20" FillColor="1 1 1">@simTime(%.2f) s</Text>
         </Container>
 
-        <!-- Status Panel -->
-        <Container X="750" Y="10" Width="100" Height="80">
-            <Rectangle Width="100" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
-            <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Status</Text>
+        <Container Style="ReadoutPanel" X="750" Width="100">
+            <Rectangle Style="ReadoutPanel" Width="100"/>
+            <Text Style="ReadoutLabel">Status</Text>
             <If Value="@impact" Value2="1" Operator="#_if_eq_">
                 <True>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="16" FillColor="1 0.3 0.3">IMPACT!</Text>
+                    <Text Style="CenteredValue" Size="16" FillColor="1 0.3 0.3">IMPACT!</Text>
                 </True>
                 <False>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="16" FillColor="0.3 1 0.3">In Flight</Text>
+                    <Text Style="CenteredValue" Size="16" FillColor="0.3 1 0.3">In Flight</Text>
                 </False>
             </If>
         </Container>

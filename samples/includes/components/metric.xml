@@ -1,0 +1,11 @@
+<Dummy>
+    <Container X="#MetricX" Y="#MetricY" Width="250" Height="115">
+        <Rectangle Style="Card" Width="250" Height="115"/>
+        <Text X="18" Y="88" Style="Label">#{MetricName}</Text>
+        <Text X="18" Y="51" Style="Readout" FillColor="#MetricColor">#{MetricValue}</Text>
+        <Text X="232" Y="54" LocalAlignX="#_align_right_" Style="Label">#{MetricDetail}</Text>
+
+        <Rectangle X="18" Y="20" Width="214" Height="5" FillColor="#Inset"/>
+        <Rectangle X="18" Y="20" Width="#MetricLevel" Height="5" FillColor="#MetricColor"/>
+    </Container>
+</Dummy>

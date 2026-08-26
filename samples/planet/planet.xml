@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <!-- Planet Demo -->
     <!-- Five-map XML geodetic view (left) vs five-map logic geodetic view (right) -->
 
     <!-- Slider raw values (all 0-100 range, mapped to actual values via Set) -->
@@ -11,7 +10,6 @@
     <Variable Type="#_variable_double_" InitialValue="30">SliderTau</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">SliderLightY</Variable>
 
-    <!-- Computed values -->
     <Variable Type="#_variable_double_" InitialValue="-58.62">Latitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="345.27">Longitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="2000000">Elevation</Variable>
@@ -22,10 +20,8 @@
     <Variable Type="#_variable_double_" InitialValue="315">OrbitLon</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">LocalRotation</Variable>
 
-    <!-- Logic-facing readout text -->
     <Variable Type="#_variable_string_">LogicReadout</Variable>
 
-    <!-- Button state variables -->
     <Variable Type="#_variable_integer_">SliderLatSelected</Variable>
     <Variable Type="#_variable_integer_">SliderLonSelected</Variable>
     <Variable Type="#_variable_integer_">SliderEleSelected</Variable>
@@ -37,10 +33,8 @@
     <Variable Type="#_variable_integer_" InitialValue="1">LeftShader</Variable>
     <Variable Type="#_variable_integer_" InitialValue="2">RightShader</Variable>
 
-    <!-- Orthographic projection toggle -->
     <Variable Type="#_variable_integer_" InitialValue="0">UseOrtho</Variable>
 
-    <!-- Texture overlay -->
     <Variable Type="#_variable_integer_" InitialValue="0">TextureRefresh</Variable>
     <Variable Type="#_variable_double_" InitialValue="2000">TexMpp</Variable>
     <Variable Type="#_variable_integer_" InitialValue="1">HazardMap0Enabled</Variable>
@@ -51,32 +45,68 @@
 
     <Logic File="logic/logic.so"/>
 
+    <Style Name="HazardTexture">
+        <PlanetTexture MetersPerPixel="@TexMpp" Latitude="-58.62" Longitude="345.27"
+            FireRefresh="@TextureRefresh"/>
+    </Style>
+
     <!-- Top-level planet definition used by the XML view. -->
     <Planet Name="Moon" CRS="#_planet_crs_geodetic_" MeshCacheSize="128" LightDirectionX="-1" LightDirectionY="@LightY" LightDirectionZ="-1">
         <PlanetData File="$DCAPP_HOME/data/LDEM_45S_400M.planet.json"/>
         <!-- Hazard-map slots are assigned by declaration order. -->
-        <PlanetTexture File="$DCAPP_HOME/assets/circle.png" MetersPerPixel="@TexMpp"
-            Latitude="-58.62" Longitude="345.27"
-            Enabled="@HazardMap0Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="$DCAPP_HOME/assets/square.png" MetersPerPixel="@TexMpp"
-            Latitude="-58.62" Longitude="345.27"
-            Enabled="@HazardMap1Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="$DCAPP_HOME/assets/triangle.png" MetersPerPixel="@TexMpp"
-            Latitude="-58.62" Longitude="345.27"
-            Enabled="@HazardMap2Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="$DCAPP_HOME/assets/ring.png" MetersPerPixel="@TexMpp"
-            Latitude="-58.62" Longitude="345.27"
-            Enabled="@HazardMap3Enabled" FireRefresh="@TextureRefresh"/>
-        <PlanetTexture File="$DCAPP_HOME/assets/cross.png" MetersPerPixel="@TexMpp"
-            Latitude="-58.62" Longitude="345.27"
-            Enabled="@HazardMap4Enabled" FireRefresh="@TextureRefresh"/>
+        <PlanetTexture Style="HazardTexture" File="$DCAPP_HOME/assets/circle.png" Enabled="@HazardMap0Enabled"/>
+        <PlanetTexture Style="HazardTexture" File="$DCAPP_HOME/assets/square.png" Enabled="@HazardMap1Enabled"/>
+        <PlanetTexture Style="HazardTexture" File="$DCAPP_HOME/assets/triangle.png" Enabled="@HazardMap2Enabled"/>
+        <PlanetTexture Style="HazardTexture" File="$DCAPP_HOME/assets/ring.png" Enabled="@HazardMap3Enabled"/>
+        <PlanetTexture Style="HazardTexture" File="$DCAPP_HOME/assets/cross.png" Enabled="@HazardMap4Enabled"/>
         <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
         <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
     </Planet>
 
     <Default>
         <Text Size="14" FillColor="#_color_white_"/>
+        <Button LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
     </Default>
+
+    <Style Name="ToggleLabel">
+        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+            LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11"/>
+    </Style>
+    <Style Name="ToggleOff">
+        <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+            LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+            Size="11" FillColor="0.6 0.6 0.6"/>
+    </Style>
+    <Style Name="HeaderToggle">
+        <Button Type="#_button_toggle_" Y="806" Width="90" Height="22" On="1" Off="0"/>
+    </Style>
+    <Style Name="HeaderToggleOn">
+        <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+    </Style>
+    <Style Name="ShaderToggle">
+        <Button Type="#_button_toggle_" Y="806" Width="150" Height="22"/>
+    </Style>
+    <Style Name="ElevationIndicator">
+        <Rectangle FillColor="0.24 0.34 0.14" LineColor="0.70 0.82 0.28" LineWidth="2"/>
+    </Style>
+    <Style Name="SlopeIndicator">
+        <Rectangle FillColor="0.45 0.18 0.16" LineColor="0.90 0.30 0.24" LineWidth="2"/>
+    </Style>
+    <Style Name="HazardToggle">
+        <Button Type="#_button_toggle_" Y="780" Width="110" Height="22" On="1" Off="0"/>
+    </Style>
+    <Style Name="SliderLabel">
+        <Text X="15" LocalAlignX="#_align_left_"/>
+    </Style>
+    <Style Name="SliderValue">
+        <Text X="195" LocalAlignX="#_align_right_"/>
+    </Style>
+    <Style Name="Slider">
+        <Container X="210" Width="775" Height="20" VirtualWidth="100"/>
+        <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+        <Button Type="#_button_momentary_" Y="10" Width="8" Height="26"/>
+    </Style>
 
     <Window X="0" Y="20" Width="1000" Height="840" UpdateRate="60">
         <Panel VirtualWidth="1000" VirtualHeight="840" BackgroundColor="#_color_black_">
@@ -97,160 +127,111 @@
             <Set Variable="LightY" Operator="#_set_multiply_">0.02</Set>
             <Set Variable="LightY" Operator="#_set_subtract_">1</Set>
 
-            <!-- ========== TEXTURE REFRESH ========== -->
-            <Button Type="#_button_toggle_" X="60" Y="806" Width="90" Height="22"
-                Variable="TextureRefresh" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HeaderToggle" X="60" Variable="TextureRefresh">
                 <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Refresh</Text>
+                    <Rectangle Style="HeaderToggleOn"/>
+                    <Text Style="ToggleLabel">Refresh</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Refresh</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Refresh</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- ========== ORTHO TOGGLE ========== -->
-            <Button Type="#_button_toggle_" X="170" Y="806" Width="90" Height="22"
-                Variable="UseOrtho" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HeaderToggle" X="170" Variable="UseOrtho">
                 <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Ortho</Text>
+                    <Rectangle Style="HeaderToggleOn"/>
+                    <Text Style="ToggleLabel">Ortho</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Ortho</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Ortho</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- ========== PER-VIEW SHADER TOGGLES ========== -->
             <Text X="290" Y="806" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
-                Size="13" FillColor="#_color_white_">Shaders:</Text>
+                Size="13">Shaders:</Text>
 
-            <Button Type="#_button_toggle_" X="410" Y="806" Width="150" Height="22"
-                Variable="LeftShader" On="2" Off="1" IndicatorOn="2"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="ShaderToggle" X="410" Variable="LeftShader" On="2" Off="1" IndicatorOn="2">
                 <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.45 0.18 0.16" LineColor="0.90 0.30 0.24" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Left: Slope</Text>
+                    <Rectangle Style="SlopeIndicator"/>
+                    <Text Style="ToggleLabel">Left: Slope</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.24 0.34 0.14" LineColor="0.70 0.82 0.28" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Left: Elevation</Text>
+                    <Rectangle Style="ElevationIndicator"/>
+                    <Text Style="ToggleLabel">Left: Elevation</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <Button Type="#_button_toggle_" X="590" Y="806" Width="150" Height="22"
-                Variable="RightShader" On="1" Off="2" IndicatorOn="1"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="ShaderToggle" X="590" Variable="RightShader" On="1" Off="2" IndicatorOn="1">
                 <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.24 0.34 0.14" LineColor="0.70 0.82 0.28" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Right: Elevation</Text>
+                    <Rectangle Style="ElevationIndicator"/>
+                    <Text Style="ToggleLabel">Right: Elevation</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.45 0.18 0.16" LineColor="0.90 0.30 0.24" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Right: Slope</Text>
+                    <Rectangle Style="SlopeIndicator"/>
+                    <Text Style="ToggleLabel">Right: Slope</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- ========== HAZARD MAP TOGGLES ========== -->
             <Text X="95" Y="780" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
-                Size="13" FillColor="#_color_white_">Hazards:</Text>
+                Size="13">Hazards:</Text>
 
-            <Button Type="#_button_toggle_" X="170" Y="780" Width="110" Height="22"
-                Variable="HazardMap0Enabled" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HazardToggle" X="170" Variable="HazardMap0Enabled">
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.55 0.12 0.12" LineColor="1.0 0.35 0.30" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11">Circle On</Text>
+                    <Text Style="ToggleLabel">Circle On</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Circle Off</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Circle Off</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <Button Type="#_button_toggle_" X="290" Y="780" Width="110" Height="22"
-                Variable="HazardMap1Enabled" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HazardToggle" X="290" Variable="HazardMap1Enabled">
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.08 0.42 0.48" LineColor="0.20 0.90 1.0" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11">Square On</Text>
+                    <Text Style="ToggleLabel">Square On</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Square Off</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Square Off</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <Button Type="#_button_toggle_" X="410" Y="780" Width="110" Height="22"
-                Variable="HazardMap2Enabled" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HazardToggle" X="410" Variable="HazardMap2Enabled">
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.52 0.42 0.08" LineColor="1.0 0.82 0.20" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11">Triangle On</Text>
+                    <Text Style="ToggleLabel">Triangle On</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Triangle Off</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Triangle Off</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <Button Type="#_button_toggle_" X="530" Y="780" Width="110" Height="22"
-                Variable="HazardMap3Enabled" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HazardToggle" X="530" Variable="HazardMap3Enabled">
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.12 0.45 0.18" LineColor="0.30 1.0 0.45" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11">Ring On</Text>
+                    <Text Style="ToggleLabel">Ring On</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Ring Off</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Ring Off</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <Button Type="#_button_toggle_" X="650" Y="780" Width="110" Height="22"
-                Variable="HazardMap4Enabled" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+            <Button Style="HazardToggle" X="650" Variable="HazardMap4Enabled">
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.50 0.12 0.50" LineColor="1.0 0.32 1.0" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11">Cross On</Text>
+                    <Text Style="ToggleLabel">Cross On</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Cross Off</Text>
+                    <Rectangle Style="ToggleOff"/>
+                    <Text Style="ToggleOff">Cross Off</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- ========== PLANET VIEWS ========== -->
             <Text X="240" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">XML: PlanetContainer</Text>
             <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_" X="15" Y="300" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
@@ -305,105 +286,102 @@
                 <DrawFunction Name="draw_logic_planet_view"/>
             </Container>
 
-            <!-- ========== SLIDERS (below planets) ========== -->
-
             <!-- Latitude: 0-100 → -90 to +90 deg -->
-            <Text X="15" Y="270" LocalAlignX="#_align_left_">Lat:</Text>
-            <Text X="195" Y="270" LocalAlignX="#_align_right_">@Latitude(%.1f) deg</Text>
-            <Container X="210" Y="260" Width="775" Height="20" VirtualWidth="100">
-                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+            <Text Style="SliderLabel" Y="270">Lat:</Text>
+            <Text Style="SliderValue" Y="270">@Latitude(%.1f) deg</Text>
+            <Container Style="Slider" Y="260">
+                <Rectangle Style="Slider"/>
                 <If Value1="@SliderLatSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLat"/>
                 </If>
                 <Set Variable="SliderLat" Operator="#_set_max_">0</Set>
                 <Set Variable="SliderLat" Operator="#_set_min_">100</Set>
-                <Button Type="#_button_momentary_" X="@SliderLat" Y="10" Width="8" Height="26" Variable="SliderLatSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Button Style="Slider" X="@SliderLat" Variable="SliderLatSelected">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
             <!-- Longitude: 0-100 → 0 to 360 deg -->
-            <Text X="15" Y="220" LocalAlignX="#_align_left_">Lon:</Text>
-            <Text X="195" Y="220" LocalAlignX="#_align_right_">@Longitude(%.1f) deg</Text>
-            <Container X="210" Y="210" Width="775" Height="20" VirtualWidth="100">
-                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+            <Text Style="SliderLabel" Y="220">Lon:</Text>
+            <Text Style="SliderValue" Y="220">@Longitude(%.1f) deg</Text>
+            <Container Style="Slider" Y="210">
+                <Rectangle Style="Slider"/>
                 <If Value1="@SliderLonSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLon"/>
                 </If>
                 <Set Variable="SliderLon" Operator="#_set_max_">0</Set>
                 <Set Variable="SliderLon" Operator="#_set_min_">100</Set>
-                <Button Type="#_button_momentary_" X="@SliderLon" Y="10" Width="8" Height="26" Variable="SliderLonSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Button Style="Slider" X="@SliderLon" Variable="SliderLonSelected">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
             <!-- Elevation: 1-100 → 50,000 to 5,000,000 m -->
-            <Text X="15" Y="170" LocalAlignX="#_align_left_">Ele:</Text>
-            <Text X="195" Y="170" LocalAlignX="#_align_right_">@Elevation(%.0f) m</Text>
-            <Container X="210" Y="160" Width="775" Height="20" VirtualWidth="100">
-                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+            <Text Style="SliderLabel" Y="170">Ele:</Text>
+            <Text Style="SliderValue" Y="170">@Elevation(%.0f) m</Text>
+            <Container Style="Slider" Y="160">
+                <Rectangle Style="Slider"/>
                 <If Value1="@SliderEleSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderEle"/>
                 </If>
                 <Set Variable="SliderEle" Operator="#_set_max_">1</Set>
                 <Set Variable="SliderEle" Operator="#_set_min_">100</Set>
-                <Button Type="#_button_momentary_" X="@SliderEle" Y="10" Width="8" Height="26" Variable="SliderEleSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Button Style="Slider" X="@SliderEle" Variable="SliderEleSelected">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
             <!-- Heading: 0-100 → 0 to 360 deg -->
-            <Text X="15" Y="120" LocalAlignX="#_align_left_">Hdg:</Text>
-            <Text X="195" Y="120" LocalAlignX="#_align_right_">@Heading(%.0f) deg</Text>
-            <Container X="210" Y="110" Width="775" Height="20" VirtualWidth="100">
-                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+            <Text Style="SliderLabel" Y="120">Hdg:</Text>
+            <Text Style="SliderValue" Y="120">@Heading(%.0f) deg</Text>
+            <Container Style="Slider" Y="110">
+                <Rectangle Style="Slider"/>
                 <If Value1="@SliderHdgSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderHdg"/>
                 </If>
                 <Set Variable="SliderHdg" Operator="#_set_max_">0</Set>
                 <Set Variable="SliderHdg" Operator="#_set_min_">100</Set>
-                <Button Type="#_button_momentary_" X="@SliderHdg" Y="10" Width="8" Height="26" Variable="SliderHdgSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Button Style="Slider" X="@SliderHdg" Variable="SliderHdgSelected">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
             <!-- Tau: 1-100 → 0.01 to 1.00 -->
-            <Text X="15" Y="70" LocalAlignX="#_align_left_">Tau:</Text>
-            <Text X="195" Y="70" LocalAlignX="#_align_right_">@Tau(%.2f)</Text>
-            <Container X="210" Y="60" Width="775" Height="20" VirtualWidth="100">
-                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+            <Text Style="SliderLabel" Y="70">Tau:</Text>
+            <Text Style="SliderValue" Y="70">@Tau(%.2f)</Text>
+            <Container Style="Slider" Y="60">
+                <Rectangle Style="Slider"/>
                 <If Value1="@SliderTauSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderTau"/>
                 </If>
                 <Set Variable="SliderTau" Operator="#_set_max_">1</Set>
                 <Set Variable="SliderTau" Operator="#_set_min_">100</Set>
-                <Button Type="#_button_momentary_" X="@SliderTau" Y="10" Width="8" Height="26" Variable="SliderTauSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Button Style="Slider" X="@SliderTau" Variable="SliderTauSelected">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
             <!-- Light Y: 0-100 → -1.0 to +1.0 -->
-            <Text X="15" Y="20" LocalAlignX="#_align_left_">Light Y:</Text>
-            <Text X="195" Y="20" LocalAlignX="#_align_right_">@LightY(%.2f)</Text>
-            <Container X="210" Y="10" Width="775" Height="20" VirtualWidth="100">
-                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+            <Text Style="SliderLabel" Y="20">Light Y:</Text>
+            <Text Style="SliderValue" Y="20">@LightY(%.2f)</Text>
+            <Container Style="Slider" Y="10">
+                <Rectangle Style="Slider"/>
                 <If Value1="@SliderLightYSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLightY"/>
                 </If>
                 <Set Variable="SliderLightY" Operator="#_set_max_">0</Set>
                 <Set Variable="SliderLightY" Operator="#_set_min_">100</Set>
-                <Button Type="#_button_momentary_" X="@SliderLightY" Y="10" Width="8" Height="26" Variable="SliderLightYSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Button Style="Slider" X="@SliderLightY" Variable="SliderLightYSelected">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
-            <!-- Logic view readout -->
             <Text X="15" Y="290" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">@LogicReadout</Text>
 
         </Panel>

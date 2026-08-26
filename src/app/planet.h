@@ -15,11 +15,15 @@ struct DcGeoCrsGeodetic;
 struct DcGeoCrsCartesian;
 struct DcGeoCrsPolarStereo;
 
-// Stable, subsystem-owned state. Its contents are private to planet.c.
+//~ subsystem lifecycle
+
+// stable subsystem-owned state with contents private to planet.c
 void dc_app_planet_init(plApiRegistryI *api_registry);
 
 DcAppPlanetContext *dc_app_planet_context_create(const char *asset_root);
 void dc_app_planet_context_destroy(DcAppPlanetContext *planet_ctx);
+
+//~ planet resources
 
 DcAppPlanetHandle dc_app_planet_get_planet_by_id(DcAppPlanetContext *planet_ctx, const char *id);
 DcAppPlanetHandle dc_app_planet_create_planet(DcAppPlanetContext *planet_ctx, DcAppPlanetCreateInfo info);
@@ -31,6 +35,9 @@ bool dc_app_planet_set_texture_cartesian_slot(DcAppPlanetContext *planet_ctx, Dc
 bool dc_app_planet_set_texture_projected_slot(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t slot, const char *path, double origin_x, double origin_y, float meters_per_pixel);
 bool dc_app_planet_clear_texture(DcAppPlanetHandle planet, uint32_t slot);
 bool dc_app_planet_set_light_direction(DcAppPlanetHandle planet, DcAppVec3 direction);
+
+//~ views and overlays
+
 DcAppPlanetViewHandle dc_app_planet_create_geodetic_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
 DcAppPlanetViewHandle dc_app_planet_create_cartesian_view(DcAppPlanetContext *planet_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
 bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
@@ -41,7 +48,8 @@ bool dc_app_planet_update_breadcrumbs_cartesian(DcAppPlanetBreadcrumbsHandle bre
 void dc_app_planet_clear_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs);
 DcAppPlanetBreadcrumbsPoints dc_app_planet_get_breadcrumbs_points(DcAppPlanetBreadcrumbsHandle breadcrumbs);
 
-// Focused internal lookup and metadata accessors.
+//~ registry metadata
+
 uint32_t dc_app_planet_count(const DcAppPlanetContext *planet_ctx);
 uint32_t dc_app_planet_view_count(const DcAppPlanetContext *planet_ctx);
 DcAppPlanetHandle dc_app_planet_at(const DcAppPlanetContext *planet_ctx, uint32_t index);
@@ -57,7 +65,8 @@ const struct DcGeoCrsPolarStereo *dc_app_planet_polar_crs(DcAppPlanetHandle plan
 bool dc_app_planet_uses_legacy_projected_origin(DcAppPlanetHandle planet);
 DcGeojson *dc_app_planet_geojson(DcAppPlanetGeojsonHandle geojson);
 
-// Renderer integration accessors.
+//~ renderer integration
+
 plPlanet *dc_app_planet_pl(DcAppPlanetHandle planet);
 plPlanetView *dc_app_planet_view_pl(DcAppPlanetViewHandle view);
 DcAppPlanetCrs dc_app_planet_view_crs(DcAppPlanetViewHandle view);

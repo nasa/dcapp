@@ -1,435 +1,179 @@
-# dcapp Variables
+# Variables
 
-A guide to declaring and using variables in dcapp displays.
-
----
-
-## Overview
-
-Variables store runtime values that can change during display execution. They enable dynamic content, user interaction, and data binding with external systems.
-
-```xml
-<Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
-```
-
-Variables are referenced using the `@` prefix:
-
-```xml
-<Text>Altitude: @altitude ft</Text>
-```
-
----
-
-## When To Use Variables
-
-Use a variable when a value can change while the display is running or when
-multiple parts of the display need to observe the same runtime state.
-
-Good fits:
-
-- text readouts and status labels
-- positions, colors, angles, and dimensions that update over time
-- button state and slider values
-- values received from Trick, Edge, or logic code
-- values that XML `Set` or `If` elements need to modify or test
-
-Do not use a variable just to avoid typing a repeated literal. Use a
-[constant](constants.md) for parse-time configuration such as colors, spacing,
-file paths, and feature flags. Use logic `user_data` for private C/C++ state
-that should not be rendered, transmitted, or directly edited by XML.
-
----
-
-## Declaring Variables
-
-Variables are declared at the top of your dcapp file, before the `<Window>` element:
+Variables hold values that can change while a display is running. Declare them
+as direct children of `DCAPP`, then refer to them with `@`:
 
 ```xml
 <DCAPP>
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
-    <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
-    <Variable Type="#_variable_string_" InitialValue="OFF">engineStatus</Variable>
-    
-    <Window Title="My Display" Width="800" Height="600">
-        <!-- Display content here -->
+
+    <Window Title="Flight Display" Width="800" Height="600">
+        <Text>Altitude: @altitude(%.0f) ft</Text>
     </Window>
 </DCAPP>
 ```
 
-### Variable Element Attributes
+Use a [constant](constants.md) instead when the value is fixed at load time.
+State private to a C or C++ logic module can stay in that module's `user_data`.
+
+## Declaration
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Type` | string | No | Data type (default: `String`) |
-| `InitialValue` | string | No | Starting value (default: empty) |
+| `Type` | constant | No | Variable type. Defaults to `#_variable_string_`. |
+| `InitialValue` | string | No | Initial value. Defaults to an empty string. |
 
-**Content:** The variable name (used for referencing with `@`)
+The element content is the variable name.
 
----
-
-## Variable Types
-
-| Type Constant | Description | Example Values |
-|---------------|-------------|----------------|
-| `#_variable_string_` | Text data | `"ON"`, `"Hello"`, `"123"` |
-| `#_variable_integer_` | Whole numbers | `0`, `42`, `-17` |
-| `#_variable_double_` | Decimal numbers | `0.0`, `3.14159`, `-273.15` |
-| `#_variable_boolean_` | True/false values | `true`, `false`, `1`, `0` |
+| Type | Values |
+|------|--------|
+| `#_variable_string_` | Text such as `STANDBY` or `Hello` |
+| `#_variable_integer_` | Whole numbers such as `0`, `42`, or `-17` |
+| `#_variable_double_` | Decimal numbers such as `3.14159` or `-273.15` |
+| `#_variable_boolean_` | `true`, `false`, `1`, or `0` |
 
 ```xml
 <Variable Type="#_variable_string_" InitialValue="STANDBY">status</Variable>
 <Variable Type="#_variable_integer_" InitialValue="100">health</Variable>
 <Variable Type="#_variable_double_" InitialValue="0.0">temperature</Variable>
-<Variable Type="#_variable_boolean_" InitialValue="false">isActive</Variable>
+<Variable Type="#_variable_boolean_" InitialValue="false">active</Variable>
 ```
 
----
+## References
 
-## Referencing Variables
-
-### In Attributes
-
-Use the `@` prefix to reference a variable's value in any numeric attribute:
+Attributes that accept variables use a direct reference:
 
 ```xml
-<Variable Type="#_variable_double_" InitialValue="100">xPos</Variable>
-<Variable Type="#_variable_double_" InitialValue="50">yPos</Variable>
-<Variable Type="#_variable_double_" InitialValue="45">angle</Variable>
-
-<Rectangle X="@xPos" Y="@yPos" Width="50" Height="50" Rotation="@angle"/>
+<Rectangle X="@x" Y="@y" Rotation="@angle" Width="50" Height="50"/>
 ```
 
-### In Text Content
-
-Variables can be interpolated directly into text:
+Text can contain a reference, a braced reference, or a printf-style format:
 
 ```xml
-<Variable Type="#_variable_string_" InitialValue="World">name</Variable>
-<Text>Hello, @name!</Text>
-<!-- Output: Hello, World! -->
+<Text>Hello, @name</Text>
+<Text>Temperature: @{temperature} F</Text>
+<Text>Altitude: @altitude(%.1f) ft</Text>
 ```
 
-### Braced Syntax
+Braces delimit the name when more text follows it. For example,
+`@{temperature}F` refers to `temperature`, while `@temperatureF` refers to a
+variable named `temperatureF`.
 
-Use braces when the variable name is adjacent to other text:
+Common numeric formats are:
 
-```xml
-<Variable Type="#_variable_double_" InitialValue="75">temp</Variable>
-<Text>Temperature: @{temp}°F</Text>
-<!-- Output: Temperature: 75°F -->
-```
+| Format | Input | Output |
+|--------|-------|--------|
+| `%.0f` | `123.456` | `123` |
+| `%.1f` | `123.456` | `123.5` |
+| `%.2f` | `123.456` | `123.46` |
+| `%05.1f` | `12.3` | `012.3` |
+| `%+.1f` | `12.3` | `+12.3` |
+| `%03d` | `7` | `007` |
+| `%e` | `1234.5` | `1.234500e+03` |
 
-Without braces, `@temp°F` would look for a variable named `temp°F`.
-
----
-
-## Format Specifiers
-
-Use printf-style format specifiers for number formatting in text:
-
-```xml
-<Variable Type="#_variable_double_" InitialValue="1234.5678">value</Variable>
-
-<Text>Default: @value</Text>           <!-- 1234.5678 -->
-<Text>Integer: @value(%.0f)</Text>     <!-- 1235 -->
-<Text>2 decimals: @value(%.2f)</Text>  <!-- 1234.57 -->
-<Text>Padded: @value(%08.2f)</Text>    <!-- 01234.57 -->
-<Text>Signed: @value(%+.1f)</Text>     <!-- +1234.6 -->
-```
-
-### Common Format Specifiers
-
-| Specifier | Description | Input | Output |
-|-----------|-------------|-------|--------|
-| `%.0f` | No decimals | `123.456` | `123` |
-| `%.1f` | One decimal | `123.456` | `123.5` |
-| `%.2f` | Two decimals | `123.456` | `123.46` |
-| `%05.1f` | Padded to 5 chars | `12.3` | `012.3` |
-| `%+.1f` | Always show sign | `12.3` | `+12.3` |
-| `%03d` | Zero-padded integer | `7` | `007` |
-| `%e` | Scientific notation | `1234.5` | `1.234500e+03` |
-
----
-
-## Modifying Variables
-
-### The `<Set>` Element
-
-Use `<Set>` to modify variable values at runtime:
-
-```xml
-<Set Variable="counter">0</Set>
-```
-
-### Set Attributes
-
-| Attribute | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `Variable` | string | **Yes** | Name of variable to modify |
-| `Operator` | integer | No | Operation type (default: assignment) |
-
-**Content:** The value or expression to apply
-
-### Set Operators
-
-| Constant | Value | Description | Effect |
-|----------|-------|-------------|--------|
-| `#_set_equal_` | 1 | Direct assignment (default) | `var = value` |
-| `#_set_add_` | 2 | Addition | `var = var + value` |
-| `#_set_subtract_` | 3 | Subtraction | `var = var - value` |
-| `#_set_multiply_` | 4 | Multiplication | `var = var * value` |
-| `#_set_divide_` | 5 | Division | `var = var / value` |
-| `#_set_min_` | 6 | Clamp maximum | `var = min(var, value)` |
-| `#_set_max_` | 7 | Clamp minimum | `var = max(var, value)` |
-| `#_set_push_` | 8 | Push onto stack | Saves current value |
-| `#_set_pop_` | 9 | Pop from stack | Restores saved value |
-| `#_set_negate_` | 10 | Negate | `var = -var` |
-| `#_set_reciprocal_` | 11 | Reciprocal | `var = 1 / var` |
-| `#_set_absolute_` | 12 | Absolute value | `var = |var|` |
-| `#_set_square_` | 13 | Square | `var = var * var` |
-| `#_set_sqrt_` | 14 | Square root | `var = sqrt(var)` |
-| `#_set_modulo_` | 15 | Modulo | `var = var % value` |
-| `#_set_power_` | 16 | Power | `var = var ^ value` |
-| `#_set_log_` | 17 | Natural log | `var = ln(var)` |
-| `#_set_exp_` | 18 | Exponential | `var = e ^ var` |
-| `#_set_round_` | 19 | Round | `var = round(var)` |
-| `#_set_sign_` | 20 | Sign | `var = sign(var)` (-1, 0, or 1) |
-
-Note: `#_set_min_` ensures `var <= value` (clamps down), `#_set_max_` ensures `var >= value` (clamps up). Use them together for range clamping:
-
-```xml
-<Set Variable="x" Operator="#_set_max_">0</Set>    <!-- x = max(x, 0) -->
-<Set Variable="x" Operator="#_set_min_">100</Set>  <!-- x = min(x, 100) -->
-```
-
-### The Defer Attribute
-
-`<Set>` accepts an optional `Defer` attribute for legacy compatibility:
-
-```xml
-<Set Variable="myVar" Operator="#_set_equal_" Defer="true">newValue</Set>
-```
-
-When `Defer="true"`, the operation is collected during the draw pass and applied atomically after the entire draw completes. This matches the legacy engine's deferred execution behavior for Sets inside event handlers. Modern XML should not use `Defer` — it exists solely for legacy conversion. See the [Migration Guide](migration.md) for details.
-
-Use `Set` for simple state changes that belong in XML, such as incrementing a
-counter, clamping a slider, or changing a mode when a button is pressed. If the
-change needs complex branching, a long calculation, or private state, call a
-logic `Function` instead.
-
-### Examples
-
-```xml
-<!-- Direct assignment -->
-<Set Variable="status">ACTIVE</Set>
-
-<!-- Increment by 1 -->
-<Set Variable="counter" Operator="#_set_add_">1</Set>
-
-<!-- Decrease health by 10 -->
-<Set Variable="health" Operator="#_set_subtract_">10</Set>
-
-<!-- Double the score -->
-<Set Variable="score" Operator="#_set_multiply_">2</Set>
-
-<!-- Halve the speed -->
-<Set Variable="speed" Operator="#_set_divide_">2</Set>
-```
-
-### Using Set in Event Handlers
-
-`<Set>` is commonly used inside button press/release handlers:
-
-```xml
-<Variable Type="#_variable_double_" InitialValue="50">volume</Variable>
-
-<Button X="100" Y="100" Width="40" Height="40">
-    <MousePressed>
-        <Set Variable="volume" Operator="#_set_add_">5</Set>
-    </MousePressed>
-    <ButtonIndicatorOff>
-        <Rectangle FillColor="0.3,0.5,0.3,1" Width="40" Height="40"/>
-    </ButtonIndicatorOff>
-    <ButtonIndicatorOn>
-        <Rectangle FillColor="0.4,0.7,0.4,1" Width="40" Height="40"/>
-    </ButtonIndicatorOn>
-</Button>
-```
-
----
-
-## Escape Sequences in Text
+Text expansion recognizes these escapes:
 
 | Sequence | Result |
 |----------|--------|
 | `\n` | Newline |
 | `\t` | Tab |
 | `\\` | Backslash |
-| `\@` | Literal @ symbol |
+| `\@` | Literal `@` |
 | `\"` | Double quote |
 | `\'` | Single quote |
-| `\#` | Literal # symbol |
-| `\$` | Literal $ symbol |
+| `\#` | Literal `#` |
+| `\$` | Literal `$` |
+
+## Changing a variable with `Set`
 
 ```xml
-<Text>Line 1\nLine 2</Text>
-<!-- Output:
-Line 1
-Line 2
--->
-
-<Text>Email: user\@example.com</Text>
-<!-- Output: Email: user@example.com -->
-
-<Text>Cost: \$100</Text>
-<!-- Output: Cost: $100 -->
+<Set Variable="counter" Operator="#_set_add_">1</Set>
 ```
 
----
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Variable` | string | Yes | Name of the variable to modify |
+| `Operator` | integer | No | Operation to apply. Defaults to `#_set_equal_`. |
+| `Defer` | boolean | No | Apply after the current draw pass. Kept for legacy compatibility. |
 
-## Conditionals with Variables
+The element content supplies the operand. It is still required for unary and
+stack operators, although those operations do not use its value.
 
-Use `<If>` to show/hide content based on variable values:
+### Set operators
+
+| Constant | Value | Effect |
+|----------|-------|--------|
+| `#_set_equal_` | 1 | `var = value` |
+| `#_set_add_` | 2 | `var = var + value` |
+| `#_set_subtract_` | 3 | `var = var - value` |
+| `#_set_multiply_` | 4 | `var = var * value` |
+| `#_set_divide_` | 5 | `var = var / value` |
+| `#_set_min_` | 6 | `var = min(var, value)` |
+| `#_set_max_` | 7 | `var = max(var, value)` |
+| `#_set_push_` | 8 | Save the current value on the variable's stack |
+| `#_set_pop_` | 9 | Restore the saved value |
+| `#_set_negate_` | 10 | `var = -var` |
+| `#_set_reciprocal_` | 11 | `var = 1 / var` |
+| `#_set_absolute_` | 12 | `var = abs(var)` |
+| `#_set_square_` | 13 | `var = var * var` |
+| `#_set_sqrt_` | 14 | `var = sqrt(var)` |
+| `#_set_modulo_` | 15 | `var = var % value` |
+| `#_set_power_` | 16 | `var = var ^ value` |
+| `#_set_log_` | 17 | `var = ln(var)` |
+| `#_set_exp_` | 18 | `var = e ^ var` |
+| `#_set_round_` | 19 | `var = round(var)` |
+| `#_set_sign_` | 20 | Set to `-1`, `0`, or `1` according to the sign |
+
+The `min` and `max` names describe the operation, not the bound. To keep `x`
+between 0 and 100:
 
 ```xml
-<Variable Type="#_variable_double_" InitialValue="100">fuel</Variable>
+<Set Variable="x" Operator="#_set_max_">0</Set>
+<Set Variable="x" Operator="#_set_min_">100</Set>
+```
 
+`Defer="true"` collects the operation during drawing and applies it after the
+draw completes. It exists to preserve legacy event behavior; new displays
+normally leave it unset. The [migration guide](migration.md) covers converted
+uses.
+
+`Set` is often used inside an event:
+
+```xml
+<Variable Type="#_variable_integer_" InitialValue="0">clicks</Variable>
+
+<Rectangle X="20" Y="20" Width="100" Height="40" FillColor="0.2 0.3 0.5 1">
+    <MousePressed>
+        <Set Variable="clicks" Operator="#_set_add_">1</Set>
+    </MousePressed>
+    <Text X="50" Y="20" LocalAlignX="#_align_center_"
+          LocalAlignY="#_align_middle_">@clicks</Text>
+</Rectangle>
+```
+
+## Testing variables with `If`
+
+`If` accepts a variable reference in `Value` or `Value2`:
+
+```xml
 <If Value="@fuel" Value2="20" Operator="#_if_lt_">
     <True>
-        <Text FillColor="1,0,0,1">LOW FUEL WARNING</Text>
+        <Text FillColor="1 0 0 1">LOW FUEL</Text>
     </True>
 </If>
 ```
 
-### Conditional Operations
-
-| Constant | Description |
-|----------|-------------|
-| `#_if_true_` | Check if value is truthy (non-zero, non-empty) |
-| `#_if_false_` | Check if value is falsy |
-| `#_if_eq_` | Equal to |
-| `#_if_ne_` | Not equal to |
+| Constant | Test |
+|----------|------|
+| `#_if_true_` | Value is truthy |
+| `#_if_false_` | Value is falsy |
+| `#_if_eq_` | Equal |
+| `#_if_ne_` | Not equal |
 | `#_if_lt_` | Less than |
 | `#_if_gt_` | Greater than |
 | `#_if_lte_` | Less than or equal |
 | `#_if_gte_` | Greater than or equal |
 
-See the [Constants documentation](constants.md) for the complete list.
-
----
-
-## External Data Integration
-
-### TrickIO / EdgeIO / PixelStream
-
-Variables can be bound to external systems for real-time data exchange. See
-[TrickIO](trick.md), [EdgeIO](edge.md), and [PixelStream](pixelstream.md) for
-the protocol-specific setup.
-
-### Logic Files
-
-For complex variable manipulation beyond what XML can express, you can use external C/C++ logic files. Logic files receive direct pointers to all declared variables, allowing arbitrary computation each render or each fixed `Window` `UpdateRate` tick.
-
-**See the [Logic Files documentation](logic.md) for details on:**
-- Setting up logic files
-- The generated `dcapp.h` header
-- Accessing variables from C/C++ code
-- The `display_init()`, `display_draw()`, and `display_close()` callbacks
-
----
-
-## Examples
-
-### Flight Instruments Display
-
-```xml
-<DCAPP>
-    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
-    <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
-    <Variable Type="#_variable_double_" InitialValue="0">heading</Variable>
-    <Variable Type="#_variable_string_" InitialValue="NORMAL">flightMode</Variable>
-
-    <Window Title="Flight Display" Width="400" Height="300">
-        <Rectangle FillColor="0.1,0.1,0.15,1" Width="400" Height="300"/>
-        
-        <Text X="20" Y="250" Size="12" FillColor="0.6,0.6,0.6,1">ALT</Text>
-        <Text X="20" Y="220" Size="28" FillColor="0,1,0,1">@altitude(%.0f) ft</Text>
-        
-        <Text X="20" Y="170" Size="12" FillColor="0.6,0.6,0.6,1">SPD</Text>
-        <Text X="20" Y="140" Size="28" FillColor="0,1,0,1">@speed(%.1f) kts</Text>
-        
-        <Text X="20" Y="90" Size="12" FillColor="0.6,0.6,0.6,1">HDG</Text>
-        <Text X="20" Y="60" Size="28" FillColor="0,1,0,1">@heading(%03.0f)°</Text>
-        
-        <Text X="20" Y="20" Size="16" FillColor="0,0.8,1,1">@flightMode</Text>
-    </Window>
-</DCAPP>
-```
-
-### Counter with Buttons
-
-```xml
-<DCAPP>
-    <Variable Type="#_variable_integer_" InitialValue="0">counter</Variable>
-
-    <Window Title="Counter" Width="300" Height="100">
-        <Rectangle FillColor="0.2,0.2,0.2,1" Width="300" Height="100"/>
-        
-        <!-- Decrement -->
-        <Button X="20" Y="25" Width="50" Height="50">
-            <MousePressed>
-                <Set Variable="counter" Operator="#_set_subtract_">1</Set>
-            </MousePressed>
-            <ButtonIndicatorOff>
-                <Rectangle FillColor="0.5,0.2,0.2,1" Width="50" Height="50"/>
-                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                      FillColor="1,1,1,1" Size="24">-</Text>
-            </ButtonIndicatorOff>
-            <ButtonIndicatorOn>
-                <Rectangle FillColor="0.7,0.3,0.3,1" Width="50" Height="50"/>
-                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                      FillColor="1,1,1,1" Size="24">-</Text>
-            </ButtonIndicatorOn>
-        </Button>
-        
-        <!-- Display -->
-        <Text X="150" Y="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-              FillColor="0,1,0,1" Size="36">@counter</Text>
-        
-        <!-- Increment -->
-        <Button X="230" Y="25" Width="50" Height="50">
-            <MousePressed>
-                <Set Variable="counter" Operator="#_set_add_">1</Set>
-            </MousePressed>
-            <ButtonIndicatorOff>
-                <Rectangle FillColor="0.2,0.5,0.2,1" Width="50" Height="50"/>
-                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                      FillColor="1,1,1,1" Size="24">+</Text>
-            </ButtonIndicatorOff>
-            <ButtonIndicatorOn>
-                <Rectangle FillColor="0.3,0.7,0.3,1" Width="50" Height="50"/>
-                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                      FillColor="1,1,1,1" Size="24">+</Text>
-            </ButtonIndicatorOn>
-        </Button>
-    </Window>
-</DCAPP>
-```
-
----
-
-## Tips & Best Practices
-
-1. **Use meaningful variable names** — `engineTemperature` is clearer than `et` or `temp1`.
-
-2. **Choose appropriate types** — Use `Integer` for counts, `Double` for measurements, `String` for states/labels.
-
-3. **Initialize with sensible defaults** — Prevents undefined behavior on startup.
-
-4. **Group related variables** — Declare related variables together for maintainability.
-
-5. **Use braced syntax `@{var}` when adjacent to text** — Ensures correct parsing.
-
-6. **Format numbers for readability** — Use `%.0f` for whole numbers, `%.2f` for precision values.
-
-7. **Use constants for operators** — `Operator="#_set_add_"` is clearer than `Operator="1"`.
+Trick, Edge, and logic libraries can also read or update declared variables.
+Their setup is documented in [TrickIO](trick.md), [EdgeIO](edge.md), and
+[logic files](logic.md).
