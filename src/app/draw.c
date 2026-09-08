@@ -187,7 +187,7 @@ static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3d po
 static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
 static bool _planet_project_overlay(DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, float size_meters, DcAppVec2 *out_position, float *out_size);
 static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 size);
-static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
+static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, float rotation_degrees, DcAppVec4 tint);
 static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
 static void _draw_planet_polygon_geodetic_enabled(
     DcAppDrawPlanetViewHandle draw_view,
@@ -1777,7 +1777,7 @@ void dc_app_draw_planet_polygon_cartesian_enabled(
     PL_FREE(cartesian);
 }
 
-void dc_app_draw_planet_image_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint) {
+void dc_app_draw_planet_image_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, DcAppTextureId texture_id, DcAppVec2 size, float rotation_degrees, float yaw_degrees, bool yaw_enabled, DcAppVec4 tint) {
     if (!ctx || !draw_view || !draw_view->view || texture_id == 0) return;
     DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
     const DcGeoCrsGeodetic *geodetic_crs = dc_app_planet_geodetic_crs(planet);
@@ -1787,10 +1787,10 @@ void dc_app_draw_planet_image_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetVie
     plVec3d geodetic_in = {lat, lon, height};
     plVec3d cartesian_out;
     dc_geo_geodetic_to_cartesian_d(geodetic_crs, cartesian_crs, &geodetic_in, &cartesian_out, 1);
-    dc_app_draw_planet_image_cartesian(ctx, draw_view, (DcAppVec3d){cartesian_out.x, cartesian_out.y, cartesian_out.z}, texture_id, size, tint);
+    dc_app_draw_planet_image_cartesian(ctx, draw_view, (DcAppVec3d){cartesian_out.x, cartesian_out.y, cartesian_out.z}, texture_id, size, rotation_degrees, yaw_degrees, yaw_enabled, tint);
 }
 
-void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, DcAppTextureId texture_id, DcAppVec2 size, DcAppVec4 tint) {
+void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3d position, DcAppTextureId texture_id, DcAppVec2 size, float rotation_degrees, float yaw_degrees, bool yaw_enabled, DcAppVec4 tint) {
     if (!ctx || !draw_view || !draw_view->view || texture_id == 0) return;
 
     DcAppVec2 size_meters = _planet_image_size_meters(ctx, texture_id, size);
@@ -1800,8 +1800,38 @@ void dc_app_draw_planet_image_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetVi
     float image_width = 0.0f;
     if (!_planet_project_overlay(draw_view, position, size_meters.x, &image_position, &image_width)) return;
 
+    // align image top to the projected local-ned heading
+    if (yaw_enabled) {
+        plVec3 up = pl_norm_vec3((plVec3){(float)position.x, (float)position.y, (float)position.z});
+        plVec3 east = pl_cross_vec3((plVec3){0.0f, 1.0f, 0.0f}, up);
+        if (pl_length_vec3(east) < 1e-6f) {
+            east = (plVec3){1.0f, 0.0f, 0.0f};
+        } else {
+            east = pl_norm_vec3(east);
+        }
+        plVec3 north = pl_cross_vec3(up, east);
+        float yaw = pl_radiansf(yaw_degrees);
+        plVec3 heading = pl_add_vec3(
+            pl_mul_vec3_scalarf(north, cosf(yaw)),
+            pl_mul_vec3_scalarf(east, sinf(yaw)));
+
+        // project the direction at the anchor without choosing a second point
+        double dx = position.x - draw_view->camera.tPosDouble.x;
+        double dy = position.y - draw_view->camera.tPosDouble.y;
+        double dz = position.z - draw_view->camera.tPosDouble.z;
+        plMat4 mvp = pl_mul_mat4(&draw_view->camera.tProjMat, &draw_view->camera.tViewMatDouble);
+        plVec4 point_clip = pl_mul_mat4_vec4(&mvp, (plVec4){(float)dx, (float)dy, (float)dz, 1.0f});
+        plVec4 heading_clip = pl_mul_mat4_vec4(&mvp, (plVec4){heading.x, heading.y, heading.z, 0.0f});
+        float point_w_squared = point_clip.w * point_clip.w;
+        float heading_x = draw_view->area.dimensions[0] * (heading_clip.x * point_clip.w - point_clip.x * heading_clip.w) / point_w_squared;
+        float heading_y = -draw_view->area.dimensions[1] * (heading_clip.y * point_clip.w - point_clip.y * heading_clip.w) / point_w_squared;
+        if (fabsf(heading_x) + fabsf(heading_y) > 1e-6f) {
+            rotation_degrees += pl_degreesf(atan2f(-heading_x, heading_y));
+        }
+    }
+
     float image_height = image_width * (size_meters.y / size_meters.x);
-    _planet_draw_image_label(ctx, draw_view, texture_id, image_position, (DcAppVec2){image_width, image_height}, tint);
+    _planet_draw_image_label(ctx, draw_view, texture_id, image_position, (DcAppVec2){image_width, image_height}, rotation_degrees, tint);
 }
 
 void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color) {
@@ -2798,14 +2828,17 @@ static DcAppVec2 _planet_image_size_meters(DcAppDrawContext *ctx, DcAppTextureId
     return (DcAppVec2){0};
 }
 
-static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint) {
+static void _planet_draw_image_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, float rotation_degrees, DcAppVec4 tint) {
     if (!ctx || !draw_view || texture_id == 0 || size.x <= 0.0f || size.y <= 0.0f) return;
     if (draw_view->area.dimensions[0] <= 0.0f || draw_view->area.dimensions[1] <= 0.0f) return;
     if (!dc_app_draw_container_push_area(ctx, &draw_view->area)) return;
 
     DcAppPlacement centered = {
+        .rotation = rotation_degrees,
         .local_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER,
         .local_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE,
+        .pivot_align_x = DC_APP_DRAW_ALIGNMENT_TYPE_CENTER,
+        .pivot_align_y = DC_APP_DRAW_ALIGNMENT_TYPE_MIDDLE,
     };
 
     if (!dc_app_draw_stencil_begin(ctx)) {

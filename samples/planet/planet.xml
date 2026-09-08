@@ -259,6 +259,10 @@
                 </PlanetContainer>
                 <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
                     LineColor="0.25 0.70 1.0 0.90" LineWidth="2.2" FillColor="0.25 0.70 1.0 0.10"/>
+                <!-- Image top follows planet-local yaw; Rotation is a view-space offset. -->
+                <PlanetImage File="$DCAPP_HOME/assets/triangle.png"
+                    Latitude="-58.62" Longitude="345.27" HeightAboveTerrain="120000"
+                    Width="120000" Height="120000" Yaw="@LocalRotation" Rotation="15"/>
                 <PlanetEllipse Latitude="-55.0" Longitude="335.0" HeightAboveTerrain="1500"
                     RadiusX="80000" RadiusY="40000" Rotation="25" Segments="64"
                     LineColor="1.0 0.35 0.80 0.90" LineWidth="2.5" FillColor="1.0 0.20 0.70 0.12"/>

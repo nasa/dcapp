@@ -541,6 +541,8 @@ typedef struct DcAppNodePlanetImage {
     DcAppNodeValueIndex3 xyz;
     DcAppVariableRegistryValueIndex height_above_terrain;
     DcAppNodeValueIndex2 dimension;
+    DcAppVariableRegistryValueIndex rotation;
+    DcAppVariableRegistryValueIndex yaw;
     DcAppNodeValueIndex4 tint_color;
     DcAppVariableRegistryValueIndex enabled;
     DcAppTextureIndex texture_index;

@@ -26,6 +26,7 @@ static DcPlanetHandle logic_planet;
 static DcPlanetViewHandle logic_planet_view;
 static DcPlanetBreadcrumbsHandle logic_orbit_breadcrumbs;
 static DcPlanetGeojsonHandle logic_geojson;
+static DcTextureId logic_image;
 static int logic_texture_refresh = -1;
 static int logic_texture_enabled[DC_PLANET_TEXTURE_SLOT_COUNT] = {-1, -1, -1, -1, -1};
 static int logic_active_shader = -1;
@@ -64,6 +65,9 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
     char data_path[LOGIC_PATH_CAPACITY] = {0};
     if (!build_dcapp_path(data_path, sizeof(data_path), dcapp_home,
                           "data/LDEM_45S_400M.planet.json")) return;
+    char image_path[LOGIC_PATH_CAPACITY] = {0};
+    if (!build_dcapp_path(image_path, sizeof(image_path), dcapp_home,
+                          "assets/triangle.png")) return;
     for (uint32_t slot = 0; slot < DC_PLANET_TEXTURE_SLOT_COUNT; slot++) {
         if (!build_dcapp_path(logic_texture_paths[slot], sizeof(logic_texture_paths[slot]),
                               dcapp_home, logic_texture_files[slot])) return;
@@ -74,6 +78,7 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
                                                                               .mesh_cache_size_mb = 128u,
                                                                           });
     logic_geojson = dc_planet->load_geojson(app_ctx, "assets/geojson_test.geojson");
+    logic_image = dc_texture->load_image(app_ctx, image_path, NULL);
     update_planet_textures(app_ctx, TextureRefresh ? *TextureRefresh : 0);
     logic_texture_refresh = TextureRefresh ? *TextureRefresh : -1;
     if (logic_planet) {
@@ -186,6 +191,13 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         geojson_style.line_color = (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.90f};
         geojson_style.fill_color = (DcVec4){.r = 0.25f, .g = 0.70f, .b = 1.0f, .a = 0.10f};
         dc_draw->planet_geojson(draw_ctx, view, logic_geojson, geojson_style);
+    }
+
+    if (logic_image) {
+        dc_draw->planet_image_geodetic(
+            draw_ctx, view, CLAVIUS_LAT, 345.27, 120000.0, logic_image,
+            (DcVec2){120000.0f, 120000.0f}, 15.0f, (float)*LocalRotation, true,
+            (DcVec4){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
     }
 
     dc_draw->planet_ellipse_filled_geodetic(

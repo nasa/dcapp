@@ -593,7 +593,8 @@ Displays an image at a geographic location on the terrain surface.
 
 ```xml
 <PlanetImage File="assets/marker.png" Latitude="@Lat" Longitude="@Lon"
-    Width="5000" Height="5000" HeightAboveTerrain="1000"/>
+    Width="5000" Height="5000" HeightAboveTerrain="1000"
+    Yaw="@RoverYaw" Rotation="@MarkerOffset"/>
 ```
 
 | Attribute | Type | Required | Description |
@@ -606,11 +607,23 @@ Displays an image at a geographic location on the terrain surface.
 | `Width` | double/var | No | Image width in meters. `DimensionX` and `Size` are aliases. |
 | `Height` | double/var | No | Image height in meters. `DimensionY` is an alias. |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `Rotation` | double/var | No | View-space rotation in degrees around the image center. Defaults to 0. |
+| `Yaw` | double/var | No | Planet-relative local-NED yaw. Image top points north at 0 degrees and east at 90 degrees. |
 | `TintColor` | color | No | Image tint color (RGBA). `Color` and `FillColor` are aliases. |
 | `Enabled` | boolean/var | No | Enables drawing. Defaults to true. |
 
 An image path and at least one dimension are required. If only width or height
 is supplied, the other dimension is inferred from the image's aspect ratio.
+The image remains screen-facing. Without `Yaw`, image top stays aligned with
+the `<PlanetView>` and `Rotation` supplies its view-space angle. With `Yaw`,
+image top follows the projected planet-relative heading and `Rotation` is an
+additional view-space offset. Both rotate around the image center without
+changing its geographic anchor.
+
+The Logic `planet_image_geodetic()` and `planet_image_cartesian()` calls take
+`rotation_degrees`, `yaw_degrees`, and `yaw_enabled` between their `size` and
+`tint` arguments. Pass `0.0f, 0.0f, false` for an upright view-space image.
+Pass `true` for `yaw_enabled` even when `yaw_degrees` is zero to point north.
 
 ### `<PlanetText>`
 

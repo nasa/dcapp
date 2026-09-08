@@ -7,6 +7,18 @@ generated-header versions.
 
 ## Unreleased
 
+### 2026-09-08: planet image rotation and yaw arguments
+
+`PlanetImage` now accepts optional `Rotation` and `Yaw` in degrees. The image
+remains screen-facing: `Rotation` is view-relative, while `Yaw` makes image top
+follow a planet-relative local-NED heading. Omitting both preserves the previous
+upright, view-relative behavior.
+
+The Logic `planet_image_geodetic()` and `planet_image_cartesian()` calls add a
+`float rotation_degrees`, `float yaw_degrees`, and `bool yaw_enabled` between
+`size` and `tint`. Add `0.0f, 0.0f, false` to preserve the previous appearance,
+then regenerate `logic/dcapp.h` and rebuild the Logic shared library.
+
 ### 2026-07-28: planet strokes use `DcStroke` and pixel widths
 
 The six Logic outline calls now take one `DcStroke` instead of separate width

@@ -4101,6 +4101,20 @@ static DcAppNodeIndex _process_xml_node_planet_image(DcAppDisplayBuilderContext 
         xmlFree(raw_height_px);
     }
 
+    //- resolve image orientation
+
+    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    if (raw_rotation) {
+        dc_node.planet_image.rotation = dc_app_variable_registry_register_value_from_string(_lookup(xml_ctx), DC_APP_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        xmlFree(raw_rotation);
+    }
+
+    xmlChar *raw_yaw = xmlGetProp(xml_node, BAD_CAST "Yaw");
+    if (raw_yaw) {
+        dc_node.planet_image.yaw = dc_app_variable_registry_register_value_from_string(_lookup(xml_ctx), DC_APP_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
+        xmlFree(raw_yaw);
+    }
+
     //- resolve visibility and tint
 
     xmlChar *raw_enabled = xmlGetProp(xml_node, BAD_CAST "Enabled");

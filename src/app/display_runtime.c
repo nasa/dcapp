@@ -5285,6 +5285,13 @@ static void _render_planet_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeConte
     DcAppVec2 size = {
         node->planet_image.dimension.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.dimension.x)->value_double : 0.0f,
         node->planet_image.dimension.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.dimension.y)->value_double : 0.0f};
+    float rotation = node->planet_image.rotation != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED
+                         ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.rotation)->value_double
+                         : 0.0f;
+    bool yaw_enabled = node->planet_image.yaw != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED;
+    float yaw = yaw_enabled
+                    ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.yaw)->value_double
+                    : 0.0f;
     DcAppVec4 tint = {1.0f, 1.0f, 1.0f, 1.0f};
     if (node->planet_image.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
         tint.r = node->planet_image.tint_color.r != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? (float)dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.tint_color.r)->value_double : 1.0f;
@@ -5298,9 +5305,9 @@ static void _render_planet_image(DcAppDrawContext *ctx, DcAppDisplayRuntimeConte
             node->planet_image.xyz.x != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.xyz.x)->value_double : 0.0,
             node->planet_image.xyz.y != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.xyz.y)->value_double : 0.0,
             node->planet_image.xyz.z != DC_APP_VARIABLE_REGISTRY_VALUE_INDEX_UNDEFINED ? dc_app_variable_registry_get_value(renderer->lookup, node->planet_image.xyz.z)->value_double : 0.0};
-        dc_app_draw_planet_image_cartesian(ctx, draw_view, position, (DcAppTextureId)node->planet_image.texture_index, size, tint);
+        dc_app_draw_planet_image_cartesian(ctx, draw_view, position, (DcAppTextureId)node->planet_image.texture_index, size, rotation, yaw, yaw_enabled, tint);
     } else {
-        dc_app_draw_planet_image_geodetic(ctx, draw_view, lat, lon, height, (DcAppTextureId)node->planet_image.texture_index, size, tint);
+        dc_app_draw_planet_image_geodetic(ctx, draw_view, lat, lon, height, (DcAppTextureId)node->planet_image.texture_index, size, rotation, yaw, yaw_enabled, tint);
     }
 }
 

@@ -263,6 +263,17 @@ void draw_api_test_planet(
     REQUIRE(api_test_state.planet_checked);
     api_test_state.planet_call_count++;
 
+    // Null views keep this dataset-independent while type-checking both
+    // generated PlanetImage signatures.
+    dc_draw->planet_image_geodetic(
+        draw_ctx, NULL, 0.0, 0.0, 0.0, api_test_state.texture,
+        (DcVec2){.x = 100.0f, .y = 50.0f}, 30.0f, 0.0f, false,
+        (DcVec4){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
+    dc_draw->planet_image_cartesian(
+        draw_ctx, NULL, (DcVec3d){0}, api_test_state.texture,
+        (DcVec2){.x = 100.0f, .y = 50.0f}, 15.0f, 90.0f, true,
+        (DcVec4){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
+
     dc_draw->rounded_rect_filled(
         draw_ctx,
         (DcVec2){.x = 20.0f, .y = 54.0f},
