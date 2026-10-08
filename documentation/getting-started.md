@@ -42,6 +42,15 @@ sudo apt install build-essential libxml2-dev libcurl4-openssl-dev libgdal-dev \
     libxinerama-dev libgl-dev libxi-dev
 ```
 
+On Fedora or RHEL, install the following:
+
+```bash
+sudo dnf install git libX11-devel xcb-util-devel libxkbcommon-x11-devel \
+    xcb-util-cursor-devel libxcb-devel xcb-util-keysyms-devel libXcursor-devel \
+    libXrandr-devel libXinerama-devel mesa-libGL-devel libXi-devel gdal-devel \
+    libcurl-devel libxml2-devel
+```
+
 On macOS, install the Xcode Command Line Tools and the Homebrew dependencies:
 
 ```bash
